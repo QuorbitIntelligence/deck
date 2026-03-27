@@ -701,7 +701,8 @@ function validarSeccion(n){
       const el=document.getElementById(id);
       if(!el.value.trim()){showToast("Complete todos los campos obligatorios.","error");el.focus();return false;}
     }
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById("correo").value)){
+    const correoVal = document.getElementById("correo").value.trim();
+    if(correoVal.indexOf("@") < 1 || correoVal.lastIndexOf(".") < correoVal.indexOf("@")+2){
       showToast("Ingrese un correo electrónico válido.","error");return false;
     }
   }
