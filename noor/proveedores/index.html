@@ -535,7 +535,7 @@ function sendData(){
     toast("Debe confirmar que la informaci\u00f3n es correcta antes de enviar.","err"); return;
   }
 
-  // Validar documentos obligatorios antes de enviar
+  // Validar documentos obligatorios
   var reqNames  = ["01_LicenciaSanitaria","03_AvisoDeFuncionamiento","04_IdentificacionOficial","05_ComprobanteDomicilio","06_RFC_CedulaFiscal","07_CatalogoProductos"];
   var reqLabels = ["Licencia sanitaria","Aviso de funcionamiento","Identificaci\u00f3n oficial","Comprobante de domicilio","RFC / C\u00e9dula fiscal","Cat\u00e1logo de productos/servicios"];
   for(var i=0; i<reqNames.length; i++){
@@ -545,60 +545,82 @@ function sendData(){
 
   var btn = document.getElementById("btnEnv");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Enviando solicitud completa...';
+  btn.innerHTML = '<span class="spin"></span>Preparando archivos...';
 
-  var rs    = document.getElementById("f_rs").value;
-  var rfc   = document.getElementById("f_rfc").value;
-  var tel   = document.getElementById("f_tel").value;
-  var em    = document.getElementById("f_email").value;
-  var dom   = document.getElementById("f_dom").value;
-  var tipo  = document.getElementById("f_tipo").value;
-  var rep   = document.getElementById("f_rep").value;
-  var cargo = document.getElementById("f_cargo").value||"No especificado";
-  var rsan  = document.getElementById("f_rsan").value||"No aplica";
-  var ced   = document.getElementById("f_ced").value||"No aplica";
-  var giro  = document.getElementById("f_giro").value;
-  var cat   = document.getElementById("f_cat").value;
-  var fecha = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
+  var rs       = document.getElementById("f_rs").value;
+  var rfc      = document.getElementById("f_rfc").value;
+  var tel      = document.getElementById("f_tel").value;
+  var em       = document.getElementById("f_email").value;
+  var dom      = document.getElementById("f_dom").value;
+  var tipo     = document.getElementById("f_tipo").value;
+  var rep      = document.getElementById("f_rep").value;
+  var cargo    = document.getElementById("f_cargo").value||"No especificado";
+  var rsan     = document.getElementById("f_rsan").value||"No aplica";
+  var ced      = document.getElementById("f_ced").value||"No aplica";
+  var giro     = document.getElementById("f_giro").value;
+  var cat      = document.getElementById("f_cat").value;
+  var fecha    = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
   var rsClean  = rs.replace(/[^a-zA-Z0-9 ]/g,"").trim().split(" ").slice(0,3).join("_");
   var fechaStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
 
-  // Construir FormData con datos + archivos
-  var fd = new FormData();
+  // Recopilar todos los file inputs
+  var docInputs = Array.prototype.slice.call(
+    document.querySelectorAll('#fsForm input[type="file"]')
+  );
 
-  // ── Bloque 1: Datos Generales
-  fd.append("razon_social", rs);
-  fd.append("rfc", rfc);
-  fd.append("telefono", tel);
-  fd.append("correo_proveedor", em);
-  fd.append("domicilio", dom);
-  fd.append("tipo_proveedor", tipo);
-
-  // ── Bloque 2: Representante y Giro
-  fd.append("representante", rep);
-  fd.append("cargo", cargo);
-  fd.append("responsable_sanitario", rsan);
-  fd.append("cedula_sanitaria", ced);
-  fd.append("giro", giro);
-  fd.append("catalogo_desc", cat);
-
-  // ── Firma digital como base64
-  fd.append("firma_base64", sp.toDataURL());
-  fd.append("fecha_envio", fecha);
-
-  // ── Archivos con nomenclatura estandarizada
-  var docInputs = document.querySelectorAll('#fsForm input[type="file"]');
-  docInputs.forEach(function(inp){
-    if(inp.files.length){
-      var f     = inp.files[0];
-      var clave = inp.name; // ej: 01_LicenciaSanitaria
-      var ext   = f.name.split(".").pop();
+  // Convertir cada archivo a base64 con Promise
+  var promesas = docInputs.map(function(inp){
+    return new Promise(function(resolve){
+      if(!inp.files.length){ resolve(null); return; }
+      var f      = inp.files[0];
+      var clave  = inp.name;
+      var ext    = f.name.split(".").pop();
       var nombre = "NOOR_"+clave+"_"+rsClean+"_"+fechaStr+"."+ext;
-      fd.append(clave, f, nombre);
-    }
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        // ev.result = "data:application/pdf;base64,AAAA..."
+        var partes = ev.result.split(",");
+        resolve({
+          clave:    clave,
+          nombre:   nombre,
+          mimeType: f.type || "application/octet-stream",
+          base64:   partes[1]
+        });
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(f);
+    });
   });
 
-  fetch(GAS_URL, { method:"POST", body:fd })
+  Promise.all(promesas).then(function(archivos){
+    // Filtrar nulos
+    archivos = archivos.filter(function(a){ return a !== null; });
+
+    btn.innerHTML = '<span class="spin"></span>Enviando al servidor...';
+
+    var payload = {
+      razon_social:          rs,
+      rfc:                   rfc,
+      telefono:              tel,
+      correo_proveedor:      em,
+      domicilio:             dom,
+      tipo_proveedor:        tipo,
+      representante:         rep,
+      cargo:                 cargo,
+      responsable_sanitario: rsan,
+      cedula_sanitaria:      ced,
+      giro:                  giro,
+      catalogo_desc:         cat,
+      firma_base64:          sp.toDataURL(),
+      fecha_envio:           fecha,
+      archivos:              archivos
+    };
+
+    fetch(GAS_URL, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(payload)
+    })
     .then(function(r){ return r.json(); })
     .then(function(data){
       if(data.status === "ok"){
@@ -615,6 +637,7 @@ function sendData(){
       btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Solicitud Completa";
       toast("Error al enviar. Verifique su conexi\u00f3n o contacte a compras&#64;noorclinic.com.mx","err");
     });
+  });
 }
 
 // ── TOAST ───────────────────────────────────────────────────
