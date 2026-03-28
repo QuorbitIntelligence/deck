@@ -6,7 +6,6 @@
 <title>Portal de Proveedores &#8212; Hospital Noor</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"></script>
-<script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{--ap:#0a1f44;--am:#1a4a8a;--ai:#1b6cc4;--ac:#4fa3e0;--aci:#a8d4f5;--ah:#e8f4fd;--w:#fff;--gs:#f4f7fc;--gt:#5a6a7e;--gb:#d0dcea;--ve:#16a34a;--sh:0 4px 24px rgba(10,31,68,.10);--shh:0 8px 40px rgba(10,31,68,.18);--r:14px;--rl:22px}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
@@ -188,7 +187,7 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
     <div class="si active" id="step1" onclick="goTo(1)"><div class="sc">1</div><div class="sl">Datos Generales</div></div>
     <div class="si" id="step2" onclick="goTo(2)"><div class="sc">2</div><div class="sl">Representante &amp; Giro</div></div>
     <div class="si" id="step3" onclick="goTo(3)"><div class="sc">3</div><div class="sl">Documentos</div></div>
-    <div class="si" id="step4" onclick="goTo(4)"><div class="sc">4</div><div class="sl">Verificaci&#243;n &amp; Env&#237;o</div></div>
+    <div class="si" id="step4" onclick="goTo(4)"><div class="sc">4</div><div class="sl">Verificar &amp; Enviar</div></div>
   </div>
 </div>
 
@@ -282,12 +281,8 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1b6cc4" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <p><strong>Documentaci&#243;n requerida:</strong> Adjunte cada archivo individualmente. Ser&#225;n enviados con nomenclatura estandarizada (<code>NOOR_01_LicenciaSanitaria_Empresa_Fecha.pdf</code>) al expediente de Hospital Noor. Formatos: PDF, JPG, PNG &#8212; m&#225;x. 5 MB.</p>
     </div>
-    <form id="fsForm" action="https://formspree.io/f/xlgogdja" method="POST" enctype="multipart/form-data">
-      <input type="hidden" name="_subject" id="fs_subj">
-      <input type="hidden" name="razon_social" id="fs_rs">
-      <input type="hidden" name="rfc" id="fs_rfc">
-      <input type="hidden" name="fecha" id="fs_fecha">
-      <input type="hidden" name="_replyto" id="fs_reply">
+    <form id="fsForm" enctype="multipart/form-data">
+      <!-- Campos gestionados por JavaScript -->
       <div class="dg">
         <div class="dc" id="cd1"><div class="dch"><div class="dn">1</div><div><div class="dnm">Licencia sanitaria</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="01_LicenciaSanitaria" id="d1" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd1','fn1')" required><div class="fui">&#128196;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn1"></div></div>
         <div class="dc" id="cd2"><div class="dch"><div class="dn">2</div><div><div class="dnm">Responsable sanitario</div><div class="dr">Cuando aplique</div></div></div><div class="fua"><input type="file" name="02_ResponsableSanitario" id="d2" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd2','fn2')"><div class="fui">&#128100;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn2"></div></div>
@@ -341,7 +336,7 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
       </label>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
-      <button class="btn btnok" id="btnEnv" onclick="sendData()">&#9993;&#65039; &nbsp; Enviar Datos y Continuar con Documentos</button>
+      <button class="btn btnok" id="btnEnv" onclick="sendData()">&#9993;&#65039; &nbsp; Enviar Solicitud Completa</button>
       <button class="btn btns" onclick="prev(4)" style="font-size:.8rem;padding:10px 24px">&#8592; Regresar y editar</button>
     </div>
   </div>
@@ -374,13 +369,9 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
 <div class="toast" id="toast"></div>
 
 <script data-cfasync="false">
-// ── CREDENCIALES ────────────────────────────────────────────
-const EJ_PK = "1vKqEhtTbmcPEvQG9";
-const EJ_SV = "service_ecnee1m";
-const EJ_TM = "template_66rvaxf";
-const FS_EP = "https://formspree.io/f/xlgogdja";
-
-emailjs.init({ publicKey: EJ_PK });
+// ── CONFIGURACIÓN ───────────────────────────────────────────
+// Reemplaza con la URL de tu Google Apps Script desplegado
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxkcLQVXbxMIjjCkWqQzYBXvAGju_iRsRt8z4bS5n_sfHq6Izn68Gwdmy3ypVhlQDLSwQ/exec";
 
 // ── DOCS ────────────────────────────────────────────────────
 const DOCS = [
@@ -555,87 +546,86 @@ function sendData(){
   if(!document.getElementById("chk").checked){
     toast("Debe confirmar que la informaci\u00f3n es correcta antes de enviar.","err"); return;
   }
+
+  // Validar documentos obligatorios antes de enviar
+  var reqNames  = ["01_LicenciaSanitaria","03_AvisoDeFuncionamiento","04_IdentificacionOficial","05_ComprobanteDomicilio","06_RFC_CedulaFiscal","07_CatalogoProductos"];
+  var reqLabels = ["Licencia sanitaria","Aviso de funcionamiento","Identificaci\u00f3n oficial","Comprobante de domicilio","RFC / C\u00e9dula fiscal","Cat\u00e1logo de productos/servicios"];
+  for(var i=0; i<reqNames.length; i++){
+    var inp = document.querySelector('input[name="'+reqNames[i]+'"]');
+    if(!inp || !inp.files.length){ toast("Documento obligatorio faltante: "+reqLabels[i],"err"); return; }
+  }
+
   var btn = document.getElementById("btnEnv");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Enviando datos...';
+  btn.innerHTML = '<span class="spin"></span>Enviando solicitud completa...';
 
-  var rs   = document.getElementById("f_rs").value;
-  var rfc  = document.getElementById("f_rfc").value;
-  var tel  = document.getElementById("f_tel").value;
-  var em   = document.getElementById("f_email").value;
-  var dom  = document.getElementById("f_dom").value;
-  var tipo = document.getElementById("f_tipo").value;
-  var rep  = document.getElementById("f_rep").value;
-  var cargo= document.getElementById("f_cargo").value||"No especificado";
-  var rsan = document.getElementById("f_rsan").value||"No aplica";
-  var ced  = document.getElementById("f_ced").value||"No aplica";
-  var giro = document.getElementById("f_giro").value;
-  var cat  = document.getElementById("f_cat").value;
-  var fecha= new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
-
-  var docsList = "";
+  var rs    = document.getElementById("f_rs").value;
+  var rfc   = document.getElementById("f_rfc").value;
+  var tel   = document.getElementById("f_tel").value;
+  var em    = document.getElementById("f_email").value;
+  var dom   = document.getElementById("f_dom").value;
+  var tipo  = document.getElementById("f_tipo").value;
+  var rep   = document.getElementById("f_rep").value;
+  var cargo = document.getElementById("f_cargo").value||"No especificado";
+  var rsan  = document.getElementById("f_rsan").value||"No aplica";
+  var ced   = document.getElementById("f_ced").value||"No aplica";
+  var giro  = document.getElementById("f_giro").value;
+  var cat   = document.getElementById("f_cat").value;
+  var fecha = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
   var rsClean  = rs.replace(/[^a-zA-Z0-9 ]/g,"").trim().split(" ").slice(0,3).join("_");
   var fechaStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
-  DOCS.forEach(function(d){
-    var f = document.getElementById(d[0]).files[0];
-    var nombre = f ? ("NOOR_"+d[3]+"_"+rsClean+"_"+fechaStr+"."+f.name.split(".").pop()) : "No adjuntado";
-    docsList += "\u2022 " + d[1] + ": " + nombre + "\n";
+
+  // Construir FormData con datos + archivos
+  var fd = new FormData();
+
+  // ── Bloque 1: Datos Generales
+  fd.append("razon_social", rs);
+  fd.append("rfc", rfc);
+  fd.append("telefono", tel);
+  fd.append("correo_proveedor", em);
+  fd.append("domicilio", dom);
+  fd.append("tipo_proveedor", tipo);
+
+  // ── Bloque 2: Representante y Giro
+  fd.append("representante", rep);
+  fd.append("cargo", cargo);
+  fd.append("responsable_sanitario", rsan);
+  fd.append("cedula_sanitaria", ced);
+  fd.append("giro", giro);
+  fd.append("catalogo_desc", cat);
+
+  // ── Firma digital como base64
+  fd.append("firma_base64", sp.toDataURL());
+  fd.append("fecha_envio", fecha);
+
+  // ── Archivos con nomenclatura estandarizada
+  var docInputs = document.querySelectorAll('#fsForm input[type="file"]');
+  docInputs.forEach(function(inp){
+    if(inp.files.length){
+      var f     = inp.files[0];
+      var clave = inp.name; // ej: 01_LicenciaSanitaria
+      var ext   = f.name.split(".").pop();
+      var nombre = "NOOR_"+clave+"_"+rsClean+"_"+fechaStr+"."+ext;
+      fd.append(clave, f, nombre);
+    }
   });
 
-  var params = {
-    razon_social: rs, rfc: rfc, telefono: tel, correo_proveedor: em,
-    domicilio: dom, tipo_proveedor: tipo, representante: rep, cargo: cargo,
-    responsable_sanitario: rsan, cedula_sanitaria: ced, giro: giro,
-    catalogo_desc: cat, docs_listado: docsList, firma_img: sp.toDataURL(),
-    fecha_envio: fecha, reply_to: em
-  };
-
-  emailjs.send(EJ_SV, EJ_TM, params).then(function(){
-    // Poblar campos ocultos de Formspree
-    // EmailJS enviado correctamente — mostrar pantalla de éxito final
-    document.getElementById("sb4").style.display = "none";
-    document.getElementById("efinal").classList.add("active");
-    window.scrollTo({top: document.getElementById("sec4").offsetTop - 80, behavior:"smooth"});
-  }, function(err){
-    console.error("EmailJS error:", err);
-    btn.disabled = false;
-    btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Datos y Continuar con Documentos";
-    toast("Error al enviar. Verifique su conexi\u00f3n o contacte compras&#64;noorclinic.com.mx","err");
-  });
-}
-
-// ── ENVÍO FORMSPREE ─────────────────────────────────────────
-function sendDocs(){
-  var req = [
-    {name:"01_LicenciaSanitaria",     label:"Licencia sanitaria"},
-    {name:"03_AvisoDeFuncionamiento",  label:"Aviso de funcionamiento"},
-    {name:"04_IdentificacionOficial",  label:"Identificaci\u00f3n oficial"},
-    {name:"05_ComprobanteDomicilio",   label:"Comprobante de domicilio"},
-    {name:"06_RFC_CedulaFiscal",       label:"RFC / C\u00e9dula fiscal"},
-    {name:"07_CatalogoProductos",      label:"Cat\u00e1logo de productos/servicios"},
-  ];
-  for(var i=0; i<req.length; i++){
-    var inp = document.querySelector('input[name="'+req[i].name+'"]');
-    if(!inp || !inp.files.length){ toast("Documento obligatorio faltante: "+req[i].label,"err"); return; }
-  }
-  var btn = document.getElementById("btnFS");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Enviando documentaci\u00f3n...';
-  var form = document.getElementById("fsForm");
-  var data = new FormData(form);
-  fetch(form.action, {method:"POST", body:data, headers:{Accept:"application/json"}})
-    .then(function(r){
-      if(r.ok){
-        document.getElementById("ep1").style.display = "none";
+  fetch(GAS_URL, { method:"POST", body:fd })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.status === "ok"){
+        document.getElementById("sb4").style.display = "none";
         document.getElementById("efinal").classList.add("active");
         window.scrollTo({top: document.getElementById("sec4").offsetTop - 80, behavior:"smooth"});
-      } else { throw new Error("Formspree "+r.status); }
+      } else {
+        throw new Error(data.message || "Error en el servidor");
+      }
     })
     .catch(function(e){
-      console.error(e);
+      console.error("Error GAS:", e);
       btn.disabled = false;
-      btn.innerHTML = "\u1f4e4 &nbsp; Enviar Documentaci\u00f3n Completa";
-      toast("Error al enviar documentos. Intente de nuevo.","err");
+      btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Solicitud Completa";
+      toast("Error al enviar. Verifique su conexi\u00f3n o contacte a compras&#64;noorclinic.com.mx","err");
     });
 }
 
