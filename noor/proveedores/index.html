@@ -353,7 +353,7 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
         <div class="prog-steps">
           <div class="prog-step" id="ps1">&#128196; Leyendo</div>
           <div class="prog-step" id="ps2">&#128260; Codificando</div>
-          <div class="prog-step" id="ps3">&#9652; Enviando</div>
+          <div class="prog-step" id="ps3">&#9652; Guardando</div>
           <div class="prog-step" id="ps4">&#10003; Listo</div>
         </div>
         <div class="prog-msg" id="progMsg"></div>
@@ -650,7 +650,7 @@ function sendData(){
     setTimeout(function(){
 
       // FASE 3 — Enviando
-      setProgreso(60, 3, "Enviando al servidor de Hospital Noor...");
+      setProgreso(60, 3, "Guardando en repositorio institucional...");
 
       fetch(GAS_URL, {
         method:  "POST",
@@ -661,7 +661,7 @@ function sendData(){
       .then(function(data){
         if(data.status === "ok"){
           // FASE 4 — Listo
-          setProgreso(100, 4, "\u00a1Solicitud enviada correctamente!");
+          setProgreso(100, 4, "\u00a1Documentos guardados y correo enviado!");
           setTimeout(function(){
             document.getElementById("sb4").style.display = "none";
             document.getElementById("efinal").classList.add("active");
