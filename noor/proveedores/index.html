@@ -6,6 +6,7 @@
 <title>Portal de Proveedores &#8212; Hospital Noor</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"></script>
+<script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{--ap:#0a1f44;--am:#1a4a8a;--ai:#1b6cc4;--ac:#4fa3e0;--aci:#a8d4f5;--ah:#e8f4fd;--w:#fff;--gs:#f4f7fc;--gt:#5a6a7e;--gb:#d0dcea;--ve:#16a34a;--sh:0 4px 24px rgba(10,31,68,.10);--shh:0 8px 40px rgba(10,31,68,.18);--r:14px;--rl:22px}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
@@ -127,11 +128,35 @@ canvas#firmaCanvas{display:block;width:100%;height:180px;cursor:crosshair;touch-
 .btnfs{width:100%;padding:16px;border-radius:50px;background:linear-gradient(135deg,var(--ai),var(--am));color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .25s;box-shadow:0 4px 18px rgba(27,108,196,.35)}
 .btnfs:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(27,108,196,.45)}
 .btnfs:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.ef{display:none;text-align:center;padding:52px 36px 40px;animation:fu .5s ease forwards}
+.ef{display:none;text-align:center;padding:36px 36px 40px;animation:fu .5s ease forwards}
 .ef.active{display:block}
-.efi{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--am),var(--ai));display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 8px 32px rgba(27,108,196,.35)}
-.ef h3{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--ap);margin-bottom:12px}
-.ef p{color:var(--gt);font-size:.95rem;line-height:1.7;max-width:460px;margin:0 auto}
+.exito-datos-ok{margin-bottom:24px}
+.efi{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#16a34a,#4ade80);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 28px rgba(22,163,74,.30)}
+.ef h3{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--ap);margin-bottom:10px}
+.ef p,.exito-datos-ok p{color:var(--gt);font-size:.9rem;line-height:1.7;max-width:540px;margin:0 auto}
+/* PASO 2 */
+.paso2-bloque{background:#fff;border:1.5px solid var(--gb);border-radius:var(--rl);overflow:hidden;margin-top:20px;text-align:left;box-shadow:var(--sh)}
+.paso2-header{background:linear-gradient(135deg,var(--ap),var(--am));padding:22px 28px}
+.paso2-badge{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:50px;color:#fff;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 14px;margin-bottom:8px}
+.paso2-titulo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:#fff}
+.paso2-sub{font-size:.78rem;color:var(--aci);margin-top:4px;font-weight:300}
+.paso2-body{padding:28px 32px}
+.docs-checklist{margin-bottom:24px}
+.docs-checklist-titulo{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--am);margin-bottom:12px}
+.docs-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dck{background:var(--gs);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--ap);display:flex;align-items:center;gap:8px;font-weight:500}
+.dck-num{background:var(--ai);color:#fff;border-radius:6px;padding:2px 7px;font-size:.7rem;font-weight:700;flex-shrink:0}
+.dck-req{margin-left:auto;font-size:.68rem;color:#dc2626;font-weight:600;text-transform:uppercase;flex-shrink:0}
+.dck-opt{margin-left:auto;font-size:.68rem;color:var(--gt);font-weight:500;flex-shrink:0}
+.paso2-btn-area{text-align:center;padding:8px 0 20px}
+.btn-paso2{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--ai),var(--am));color:#fff;border:none;border-radius:50px;padding:16px 40px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .25s;box-shadow:0 4px 18px rgba(27,108,196,.35)}
+.btn-paso2:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(27,108,196,.45)}
+.paso2-hint{font-size:.75rem;color:var(--gt);margin-top:12px;line-height:1.6;max-width:400px;margin-left:auto;margin-right:auto}
+.btn-confirmar-docs{display:block;margin:0 auto;background:none;border:1.5px solid var(--gb);border-radius:50px;padding:10px 28px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:var(--gt);cursor:pointer;transition:all .25s;letter-spacing:.03em}
+.btn-confirmar-docs:hover{border-color:var(--ve);color:var(--ve)}
+.paso2-confirmado{display:flex;align-items:center;justify-content:center;gap:6px;background:#f0fbf5;border:1.5px solid #34c97b;border-radius:50px;padding:12px 24px;font-size:.88rem;color:#16a34a;font-weight:500;margin:0 auto 16px;max-width:380px}
+.paso2-footer{background:var(--ap);padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:.72rem;color:rgba(255,255,255,.45);letter-spacing:.04em}
+@media(max-width:640px){.docs-check-grid{grid-template-columns:1fr}.paso2-body{padding:20px 16px}}
 footer{background:var(--ap);padding:36px 32px;text-align:center}
 .fi{max-width:860px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:16px}
 .flogo{height:50px;width:auto;object-fit:contain;background:#fff;border-radius:10px;padding:6px 12px;display:block}
@@ -285,29 +310,26 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
 
 <!-- BLOQUE 3: DOCUMENTOS via Formspree (una sola vez) -->
 <div class="sec" id="sec3">
-  <div class="sh2"><div class="sn">3</div><div class="st"><h3>Carga de Documentaci&#243;n</h3><p>Adjunte cada documento una sola vez &#8212; se env&#237;an directamente al expediente institucional</p></div></div>
+  <div class="sh2"><div class="sn">3</div><div class="st"><h3>Documentaci&#243;n requerida</h3><p>Tenga listos estos documentos para subirlos despu&#233;s de completar su registro</p></div></div>
   <div class="sb">
-    <div class="nc">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1b6cc4" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <p><strong>Documentaci&#243;n requerida:</strong> Adjunte cada archivo individualmente. Ser&#225;n enviados con nomenclatura estandarizada (<code>NOOR_01_LicenciaSanitaria_Empresa_Fecha.pdf</code>) al expediente de Hospital Noor. Formatos: PDF, JPG, PNG &#8212; m&#225;x. 5 MB.</p>
+    <div class="nc" style="margin-bottom:24px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1b6cc4" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p><strong>Proceso en 2 pasos:</strong> Primero env&#237;e sus datos (r&#225;pido) y despu&#233;s adjunte sus documentos mediante un formulario seguro. Sus archivos se guardar&#225;n organizados en el repositorio institucional de Hospital Noor.</p>
     </div>
-    <form id="fsForm" enctype="multipart/form-data">
-      <!-- Campos gestionados por JavaScript -->
-      <div class="dg">
-        <div class="dc" id="cd1"><div class="dch"><div class="dn">1</div><div><div class="dnm">Licencia sanitaria</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="01_LicenciaSanitaria" id="d1" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd1','fn1')" required><div class="fui">&#128196;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn1"></div></div>
-        <div class="dc" id="cd2"><div class="dch"><div class="dn">2</div><div><div class="dnm">Responsable sanitario</div><div class="dr">Cuando aplique</div></div></div><div class="fua"><input type="file" name="02_ResponsableSanitario" id="d2" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd2','fn2')"><div class="fui">&#128100;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn2"></div></div>
-        <div class="dc" id="cd3"><div class="dch"><div class="dn">3</div><div><div class="dnm">Aviso de funcionamiento</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="03_AvisoDeFuncionamiento" id="d3" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd3','fn3')" required><div class="fui">&#128203;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn3"></div></div>
-        <div class="dc" id="cd4"><div class="dch"><div class="dn">4</div><div><div class="dnm">Identificaci&#243;n oficial</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="04_IdentificacionOficial" id="d4" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd4','fn4')" required><div class="fui">&#129514;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn4"></div></div>
-        <div class="dc" id="cd5"><div class="dch"><div class="dn">5</div><div><div class="dnm">Comprobante de domicilio</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="05_ComprobanteDomicilio" id="d5" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd5','fn5')" required><div class="fui">&#127968;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn5"></div></div>
-        <div class="dc" id="cd6"><div class="dch"><div class="dn">6</div><div><div class="dnm">RFC / C&#233;dula fiscal</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="06_RFC_CedulaFiscal" id="d6" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd6','fn6')" required><div class="fui">&#128209;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn6"></div></div>
-        <div class="dc" id="cd7"><div class="dch"><div class="dn">7</div><div><div class="dnm">Cat&#225;logo de productos / servicios</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="07_CatalogoProductos" id="d7" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd7','fn7')" required><div class="fui">&#128230;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn7"></div></div>
-        <div class="dc" id="cd8"><div class="dch"><div class="dn">8</div><div><div class="dnm">Carta de aceptaci&#243;n firmada</div><div class="dr">Recomendado &#8212; versi&#243;n f&#237;sica escaneada</div></div></div><div class="fua"><input type="file" name="08_CartaAceptacionFirmada" id="d8" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd8','fn8')"><div class="fui">&#9997;&#65039;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn8"></div></div>
-      </div>
-      <div class="br">
-        <button type="button" class="btn btns" onclick="prev(3)">&#8592; Anterior</button>
-        <button type="button" class="btn btnp" onclick="next(3)">Continuar &#8594;</button>
-      </div>
-    </form>
+    <div class="dg">
+      <div class="dc"><div class="dch"><div class="dn">1</div><div><div class="dnm">Licencia sanitaria</div><div class="dr">Obligatorio</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">2</div><div><div class="dnm">Responsable sanitario</div><div class="dr">Cuando aplique</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">3</div><div><div class="dnm">Aviso de funcionamiento</div><div class="dr">Obligatorio</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">4</div><div><div class="dnm">Identificaci&#243;n oficial</div><div class="dr">Obligatorio</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">5</div><div><div class="dnm">Comprobante de domicilio</div><div class="dr">Obligatorio</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">6</div><div><div class="dnm">RFC / C&#233;dula fiscal</div><div class="dr">Obligatorio</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">7</div><div><div class="dnm">Cat&#225;logo de productos / servicios</div><div class="dr">Obligatorio</div></div></div></div>
+      <div class="dc"><div class="dch"><div class="dn">8</div><div><div class="dnm">Carta de aceptaci&#243;n firmada</div><div class="dr">Recomendado</div></div></div></div>
+    </div>
+    <div class="br">
+      <button type="button" class="btn btns" onclick="prev(3)">&#8592; Anterior</button>
+      <button type="button" class="btn btnp" onclick="next(3)">Continuar &#8594;</button>
+    </div>
   </div>
 </div>
 
@@ -346,14 +368,14 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
       </label>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
-      <button class="btn btnok" id="btnEnv" onclick="sendData()">&#9993;&#65039; &nbsp; Enviar Solicitud Completa</button>
+      <button class="btn btnok" id="btnEnv" onclick="sendData()">&#9993;&#65039; &nbsp; Enviar Datos del Proveedor</button>
       <!-- BARRA DE PROGRESO -->
       <div class="prog-wrap" id="progWrap">
         <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
         <div class="prog-steps">
-          <div class="prog-step" id="ps1">&#128196; Leyendo</div>
-          <div class="prog-step" id="ps2">&#128260; Codificando</div>
-          <div class="prog-step" id="ps3">&#9652; Guardando</div>
+          <div class="prog-step" id="ps1">&#128203; Preparando</div>
+          <div class="prog-step" id="ps2">&#128260; Procesando</div>
+          <div class="prog-step" id="ps3">&#9652; Enviando</div>
           <div class="prog-step" id="ps4">&#10003; Listo</div>
         </div>
         <div class="prog-msg" id="progMsg"></div>
@@ -365,12 +387,67 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
 
   <!-- EXITO FINAL -->
   <div class="ef" id="efinal">
-    <div class="efi"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="44" height="44"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-    <h3>&#160;&#161;Registro completo y enviado!</h3>
-    <p>Sus datos y documentaci&#243;n han sido recibidos de forma segura y estructurada por el equipo de Hospital Noor. En breve nos comunicaremos con usted para confirmar su credencializaci&#243;n como proveedor.</p>
-    <br>
-    <p style="font-size:.82rem;color:var(--ai)">&#128222; 55 5213 1664 &nbsp;&#183;&nbsp; compras&#64;noorclinic.com.mx</p>
-  </div>
+
+    <!-- Confirmación datos -->
+    <div class="exito-datos-ok">
+      <div class="efi"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3>&#161;Datos enviados correctamente!</h3>
+      <p style="margin-bottom:8px">Su informaci&#243;n fue recibida por el equipo de Hospital Noor.<br>Ahora complete su registro adjuntando la documentaci&#243;n requerida.</p>
+    </div>
+
+    <!-- Paso 2: Documentos -->
+    <div class="paso2-bloque">
+      <div class="paso2-header">
+        <div class="paso2-badge">Paso 2 de 2</div>
+        <div class="paso2-titulo">&#128193; Adjuntar Documentaci&#243;n</div>
+        <div class="paso2-sub">Sus archivos se guardar&#225;n en el repositorio institucional de Hospital Noor</div>
+      </div>
+
+      <div class="paso2-body">
+        <!-- Lista de documentos requeridos -->
+        <div class="docs-checklist">
+          <div class="docs-checklist-titulo">Documentos a adjuntar:</div>
+          <div class="docs-check-grid">
+            <div class="dck"><span class="dck-num">01</span> Licencia sanitaria <span class="dck-req">Obligatorio</span></div>
+            <div class="dck"><span class="dck-num">02</span> Responsable sanitario <span class="dck-opt">Opcional</span></div>
+            <div class="dck"><span class="dck-num">03</span> Aviso de funcionamiento <span class="dck-req">Obligatorio</span></div>
+            <div class="dck"><span class="dck-num">04</span> Identificaci&#243;n oficial <span class="dck-req">Obligatorio</span></div>
+            <div class="dck"><span class="dck-num">05</span> Comprobante de domicilio <span class="dck-req">Obligatorio</span></div>
+            <div class="dck"><span class="dck-num">06</span> RFC / C&#233;dula fiscal <span class="dck-req">Obligatorio</span></div>
+            <div class="dck"><span class="dck-num">07</span> Cat&#225;logo de productos/servicios <span class="dck-req">Obligatorio</span></div>
+            <div class="dck"><span class="dck-num">08</span> Carta de aceptaci&#243;n firmada <span class="dck-opt">Recomendado</span></div>
+          </div>
+        </div>
+
+        <!-- Botón principal -->
+        <div class="paso2-btn-area">
+          <button class="btn-paso2" onclick="abrirFormDocs()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Adjuntar documentaci&#243;n
+          </button>
+          <p class="paso2-hint">Se abrir&#225; el formulario de carga de archivos en una nueva ventana.<br>Al finalizar, vuelva a esta p&#225;gina para confirmar su registro.</p>
+        </div>
+
+        <!-- Estado confirmación docs -->
+        <div class="paso2-confirmado" id="docsConfirmados" style="display:none">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          &#160;Documentaci&#243;n enviada. &#160;<strong>&#161;Su registro est&#225; completo!</strong>
+        </div>
+
+        <!-- Botón confirmar -->
+        <button class="btn-confirmar-docs" id="btnConfirmarDocs" onclick="confirmarDocs()">
+          &#10003; &#160; Ya adjunt&#233; mis documentos
+        </button>
+      </div>
+
+      <div class="paso2-footer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        &#160; Informaci&#243;n tratada con estricta confidencialidad &#183; Repositorio institucional seguro
+      </div>
+    </div>
+
+    <p style="font-size:.82rem;color:var(--ai);margin-top:20px;text-align:center">&#128222; 55 5213 1664 &nbsp;&#183;&nbsp; compras&#64;noorclinic.com.mx</p>
+  </div></div>
 </div>
 
 </main>
@@ -390,62 +467,72 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
 <div class="toast" id="toast"></div>
 
 <script data-cfasync="false">
-// ── CONFIGURACIÓN ───────────────────────────────────────────
-// Reemplaza con la URL de tu Google Apps Script desplegado
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxkcLQVXbxMIjjCkWqQzYBXvAGju_iRsRt8z4bS5n_sfHq6Izn68Gwdmy3ypVhlQDLSwQ/exec";
+// ── CREDENCIALES ─────────────────────────────────────────────
+var EJ_PK = "1vKqEhtTbmcPEvQG9";
+var EJ_SV = "service_ecnee1m";
+var EJ_TM = "template_66rvaxf";
 
-// ── DOCS ────────────────────────────────────────────────────
-const DOCS = [
-  ["d1","Licencia sanitaria",true,"01_LicenciaSanitaria"],
-  ["d2","Responsable sanitario",false,"02_ResponsableSanitario"],
-  ["d3","Aviso de funcionamiento",true,"03_AvisoDeFuncionamiento"],
-  ["d4","Identificaci\u00f3n oficial",true,"04_IdentificacionOficial"],
-  ["d5","Comprobante de domicilio",true,"05_ComprobanteDomicilio"],
-  ["d6","RFC / C\u00e9dula fiscal",true,"06_RFC_CedulaFiscal"],
-  ["d7","Cat\u00e1logo de productos/servicios",true,"07_CatalogoProductos"],
-  ["d8","Carta de aceptaci\u00f3n firmada",false,"08_CartaAceptacion"],
-];
+emailjs.init({ publicKey: EJ_PK });
 
-let sp, cur = 1;
+// ── ESTADO ───────────────────────────────────────────────────
+var sp  = null;
+var cur = 1;
 
+// ── INIT FIRMA ───────────────────────────────────────────────
 window.addEventListener("load", function(){
   var c = document.getElementById("firmaCanvas");
-  c.width  = (c.parentElement.getBoundingClientRect().width || 740);
+  if(!c) return;
+  c.width  = c.parentElement.getBoundingClientRect().width || 740;
   c.height = 180;
-  sp = new SignaturePad(c, {backgroundColor:"rgb(255,255,255)", penColor:"#0a1f44", minWidth:1.5, maxWidth:3.5});
+  sp = new SignaturePad(c, {
+    backgroundColor: "rgb(255,255,255)",
+    penColor:        "#0a1f44",
+    minWidth:        1.5,
+    maxWidth:        3.5
+  });
 });
 
-// ── NAVEGACIÓN ──────────────────────────────────────────────
-function goTo(n){ if(n <= cur) show(n); }
+// ── NAVEGACIÓN ───────────────────────────────────────────────
+function goTo(n){
+  if(n <= cur) show(n);
+}
 
 function show(n){
-  document.querySelectorAll(".sec").forEach(function(s){ s.classList.remove("active"); });
-  document.getElementById("sec"+n).classList.add("active");
+  document.querySelectorAll(".sec").forEach(function(s){
+    s.classList.remove("active");
+  });
+  var sec = document.getElementById("sec"+n);
+  if(sec) sec.classList.add("active");
+
   document.querySelectorAll(".si").forEach(function(s,i){
     s.classList.remove("active","done");
-    if(i+1 < n) s.classList.add("done");
+    if(i+1 < n)  s.classList.add("done");
     if(i+1 === n) s.classList.add("active");
   });
+
   cur = n;
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function next(d){
   if(!validate(d)) return;
-  if(d === 3){ buildPreview(); }
-  show(d+1);
+  if(d === 3) buildPreview();
+  show(d + 1);
 }
-function prev(d){ show(d-1); }
 
-// ── VALIDACIÓN ──────────────────────────────────────────────
+function prev(d){
+  show(d - 1);
+}
+
+// ── VALIDACIÓN ───────────────────────────────────────────────
 function validate(n){
   if(n === 1){
     var ids = ["f_rs","f_rfc","f_tel","f_email","f_dom","f_tipo"];
     for(var i=0; i<ids.length; i++){
       var el = document.getElementById(ids[i]);
-      if(!el.value.trim()){
+      if(!el || !el.value.trim()){
         toast("Complete todos los campos obligatorios.","err");
-        el.focus();
+        if(el) el.focus();
         return false;
       }
     }
@@ -456,124 +543,139 @@ function validate(n){
     }
   }
   if(n === 2){
-    if(!document.getElementById("f_rep").value.trim()){ toast("Ingrese el nombre del representante legal.","err"); return false; }
-    if(!document.getElementById("f_giro").value.trim()){ toast("Ingrese el giro de servicio o producto.","err"); return false; }
-    if(!document.getElementById("f_cat").value.trim()){ toast("Describa el cat\u00e1logo de productos o servicios.","err"); return false; }
-    if(sp.isEmpty()){ toast("Proporcione su firma digital para aceptar las pol\u00edticas.","err"); return false; }
-  }
-  if(n === 3){
-    var reqNames = ["01_LicenciaSanitaria","03_AvisoDeFuncionamiento","04_IdentificacionOficial","05_ComprobanteDomicilio","06_RFC_CedulaFiscal","07_CatalogoProductos"];
-    var reqLabels = ["Licencia sanitaria","Aviso de funcionamiento","Identificaci\u00f3n oficial","Comprobante de domicilio","RFC / C\u00e9dula fiscal","Cat\u00e1logo de productos/servicios"];
-    for(var j=0; j<reqNames.length; j++){
-      var inp = document.querySelector('input[name="'+reqNames[j]+'"]');
-      if(!inp || !inp.files.length){
-        toast("Documento obligatorio faltante: "+reqLabels[j],"err");
-        return false;
-      }
+    if(!document.getElementById("f_rep").value.trim()){
+      toast("Ingrese el nombre del representante legal.","err"); return false;
+    }
+    if(!document.getElementById("f_giro").value.trim()){
+      toast("Ingrese el giro de servicio o producto.","err"); return false;
+    }
+    if(!document.getElementById("f_cat").value.trim()){
+      toast("Describa el cat\u00e1logo de productos o servicios.","err"); return false;
+    }
+    if(!sp || sp.isEmpty()){
+      toast("Proporcione su firma digital para aceptar las pol\u00edticas.","err"); return false;
     }
   }
+  // Bloque 3 es solo informativo - sin validación de archivos
   return true;
 }
 
-// ── ARCHIVOS ────────────────────────────────────────────────
-function hf(inp,cid,fid){
-  var card=document.getElementById(cid), fn=document.getElementById(fid);
-  if(inp.files.length){
-    if(inp.files[0].size > 5*1024*1024){ toast("El archivo supera los 5 MB permitidos.","err"); inp.value=""; return; }
-    card.classList.add("up"); fn.textContent="\u2705 "+inp.files[0].name;
-  } else { card.classList.remove("up"); fn.textContent=""; }
-}
-function hff(inp,fid){
-  var fn=document.getElementById(fid);
-  if(inp.files.length){
-    if(inp.files[0].size > 5*1024*1024){ toast("El archivo supera los 5 MB permitidos.","err"); inp.value=""; return; }
-    fn.textContent="\u2705 "+inp.files[0].name; fn.style.color="#16a34a";
-  } else { fn.textContent=""; fn.style.color=""; }
+// ── FIRMA ────────────────────────────────────────────────────
+function clearFirma(){
+  if(sp) sp.clear();
 }
 
-function clearFirma(){ sp.clear(); }
-
-// ── DESCARGA CARTA ──────────────────────────────────────────
+// ── DESCARGA CARTA PDF ────────────────────────────────────────
 function descargar(){
   var rs   = document.getElementById("f_rs").value   || "________________________________";
   var rep  = document.getElementById("f_rep").value  || "________________________________";
   var rfc  = document.getElementById("f_rfc").value  || "________________________________";
   var giro = document.getElementById("f_giro").value || "________________________________";
-  var txt  = "CARTA DE ACEPTACI\u00d3N DE POL\u00cdTICAS DEL HOSPITAL NOOR\n";
-  txt += "================================================\n";
-  txt += "Fecha: " + new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"long",year:"numeric"}) + "\n\n";
-  txt += "Nombre de la empresa:       " + rs   + "\n";
-  txt += "Representante legal:        " + rep  + "\n";
-  txt += "RFC:                        " + rfc  + "\n";
-  txt += "Giro comercial:             " + giro + "\n\n";
-  txt += "Por medio del presente manifiesto mi entera conformidad y aceptaci\u00f3n con las pol\u00edticas,\nnormas y lineamientos internos establecidos por Hospital Noor.\n\n";
-  txt += "INGRESOS\n- Todos los ingresos deben ser programados v\u00eda correo compras@noorclinic.com.mx\n  y/o al tel\u00e9fono 55 52131664 con Mar\u00eda de Lourdes Cruz Cruz.\n\n";
-  txt += "ESTERILIZACI\u00d3N DE INSTRUMENTAL\n- Entrega de instrumental al menos 24 horas previas a la cirug\u00eda programada.\n- En cirug\u00edas de urgencia, proporcionar el instrumental con al menos 4 horas de anticipaci\u00f3n.\n\n";
-  txt += "REMISIONES Y PAGOS\n- Todos los proveedores deben entregar en el \u00e1rea de CEyE una remisi\u00f3n con costos.\n- No se permiten remisiones en cero.\n- La remisi\u00f3n llevar\u00e1 tres sellos: CEyE, Quir\u00f3fano y Caja.\n\n";
-  txt += "PROCESO DE COBRO\n- Enviar a facturacion@noorclinic.com.mx: Factura, Remisi\u00f3n sellada y Estado de cuenta.\n- Pago programado 30 d\u00edas posteriores a la recepci\u00f3n de la factura.\n\n";
-  txt += "Me comprometo a que todo el personal a mi cargo se regir\u00e1 por los mismos principios.\n\n";
-  txt += "Nombre del proveedor:      _______________________________\n\n";
-  txt += "Nombre del representante:  _______________________________\n\n";
-  txt += "Firma:                     _______________________________\n\n";
-  txt += "Tel\u00e9fono y correo:         _______________________________\n\n";
-  txt += "---\nHospital Noor \u00b7 Huixquilucan, Estado de M\u00e9xico";
-  var blob = new Blob([txt],{type:"text/plain;charset=utf-8"});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement("a"); a.href=url; a.download="CartaAceptacion_HospitalNoor.txt"; a.click();
-  URL.revokeObjectURL(url);
-  toast("Carta descargada. Imprima, firme, esc\u00e1nee y adj\u00fantela en el Bloque 3.","ok");
+  var fecha = new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"long",year:"numeric"});
+
+  var ventana = window.open("","_blank","width=820,height=950");
+  if(!ventana){ toast("Permita ventanas emergentes para descargar la carta.","err"); return; }
+
+  var h = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+  h += "<title>Carta de Aceptaci\u00f3n - Hospital Noor</title><style>";
+  h += "body{font-family:Arial,sans-serif;margin:48px;color:#0a1f44;font-size:13px;line-height:1.75}";
+  h += "h1{font-size:15px;color:#1a4a8a;border-bottom:2px solid #1b6cc4;padding-bottom:6px;margin-bottom:18px}";
+  h += "h2{font-size:13px;color:#1a4a8a;margin:18px 0 6px}";
+  h += ".logo{font-size:24px;font-weight:bold;color:#1a4a8a;margin-bottom:24px}";
+  h += ".campo{border:none;border-bottom:1px solid #333;display:inline-block;min-width:260px;height:18px;margin-left:8px}";
+  h += ".firma-box{border:1px solid #555;width:280px;height:72px;display:inline-block;margin-top:6px}";
+  h += ".row{margin:10px 0} .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px}";
+  h += "ul{padding-left:20px;margin:6px 0}li{margin-bottom:5px}";
+  h += ".pie{margin-top:28px;padding-top:10px;border-top:1px solid #ddd;font-size:11px;color:#999}";
+  h += "@media print{body{margin:24px}.no-print{display:none}}";
+  h += "</style></head><body>";
+  h += "<div class='logo'>Hospital Noor</div>";
+  h += "<h1>Carta de Aceptaci\u00f3n de Pol\u00edticas del Hospital</h1>";
+  h += "<div class='row'><strong>Fecha:</strong><span class='campo'>" + fecha + "</span></div>";
+  h += "<div class='row'><strong>Nombre de la empresa:</strong><span class='campo'>" + rs + "</span></div>";
+  h += "<div class='row'><strong>Representante legal:</strong><span class='campo'>" + rep + "</span></div>";
+  h += "<div class='row'><strong>RFC:</strong><span class='campo'>" + rfc + "</span></div>";
+  h += "<div class='row'><strong>Giro comercial:</strong><span class='campo'>" + giro + "</span></div>";
+  h += "<p style='margin-top:16px'>Por medio del presente, en mi car\u00e1cter de proveedor de productos y/o servicios m\u00e9dicos para <strong>Hospital Noor</strong>, manifiesto mi entera conformidad y aceptaci\u00f3n con las pol\u00edticas, normas y lineamientos internos establecidos por el hospital.</p>";
+  h += "<h2>Ingresos</h2><ul><li>Todos los ingresos de insumos o materiales deber\u00e1n ser programados v\u00eda correo a <strong>compras@noorclinic.com.mx</strong> y/o al tel\u00e9fono <strong>55 52131664</strong> con Mar\u00eda de Lourdes Cruz Cruz.</li></ul>";
+  h += "<h2>Esterilizaci\u00f3n de Instrumental</h2><ul><li>Entrega de instrumental al menos <strong>24 horas</strong> previas a la cirug\u00eda programada.</li><li>En cirug\u00edas de urgencia, proporcionar el instrumental con al menos <strong>4 horas</strong> de anticipaci\u00f3n.</li></ul>";
+  h += "<h2>Remisiones y Pagos</h2><ul><li>Todos los proveedores deben entregar en el \u00e1rea de CEyE una remisi\u00f3n con costos de los insumos y equipos.</li><li>No se permiten remisiones en cero, a\u00fan cuando se trate de una cortes\u00eda para el paciente.</li><li>La remisi\u00f3n llevar\u00e1 tres sellos: <strong>CEyE</strong> (recepci\u00f3n), <strong>Quir\u00f3fano</strong> y <strong>Caja</strong> (t\u00e9rmino de cirug\u00eda).</li></ul>";
+  h += "<h2>Proceso de Cobro</h2><ul><li>Para ingresar su factura a cobro, enviar a <strong>facturacion@noorclinic.com.mx</strong>: Factura, Remisi\u00f3n sellada y firmada, y Estado de cuenta bancario.</li><li>El pago se programa <strong>30 d\u00edas</strong> posteriores a la recepci\u00f3n de la factura.</li></ul>";
+  h += "<p style='margin-top:14px'>Asimismo, me comprometo a que <strong>todo el personal a mi cargo</strong> que ingrese al hospital para labores de entrega, demostraci\u00f3n, capacitaci\u00f3n o promoci\u00f3n, se regir\u00e1 por los mismos principios y lineamientos.</p>";
+  h += "<div class='grid'>";
+  h += "<div><div class='row'><strong>Nombre del proveedor o empresa:</strong></div><div class='campo' style='width:90%;height:18px'>&nbsp;</div></div>";
+  h += "<div><div class='row'><strong>Nombre del representante legal:</strong></div><div class='campo' style='width:90%;height:18px'>&nbsp;</div></div>";
+  h += "<div><div class='row'><strong>Firma:</strong></div><div class='firma-box'></div></div>";
+  h += "<div><div class='row'><strong>Tel\u00e9fono y correo de contacto:</strong></div><div class='campo' style='width:90%;height:18px'>&nbsp;</div></div>";
+  h += "</div>";
+  h += "<div class='pie'>Hospital Noor &nbsp;&bull;&nbsp; Huixquilucan, Estado de M\u00e9xico &nbsp;&bull;&nbsp; compras@noorclinic.com.mx &nbsp;&bull;&nbsp; 55 5213 1664</div>";
+  h += "<scr"+"ipt>window.addEventListener('load',function(){setTimeout(function(){window.print();},300);});<"+"/script>";
+  h += "</body></html>";
+
+  ventana.document.write(h);
+  ventana.document.close();
 }
 
-// ── PREVIEW ─────────────────────────────────────────────────
+// ── PREVIEW BLOQUE 4 ─────────────────────────────────────────
 function buildPreview(){
-  function s(id,v){ var e=document.getElementById(id); if(e) e.textContent=v||"\u2014"; }
-  s("p_rs",   document.getElementById("f_rs").value);
-  s("p_rfc",  document.getElementById("f_rfc").value);
-  s("p_tel",  document.getElementById("f_tel").value);
-  s("p_email",document.getElementById("f_email").value);
-  s("p_dom",  document.getElementById("f_dom").value);
-  s("p_tipo", document.getElementById("f_tipo").value);
-  s("p_rep",  document.getElementById("f_rep").value);
-  s("p_cargo",document.getElementById("f_cargo").value||"No especificado");
-  s("p_rsan", document.getElementById("f_rsan").value||"No aplica");
-  s("p_ced",  document.getElementById("f_ced").value||"No aplica");
-  s("p_giro", document.getElementById("f_giro").value);
-  s("p_cat",  document.getElementById("f_cat").value);
-  var c = document.getElementById("p_docs"); c.innerHTML="";
-  DOCS.forEach(function(d){
-    var f = document.getElementById(d[0]).files[0];
-    var t = document.createElement("div");
-    t.className = "pdt" + ((!f && d[2]) ? " falt" : "");
-    t.textContent = (f ? "\u2705 " : (d[2] ? "\u274c " : "\u25a1 ")) + d[1];
-    c.appendChild(t);
-  });
-  document.getElementById("p_firma").src = sp.toDataURL();
+  function s(id, v){
+    var e = document.getElementById(id);
+    if(e) e.textContent = v || "\u2014";
+  }
+  s("p_rs",    document.getElementById("f_rs").value);
+  s("p_rfc",   document.getElementById("f_rfc").value);
+  s("p_tel",   document.getElementById("f_tel").value);
+  s("p_email", document.getElementById("f_email").value);
+  s("p_dom",   document.getElementById("f_dom").value);
+  s("p_tipo",  document.getElementById("f_tipo").value);
+  s("p_rep",   document.getElementById("f_rep").value);
+  s("p_cargo", document.getElementById("f_cargo").value || "No especificado");
+  s("p_rsan",  document.getElementById("f_rsan").value  || "No aplica");
+  s("p_ced",   document.getElementById("f_ced").value   || "No aplica");
+  s("p_giro",  document.getElementById("f_giro").value);
+  s("p_cat",   document.getElementById("f_cat").value);
+
+  // Documentos — bloque 3 ya no tiene inputs de archivo, mostrar lista fija
+  var c = document.getElementById("p_docs");
+  if(c){
+    c.innerHTML = "";
+    var docs = [
+      "Licencia sanitaria","Responsable sanitario","Aviso de funcionamiento",
+      "Identificaci\u00f3n oficial","Comprobante de domicilio","RFC / C\u00e9dula fiscal",
+      "Cat\u00e1logo de productos/servicios","Carta de aceptaci\u00f3n firmada"
+    ];
+    docs.forEach(function(nombre){
+      var t = document.createElement("div");
+      t.className = "pdt";
+      t.textContent = "\u25a1 " + nombre;
+      c.appendChild(t);
+    });
+  }
+
+  // Firma
+  var img = document.getElementById("p_firma");
+  if(img && sp && !sp.isEmpty()) img.src = sp.toDataURL();
 }
 
-// ── ENVÍO EMAILJS ───────────────────────────────────────────
 // ── PROGRESO ─────────────────────────────────────────────────
 function setProgreso(pct, paso, msg){
-  document.getElementById("progFill").style.width = pct + "%";
-  document.getElementById("progMsg").textContent  = msg;
+  var fill = document.getElementById("progFill");
+  var pmsg = document.getElementById("progMsg");
+  if(fill) fill.style.width = pct + "%";
+  if(pmsg) pmsg.textContent = msg;
   for(var k=1; k<=4; k++){
     var el = document.getElementById("ps"+k);
+    if(!el) continue;
     el.classList.remove("active","done");
     if(k < paso)  el.classList.add("done");
     if(k === paso) el.classList.add("active");
   }
 }
 
+// ── ENVÍO EMAILJS ─────────────────────────────────────────────
 function sendData(){
   if(!document.getElementById("chk").checked){
     toast("Debe confirmar que la informaci\u00f3n es correcta antes de enviar.","err"); return;
-  }
-
-  // Validar documentos obligatorios
-  var reqNames  = ["01_LicenciaSanitaria","03_AvisoDeFuncionamiento","04_IdentificacionOficial","05_ComprobanteDomicilio","06_RFC_CedulaFiscal","07_CatalogoProductos"];
-  var reqLabels = ["Licencia sanitaria","Aviso de funcionamiento","Identificaci\u00f3n oficial","Comprobante de domicilio","RFC / C\u00e9dula fiscal","Cat\u00e1logo de productos/servicios"];
-  for(var i=0; i<reqNames.length; i++){
-    var inp = document.querySelector('input[name="'+reqNames[i]+'"]');
-    if(!inp || !inp.files.length){ toast("Documento obligatorio faltante: "+reqLabels[i],"err"); return; }
   }
 
   var btn  = document.getElementById("btnEnv");
@@ -582,113 +684,89 @@ function sendData(){
 
   btn.disabled  = true;
   back.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Procesando...';
-  wrap.classList.add("active");
+  btn.innerHTML = "<span class=\"spin\"></span>Enviando...";
+  if(wrap) wrap.classList.add("active");
 
-  var rs       = document.getElementById("f_rs").value;
-  var rfc      = document.getElementById("f_rfc").value;
-  var tel      = document.getElementById("f_tel").value;
-  var em       = document.getElementById("f_email").value;
-  var dom      = document.getElementById("f_dom").value;
-  var tipo     = document.getElementById("f_tipo").value;
-  var rep      = document.getElementById("f_rep").value;
-  var cargo    = document.getElementById("f_cargo").value||"No especificado";
-  var rsan     = document.getElementById("f_rsan").value||"No aplica";
-  var ced      = document.getElementById("f_ced").value||"No aplica";
-  var giro     = document.getElementById("f_giro").value;
-  var cat      = document.getElementById("f_cat").value;
-  var fecha    = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
-  var rsClean  = rs.replace(/[^a-zA-Z0-9 ]/g,"").trim().split(" ").slice(0,3).join("_");
-  var fechaStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  var rs    = document.getElementById("f_rs").value;
+  var rfc   = document.getElementById("f_rfc").value;
+  var tel   = document.getElementById("f_tel").value;
+  var em    = document.getElementById("f_email").value;
+  var dom   = document.getElementById("f_dom").value;
+  var tipo  = document.getElementById("f_tipo").value;
+  var rep   = document.getElementById("f_rep").value;
+  var cargo = document.getElementById("f_cargo").value || "No especificado";
+  var rsan  = document.getElementById("f_rsan").value  || "No aplica";
+  var ced   = document.getElementById("f_ced").value   || "No aplica";
+  var giro  = document.getElementById("f_giro").value;
+  var cat   = document.getElementById("f_cat").value;
+  var fecha = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
 
-  var docInputs = Array.prototype.slice.call(
-    document.querySelectorAll('#fsForm input[type="file"]')
-  );
-  var total = docInputs.filter(function(i){ return i.files.length; }).length;
-  var conta = 0;
+  setProgreso(25, 1, "Preparando informaci\u00f3n...");
 
-  // FASE 1 — Leyendo archivos
-  setProgreso(5, 1, "Leyendo " + total + " archivo(s)...");
+  setTimeout(function(){
+    setProgreso(50, 2, "Procesando datos...");
 
-  var promesas = docInputs.map(function(inp){
-    return new Promise(function(resolve){
-      if(!inp.files.length){ resolve(null); return; }
-      var f      = inp.files[0];
-      var clave  = inp.name;
-      var ext    = f.name.split(".").pop();
-      var nombre = "NOOR_"+clave+"_"+rsClean+"_"+fechaStr+"."+ext;
-      var reader = new FileReader();
-      reader.onload = function(ev){
-        conta++;
-        var pct = 5 + Math.round((conta / total) * 30);
-        setProgreso(pct, 1, "Leyendo: " + f.name.slice(0,35) + (f.name.length>35?"...":""));
-        var partes = ev.result.split(",");
-        resolve({ clave:clave, nombre:nombre, mimeType:f.type||"application/octet-stream", base64:partes[1] });
-      };
-      reader.onerror = function(){ conta++; resolve(null); };
-      reader.readAsDataURL(f);
-    });
-  });
-
-  Promise.all(promesas).then(function(archivos){
-    archivos = archivos.filter(function(a){ return a !== null; });
-
-    // FASE 2 — Codificando payload
-    setProgreso(40, 2, "Codificando " + archivos.length + " documento(s)...");
-
-    var payload = {
-      razon_social:rs, rfc:rfc, telefono:tel, correo_proveedor:em,
-      domicilio:dom, tipo_proveedor:tipo, representante:rep, cargo:cargo,
-      responsable_sanitario:rsan, cedula_sanitaria:ced, giro:giro,
-      catalogo_desc:cat, firma_base64:sp.toDataURL(),
-      fecha_envio:fecha, archivos:archivos
+    var params = {
+      razon_social:          rs,
+      rfc:                   rfc,
+      telefono:              tel,
+      correo_proveedor:      em,
+      domicilio:             dom,
+      tipo_proveedor:        tipo,
+      representante:         rep,
+      cargo:                 cargo,
+      responsable_sanitario: rsan,
+      cedula_sanitaria:      ced,
+      giro:                  giro,
+      catalogo_desc:         cat,
+      firma_img:             (sp && !sp.isEmpty()) ? sp.toDataURL() : "",
+      fecha_envio:           fecha,
+      reply_to:              em
     };
 
-    var body = JSON.stringify(payload);
-
-    // Pequeña pausa visual para que el usuario vea fase 2
     setTimeout(function(){
+      setProgreso(75, 3, "Enviando a Hospital Noor...");
 
-      // FASE 3 — Enviando
-      setProgreso(60, 3, "Guardando en repositorio institucional...");
-
-      fetch(GAS_URL, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    body
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        if(data.status === "ok"){
-          // FASE 4 — Listo
-          setProgreso(100, 4, "\u00a1Documentos guardados y correo enviado!");
-          setTimeout(function(){
-            document.getElementById("sb4").style.display = "none";
-            document.getElementById("efinal").classList.add("active");
-            window.scrollTo({top: document.getElementById("sec4").offsetTop - 80, behavior:"smooth"});
-          }, 800);
-        } else {
-          throw new Error(data.message || "Error en el servidor");
-        }
-      })
-      .catch(function(e){
-        console.error("Error GAS:", e);
-        wrap.classList.remove("active");
+      emailjs.send(EJ_SV, EJ_TM, params).then(function(){
+        setProgreso(100, 4, "\u00a1Datos enviados correctamente!");
+        setTimeout(function(){
+          var sb4    = document.getElementById("sb4");
+          var efinal = document.getElementById("efinal");
+          var sec4   = document.getElementById("sec4");
+          if(sb4)    sb4.style.display = "none";
+          if(efinal) efinal.classList.add("active");
+          if(sec4)   window.scrollTo({top: sec4.offsetTop - 80, behavior:"smooth"});
+        }, 700);
+      }, function(err){
+        console.error("EmailJS error:", err);
+        if(wrap) wrap.classList.remove("active");
         btn.disabled  = false;
         back.disabled = false;
-        btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Solicitud Completa";
-        toast("Error al enviar. Verifique su conexi\u00f3n o contacte a compras&#64;noorclinic.com.mx","err");
+        btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Datos del Proveedor";
+        toast("Error al enviar. Verifique su conexi\u00f3n o contacte compras@noorclinic.com.mx","err");
       });
-
     }, 400);
-  });
+  }, 300);
 }
 
-// ── TOAST ───────────────────────────────────────────────────
+// ── FORMULARIO DOCUMENTOS ────────────────────────────────────
+var FORM_DOCS_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd1gE4UzNOq8ZzcpLaccyks3KOg_VKWLoIcvfM3RNF6HTbO9g/viewform";
+
+function abrirFormDocs(){
+  window.open(FORM_DOCS_URL, "_blank", "noopener,noreferrer");
+}
+
+function confirmarDocs(){
+  document.getElementById("btnConfirmarDocs").style.display = "none";
+  document.getElementById("docsConfirmados").style.display  = "flex";
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
 function toast(msg, type){
   var t = document.getElementById("toast");
+  if(!t) return;
   t.textContent = msg;
-  t.className = "toast show" + (type ? " "+type : "");
+  t.className   = "toast show" + (type ? " "+type : "");
   setTimeout(function(){ t.className = "toast"; }, 5000);
 }
 </script>
