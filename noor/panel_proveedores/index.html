@@ -1,1 +1,903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Administración — Hospital Noor</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:       #f5f5f3;
+  --surface:  #ffffff;
+  --border:   #e5e5e2;
+  --border2:  #d4d4d0;
+  --txt:      #1a1a18;
+  --txt2:     #6b6b65;
+  --txt3:     #9b9b95;
+  --accent:   #0a1f44;
+  --accent2:  #1b6cc4;
+  --green:    #16a34a;
+  --green-bg: #f0fdf4;
+  --green-b:  #bbf7d0;
+  --red:      #dc2626;
+  --red-bg:   #fef2f2;
+  --red-b:    #fecaca;
+  --amber:    #d97706;
+  --amber-bg: #fffbeb;
+  --amber-b:  #fde68a;
+  --sh:       0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --sh2:      0 4px 16px rgba(0,0,0,.10);
+  --r:        10px;
+  --r2:       14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Geist',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:14px}
 
+/* ── LOGIN ─────────────────────────────── */
+#loginScreen{
+  position:fixed;inset:0;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;
+}
+.login-box{
+  background:#fff;border-radius:20px;padding:48px 40px;
+  width:100%;max-width:400px;text-align:center;
+  box-shadow:0 24px 64px rgba(0,0,0,.25);
+}
+.login-logo{
+  width:64px;height:64px;background:var(--accent);border-radius:16px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
+}
+.login-logo svg{width:32px;height:32px;fill:white}
+.login-box h2{
+  font-family:'Instrument Serif',serif;font-size:1.6rem;
+  color:var(--accent);margin-bottom:6px;
+}
+.login-box p{font-size:.82rem;color:var(--txt2);margin-bottom:28px}
+.login-input{
+  width:100%;border:1.5px solid var(--border2);border-radius:var(--r);
+  padding:12px 16px;font-family:'Geist',sans-serif;font-size:.95rem;
+  color:var(--txt);background:var(--bg);outline:none;
+  transition:border .2s;margin-bottom:14px;text-align:center;
+  letter-spacing:.15em;
+}
+.login-input:focus{border-color:var(--accent2);background:#fff}
+.login-btn{
+  width:100%;padding:13px;background:var(--accent);color:#fff;
+  border:none;border-radius:var(--r);font-family:'Geist',sans-serif;
+  font-size:.9rem;font-weight:600;cursor:pointer;letter-spacing:.04em;
+  text-transform:uppercase;transition:all .2s;
+}
+.login-btn:hover{background:var(--accent2)}
+.login-error{
+  font-size:.78rem;color:var(--red);margin-top:10px;
+  display:none;
+}
+
+/* ── LAYOUT ────────────────────────────── */
+#appScreen{display:none}
+header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 32px;height:60px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;
+  box-shadow:var(--sh);
+}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-logo-box{
+  width:36px;height:36px;background:var(--accent);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.header-logo-box svg{width:18px;height:18px;fill:white}
+.header-title{font-size:.92rem;font-weight:600;color:var(--accent)}
+.header-sub{font-size:.72rem;color:var(--txt3);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:12px}
+.btn-refresh{
+  display:flex;align-items:center;gap:7px;background:var(--bg);
+  border:1px solid var(--border2);border-radius:var(--r);
+  padding:7px 14px;font-family:'Geist',sans-serif;font-size:.78rem;
+  font-weight:500;color:var(--txt2);cursor:pointer;transition:all .2s;
+}
+.btn-refresh:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-pdf{
+  display:flex;align-items:center;gap:7px;background:var(--accent);
+  border:none;border-radius:var(--r);padding:7px 16px;
+  font-family:'Geist',sans-serif;font-size:.78rem;font-weight:600;
+  color:white;cursor:pointer;transition:all .2s;
+}
+.btn-pdf:hover{background:var(--accent2)}
+.badge-live{
+  display:flex;align-items:center;gap:5px;font-size:.72rem;
+  color:var(--green);font-weight:500;
+}
+.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);
+  animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+main{max-width:1400px;margin:0 auto;padding:28px 32px 60px}
+
+/* ── KPI CARDS ─────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi{
+  background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);
+  padding:20px 22px;box-shadow:var(--sh);transition:box-shadow .2s;
+}
+.kpi:hover{box-shadow:var(--sh2)}
+.kpi-label{font-size:.72rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--txt3);margin-bottom:10px}
+.kpi-val{font-family:'Instrument Serif',serif;font-size:2.4rem;
+  color:var(--accent);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:.75rem;color:var(--txt2)}
+.kpi.green .kpi-val{color:var(--green)}
+.kpi.red   .kpi-val{color:var(--red)}
+.kpi.blue  .kpi-val{color:var(--accent2)}
+
+/* ── CHART + FILTROS ROW ───────────────── */
+.mid-row{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:24px}
+.chart-card{
+  background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);
+  padding:22px 24px;box-shadow:var(--sh);
+}
+.card-title{font-size:.82rem;font-weight:700;color:var(--accent);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:18px;
+  display:flex;align-items:center;gap:8px;
+}
+.filtros-card{
+  background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);
+  padding:22px 24px;box-shadow:var(--sh);
+}
+.input-search{
+  width:100%;border:1.5px solid var(--border2);border-radius:var(--r);
+  padding:10px 14px;font-family:'Geist',sans-serif;font-size:.85rem;
+  color:var(--txt);background:var(--bg);outline:none;transition:border .2s;
+  margin-bottom:12px;
+}
+.input-search:focus{border-color:var(--accent2);background:#fff}
+.filtros-label{font-size:.72rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--txt3);margin-bottom:6px}
+.select-fecha{
+  width:100%;border:1.5px solid var(--border2);border-radius:var(--r);
+  padding:9px 12px;font-family:'Geist',sans-serif;font-size:.83rem;
+  color:var(--txt);background:var(--bg);outline:none;cursor:pointer;
+  appearance:none;margin-bottom:12px;
+}
+.filtro-estado{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.chip{
+  padding:5px 12px;border-radius:50px;border:1px solid var(--border2);
+  font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;
+  background:var(--bg);color:var(--txt2);
+}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.green-chip.active{background:var(--green);border-color:var(--green);color:#fff}
+.chip.red-chip.active{background:var(--red);border-color:var(--red);color:#fff}
+
+/* ── TABLA ─────────────────────────────── */
+.tabla-card{
+  background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);
+  box-shadow:var(--sh);overflow:hidden;
+}
+.tabla-header{
+  padding:16px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.tabla-count{font-size:.78rem;color:var(--txt2)}
+table{width:100%;border-collapse:collapse}
+thead th{
+  background:#f9f9f8;border-bottom:1px solid var(--border);
+  padding:10px 16px;text-align:left;font-size:.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);
+  white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fafaf9}
+td{padding:13px 16px;font-size:.83rem;color:var(--txt);vertical-align:middle}
+.td-empresa{font-weight:600;color:var(--accent)}
+.td-rfc{font-family:monospace;font-size:.78rem;color:var(--txt2);
+  background:var(--bg);padding:2px 8px;border-radius:5px}
+.td-fecha{font-size:.75rem;color:var(--txt3)}
+
+/* ── ESTADO BADGE ───────────────────────── */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  border-radius:50px;padding:4px 10px;font-size:.7rem;font-weight:700;
+  white-space:nowrap;
+}
+.badge.completo{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
+.badge.incompleto{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b)}
+.badge.sin-docs{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b)}
+
+/* ── DOCS ICONS ─────────────────────────── */
+.docs-icons{display:flex;gap:4px;flex-wrap:wrap}
+.doc-icon{
+  width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:800;text-decoration:none;
+  transition:all .2s;cursor:pointer;
+}
+.doc-icon.ok{background:var(--green-bg);border-color:var(--green-b);color:var(--green)}
+.doc-icon.ok:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.doc-icon.miss{background:var(--bg);border-color:var(--border);color:var(--txt3);cursor:default}
+.doc-icon[title]{position:relative}
+
+/* ── MODAL ──────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:#fff;border-radius:18px;width:100%;max-width:640px;
+  max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.20);
+  animation:modalIn .25s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-head{
+  background:var(--accent);padding:22px 28px;border-radius:18px 18px 0 0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-head h3{
+  font-family:'Instrument Serif',serif;color:#fff;font-size:1.2rem;
+}
+.modal-head p{color:rgba(255,255,255,.65);font-size:.78rem;margin-top:3px}
+.modal-close{
+  background:rgba(255,255,255,.15);border:none;border-radius:8px;
+  width:32px;height:32px;color:#fff;cursor:pointer;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;transition:background .2s;
+}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-body{padding:24px 28px}
+.modal-section{margin-bottom:20px}
+.modal-section h4{
+  font-size:.72rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--txt3);margin-bottom:10px;
+  border-bottom:1px solid var(--border);padding-bottom:6px;
+}
+.modal-row{display:flex;justify-content:space-between;
+  padding:7px 0;border-bottom:1px solid var(--border);font-size:.84rem}
+.modal-row:last-child{border-bottom:none}
+.modal-row span:first-child{color:var(--txt2);font-weight:500}
+.modal-row span:last-child{color:var(--txt);font-weight:600;text-align:right;max-width:60%}
+.modal-docs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-doc{
+  border-radius:9px;padding:10px 12px;border:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;font-size:.78rem;
+}
+.modal-doc.ok{background:var(--green-bg);border-color:var(--green-b)}
+.modal-doc.miss{background:var(--bg)}
+.modal-doc .mdi{
+  width:24px;height:24px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-weight:800;font-size:.65rem;
+}
+.modal-doc.ok .mdi{background:var(--green);color:#fff}
+.modal-doc.miss .mdi{background:var(--border2);color:var(--txt3)}
+.modal-doc a{color:var(--green);text-decoration:none;font-weight:600}
+.modal-doc a:hover{text-decoration:underline}
+.modal-doc .miss-txt{color:var(--txt3)}
+
+/* ── LOADING / EMPTY ────────────────────── */
+.loading-row td{text-align:center;padding:48px;color:var(--txt3)}
+.spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border2);
+  border-top-color:var(--accent2);border-radius:50%;
+  animation:sp .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── TOAST ──────────────────────────────── */
+.toast{
+  position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;
+  padding:12px 20px;border-radius:var(--r);font-size:.82rem;
+  box-shadow:var(--sh2);z-index:9999;opacity:0;
+  transform:translateY(8px);transition:all .3s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:1024px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .mid-row{grid-template-columns:1fr}
+  main{padding:20px 16px 60px}
+}
+@media(max-width:640px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  header{padding:0 16px}
+  .header-sub,.badge-live{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    </div>
+    <h2>Hospital Noor</h2>
+    <p>Panel de Administración de Proveedores</p>
+    <input class="login-input" type="password" id="passInput"
+      placeholder="••••••••••••" maxlength="30"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginError">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="header-logo-box">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    </div>
+    <div>
+      <div class="header-title">Panel de Proveedores</div>
+      <div class="header-sub">Hospital Noor &nbsp;&#183;&nbsp; Administraci&#243;n</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="badge-live">
+      <div class="dot-live"></div>
+      Datos en tiempo real
+    </div>
+    <button class="btn-refresh" onclick="cargarDatos()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Actualizar
+    </button>
+    <button class="btn-pdf" onclick="exportarPDF()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exportar PDF
+    </button>
+    <button class="btn-refresh" onclick="cerrarSesion()" title="Cerrar sesión" style="color:#dc2626;border-color:#fecaca">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Salir
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- KPIs -->
+<div class="kpi-grid" id="kpiGrid">
+  <div class="kpi">
+    <div class="kpi-label">Total proveedores</div>
+    <div class="kpi-val" id="kpiTotal">&#8212;</div>
+    <div class="kpi-sub">Registros en el sistema</div>
+  </div>
+  <div class="kpi green">
+    <div class="kpi-label">Expedientes completos</div>
+    <div class="kpi-val" id="kpiCompletos">&#8212;</div>
+    <div class="kpi-sub">Con todos los documentos</div>
+  </div>
+  <div class="kpi red">
+    <div class="kpi-label">Expedientes incompletos</div>
+    <div class="kpi-val" id="kpiIncompletos">&#8212;</div>
+    <div class="kpi-sub">Documentos faltantes</div>
+  </div>
+  <div class="kpi blue">
+    <div class="kpi-label">Documentos faltantes</div>
+    <div class="kpi-val" id="kpiDocsFaltantes">&#8212;</div>
+    <div class="kpi-sub">Total en todos los expedientes</div>
+  </div>
+</div>
+
+<!-- CHART + FILTROS -->
+<div class="mid-row">
+  <div class="chart-card">
+    <div class="card-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Indicadores de expedientes
+    </div>
+    <canvas id="chartDocs" height="200"></canvas>
+  </div>
+  <div class="filtros-card">
+    <div class="card-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filtros
+    </div>
+    <input class="input-search" type="text" id="buscar"
+      placeholder="&#128269; Buscar por empresa o RFC..."
+      oninput="aplicarFiltros()">
+    <div class="filtros-label">Fecha de registro</div>
+    <select class="select-fecha" id="filtroPeriodo" onchange="aplicarFiltros()">
+      <option value="todos">Todos los periodos</option>
+      <option value="hoy">Hoy</option>
+      <option value="semana">&#218;ltimos 7 d&#237;as</option>
+      <option value="mes">Este mes</option>
+      <option value="mes3">&#218;ltimos 3 meses</option>
+    </select>
+    <div class="filtros-label">Estado del expediente</div>
+    <div class="filtro-estado">
+      <div class="chip active" data-estado="todos" onclick="setChip(this,'estado')">Todos</div>
+      <div class="chip green-chip" data-estado="completo" onclick="setChip(this,'estado')">Completos</div>
+      <div class="chip red-chip" data-estado="incompleto" onclick="setChip(this,'estado')">Incompletos</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="tabla-card">
+  <div class="tabla-header">
+    <div class="card-title" style="margin-bottom:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Registro de proveedores
+    </div>
+    <div class="tabla-count" id="tablaCount"></div>
+  </div>
+  <div style="overflow-x:auto">
+    <table id="tablaProveedores">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Empresa / Raz&#243;n Social</th>
+          <th>RFC</th>
+          <th>Fecha registro</th>
+          <th>Estado</th>
+          <th>Documentos (clic para abrir)</th>
+        </tr>
+      </thead>
+      <tbody id="tablaBody">
+        <tr class="loading-row"><td colspan="6"><span class="spin"></span>Cargando datos&#8230;</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+</div><!-- /appScreen -->
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-head">
+      <div>
+        <h3 id="modalEmpresa">Empresa</h3>
+        <p id="modalMeta"></p>
+      </div>
+      <button class="modal-close" onclick="cerrarModal(null)">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <h4>Datos generales</h4>
+        <div id="modalDatos"></div>
+      </div>
+      <div class="modal-section">
+        <h4>&#128193; Documentaci&#243;n adjunta</h4>
+        <div class="modal-docs-grid" id="modalDocs"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIGURACIÓN ─────────────────────────────────────────────
+var SHEET_ID  = "1xSOahv78MWW998vL-nCNGVWU-QrYKgiCLcOZK4tUIJE";
+var SHEET_GID = "511569334";
+var PASSWORD  = "NoorAdmin2026";
+
+// Nombres de columnas de documentos (cols E-L = índices 4-11)
+var DOC_KEYS = [
+  {key:"licencia",       label:"Licencia sanitaria",        idx:4, req:true},
+  {key:"responsable",    label:"Resp. sanitario",           idx:5, req:false},
+  {key:"aviso",          label:"Aviso de funcionamiento",   idx:6, req:true},
+  {key:"identificacion", label:"ID oficial",                idx:7, req:true},
+  {key:"comprobante",    label:"Comp. domicilio",           idx:8, req:true},
+  {key:"cedula",         label:"RFC/Cédula",                idx:9, req:true},
+  {key:"catalogo",       label:"Catálogo",                  idx:10,req:true},
+  {key:"carta",          label:"Carta aceptación",          idx:11,req:false},
+];
+var DOC_ABREV = ["LIC","RS","AVF","ID","DOM","RFC","CAT","CA"];
+
+var allData  = [];
+var filtered = [];
+var chart    = null;
+var filtroBuscar  = "";
+var filtroEstado  = "todos";
+var filtroPeriodo = "todos";
+
+// ── LOGIN ─────────────────────────────────────────────────────
+function doLogin(){
+  var pass = document.getElementById("passInput").value;
+  if(pass === PASSWORD){
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appScreen").style.display   = "block";
+    sessionStorage.setItem("noor_auth","1");
+    cargarDatos();
+  } else {
+    var err = document.getElementById("loginError");
+    err.style.display = "block";
+    setTimeout(function(){err.style.display="none";}, 3000);
+  }
+}
+
+function cerrarSesion(){
+  sessionStorage.removeItem("noor_auth");
+  location.reload();
+}
+
+window.addEventListener("load", function(){
+  if(sessionStorage.getItem("noor_auth")==="1"){
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("appScreen").style.display="block";
+    cargarDatos();
+  }
+  document.getElementById("passInput").focus();
+});
+
+// ── CARGAR DATOS DESDE SHEET ──────────────────────────────────
+function cargarDatos(){
+  var url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5ohWgg_LIG5r6z67oj5BJ3RTh5d9N1TQsQqYSVSl1KhkLVomubnfaNgVC-INbx73OQsW4Ndb_PoJM/pub?gid=511569334&single=true&output=csv";
+  document.getElementById("tablaBody").innerHTML =
+    '<tr class="loading-row"><td colspan="6"><span class="spin"></span>Cargando datos&#8230;</td></tr>';
+
+  fetch(url)
+    .then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.text();
+    })
+    .then(function(csv){
+      allData = parsearCSV(csv);
+      if(!allData.length){
+        document.getElementById("tablaBody").innerHTML =
+          '<tr class="loading-row"><td colspan="6">No hay registros en el sistema todav&#237;a.</td></tr>';
+        return;
+      }
+      aplicarFiltros();
+      actualizarChart();
+      toast("Datos actualizados &#10003;");
+    })
+    .catch(function(e){
+      console.error("Fetch error:", e);
+      // Fallback JSONP si fetch falla por CORS local
+      cargarConJsonp();
+    });
+}
+
+// ── PARSEAR GOOGLE VISUALIZATION JSON ────────────────────────
+function parsearGViz(data){
+  var rows = [];
+  if(!data || !data.table || !data.table.rows) return rows;
+
+  data.table.rows.forEach(function(row){
+    if(!row.c) return;
+    function getVal(i){
+      var cell = row.c[i];
+      if(!cell) return "";
+      // Fechas vienen como objeto Date
+      if(cell.f) return cell.f; // formatted value
+      if(cell.v === null || cell.v === undefined) return "";
+      return String(cell.v);
+    }
+
+    var empresa = getVal(2).trim();
+    var rfc     = getVal(3).trim();
+    if(!empresa && !rfc) return; // skip empty rows
+
+    var docs = {};
+    DOC_KEYS.forEach(function(d){
+      docs[d.key] = getVal(d.idx).trim();
+    });
+
+    var reqDocs  = DOC_KEYS.filter(function(d){ return d.req; });
+    var docsOk   = reqDocs.filter(function(d){ return !!docs[d.key]; }).length;
+    var totalReq = reqDocs.length;
+
+    rows.push({
+      fecha:     getVal(0),
+      correo:    getVal(1).trim(),
+      empresa:   empresa,
+      rfc:       rfc,
+      docs:      docs,
+      docsOk:    docsOk,
+      totalReq:  totalReq,
+      faltantes: totalReq - docsOk,
+      completo:  docsOk === totalReq,
+    });
+  });
+  return rows;
+}
+
+// ── FALLBACK JSONP ────────────────────────────────────────────
+function cargarConJsonp(){
+  // Fallback: cargar CSV via elemento <link> no bloqueado
+  // Usamos XMLHttpRequest como segunda alternativa
+  var url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5ohWgg_LIG5r6z67oj5BJ3RTh5d9N1TQsQqYSVSl1KhkLVomubnfaNgVC-INbx73OQsW4Ndb_PoJM/pub?gid=511569334&single=true&output=csv";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.onload = function(){
+    if(xhr.status === 200){
+      allData = parsearCSV(xhr.responseText);
+      if(!allData.length){ mostrarError(); return; }
+      aplicarFiltros();
+      actualizarChart();
+      toast("Datos actualizados &#10003;");
+    } else {
+      mostrarError();
+    }
+  };
+  xhr.onerror = function(){ mostrarError(); };
+  xhr.send();
+}
+
+function mostrarError(){
+  document.getElementById("tablaBody").innerHTML =
+    '<tr class="loading-row"><td colspan="6">'+
+    '&#9888; No se pudo conectar al Sheet. Verifique que el documento est&#233; compartido '+
+    'con <strong>"Cualquier persona con el link"</strong> y recargue.</td></tr>';
+}
+
+// ── PARSEAR CSV (legacy, mantenido por compatibilidad) ────────
+function parsearCSV(csv){
+  var lines = csv.split("\n").filter(function(l){return l.trim();});
+  var rows  = [];
+  for(var i=1; i<lines.length; i++){
+    var cols = splitCSVLine(lines[i]);
+    if(!cols[0] || !cols[2]) continue;
+    var docs = {};
+    DOC_KEYS.forEach(function(d){ docs[d.key] = (cols[d.idx]||"").trim(); });
+    var reqDocs  = DOC_KEYS.filter(function(d){return d.req;});
+    var docsOk   = reqDocs.filter(function(d){return !!docs[d.key];}).length;
+    var totalReq = reqDocs.length;
+    rows.push({
+      fecha:cols[0].trim(),correo:cols[1].trim(),empresa:cols[2].trim(),rfc:cols[3].trim(),
+      docs:docs,docsOk:docsOk,totalReq:totalReq,
+      faltantes:totalReq-docsOk,completo:docsOk===totalReq,
+    });
+  }
+  return rows;
+}
+
+function splitCSVLine(line){
+  var result=[],cur="",inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){result.push(cur);cur="";}
+    else{cur+=c;}
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── FILTROS ───────────────────────────────────────────────────
+function aplicarFiltros(){
+  filtroBuscar  = document.getElementById("buscar").value.toLowerCase();
+  filtroPeriodo = document.getElementById("filtroPeriodo").value;
+
+  var hoy   = new Date(); hoy.setHours(0,0,0,0);
+  var desde = null;
+  if(filtroPeriodo==="hoy")   desde = new Date(hoy);
+  if(filtroPeriodo==="semana"){ desde=new Date(hoy); desde.setDate(desde.getDate()-7); }
+  if(filtroPeriodo==="mes")   { desde=new Date(hoy.getFullYear(),hoy.getMonth(),1); }
+  if(filtroPeriodo==="mes3")  { desde=new Date(hoy); desde.setMonth(desde.getMonth()-3); }
+
+  filtered = allData.filter(function(r){
+    var matchBuscar = !filtroBuscar ||
+      r.empresa.toLowerCase().includes(filtroBuscar) ||
+      r.rfc.toLowerCase().includes(filtroBuscar);
+    var matchEstado = filtroEstado==="todos" ||
+      (filtroEstado==="completo"   && r.completo) ||
+      (filtroEstado==="incompleto" && !r.completo);
+    var matchFecha  = true;
+    if(desde){
+      var parts = r.fecha.split(/[\/\s:]/);
+      var fd = new Date(parts[2], parseInt(parts[1])-1, parseInt(parts[0]));
+      matchFecha = fd >= desde;
+    }
+    return matchBuscar && matchEstado && matchFecha;
+  });
+
+  renderTabla();
+  actualizarKPIs();
+}
+
+function setChip(el, grupo){
+  document.querySelectorAll('.chip[data-'+grupo+']').forEach(function(c){
+    c.classList.remove("active");
+  });
+  el.classList.add("active");
+  filtroEstado = el.dataset.estado;
+  aplicarFiltros();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+function actualizarKPIs(){
+  var total      = allData.length;
+  var completos  = allData.filter(function(r){return r.completo;}).length;
+  var incomp     = total - completos;
+  var faltantes  = allData.reduce(function(s,r){return s+r.faltantes;},0);
+  document.getElementById("kpiTotal").textContent       = total;
+  document.getElementById("kpiCompletos").textContent   = completos;
+  document.getElementById("kpiIncompletos").textContent = incomp;
+  document.getElementById("kpiDocsFaltantes").textContent = faltantes;
+}
+
+// ── TABLA ─────────────────────────────────────────────────────
+function renderTabla(){
+  var tbody = document.getElementById("tablaBody");
+  document.getElementById("tablaCount").textContent =
+    filtered.length + " de " + allData.length + " registros";
+
+  if(!filtered.length){
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6">No se encontraron registros con los filtros aplicados.</td></tr>';
+    return;
+  }
+
+  var html = "";
+  filtered.forEach(function(r,i){
+    var estado = r.completo
+      ? '<span class="badge completo">&#10003; Completo</span>'
+      : '<span class="badge incompleto">&#9651; Faltan '+r.faltantes+'</span>';
+
+    var docsHtml = '<div class="docs-icons">';
+    DOC_KEYS.forEach(function(d,di){
+      var url = r.docs[d.key];
+      if(url){
+        docsHtml += '<a class="doc-icon ok" href="'+url+'" target="_blank" rel="noopener" title="'+d.label+'" onclick="event.stopPropagation()">'+DOC_ABREV[di]+'</a>';
+      } else {
+        docsHtml += '<div class="doc-icon miss" title="'+d.label+(d.req?' (obligatorio)':' (opcional)')+'">'+DOC_ABREV[di]+'</div>';
+      }
+    });
+    docsHtml += '</div>';
+
+    html += '<tr onclick="abrirModal('+i+')">';
+    html += '<td style="color:var(--txt3);font-size:.75rem">'+(i+1)+'</td>';
+    html += '<td class="td-empresa">'+esc(r.empresa)+'</td>';
+    html += '<td><span class="td-rfc">'+esc(r.rfc)+'</span></td>';
+    html += '<td class="td-fecha">'+esc(r.fecha)+'</td>';
+    html += '<td>'+estado+'</td>';
+    html += '<td>'+docsHtml+'</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function abrirModal(idx){
+  var r = filtered[idx];
+  document.getElementById("modalEmpresa").textContent = r.empresa;
+  document.getElementById("modalMeta").textContent    = "RFC: "+r.rfc+" · Registro: "+r.fecha;
+
+  var datos = '<div class="modal-row"><span>Correo</span><span>'+esc(r.correo)+'</span></div>';
+  datos += '<div class="modal-row"><span>Estado expediente</span><span>'+(r.completo?'✅ Completo':'⚠️ Incompleto ('+r.faltantes+' doc. faltantes)')+'</span></div>';
+  document.getElementById("modalDatos").innerHTML = datos;
+
+  var docsHtml = "";
+  DOC_KEYS.forEach(function(d,di){
+    var url = r.docs[d.key];
+    var cls = url ? "ok" : "miss";
+    docsHtml += '<div class="modal-doc '+cls+'">';
+    docsHtml += '<div class="mdi">'+DOC_ABREV[di]+'</div>';
+    docsHtml += '<div style="min-width:0">';
+    docsHtml += '<div style="font-size:.72rem;font-weight:700;color:var(--txt2);margin-bottom:1px">'+d.label+(d.req?' *':'')+'</div>';
+    if(url){
+      docsHtml += '<a href="'+url+'" target="_blank" rel="noopener">Abrir documento ↗</a>';
+    } else {
+      docsHtml += '<span class="miss-txt">No adjuntado</span>';
+    }
+    docsHtml += '</div></div>';
+  });
+  document.getElementById("modalDocs").innerHTML = docsHtml;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function cerrarModal(e){
+  if(!e || e.target===document.getElementById("modalOverlay")){
+    document.getElementById("modalOverlay").classList.remove("open");
+  }
+}
+
+// ── CHART ─────────────────────────────────────────────────────
+function actualizarChart(){
+  var completos  = allData.filter(function(r){return r.completo;}).length;
+  var incomp     = allData.length - completos;
+  var docCounts  = DOC_KEYS.map(function(d){
+    return allData.filter(function(r){return !!r.docs[d.key];}).length;
+  });
+
+  if(chart){ chart.destroy(); }
+  var ctx = document.getElementById("chartDocs").getContext("2d");
+
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: DOC_KEYS.map(function(d){return d.label;}),
+      datasets:[
+        {
+          label:"Con documento",
+          data: docCounts,
+          backgroundColor:"rgba(27,108,196,.85)",
+          borderRadius:6,
+          borderSkipped:false,
+        },
+        {
+          label:"Sin documento",
+          data: DOC_KEYS.map(function(d,i){return allData.length - docCounts[i];}),
+          backgroundColor:"rgba(220,38,38,.20)",
+          borderRadius:6,
+          borderSkipped:false,
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      plugins:{
+        legend:{ position:"bottom", labels:{ font:{family:"Geist",size:11}, boxWidth:10 } },
+        tooltip:{ callbacks:{ title:function(i){return i[0].label;} } }
+      },
+      scales:{
+        x:{ stacked:false, grid:{display:false}, ticks:{font:{family:"Geist",size:10}, maxRotation:40} },
+        y:{ grid:{color:"#f0f0ee"}, ticks:{font:{family:"Geist",size:11}, precision:0} }
+      }
+    }
+  });
+}
+
+// ── EXPORTAR PDF ──────────────────────────────────────────────
+function exportarPDF(){
+  var win = window.open("","_blank","width=900,height=700");
+  var fecha = new Date().toLocaleDateString("es-MX",{dateStyle:"long"});
+  var total      = allData.length;
+  var completos  = allData.filter(function(r){return r.completo;}).length;
+  var faltantes  = allData.reduce(function(s,r){return s+r.faltantes;},0);
+
+  var filas = "";
+  filtered.forEach(function(r,i){
+    var docStatus = DOC_KEYS.map(function(d,di){
+      return r.docs[d.key]
+        ? '<span style="color:#16a34a;font-weight:700">'+DOC_ABREV[di]+'</span>'
+        : '<span style="color:#dc2626">'+DOC_ABREV[di]+'</span>';
+    }).join(" ");
+    filas += "<tr style='border-bottom:1px solid #eee'>";
+    filas += "<td style='padding:8px 10px;font-size:12px;color:#999'>"+(i+1)+"</td>";
+    filas += "<td style='padding:8px 10px;font-size:13px;font-weight:600;color:#0a1f44'>"+esc(r.empresa)+"</td>";
+    filas += "<td style='padding:8px 10px;font-size:11px;font-family:monospace'>"+esc(r.rfc)+"</td>";
+    filas += "<td style='padding:8px 10px;font-size:11px;color:#666'>"+esc(r.fecha)+"</td>";
+    filas += "<td style='padding:8px 10px;font-size:11px;color:"+(r.completo?"#16a34a":"#d97706")+"'>"+(r.completo?"✓ Completo":"⚠ Faltan "+r.faltantes)+"</td>";
+    filas += "<td style='padding:8px 10px;font-size:11px;letter-spacing:3px'>"+docStatus+"</td>";
+    filas += "</tr>";
+  });
+
+  win.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'>");
+  win.document.write("<title>Reporte Proveedores - Hospital Noor</title>");
+  win.document.write("<style>body{font-family:Arial,sans-serif;margin:32px;color:#1a1a18}@media print{body{margin:16px}}</style>");
+  win.document.write("</head><body>");
+  win.document.write("<div style='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;border-bottom:2px solid #0a1f44;padding-bottom:16px'>");
+  win.document.write("<div><h1 style='font-size:18px;color:#0a1f44;margin:0'>Panel de Proveedores — Hospital Noor</h1>");
+  win.document.write("<p style='font-size:12px;color:#666;margin:4px 0 0'>Generado el "+fecha+"</p></div>");
+  win.document.write("<div style='text-align:right;font-size:12px;color:#666'>");
+  win.document.write("Total: <strong>"+total+"</strong> &nbsp; Completos: <strong style='color:#16a34a'>"+completos+"</strong> &nbsp; Doc. faltantes: <strong style='color:#dc2626'>"+faltantes+"</strong></div>");
+  win.document.write("</div>");
+  win.document.write("<table style='width:100%;border-collapse:collapse'>");
+  win.document.write("<thead><tr style='background:#f5f5f3'>");
+  win.document.write("<th style='padding:8px 10px;font-size:11px;text-align:left;color:#666'>#</th>");
+  win.document.write("<th style='padding:8px 10px;font-size:11px;text-align:left;color:#666'>Empresa / Razón Social</th>");
+  win.document.write("<th style='padding:8px 10px;font-size:11px;text-align:left;color:#666'>RFC</th>");
+  win.document.write("<th style='padding:8px 10px;font-size:11px;text-align:left;color:#666'>Fecha</th>");
+  win.document.write("<th style='padding:8px 10px;font-size:11px;text-align:left;color:#666'>Estado</th>");
+  win.document.write("<th style='padding:8px 10px;font-size:11px;text-align:left;color:#666'>Docs</th>");
+  win.document.write("</tr></thead><tbody>"+filas+"</tbody></table>");
+  win.document.write("<p style='margin-top:24px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px'>LIC=Licencia · RS=Resp.Sanitario · AVF=Aviso Funcionamiento · ID=Identificación · DOM=Domicilio · RFC=RFC/Cédula · CAT=Catálogo · CA=Carta Aceptación</p>");
+  win.document.write("<scr"+"ipt>window.addEventListener('load',function(){setTimeout(window.print,300)});<"+"/scr"+"ipt>");
+  win.document.write("</body></html>");
+  win.document.close();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function esc(s){
+  return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function toast(msg){
+  var t = document.getElementById("toast");
+  t.innerHTML = msg;
+  t.classList.add("show");
+  setTimeout(function(){t.classList.remove("show");}, 2800);
+}
+</script>
+</body>
+</html>
