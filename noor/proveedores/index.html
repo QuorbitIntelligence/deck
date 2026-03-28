@@ -274,28 +274,35 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
   </div>
 </div>
 
-<!-- BLOQUE 3 -->
+<!-- BLOQUE 3: DOCUMENTOS via Formspree (una sola vez) -->
 <div class="sec" id="sec3">
-  <div class="sh2"><div class="sn">3</div><div class="st"><h3>Carga de Documentaci&#243;n</h3><p>Adjunte todos los documentos requeridos en formato PDF, JPG o PNG</p></div></div>
+  <div class="sh2"><div class="sn">3</div><div class="st"><h3>Carga de Documentaci&#243;n</h3><p>Adjunte cada documento una sola vez &#8212; se env&#237;an directamente al expediente institucional</p></div></div>
   <div class="sb">
     <div class="nc">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1b6cc4" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <p><strong>Documentaci&#243;n requerida:</strong> Adjunte cada documento individualmente. Los archivos se env&#237;an con nomenclatura estandarizada al equipo de compras de Hospital Noor. Formatos aceptados: PDF, JPG, PNG &#8212; m&#225;x. 5 MB por archivo.</p>
+      <p><strong>Documentaci&#243;n requerida:</strong> Adjunte cada archivo individualmente. Ser&#225;n enviados con nomenclatura estandarizada (<code>NOOR_01_LicenciaSanitaria_Empresa_Fecha.pdf</code>) al expediente de Hospital Noor. Formatos: PDF, JPG, PNG &#8212; m&#225;x. 5 MB.</p>
     </div>
-    <div class="dg">
-      <div class="dc" id="cd1"><div class="dch"><div class="dn">1</div><div><div class="dnm">Licencia sanitaria</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" id="d1" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd1','fn1')"><div class="fui">&#128196;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn1"></div></div>
-      <div class="dc" id="cd2"><div class="dch"><div class="dn">2</div><div><div class="dnm">Responsable sanitario</div><div class="dr">Cuando aplique</div></div></div><div class="fua"><input type="file" id="d2" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd2','fn2')"><div class="fui">&#128100;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn2"></div></div>
-      <div class="dc" id="cd3"><div class="dch"><div class="dn">3</div><div><div class="dnm">Aviso de funcionamiento</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" id="d3" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd3','fn3')"><div class="fui">&#128203;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn3"></div></div>
-      <div class="dc" id="cd4"><div class="dch"><div class="dn">4</div><div><div class="dnm">Identificaci&#243;n oficial</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" id="d4" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd4','fn4')"><div class="fui">&#129514;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn4"></div></div>
-      <div class="dc" id="cd5"><div class="dch"><div class="dn">5</div><div><div class="dnm">Comprobante de domicilio</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" id="d5" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd5','fn5')"><div class="fui">&#127968;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn5"></div></div>
-      <div class="dc" id="cd6"><div class="dch"><div class="dn">6</div><div><div class="dnm">RFC / C&#233;dula fiscal</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" id="d6" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd6','fn6')"><div class="fui">&#128209;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn6"></div></div>
-      <div class="dc" id="cd7"><div class="dch"><div class="dn">7</div><div><div class="dnm">Cat&#225;logo de productos / servicios</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" id="d7" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd7','fn7')"><div class="fui">&#128230;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn7"></div></div>
-      <div class="dc" id="cd8"><div class="dch"><div class="dn">8</div><div><div class="dnm">Carta de aceptaci&#243;n firmada</div><div class="dr">Recomendado &#8212; versi&#243;n f&#237;sica escaneada</div></div></div><div class="fua"><input type="file" id="d8" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd8','fn8')"><div class="fui">&#9997;&#65039;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn8"></div></div>
-    </div>
-    <div class="br">
-      <button class="btn btns" onclick="prev(3)">&#8592; Anterior</button>
-      <button class="btn btnp" onclick="next(3)">Continuar &#8594;</button>
-    </div>
+    <form id="fsForm" action="https://formspree.io/f/xlgogdja" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_subject" id="fs_subj">
+      <input type="hidden" name="razon_social" id="fs_rs">
+      <input type="hidden" name="rfc" id="fs_rfc">
+      <input type="hidden" name="fecha" id="fs_fecha">
+      <input type="hidden" name="_replyto" id="fs_reply">
+      <div class="dg">
+        <div class="dc" id="cd1"><div class="dch"><div class="dn">1</div><div><div class="dnm">Licencia sanitaria</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="01_LicenciaSanitaria" id="d1" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd1','fn1')" required><div class="fui">&#128196;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn1"></div></div>
+        <div class="dc" id="cd2"><div class="dch"><div class="dn">2</div><div><div class="dnm">Responsable sanitario</div><div class="dr">Cuando aplique</div></div></div><div class="fua"><input type="file" name="02_ResponsableSanitario" id="d2" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd2','fn2')"><div class="fui">&#128100;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn2"></div></div>
+        <div class="dc" id="cd3"><div class="dch"><div class="dn">3</div><div><div class="dnm">Aviso de funcionamiento</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="03_AvisoDeFuncionamiento" id="d3" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd3','fn3')" required><div class="fui">&#128203;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn3"></div></div>
+        <div class="dc" id="cd4"><div class="dch"><div class="dn">4</div><div><div class="dnm">Identificaci&#243;n oficial</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="04_IdentificacionOficial" id="d4" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd4','fn4')" required><div class="fui">&#129514;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn4"></div></div>
+        <div class="dc" id="cd5"><div class="dch"><div class="dn">5</div><div><div class="dnm">Comprobante de domicilio</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="05_ComprobanteDomicilio" id="d5" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd5','fn5')" required><div class="fui">&#127968;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn5"></div></div>
+        <div class="dc" id="cd6"><div class="dch"><div class="dn">6</div><div><div class="dnm">RFC / C&#233;dula fiscal</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="06_RFC_CedulaFiscal" id="d6" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd6','fn6')" required><div class="fui">&#128209;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn6"></div></div>
+        <div class="dc" id="cd7"><div class="dch"><div class="dn">7</div><div><div class="dnm">Cat&#225;logo de productos / servicios</div><div class="dr">Obligatorio</div></div></div><div class="fua"><input type="file" name="07_CatalogoProductos" id="d7" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd7','fn7')" required><div class="fui">&#128230;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn7"></div></div>
+        <div class="dc" id="cd8"><div class="dch"><div class="dn">8</div><div><div class="dnm">Carta de aceptaci&#243;n firmada</div><div class="dr">Recomendado &#8212; versi&#243;n f&#237;sica escaneada</div></div></div><div class="fua"><input type="file" name="08_CartaAceptacionFirmada" id="d8" accept=".pdf,.jpg,.jpeg,.png" onchange="hf(this,'cd8','fn8')"><div class="fui">&#9997;&#65039;</div><div class="fut">Clic o arrastre el archivo</div><div class="fuh">PDF &#183; JPG &#183; PNG &#8212; M&#225;x. 5 MB</div></div><div class="fn" id="fn8"></div></div>
+      </div>
+      <div class="br">
+        <button type="button" class="btn btns" onclick="prev(3)">&#8592; Anterior</button>
+        <button type="button" class="btn btnp" onclick="next(3)">Continuar &#8594;</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -339,46 +346,12 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
     </div>
   </div>
 
-  <!-- PASO 1.5: EXITO + FORMSPREE -->
-  <div class="ep1" id="ep1">
-    <div class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><polyline points="20 6 9 17 4 12"/></svg></div>
-    <h3>&#10003; Datos enviados correctamente</h3>
-    <p>Su informaci&#243;n fue recibida por el equipo de compras de Hospital Noor.<br>Ahora adjunte su documentaci&#243;n para completar el registro.</p>
-    <div class="bfs">
-      <div class="fshead">
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="fsbadge">Paso 2 de 2</div></div>
-          <div class="fstit">&#128193; Env&#237;o de Documentaci&#243;n</div>
-          <div class="fssub">Adjunte los archivos seg&#250;n cada categor&#237;a &#8212; se env&#237;an al expediente institucional de Hospital Noor</div>
-        </div>
-      </div>
-      <div class="fsnote"><strong>Nomenclatura de archivos:</strong> Cada documento es identificado autom&#225;ticamente con su raz&#243;n social, tipo de documento y fecha. Ejemplo: <code>NOOR_01_LicenciaSanitaria_EmpresaSA_20250727.pdf</code></div>
-      <form id="fsForm" action="https://formspree.io/f/xlgogdja" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="_subject" id="fs_subj">
-        <input type="hidden" name="razon_social" id="fs_rs">
-        <input type="hidden" name="rfc" id="fs_rfc">
-        <input type="hidden" name="fecha" id="fs_fecha">
-        <input type="hidden" name="_replyto" id="fs_reply">
-        <div class="fsdg">
-          <div class="fsdi"><div class="fsdl">01 &#8212; Licencia sanitaria <span style="color:#dc2626">*</span></div><div class="fsfa"><input type="file" name="01_LicenciaSanitaria" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn1')" required><div class="fsft">&#128196; Seleccionar archivo</div></div><div class="fsfn" id="ffn1"></div></div>
-          <div class="fsdi"><div class="fsdl">02 &#8212; Responsable sanitario <span class="opt">(si aplica)</span></div><div class="fsfa"><input type="file" name="02_ResponsableSanitario" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn2')"><div class="fsft">&#128100; Seleccionar archivo</div></div><div class="fsfn" id="ffn2"></div></div>
-          <div class="fsdi"><div class="fsdl">03 &#8212; Aviso de funcionamiento <span style="color:#dc2626">*</span></div><div class="fsfa"><input type="file" name="03_AvisoDeFuncionamiento" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn3')" required><div class="fsft">&#128203; Seleccionar archivo</div></div><div class="fsfn" id="ffn3"></div></div>
-          <div class="fsdi"><div class="fsdl">04 &#8212; Identificaci&#243;n oficial <span style="color:#dc2626">*</span></div><div class="fsfa"><input type="file" name="04_IdentificacionOficial" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn4')" required><div class="fsft">&#129514; Seleccionar archivo</div></div><div class="fsfn" id="ffn4"></div></div>
-          <div class="fsdi"><div class="fsdl">05 &#8212; Comprobante de domicilio <span style="color:#dc2626">*</span></div><div class="fsfa"><input type="file" name="05_ComprobanteDomicilio" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn5')" required><div class="fsft">&#127968; Seleccionar archivo</div></div><div class="fsfn" id="ffn5"></div></div>
-          <div class="fsdi"><div class="fsdl">06 &#8212; RFC / C&#233;dula fiscal <span style="color:#dc2626">*</span></div><div class="fsfa"><input type="file" name="06_RFC_CedulaFiscal" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn6')" required><div class="fsft">&#128209; Seleccionar archivo</div></div><div class="fsfn" id="ffn6"></div></div>
-          <div class="fsdi"><div class="fsdl">07 &#8212; Cat&#225;logo de productos/servicios <span style="color:#dc2626">*</span></div><div class="fsfa"><input type="file" name="07_CatalogoProductos" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn7')" required><div class="fsft">&#128230; Seleccionar archivo</div></div><div class="fsfn" id="ffn7"></div></div>
-          <div class="fsdi"><div class="fsdl">08 &#8212; Carta de aceptaci&#243;n firmada <span class="opt">(recomendado)</span></div><div class="fsfa"><input type="file" name="08_CartaAceptacionFirmada" accept=".pdf,.jpg,.jpeg,.png" onchange="hff(this,'ffn8')"><div class="fsft">&#9997;&#65039; Seleccionar archivo</div></div><div class="fsfn" id="ffn8"></div></div>
-        </div>
-        <button type="button" class="btnfs" id="btnFS" onclick="sendDocs()">&#128228; &nbsp; Enviar Documentaci&#243;n Completa</button>
-      </form>
-    </div>
-  </div>
 
   <!-- EXITO FINAL -->
   <div class="ef" id="efinal">
     <div class="efi"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="44" height="44"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
     <h3>&#160;&#161;Registro completo y enviado!</h3>
-    <p>Su expediente de proveedor &#8212; datos y documentaci&#243;n &#8212; ha sido recibido de forma segura por el equipo de Hospital Noor. En breve nos comunicaremos con usted para confirmar su credencializaci&#243;n.</p>
+    <p>Sus datos y documentaci&#243;n han sido recibidos de forma segura y estructurada por el equipo de Hospital Noor. En breve nos comunicaremos con usted para confirmar su credencializaci&#243;n como proveedor.</p>
     <br>
     <p style="font-size:.82rem;color:var(--ai)">&#128222; 55 5213 1664 &nbsp;&#183;&nbsp; compras&#64;noorclinic.com.mx</p>
   </div>
@@ -447,7 +420,19 @@ function show(n){
 
 function next(d){
   if(!validate(d)) return;
-  if(d === 3) buildPreview();
+  if(d === 3){
+    // Poblar campos ocultos del form Formspree antes de avanzar
+    var rs    = document.getElementById("f_rs").value;
+    var rfc   = document.getElementById("f_rfc").value;
+    var em    = document.getElementById("f_email").value;
+    var fecha = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
+    document.getElementById("fs_subj").value  = "Documentos Proveedor \u2014 " + rs + " \u2014 Hospital Noor";
+    document.getElementById("fs_rs").value    = rs;
+    document.getElementById("fs_rfc").value   = rfc;
+    document.getElementById("fs_fecha").value = fecha;
+    document.getElementById("fs_reply").value = em;
+    buildPreview();
+  }
   show(d+1);
 }
 function prev(d){ show(d-1); }
@@ -477,10 +462,12 @@ function validate(n){
     if(sp.isEmpty()){ toast("Proporcione su firma digital para aceptar las pol\u00edticas.","err"); return false; }
   }
   if(n === 3){
-    for(var j=0; j<DOCS.length; j++){
-      var doc = DOCS[j];
-      if(doc[2] && !document.getElementById(doc[0]).files.length){
-        toast("Documento obligatorio faltante: "+doc[1],"err");
+    var reqNames = ["01_LicenciaSanitaria","03_AvisoDeFuncionamiento","04_IdentificacionOficial","05_ComprobanteDomicilio","06_RFC_CedulaFiscal","07_CatalogoProductos"];
+    var reqLabels = ["Licencia sanitaria","Aviso de funcionamiento","Identificaci\u00f3n oficial","Comprobante de domicilio","RFC / C\u00e9dula fiscal","Cat\u00e1logo de productos/servicios"];
+    for(var j=0; j<reqNames.length; j++){
+      var inp = document.querySelector('input[name="'+reqNames[j]+'"]');
+      if(!inp || !inp.files.length){
+        toast("Documento obligatorio faltante: "+reqLabels[j],"err");
         return false;
       }
     }
@@ -605,15 +592,9 @@ function sendData(){
 
   emailjs.send(EJ_SV, EJ_TM, params).then(function(){
     // Poblar campos ocultos de Formspree
-    document.getElementById("fs_subj").value  = "Documentos Proveedor \u2014 " + rs + " \u2014 Hospital Noor";
-    document.getElementById("fs_rs").value    = rs;
-    document.getElementById("fs_rfc").value   = rfc;
-    document.getElementById("fs_fecha").value = fecha;
-    document.getElementById("fs_reply").value = em;
-    document.getElementById("fsForm").action  = FS_EP;
-    // Mostrar paso 1.5
+    // EmailJS enviado correctamente — mostrar pantalla de éxito final
     document.getElementById("sb4").style.display = "none";
-    document.getElementById("ep1").classList.add("active");
+    document.getElementById("efinal").classList.add("active");
     window.scrollTo({top: document.getElementById("sec4").offsetTop - 80, behavior:"smooth"});
   }, function(err){
     console.error("EmailJS error:", err);
