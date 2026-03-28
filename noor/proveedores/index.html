@@ -411,19 +411,7 @@ function show(n){
 
 function next(d){
   if(!validate(d)) return;
-  if(d === 3){
-    // Poblar campos ocultos del form Formspree antes de avanzar
-    var rs    = document.getElementById("f_rs").value;
-    var rfc   = document.getElementById("f_rfc").value;
-    var em    = document.getElementById("f_email").value;
-    var fecha = new Date().toLocaleString("es-MX",{dateStyle:"long",timeStyle:"short"});
-    document.getElementById("fs_subj").value  = "Documentos Proveedor \u2014 " + rs + " \u2014 Hospital Noor";
-    document.getElementById("fs_rs").value    = rs;
-    document.getElementById("fs_rfc").value   = rfc;
-    document.getElementById("fs_fecha").value = fecha;
-    document.getElementById("fs_reply").value = em;
-    buildPreview();
-  }
+  if(d === 3){ buildPreview(); }
   show(d+1);
 }
 function prev(d){ show(d-1); }
