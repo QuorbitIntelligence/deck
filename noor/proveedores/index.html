@@ -147,6 +147,16 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
 .toast.ok{background:#16a34a}
 .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .8s linear infinite;margin-right:8px;vertical-align:middle}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* ── BARRA DE PROGRESO ── */
+.prog-wrap{display:none;width:100%;max-width:480px;margin:0 auto 8px}
+.prog-wrap.active{display:block;animation:fu .3s ease forwards}
+.prog-bar-bg{background:#d0dcea;border-radius:50px;height:10px;overflow:hidden;margin-bottom:10px}
+.prog-bar-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,var(--ai),var(--ac));width:0%;transition:width .5s ease}
+.prog-steps{display:flex;justify-content:space-between;gap:4px}
+.prog-step{flex:1;text-align:center;font-size:.68rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--gb);transition:color .3s;line-height:1.4;padding:4px 2px;border-radius:6px}
+.prog-step.done{color:var(--ve)}
+.prog-step.active{color:var(--ai);background:var(--ah)}
+.prog-msg{text-align:center;font-size:.82rem;color:var(--gt);margin-top:8px;min-height:20px;font-weight:500}
 @media(max-width:640px){
   .fg{grid-template-columns:1fr}.fg2{grid-column:span 1}.fg .fg2{grid-column:span 1}
   .dg,.pg,.fsdg{grid-template-columns:1fr}
@@ -337,7 +347,18 @@ footer{background:var(--ap);padding:36px 32px;text-align:center}
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
       <button class="btn btnok" id="btnEnv" onclick="sendData()">&#9993;&#65039; &nbsp; Enviar Solicitud Completa</button>
-      <button class="btn btns" onclick="prev(4)" style="font-size:.8rem;padding:10px 24px">&#8592; Regresar y editar</button>
+      <!-- BARRA DE PROGRESO -->
+      <div class="prog-wrap" id="progWrap">
+        <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
+        <div class="prog-steps">
+          <div class="prog-step" id="ps1">&#128196; Leyendo</div>
+          <div class="prog-step" id="ps2">&#128260; Codificando</div>
+          <div class="prog-step" id="ps3">&#9652; Enviando</div>
+          <div class="prog-step" id="ps4">&#10003; Listo</div>
+        </div>
+        <div class="prog-msg" id="progMsg"></div>
+      </div>
+      <button class="btn btns" id="btnBack" onclick="prev(4)" style="font-size:.8rem;padding:10px 24px">&#8592; Regresar y editar</button>
     </div>
   </div>
 
@@ -530,6 +551,18 @@ function buildPreview(){
 }
 
 // ── ENVÍO EMAILJS ───────────────────────────────────────────
+// ── PROGRESO ─────────────────────────────────────────────────
+function setProgreso(pct, paso, msg){
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("progMsg").textContent  = msg;
+  for(var k=1; k<=4; k++){
+    var el = document.getElementById("ps"+k);
+    el.classList.remove("active","done");
+    if(k < paso)  el.classList.add("done");
+    if(k === paso) el.classList.add("active");
+  }
+}
+
 function sendData(){
   if(!document.getElementById("chk").checked){
     toast("Debe confirmar que la informaci\u00f3n es correcta antes de enviar.","err"); return;
@@ -543,9 +576,14 @@ function sendData(){
     if(!inp || !inp.files.length){ toast("Documento obligatorio faltante: "+reqLabels[i],"err"); return; }
   }
 
-  var btn = document.getElementById("btnEnv");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Preparando archivos...';
+  var btn  = document.getElementById("btnEnv");
+  var back = document.getElementById("btnBack");
+  var wrap = document.getElementById("progWrap");
+
+  btn.disabled  = true;
+  back.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Procesando...';
+  wrap.classList.add("active");
 
   var rs       = document.getElementById("f_rs").value;
   var rfc      = document.getElementById("f_rfc").value;
@@ -563,12 +601,15 @@ function sendData(){
   var rsClean  = rs.replace(/[^a-zA-Z0-9 ]/g,"").trim().split(" ").slice(0,3).join("_");
   var fechaStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
 
-  // Recopilar todos los file inputs
   var docInputs = Array.prototype.slice.call(
     document.querySelectorAll('#fsForm input[type="file"]')
   );
+  var total = docInputs.filter(function(i){ return i.files.length; }).length;
+  var conta = 0;
 
-  // Convertir cada archivo a base64 con Promise
+  // FASE 1 — Leyendo archivos
+  setProgreso(5, 1, "Leyendo " + total + " archivo(s)...");
+
   var promesas = docInputs.map(function(inp){
     return new Promise(function(resolve){
       if(!inp.files.length){ resolve(null); return; }
@@ -578,65 +619,68 @@ function sendData(){
       var nombre = "NOOR_"+clave+"_"+rsClean+"_"+fechaStr+"."+ext;
       var reader = new FileReader();
       reader.onload = function(ev){
-        // ev.result = "data:application/pdf;base64,AAAA..."
+        conta++;
+        var pct = 5 + Math.round((conta / total) * 30);
+        setProgreso(pct, 1, "Leyendo: " + f.name.slice(0,35) + (f.name.length>35?"...":""));
         var partes = ev.result.split(",");
-        resolve({
-          clave:    clave,
-          nombre:   nombre,
-          mimeType: f.type || "application/octet-stream",
-          base64:   partes[1]
-        });
+        resolve({ clave:clave, nombre:nombre, mimeType:f.type||"application/octet-stream", base64:partes[1] });
       };
-      reader.onerror = function(){ resolve(null); };
+      reader.onerror = function(){ conta++; resolve(null); };
       reader.readAsDataURL(f);
     });
   });
 
   Promise.all(promesas).then(function(archivos){
-    // Filtrar nulos
     archivos = archivos.filter(function(a){ return a !== null; });
 
-    btn.innerHTML = '<span class="spin"></span>Enviando al servidor...';
+    // FASE 2 — Codificando payload
+    setProgreso(40, 2, "Codificando " + archivos.length + " documento(s)...");
 
     var payload = {
-      razon_social:          rs,
-      rfc:                   rfc,
-      telefono:              tel,
-      correo_proveedor:      em,
-      domicilio:             dom,
-      tipo_proveedor:        tipo,
-      representante:         rep,
-      cargo:                 cargo,
-      responsable_sanitario: rsan,
-      cedula_sanitaria:      ced,
-      giro:                  giro,
-      catalogo_desc:         cat,
-      firma_base64:          sp.toDataURL(),
-      fecha_envio:           fecha,
-      archivos:              archivos
+      razon_social:rs, rfc:rfc, telefono:tel, correo_proveedor:em,
+      domicilio:dom, tipo_proveedor:tipo, representante:rep, cargo:cargo,
+      responsable_sanitario:rsan, cedula_sanitaria:ced, giro:giro,
+      catalogo_desc:cat, firma_base64:sp.toDataURL(),
+      fecha_envio:fecha, archivos:archivos
     };
 
-    fetch(GAS_URL, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(payload)
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(data.status === "ok"){
-        document.getElementById("sb4").style.display = "none";
-        document.getElementById("efinal").classList.add("active");
-        window.scrollTo({top: document.getElementById("sec4").offsetTop - 80, behavior:"smooth"});
-      } else {
-        throw new Error(data.message || "Error en el servidor");
-      }
-    })
-    .catch(function(e){
-      console.error("Error GAS:", e);
-      btn.disabled = false;
-      btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Solicitud Completa";
-      toast("Error al enviar. Verifique su conexi\u00f3n o contacte a compras&#64;noorclinic.com.mx","err");
-    });
+    var body = JSON.stringify(payload);
+
+    // Pequeña pausa visual para que el usuario vea fase 2
+    setTimeout(function(){
+
+      // FASE 3 — Enviando
+      setProgreso(60, 3, "Enviando al servidor de Hospital Noor...");
+
+      fetch(GAS_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    body
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.status === "ok"){
+          // FASE 4 — Listo
+          setProgreso(100, 4, "\u00a1Solicitud enviada correctamente!");
+          setTimeout(function(){
+            document.getElementById("sb4").style.display = "none";
+            document.getElementById("efinal").classList.add("active");
+            window.scrollTo({top: document.getElementById("sec4").offsetTop - 80, behavior:"smooth"});
+          }, 800);
+        } else {
+          throw new Error(data.message || "Error en el servidor");
+        }
+      })
+      .catch(function(e){
+        console.error("Error GAS:", e);
+        wrap.classList.remove("active");
+        btn.disabled  = false;
+        back.disabled = false;
+        btn.innerHTML = "\u2709\ufe0f &nbsp; Enviar Solicitud Completa";
+        toast("Error al enviar. Verifique su conexi\u00f3n o contacte a compras&#64;noorclinic.com.mx","err");
+      });
+
+    }, 400);
   });
 }
 
