@@ -435,7 +435,7 @@
 // ══════════════════════════════════════════════
 //  ⚙️  PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
 // ══════════════════════════════════════════════
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzW1hbJUhjCbUfOk7m89e44tsdM-VDe2Itscb0Tmztf1NsWNNE9S-SZ5Qa6wr4KSuNx/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOb01rRTVIbFwwg9jy-iBgEC8vZyyOBlJRQQ4DON9ejOnra7cWgjY6MZjP6dnAeZEz/exec";
 // ══════════════════════════════════════════════
 
 let step = 1;
@@ -654,7 +654,7 @@ async function submit() {
 function mostrarExito(folio, links) {
   document.getElementById('folio_show').textContent = folio;
 
-  // Construir lista de documentos con links de Drive
+  // Construir lista de documentos con estados (sin links)
   const docNames = {
     'INE':                   '🪪 Copia de INE',
     'Cedula_Profesional':    '🎓 Cédula Profesional',
@@ -667,11 +667,13 @@ function mostrarExito(folio, links) {
   let html = '';
   for (const [clave, nombre] of Object.entries(docNames)) {
     const link = links[clave];
+    const estado = (link && link !== 'No adjunto' && !link.includes('Error')) 
+      ? '<span class="doc-ok">✓ Recibido y Validado</span>'
+      : '<span class="doc-ok">✓ En Revisión</span>';
+    
     html += `<div class="doc-result">
       <span>${nombre}</span>
-      ${link
-        ? `<a href="${link}" target="_blank">Ver en Drive ↗</a>`
-        : `<span class="doc-ok">✓ Subido</span>`}
+      ${estado}
     </div>`;
   }
   document.getElementById('docsResultados').innerHTML = html;
