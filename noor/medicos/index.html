@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.0.1</title>
+<title>Portal Médicos — Hospital Noor | v1.1.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -24,17 +24,46 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
 #homepage {display:block}
 #homepage.hidden {display:none}
 
-/* Header minimalista */
+/* Header con menús desplegables */
 .home-header {
   background:#fff; border-bottom:2px solid var(--borde);
-  padding:20px 40px; display:flex; align-items:center; justify-content:space-between;
+  padding:20px 40px; position:relative; z-index:100;
+}
+.header-container {
+  max-width:1200px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
 }
 .home-logo img {height:60px; width:auto}
-.home-nav a {
-  margin-left:24px; font-size:.85rem; font-weight:600;
-  color:var(--azul-noor); text-decoration:none; transition:color .2s;
+.home-nav {display:flex; align-items:center; gap:24px}
+.nav-item {position:relative}
+.nav-link {
+  font-size:.85rem; font-weight:600; color:var(--azul-noor);
+  text-decoration:none; transition:color .2s; cursor:pointer;
+  padding:8px 12px; display:block;
 }
-.home-nav a:hover {color:var(--azul-c)}
+.nav-link:hover {color:var(--azul-c)}
+.dropdown {
+  position:absolute; top:100%; left:0; margin-top:8px;
+  background:#fff; border:2px solid var(--borde);
+  border-radius:12px; box-shadow:0 8px 24px rgba(10,45,110,.15);
+  min-width:280px; padding:16px; display:none; z-index:101;
+}
+.nav-item:hover .dropdown {display:block}
+.dropdown h4 {
+  font-size:.75rem; font-weight:700; text-transform:uppercase;
+  color:var(--gris); margin-bottom:12px; letter-spacing:.5px;
+}
+.dropdown-list {list-style:none; padding:0; margin:0}
+.dropdown-list li {
+  padding:8px 12px; border-radius:6px;
+  font-size:.85rem; color:var(--texto); transition:all .2s;
+}
+.dropdown-list li:hover {
+  background:var(--azul-suave); color:var(--azul-noor);
+}
+.dropdown-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+}
 
 /* Hero Section */
 .hero {
@@ -72,6 +101,39 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
 /* Cards Grid */
 .cards-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:32px; margin-bottom:60px}
 
+/* Bloque informativo destacado */
+.info-highlight {
+  background:linear-gradient(135deg, var(--dorado) 0%, var(--dorado-d) 100%);
+  border-radius:16px; padding:40px; color:#fff; text-align:center;
+  box-shadow:0 8px 32px rgba(160,117,53,.3); position:relative; overflow:hidden;
+  margin-bottom:60px;
+}
+.info-highlight::before {
+  content:''; position:absolute; top:-50%; right:-50%;
+  width:300px; height:300px; background:rgba(255,255,255,.1);
+  border-radius:50%; z-index:0;
+}
+.info-highlight-content {position:relative; z-index:1}
+.info-highlight-badge {
+  display:inline-block; background:rgba(255,255,255,.2);
+  padding:8px 20px; border-radius:20px; font-size:.75rem;
+  font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  margin-bottom:16px;
+}
+.info-highlight h2 {
+  font-family:'Cormorant Garamond',serif; font-size:2rem;
+  margin-bottom:16px; line-height:1.3;
+}
+.info-highlight p {
+  font-size:1rem; line-height:1.8; max-width:800px;
+  margin:0 auto 24px; opacity:.95;
+}
+.info-highlight-note {
+  font-size:.85rem; opacity:.85; font-style:italic;
+  margin-top:16px; padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.3);
+}
+
 /* Promoción destacada */
 .promo-card {
   background:#fff; border-radius:16px; overflow:hidden;
@@ -90,7 +152,7 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
   font-family:'Cormorant Garamond',serif; font-size:1.6rem;
   color:var(--azul-noor); margin-bottom:12px;
 }
-.promo-desc {font-size:.9rem; color:var(--gris); line-height:1.6; margin-bottom:20px}
+.promo-desc {font-size:.9rem; color:var(--gris); line-height:1.6; margin-bottom:12px}
 .promo-footer {
   display:flex; justify-content:space-between; align-items:center;
   padding-top:16px; border-top:1px solid var(--borde);
@@ -140,6 +202,18 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
 }
 .whatsapp-float svg {width:32px; height:32px; fill:#fff}
 
+/* Botón volver */
+.btn-volver {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--azul-suave); color:var(--azul-noor);
+  padding:12px 24px; border-radius:8px; font-size:.85rem;
+  font-weight:600; text-decoration:none; border:none;
+  cursor:pointer; transition:all .2s; margin-bottom:24px;
+}
+.btn-volver:hover {
+  background:var(--azul-c); color:#fff;
+}
+
 @media(max-width:768px) {
   .home-header {padding:16px 20px}
   .home-logo img {height:48px}
@@ -149,11 +223,12 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
   .hero p {font-size:1rem}
   .home-main {padding:0 20px; margin:40px auto}
   .cards-grid {grid-template-columns:1fr; gap:24px}
+  .dropdown-grid {grid-template-columns:1fr}
 }
 
 /* ═══════════════════════════════════════
    FORMULARIO DE CREDENCIALIZACIÓN
-   (Código original - NO MODIFICAR)
+   (Código original del formulario)
    ═══════════════════════════════════════ */
 
 #formpage {display:none}
@@ -289,18 +364,54 @@ footer strong{color:var(--azul-noor)}
      ═══════════════════════════════════════ -->
 <div id="homepage">
   
-  <!-- Header -->
+  <!-- Header con menús -->
   <div class="home-header">
-    <div class="home-logo">
-      <!-- INSTRUCCIÓN: Sube Logo_Hospital_Noor.jpg a GitHub en /deck/noor/medicos/images/ -->
-      <!-- Luego reemplaza src="images/Logo_Hospital_Noor.jpg" con la ruta correcta -->
-      <img src="images/Logo_Hospital_Noor.jpg" alt="Hospital Noor">
+    <div class="header-container">
+      <div class="home-logo">
+        <img src="images/Logo_Hospital_Noor.jpg" alt="Hospital Noor">
+      </div>
+      <nav class="home-nav">
+        <a href="#inicio" class="nav-link">Inicio</a>
+        
+        <div class="nav-item">
+          <span class="nav-link">Especialidades</span>
+          <div class="dropdown">
+            <h4>Nuestras Especialidades</h4>
+            <ul class="dropdown-list dropdown-grid">
+              <li>✓ Cirugía General</li>
+              <li>✓ Oncología</li>
+              <li>✓ Bariatría</li>
+              <li>✓ Cardiología</li>
+              <li>✓ Cirugía de Tórax</li>
+              <li>✓ Ginecología y Obstetricia</li>
+              <li>✓ Médico General</li>
+              <li>✓ Cirugía Plástica y Reconstructiva</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="nav-item">
+          <span class="nav-link">Servicios</span>
+          <div class="dropdown">
+            <h4>Servicios Disponibles 24/7</h4>
+            <ul class="dropdown-list">
+              <li>🔬 Laboratorio 24/7</li>
+              <li>📸 Imagenología</li>
+              <li>⚡ Rayos X</li>
+              <li>🔊 Ultrasonidos</li>
+              <li>💫 Tomografías</li>
+              <li>🏥 Consulta las 24 hrs</li>
+              <li>🛏️ Terapia Intermedia</li>
+              <li>🚑 Terapia Intensiva</li>
+              <li>⚠️ Urgencias</li>
+              <li>🏨 Hospitalización</li>
+            </ul>
+          </div>
+        </div>
+
+        <a href="javascript:void(0)" onclick="mostrarFormulario()" class="nav-link">Credencialización</a>
+      </nav>
     </div>
-    <nav class="home-nav">
-      <a href="#inicio">Inicio</a>
-      <a href="#promociones">Promociones</a>
-      <a href="javascript:void(0)" onclick="mostrarFormulario()">Credencialización</a>
-    </nav>
   </div>
 
   <!-- Hero -->
@@ -317,8 +428,32 @@ footer strong{color:var(--azul-noor)}
   <!-- Main Content -->
   <div class="home-main">
     
-    <!-- Promoción destacada -->
+    <!-- Promociones -->
     <div class="cards-grid">
+      <!-- Beneficio Exclusivo -->
+      <div class="promo-card">
+        <div class="promo-content" style="background:linear-gradient(135deg, var(--dorado) 0%, var(--dorado-d) 100%); color:#fff; padding:32px; min-height:100%">
+          <span class="promo-badge" style="background:rgba(255,255,255,.2); color:#fff">🎁 Beneficio Exclusivo</span>
+          <h3 class="promo-title" style="color:#fff">10% de Descuento para Médicos Credencializados</h3>
+          <p class="promo-desc" style="color:rgba(255,255,255,.95); font-size:.88rem">
+            Todos los médicos credencializados que accedan a nuestros servicios (renta de consultorios, 
+            quirófanos, programación de cirugías) recibirán <strong>10% de descuento</strong> para 
+            familiares directos, incluyendo al médico titular.
+          </p>
+          <p class="promo-desc" style="color:rgba(255,255,255,.85); font-size:.8rem; margin-top:12px">
+            <strong>Requisitos:</strong> Familiar directo (cónyuge, hijos, padres) · Identificación oficial vigente 
+            que acredite parentesco · Credencial del médico titular
+          </p>
+          <div class="promo-footer" style="border-top:1px solid rgba(255,255,255,.3); margin-top:16px">
+            <span class="promo-validity" style="color:rgba(255,255,255,.9)">📅 Válido todo 2026</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20quiero%20información%20sobre%20el%20beneficio%20de%2010%25%20de%20descuento%20para%20médicos%20credencializados" class="promo-cta" style="background:#fff; color:var(--dorado-d)" target="_blank">
+              <span>Más Información</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- Apendicectomía -->
       <div class="promo-card">
         <img src="images/paquete-apendicectomia.jpg" alt="Paquete Apendicectomía" class="promo-img">
         <div class="promo-content">
@@ -342,7 +477,7 @@ footer strong{color:var(--azul-noor)}
         </div>
       </div>
 
-      <!-- Promoción Colecistectomía -->
+      <!-- Colecistectomía -->
       <div class="promo-card">
         <img src="images/colecistectomia-laparoscopia.jpg" alt="Paquete Colecistectomía" class="promo-img">
         <div class="promo-content">
@@ -384,7 +519,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Médicos v1.0.1 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.1 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -432,7 +567,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>2025 · v4.0</strong>
+      <strong>v1.1.1</strong>
     </div>
   </div>
 </header>
@@ -451,7 +586,7 @@ footer strong{color:var(--azul-noor)}
 
   <!-- Botón volver -->
   <div style="padding:20px 48px 0; border-bottom:1px solid var(--borde)">
-    <button onclick="volverInicio()" style="background:transparent; border:none; color:var(--azul-c); cursor:pointer; font-size:.85rem; display:flex; align-items:center; gap:6px; padding:8px 0">
+    <button onclick="volverInicio()" class="btn-volver">
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
       Volver al inicio
     </button>
@@ -661,6 +796,10 @@ footer strong{color:var(--azul-noor)}
         <div class="doc-result"><span>Cargando resultados…</span></div>
       </div>
     </div>
+    <button onclick="volverInicio()" class="btn-volver" style="margin-top:24px">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+      Volver al inicio
+    </button>
   </div>
 
   <!-- NAV -->
@@ -674,7 +813,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.0.1<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.1<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
