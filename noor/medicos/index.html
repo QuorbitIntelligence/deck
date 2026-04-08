@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor</title>
+<title>Portal Médicos — Hospital Noor | v1.0.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -320,9 +320,6 @@ footer strong{color:var(--azul-noor)}
     <!-- Promoción destacada -->
     <div class="cards-grid">
       <div class="promo-card">
-        <!-- INSTRUCCIÓN: Sube Paquete_de_apendicectomía_por_laparoscopia_para_portal.jpg -->
-        <!-- a GitHub en /deck/noor/medicos/images/ -->
-        <!-- Luego reemplaza src="images/paquete-apendicectomia.jpg" con la ruta correcta -->
         <img src="images/paquete-apendicectomia.jpg" alt="Paquete Apendicectomía" class="promo-img">
         <div class="promo-content">
           <span class="promo-badge">⏰ Promoción Limitada</span>
@@ -331,17 +328,45 @@ footer strong{color:var(--azul-noor)}
             Paquetes especiales para tus pacientes. Incluye 1 noche de hospitalización, 
             2 horas de quirófano, torre de laparoscopía y energía monopolar.
           </p>
+          <p class="promo-desc" style="font-size:.75rem; color:var(--error); margin-top:8px">
+            <strong>No incluye:</strong> Honorarios médicos · Patología<br>
+            <strong>No aplica:</strong> Aseguradoras
+          </p>
           <div class="promo-footer">
             <span class="promo-validity">📅 Vigente hasta 30 Jun 2026</span>
-            <a href="https://wa.me/5215576576669?text=Hola%2C%20me%20interesa%20el%20paquete%20de%20apendicectomía%20por%20laparoscopía" class="promo-cta" target="_blank">
-              <span>Solicitar Info</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20solicito%20información%20y%20lista%20de%20materiales%20del%20paquete%20de%20Apendicectomía%20por%20Laparoscopía" class="promo-cta" target="_blank">
+              <span>Solicitar Info y Lista</span>
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
             </a>
           </div>
         </div>
       </div>
 
-      <!-- Info Cards -->
+      <!-- Promoción Colecistectomía -->
+      <div class="promo-card">
+        <img src="images/colecistectomia-laparoscopia.jpg" alt="Paquete Colecistectomía" class="promo-img">
+        <div class="promo-content">
+          <span class="promo-badge">⚡ Nueva Promoción</span>
+          <h3 class="promo-title">Colecistectomía por Laparoscopía</h3>
+          <p class="promo-desc">
+            1 día de hospitalización · 2 horas de quirófano<br>
+            <strong>Con energía:</strong> $29,800 · <strong>Sin energía:</strong> $26,800
+          </p>
+          <p class="promo-desc" style="font-size:.75rem; color:var(--error); margin-top:8px">
+            <strong>No incluye:</strong> Patología · Honorarios médicos<br>
+            <strong>No aplica:</strong> Aseguradoras
+          </p>
+          <div class="promo-footer">
+            <span class="promo-validity">📅 Disponible</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20solicito%20información%20y%20lista%20de%20materiales%20del%20paquete%20de%20Colecistectomía%20por%20Laparoscopía" class="promo-cta" target="_blank">
+              <span>Solicitar Info y Lista</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credencialización -->
       <div class="info-card">
         <div class="info-icon">📋</div>
         <h3 class="info-title">Credencialización Rápida</h3>
@@ -352,14 +377,6 @@ footer strong{color:var(--azul-noor)}
           Iniciar Registro
         </button>
       </div>
-
-      <div class="info-card">
-        <div class="info-icon">💼</div>
-        <h3 class="info-title">Paquetes Especiales</h3>
-        <p class="info-desc">
-          Descubre nuestras promociones exclusivas y paquetes quirúrgicos para tus pacientes.
-        </p>
-      </div>
     </div>
 
   </div>
@@ -367,7 +384,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Médicos 2025<br>
+      <strong>Hospital Noor</strong> · Portal Médicos v1.0.1 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -657,7 +674,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · 2025 · v4.0<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.0.1<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
