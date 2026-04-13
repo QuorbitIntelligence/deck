@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.1.7</title>
+<title>Portal Médicos — Hospital Noor | v1.1.8</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -46,7 +46,7 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
   position:absolute; top:100%; left:0; margin-top:0px;
   background:#fff; border:2px solid var(--borde);
   border-radius:12px; box-shadow:0 8px 24px rgba(10,45,110,.15);
-  min-width:280px; padding:16px; display:none; z-index:101;
+  min-width:280px; padding:16px; display:none; z-index:999;
 }
 .nav-item:hover .dropdown,
 .dropdown:hover {display:block}
@@ -447,6 +447,23 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
   box-shadow:0 4px 12px rgba(10,45,110,.3);
 }
 
+/* Tablet específico - Asegurar que dropdowns funcionen */
+@media(min-width:769px) and (max-width:1024px) {
+  .dropdown {
+    z-index:9999;
+    max-width:90vw;
+  }
+  .home-nav {
+    display:none !important;
+  }
+  .menu-toggle {
+    display:block !important;
+  }
+  .mobile-menu {
+    display:block !important;
+  }
+}
+
 @media(max-width:1024px) {
   .home-header {padding:16px 20px}
   .home-logo img {height:48px}
@@ -807,7 +824,7 @@ footer strong{color:var(--azul-noor)}
       <div class="promo-card">
         <img src="images/paquete-apendicectomia.jpg" alt="Paquete Apendicectomía" class="promo-img">
         <div class="promo-content">
-          <span class="promo-badge">⏰ Promoción Limitada</span>
+          <span class="promo-badge">⏰ Beneficio Limitado</span>
           <h3 class="promo-title">Apendicectomía por Laparoscopía</h3>
           <p class="promo-desc">
             Paquetes especiales para tus pacientes. Incluye 1 noche de hospitalización, 
@@ -835,7 +852,7 @@ footer strong{color:var(--azul-noor)}
       <div class="promo-card">
         <img src="images/colecistectomia-laparoscopia.jpg" alt="Paquete Colecistectomía" class="promo-img">
         <div class="promo-content">
-          <span class="promo-badge">⚡ Nueva Promoción</span>
+          <span class="promo-badge">⚡ Nuevo Beneficio</span>
           <h3 class="promo-title">Colecistectomía por Laparoscopía</h3>
           <p class="promo-desc">
             1 día de hospitalización · 2 horas de quirófano<br>
@@ -873,10 +890,15 @@ footer strong{color:var(--azul-noor)}
             Este beneficio aplica para cualquier día y esta noche de admisión temprana es 
             <strong>sin costo para el paciente</strong>.
           </p>
+          <p class="promo-desc" style="color:rgba(255,255,255,.85); font-size:.78rem; margin-top:12px; line-height:1.6; font-style:italic">
+            <strong>Validación:</strong> Este beneficio se autoriza según disponibilidad en la programación 
+            quirúrgica actualizada. El médico cirujano debe estar debidamente credencializado y registrado 
+            en Hospital Noor.
+          </p>
           <div class="promo-footer" style="border-top:1px solid rgba(255,255,255,.3); margin-top:16px">
             <span class="promo-validity" style="color:rgba(255,255,255,.9)">📅 Disponible</span>
-            <a href="https://wa.me/5215576576669?text=Hola%2C%20quiero%20información%20sobre%20el%20beneficio%20de%20Admisión%20Temprana" class="promo-cta" style="background:#fff; color:#1a3d7a" target="_blank">
-              <span>Más Información</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20solicito%20Admisión%20Temprana%20y%20quiero%20programar%20mi%20cirugía" class="promo-cta" style="background:#fff; color:#1a3d7a; font-size:.75rem; padding:10px 16px" target="_blank">
+              <span>Solicita tu Admisión Temprana - Programa tu Cirugía</span>
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
             </a>
           </div>
@@ -913,6 +935,30 @@ footer strong{color:var(--azul-noor)}
         </div>
       </div>
 
+      <!-- Aseguradoras con Convenio -->
+      <div class="promo-card">
+        <img src="images/aseguradoras-noor.jpg" alt="Aseguradoras con Convenio" class="promo-img">
+        <div class="promo-content">
+          <span class="promo-badge">🏥 Alianzas Comerciales</span>
+          <h3 class="promo-title">Aseguradoras con Convenio</h3>
+          <p class="promo-desc">
+            Contamos con alianza comercial con las principales aseguradoras del país. 
+            Facilita la atención de tus pacientes con cobertura de seguro médico.
+          </p>
+          <p class="promo-desc" style="font-size:.82rem; color:var(--azul-noor); margin-top:10px">
+            <strong>Aseguradoras:</strong> Sofía, Atlas, Prevem, MediAccess, Bupa, BX+, 
+            Seguros Monterrey y más.
+          </p>
+          <div class="promo-footer">
+            <span class="promo-validity">📋 Convenios activos</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20necesito%20información%20sobre%20las%20aseguradoras%20con%20convenio" class="promo-cta" target="_blank">
+              <span>Más Información</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
       <!-- Credencialización -->
       <div class="info-card">
         <div class="info-icon">📋</div>
@@ -931,7 +977,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.7 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.8 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1017,7 +1063,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.1.7</strong>
+      <strong>v1.1.8</strong>
     </div>
   </div>
 </header>
@@ -1263,7 +1309,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.7<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.8<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
