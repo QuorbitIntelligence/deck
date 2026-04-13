@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.1.5</title>
+<title>Portal Médicos — Hospital Noor | v1.1.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -644,19 +644,19 @@ footer strong{color:var(--azul-noor)}
         </div>
 
         <div class="nav-item">
-          <span class="nav-link">Listas de Materiales</span>
+          <span class="nav-link">Listas de Materiales y Medicamentos</span>
           <div class="dropdown">
             <h4>Listas de Materiales y Medicamentos</h4>
             <ul class="dropdown-list">
-              <li onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía')" style="cursor:pointer">📄 Apendicectomía</li>
-              <li onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía')" style="cursor:pointer">📄 Colecistectomía</li>
-              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_general_2026.pdf', 'Ambulatorio - Anestesia General')" style="cursor:pointer">📄 Ambulatorio - Anestesia General</li>
-              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_regional_2026.pdf', 'Ambulatorio - Anestesia Regional')" style="cursor:pointer">📄 Ambulatorio - Anestesia Regional</li>
-              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_sedacion_2026.pdf', 'Ambulatorio - Sedación')" style="cursor:pointer">📄 Ambulatorio - Sedación</li>
-              <li onclick="solicitarPassword('pdfs/lista_cirugia_laparoscopica_2026.pdf', 'Cirugía Laparoscópica')" style="cursor:pointer">📄 Cirugía Laparoscópica</li>
-              <li onclick="solicitarPassword('pdfs/lista_hospitalizacion_2026.pdf', 'Hospitalización')" style="cursor:pointer">📄 Hospitalización</li>
-              <li onclick="solicitarPassword('pdfs/lista_paquete_cirugia_menor.pdf', 'Paquete Cirugía Menor')" style="cursor:pointer">📄 Paquete Cirugía Menor</li>
-              <li onclick="solicitarPassword('pdfs/lista_procedimiento_ambulatorio_2026.pdf', 'Procedimiento Ambulatorio')" style="cursor:pointer">📄 Procedimiento Ambulatorio</li>
+              <li onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía', 'noor-apen-2026')" style="cursor:pointer">📄 Apendicectomía</li>
+              <li onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía', 'noor-cole-2026')" style="cursor:pointer">📄 Colecistectomía</li>
+              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_general_2026.pdf', 'Ambulatorio - Anestesia General', 'noor-ambag-2026')" style="cursor:pointer">📄 Ambulatorio - Anestesia General</li>
+              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_regional_2026.pdf', 'Ambulatorio - Anestesia Regional', 'noor-ambar-2026')" style="cursor:pointer">📄 Ambulatorio - Anestesia Regional</li>
+              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_sedacion_2026.pdf', 'Ambulatorio - Sedación', 'noor-ambse-2026')" style="cursor:pointer">📄 Ambulatorio - Sedación</li>
+              <li onclick="solicitarPassword('pdfs/lista_cirugia_laparoscopica_2026.pdf', 'Cirugía Laparoscópica', 'noor-laparo-2026')" style="cursor:pointer">📄 Cirugía Laparoscópica</li>
+              <li onclick="solicitarPassword('pdfs/lista_hospitalizacion_2026.pdf', 'Lista con Hospitalización - Primer Día', 'noor-hosp1d-2026')" style="cursor:pointer">📄 Lista con Hospitalización - Primer Día</li>
+              <li onclick="solicitarPassword('pdfs/lista_paquete_cirugia_menor.pdf', 'Lista Cirugía Menor', 'noor-cirmen-2026')" style="cursor:pointer">📄 Lista Cirugía Menor</li>
+              <li onclick="solicitarPassword('pdfs/lista_procedimiento_ambulatorio_2026.pdf', 'Procedimiento Ambulatorio', 'noor-procamb-2026')" style="cursor:pointer">📄 Procedimiento Ambulatorio</li>
             </ul>
           </div>
         </div>
@@ -724,17 +724,17 @@ footer strong{color:var(--azul-noor)}
       </div>
 
       <div class="mobile-nav-item">
-        <span class="mobile-nav-link" onclick="toggleDropdown('listasMobile')">📋 Listas de Materiales ▼</span>
+        <span class="mobile-nav-link" onclick="toggleDropdown('listasMobile')">📋 Listas de Materiales y Medicamentos ▼</span>
         <div class="mobile-dropdown" id="listasMobile">
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía')">📄 Apendicectomía</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía')">📄 Colecistectomía</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_general_2026.pdf', 'Ambulatorio - Anestesia General')">📄 Ambulatorio - Anestesia General</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_regional_2026.pdf', 'Ambulatorio - Anestesia Regional')">📄 Ambulatorio - Anestesia Regional</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_sedacion_2026.pdf', 'Ambulatorio - Sedación')">📄 Ambulatorio - Sedación</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_cirugia_laparoscopica_2026.pdf', 'Cirugía Laparoscópica')">📄 Cirugía Laparoscópica</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_hospitalizacion_2026.pdf', 'Hospitalización')">📄 Hospitalización</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_paquete_cirugia_menor.pdf', 'Paquete Cirugía Menor')">📄 Paquete Cirugía Menor</div>
-          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_procedimiento_ambulatorio_2026.pdf', 'Procedimiento Ambulatorio')">📄 Procedimiento Ambulatorio</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía', 'noor-apen-2026')">📄 Apendicectomía</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía', 'noor-cole-2026')">📄 Colecistectomía</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_general_2026.pdf', 'Ambulatorio - Anestesia General', 'noor-ambag-2026')">📄 Ambulatorio - Anestesia General</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_regional_2026.pdf', 'Ambulatorio - Anestesia Regional', 'noor-ambar-2026')">📄 Ambulatorio - Anestesia Regional</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_sedacion_2026.pdf', 'Ambulatorio - Sedación', 'noor-ambse-2026')">📄 Ambulatorio - Sedación</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_cirugia_laparoscopica_2026.pdf', 'Cirugía Laparoscópica', 'noor-laparo-2026')">📄 Cirugía Laparoscópica</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_hospitalizacion_2026.pdf', 'Lista con Hospitalización - Primer Día', 'noor-hosp1d-2026')">📄 Lista con Hospitalización - Primer Día</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_paquete_cirugia_menor.pdf', 'Lista Cirugía Menor', 'noor-cirmen-2026')">📄 Lista Cirugía Menor</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_procedimiento_ambulatorio_2026.pdf', 'Procedimiento Ambulatorio', 'noor-procamb-2026')">📄 Procedimiento Ambulatorio</div>
         </div>
       </div>
 
@@ -813,7 +813,7 @@ footer strong{color:var(--azul-noor)}
             <strong>No incluye:</strong> Honorarios médicos · Patología<br>
             <strong>No aplica:</strong> Aseguradoras
           </p>
-          <button class="btn-download-list" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía')">
+          <button class="btn-download-list" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía', 'noor-apen-2026')">
             <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
             Descargar Lista de Materiales y Medicamentos
           </button>
@@ -841,7 +841,7 @@ footer strong{color:var(--azul-noor)}
             <strong>No incluye:</strong> Patología · Honorarios médicos<br>
             <strong>No aplica:</strong> Aseguradoras
           </p>
-          <button class="btn-download-list" onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía')">
+          <button class="btn-download-list" onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía', 'noor-cole-2026')">
             <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
             Descargar Lista de Materiales y Medicamentos
           </button>
@@ -849,6 +849,30 @@ footer strong{color:var(--azul-noor)}
             <span class="promo-validity">📅 Disponible</span>
             <a href="https://wa.me/5215576576669?text=Hola%2C%20solicito%20información%20y%20lista%20de%20materiales%20del%20paquete%20de%20Colecistectomía%20por%20Laparoscopía" class="promo-cta" target="_blank">
               <span>Solicitar Info y Lista</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admisión Temprana -->
+      <div class="promo-card">
+        <div class="promo-content" style="background:linear-gradient(135deg, #2d5aa0 0%, #1a3d7a 100%); color:#fff; padding:32px; min-height:100%">
+          <span class="promo-badge" style="background:rgba(255,255,255,.2); color:#fff">🌙 Beneficio Especial</span>
+          <h3 class="promo-title" style="color:#fff">Admisión Temprana</h3>
+          <p class="promo-desc" style="color:rgba(255,255,255,.95); font-size:.85rem; line-height:1.7">
+            El médico cirujano puede elegir este beneficio para que sus pacientes se hospitalicen 
+            un día antes <strong>sin costo</strong> en un horario de <strong>7:00 PM a 8:00 PM</strong>, 
+            siempre cuando la cirugía esté programada al siguiente día de <strong>7:00 AM a 9:00 AM</strong>.
+          </p>
+          <p class="promo-desc" style="color:rgba(255,255,255,.9); font-size:.82rem; margin-top:12px; line-height:1.6">
+            Este beneficio aplica para cualquier día y esta noche de admisión temprana es 
+            <strong>sin costo para el paciente</strong>.
+          </p>
+          <div class="promo-footer" style="border-top:1px solid rgba(255,255,255,.3); margin-top:16px">
+            <span class="promo-validity" style="color:rgba(255,255,255,.9)">📅 Disponible</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20quiero%20información%20sobre%20el%20beneficio%20de%20Admisión%20Temprana" class="promo-cta" style="background:#fff; color:#1a3d7a" target="_blank">
+              <span>Más Información</span>
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
             </a>
           </div>
@@ -903,7 +927,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.5 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.6 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -989,7 +1013,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.1.5</strong>
+      <strong>v1.1.6</strong>
     </div>
   </div>
 </header>
@@ -1235,7 +1259,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.5<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.6<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
@@ -1517,13 +1541,14 @@ function mostrarExito(folio, links) {
 // ══════════════════════════════════════════════════════
 //  SISTEMA DE DESCARGA CON CONTRASEÑA
 // ══════════════════════════════════════════════════════
-const PASSWORD_CORRECTA = 'lmmnoor2026';
 let archivoActual = '';
 let nombreActual = '';
+let passwordCorrecta = '';
 
-function solicitarPassword(archivo, nombre) {
+function solicitarPassword(archivo, nombre, password) {
   archivoActual = archivo;
   nombreActual = nombre;
+  passwordCorrecta = password;
   document.getElementById('passwordModal').classList.add('active');
   document.getElementById('passwordInput').value = '';
   document.getElementById('passwordError').classList.remove('show');
@@ -1534,13 +1559,14 @@ function cerrarModal() {
   document.getElementById('passwordModal').classList.remove('active');
   archivoActual = '';
   nombreActual = '';
+  passwordCorrecta = '';
 }
 
 function verificarYDescargar() {
   const password = document.getElementById('passwordInput').value;
   const errorDiv = document.getElementById('passwordError');
   
-  if (password === PASSWORD_CORRECTA) {
+  if (password === passwordCorrecta) {
     // Contraseña correcta - descargar archivo
     const link = document.createElement('a');
     link.href = archivoActual;
