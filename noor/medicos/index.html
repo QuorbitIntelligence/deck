@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.1.4</title>
+<title>Portal Médicos — Hospital Noor | v1.1.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -354,6 +354,95 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
   background:var(--azul-c); color:#fff;
 }
 
+/* Botón descargar lista */
+.btn-download-list {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--azul-noor); color:#fff;
+  padding:10px 20px; border-radius:8px; font-size:.8rem;
+  font-weight:600; border:none; cursor:pointer;
+  transition:all .2s; margin-top:12px; width:100%;
+  justify-content:center;
+}
+.btn-download-list:hover {
+  background:var(--azul-m); transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(10,45,110,.3);
+}
+.btn-download-list svg {width:16px; height:16px; fill:currentColor}
+
+/* Modal de contraseña */
+.password-modal {
+  display:none; position:fixed; inset:0; z-index:10000;
+  background:rgba(10,45,110,.7); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;
+}
+.password-modal.active {display:flex}
+.password-modal-content {
+  background:#fff; border-radius:16px;
+  box-shadow:0 12px 48px rgba(10,45,110,.3);
+  max-width:420px; width:90%; padding:32px;
+  animation:modalIn .3s ease;
+}
+@keyframes modalIn {
+  from {opacity:0; transform:scale(.9) translateY(-20px)}
+  to {opacity:1; transform:scale(1) translateY(0)}
+}
+.password-modal-header {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:16px;
+}
+.password-modal-icon {
+  width:48px; height:48px; border-radius:12px;
+  background:var(--azul-suave); display:flex;
+  align-items:center; justify-content:center;
+  font-size:1.5rem;
+}
+.password-modal-title {
+  font-size:1.2rem; font-weight:600; color:var(--azul-noor);
+}
+.password-modal-desc {
+  font-size:.85rem; color:var(--gris);
+  line-height:1.6; margin-bottom:20px;
+}
+.password-input-wrap {
+  position:relative; margin-bottom:20px;
+}
+.password-input {
+  width:100%; padding:12px 16px;
+  border:2px solid var(--borde); border-radius:8px;
+  font-size:.9rem; font-family:'DM Sans',sans-serif;
+  outline:none; transition:all .2s;
+}
+.password-input:focus {
+  border-color:var(--azul-c);
+  box-shadow:0 0 0 3px rgba(45,125,210,.1);
+}
+.password-error {
+  display:none; color:var(--error);
+  font-size:.75rem; margin-top:6px;
+}
+.password-error.show {display:block}
+.password-modal-footer {
+  display:flex; gap:12px; justify-content:flex-end;
+}
+.btn-modal {
+  padding:10px 24px; border-radius:8px;
+  font-size:.85rem; font-weight:600;
+  border:none; cursor:pointer; transition:all .2s;
+}
+.btn-modal-cancel {
+  background:var(--hielo); color:var(--gris);
+}
+.btn-modal-cancel:hover {
+  background:var(--borde);
+}
+.btn-modal-download {
+  background:var(--azul-noor); color:#fff;
+}
+.btn-modal-download:hover {
+  background:var(--azul-m);
+  box-shadow:0 4px 12px rgba(10,45,110,.3);
+}
+
 @media(max-width:768px) {
   .home-header {padding:16px 20px}
   .home-logo img {height:48px}
@@ -554,6 +643,24 @@ footer strong{color:var(--azul-noor)}
           </div>
         </div>
 
+        <div class="nav-item">
+          <span class="nav-link">Listas de Materiales</span>
+          <div class="dropdown">
+            <h4>Listas de Materiales y Medicamentos</h4>
+            <ul class="dropdown-list">
+              <li onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía')" style="cursor:pointer">📄 Apendicectomía</li>
+              <li onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía')" style="cursor:pointer">📄 Colecistectomía</li>
+              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_general_2026.pdf', 'Ambulatorio - Anestesia General')" style="cursor:pointer">📄 Ambulatorio - Anestesia General</li>
+              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_regional_2026.pdf', 'Ambulatorio - Anestesia Regional')" style="cursor:pointer">📄 Ambulatorio - Anestesia Regional</li>
+              <li onclick="solicitarPassword('pdfs/lista_ambulatorio_sedacion_2026.pdf', 'Ambulatorio - Sedación')" style="cursor:pointer">📄 Ambulatorio - Sedación</li>
+              <li onclick="solicitarPassword('pdfs/lista_cirugia_laparoscopica_2026.pdf', 'Cirugía Laparoscópica')" style="cursor:pointer">📄 Cirugía Laparoscópica</li>
+              <li onclick="solicitarPassword('pdfs/lista_hospitalizacion_2026.pdf', 'Hospitalización')" style="cursor:pointer">📄 Hospitalización</li>
+              <li onclick="solicitarPassword('pdfs/lista_paquete_cirugia_menor.pdf', 'Paquete Cirugía Menor')" style="cursor:pointer">📄 Paquete Cirugía Menor</li>
+              <li onclick="solicitarPassword('pdfs/lista_procedimiento_ambulatorio_2026.pdf', 'Procedimiento Ambulatorio')" style="cursor:pointer">📄 Procedimiento Ambulatorio</li>
+            </ul>
+          </div>
+        </div>
+
         <a href="javascript:void(0)" onclick="mostrarFormulario()" class="nav-link">Credencialización</a>
         
         <!-- Contactos programación -->
@@ -613,6 +720,21 @@ footer strong{color:var(--azul-noor)}
           <div class="mobile-dropdown-item">🚑 Terapia Intensiva</div>
           <div class="mobile-dropdown-item">⚠️ Urgencias</div>
           <div class="mobile-dropdown-item">🏨 Hospitalización</div>
+        </div>
+      </div>
+
+      <div class="mobile-nav-item">
+        <span class="mobile-nav-link" onclick="toggleDropdown('listasMobile')">📋 Listas de Materiales ▼</span>
+        <div class="mobile-dropdown" id="listasMobile">
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía')">📄 Apendicectomía</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía')">📄 Colecistectomía</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_general_2026.pdf', 'Ambulatorio - Anestesia General')">📄 Ambulatorio - Anestesia General</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_anestesia_regional_2026.pdf', 'Ambulatorio - Anestesia Regional')">📄 Ambulatorio - Anestesia Regional</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_ambulatorio_sedacion_2026.pdf', 'Ambulatorio - Sedación')">📄 Ambulatorio - Sedación</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_cirugia_laparoscopica_2026.pdf', 'Cirugía Laparoscópica')">📄 Cirugía Laparoscópica</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_hospitalizacion_2026.pdf', 'Hospitalización')">📄 Hospitalización</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_paquete_cirugia_menor.pdf', 'Paquete Cirugía Menor')">📄 Paquete Cirugía Menor</div>
+          <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_procedimiento_ambulatorio_2026.pdf', 'Procedimiento Ambulatorio')">📄 Procedimiento Ambulatorio</div>
         </div>
       </div>
 
@@ -691,6 +813,10 @@ footer strong{color:var(--azul-noor)}
             <strong>No incluye:</strong> Honorarios médicos · Patología<br>
             <strong>No aplica:</strong> Aseguradoras
           </p>
+          <button class="btn-download-list" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía')">
+            <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+            Descargar Lista de Materiales y Medicamentos
+          </button>
           <div class="promo-footer">
             <span class="promo-validity">📅 Vigente hasta 30 Jun 2026</span>
             <a href="https://wa.me/5215576576669?text=Hola%2C%20solicito%20información%20y%20lista%20de%20materiales%20del%20paquete%20de%20Apendicectomía%20por%20Laparoscopía" class="promo-cta" target="_blank">
@@ -715,6 +841,10 @@ footer strong{color:var(--azul-noor)}
             <strong>No incluye:</strong> Patología · Honorarios médicos<br>
             <strong>No aplica:</strong> Aseguradoras
           </p>
+          <button class="btn-download-list" onclick="solicitarPassword('pdfs/Lista_colecistectomia_2026.pdf', 'Colecistectomía')">
+            <svg viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+            Descargar Lista de Materiales y Medicamentos
+          </button>
           <div class="promo-footer">
             <span class="promo-validity">📅 Disponible</span>
             <a href="https://wa.me/5215576576669?text=Hola%2C%20solicito%20información%20y%20lista%20de%20materiales%20del%20paquete%20de%20Colecistectomía%20por%20Laparoscopía" class="promo-cta" target="_blank">
@@ -773,7 +903,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.4 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.5 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -859,7 +989,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.1.4</strong>
+      <strong>v1.1.5</strong>
     </div>
   </div>
 </header>
@@ -1105,7 +1235,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.4<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.5<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
@@ -1383,6 +1513,92 @@ function mostrarExito(folio, links) {
   document.querySelectorAll('.s-tab').forEach(t => t.classList.add('done'));
   window.scrollTo({ top:0, behavior:'smooth' });
 }
+
+// ══════════════════════════════════════════════════════
+//  SISTEMA DE DESCARGA CON CONTRASEÑA
+// ══════════════════════════════════════════════════════
+const PASSWORD_CORRECTA = 'lmmnoor2026';
+let archivoActual = '';
+let nombreActual = '';
+
+function solicitarPassword(archivo, nombre) {
+  archivoActual = archivo;
+  nombreActual = nombre;
+  document.getElementById('passwordModal').classList.add('active');
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').classList.remove('show');
+  document.getElementById('passwordInput').focus();
+}
+
+function cerrarModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+  archivoActual = '';
+  nombreActual = '';
+}
+
+function verificarYDescargar() {
+  const password = document.getElementById('passwordInput').value;
+  const errorDiv = document.getElementById('passwordError');
+  
+  if (password === PASSWORD_CORRECTA) {
+    // Contraseña correcta - descargar archivo
+    const link = document.createElement('a');
+    link.href = archivoActual;
+    link.download = archivoActual.split('/').pop();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    cerrarModal();
+  } else {
+    // Contraseña incorrecta
+    errorDiv.textContent = 'Contraseña incorrecta. Solicita acceso al hospital.';
+    errorDiv.classList.add('show');
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
+  }
+}
+
+// Permitir Enter para descargar
+document.addEventListener('DOMContentLoaded', function() {
+  const passwordInput = document.getElementById('passwordInput');
+  if (passwordInput) {
+    passwordInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        verificarYDescargar();
+      }
+    });
+  }
+});
 </script>
+
+<!-- Modal de Contraseña -->
+<div class="password-modal" id="passwordModal">
+  <div class="password-modal-content">
+    <div class="password-modal-header">
+      <div class="password-modal-icon">🔒</div>
+      <div>
+        <div class="password-modal-title">Acceso Restringido</div>
+      </div>
+    </div>
+    <p class="password-modal-desc">
+      Ingresa la contraseña para descargar la lista de materiales y medicamentos
+    </p>
+    <div class="password-input-wrap">
+      <input 
+        type="password" 
+        id="passwordInput" 
+        class="password-input" 
+        placeholder="Contraseña"
+        autocomplete="off"
+      >
+      <div class="password-error" id="passwordError"></div>
+    </div>
+    <div class="password-modal-footer">
+      <button class="btn-modal btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-modal btn-modal-download" onclick="verificarYDescargar()">Descargar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
