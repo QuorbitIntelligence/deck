@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.1.6</title>
+<title>Portal Médicos — Hospital Noor | v1.1.7</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -43,17 +43,21 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
 }
 .nav-link:hover {color:var(--azul-c)}
 .dropdown {
-  position:absolute; top:100%; left:0; margin-top:8px;
+  position:absolute; top:100%; left:0; margin-top:0px;
   background:#fff; border:2px solid var(--borde);
   border-radius:12px; box-shadow:0 8px 24px rgba(10,45,110,.15);
   min-width:280px; padding:16px; display:none; z-index:101;
 }
-.nav-item:hover .dropdown {display:block}
+.nav-item:hover .dropdown,
+.dropdown:hover {display:block}
 .dropdown h4 {
   font-size:.75rem; font-weight:700; text-transform:uppercase;
   color:var(--gris); margin-bottom:12px; letter-spacing:.5px;
 }
-.dropdown-list {list-style:none; padding:0; margin:0}
+.dropdown-list {
+  list-style:none; padding:0; margin:0;
+  max-height:400px; overflow-y:auto;
+}
 .dropdown-list li {
   padding:8px 12px; border-radius:6px;
   font-size:.85rem; color:var(--texto); transition:all .2s;
@@ -443,7 +447,7 @@ body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--tex
   box-shadow:0 4px 12px rgba(10,45,110,.3);
 }
 
-@media(max-width:768px) {
+@media(max-width:1024px) {
   .home-header {padding:16px 20px}
   .home-logo img {height:48px}
   .home-nav {display:none}
@@ -927,7 +931,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.6 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.7 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1013,7 +1017,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.1.6</strong>
+      <strong>v1.1.7</strong>
     </div>
   </div>
 </header>
@@ -1259,7 +1263,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.6<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.7<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
