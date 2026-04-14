@@ -1,1 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equipo de Terapia Intensiva — Hospital Noor</title>
+<style>
+:root {
+  --azul-noor: #0a2d6e;
+  --azul-c: #1a3d7a;
+  --azul-suave: #e8f0f7;
+  --dorado: #d4af37;
+  --texto: #333;
+  --gris: #666;
+  --borde: #e0e0e0;
+}
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto);
+  line-height: 1.6;
+  background: #fafafa;
+}
+
+/* Header */
+.header {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 20px 40px;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo img {
+  height: 60px;
+}
+
+.back-link {
+  background: var(--azul-noor);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.back-link:hover {
+  background: var(--azul-c);
+  transform: translateY(-2px);
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, var(--azul-noor) 0%, var(--azul-c) 100%);
+  color: white;
+  padding: 80px 40px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  font-weight: 800;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  opacity: 0.95;
+  line-height: 1.8;
+}
+
+/* Main Content */
+.container {
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 40px;
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.intro h2 {
+  font-size: 2rem;
+  color: var(--azul-noor);
+  margin-bottom: 16px;
+}
+
+.intro p {
+  font-size: 1.1rem;
+  color: var(--gris);
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+/* Doctor Cards */
+.doctors-grid {
+  display: grid;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.doctor-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  transition: all 0.3s;
+}
+
+.doctor-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+}
+
+.doctor-photo {
+  background: var(--azul-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.doctor-photo img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.doctor-info {
+  padding: 40px;
+}
+
+.doctor-name {
+  font-size: 1.8rem;
+  color: var(--azul-noor);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.doctor-specialty {
+  font-size: 1.1rem;
+  color: var(--dorado);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.doctor-description {
+  font-size: 1rem;
+  color: var(--texto);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.doctor-highlights {
+  margin-top: 20px;
+}
+
+.doctor-highlights h4 {
+  font-size: 0.9rem;
+  color: var(--azul-noor);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.doctor-highlights ul {
+  list-style: none;
+  padding: 0;
+}
+
+.doctor-highlights li {
+  padding: 6px 0;
+  font-size: 0.95rem;
+  color: var(--gris);
+  padding-left: 24px;
+  position: relative;
+}
+
+.doctor-highlights li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--dorado);
+  font-weight: 700;
+}
+
+/* Footer */
+.footer {
+  background: var(--azul-noor);
+  color: white;
+  text-align: center;
+  padding: 30px;
+  margin-top: 80px;
+}
+
+.footer p {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media(max-width: 768px) {
+  .header {
+    padding: 16px 20px;
+  }
+  
+  .logo img {
+    height: 48px;
+  }
+  
+  .hero {
+    padding: 60px 20px;
+  }
+  
+  .hero h1 {
+    font-size: 2rem;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+  }
+  
+  .container {
+    padding: 0 20px;
+    margin: 40px auto;
+  }
+  
+  .intro h2 {
+    font-size: 1.6rem;
+  }
+  
+  .doctor-card {
+    grid-template-columns: 1fr;
+  }
+  
+  .doctor-photo {
+    padding: 30px;
+  }
+  
+  .doctor-photo img {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .doctor-info {
+    padding: 30px 20px;
+  }
+  
+  .doctor-name {
+    font-size: 1.5rem;
+  }
+  
+  .doctor-specialty {
+    font-size: 1rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-content">
+    <div class="logo">
+      <img src="images/Logo_Hospital_Noor.jpg" alt="Hospital Noor">
+    </div>
+    <a href="index.html" class="back-link">← Volver al Portal</a>
+  </div>
+</div>
+
+<!-- Hero Section -->
+<div class="hero">
+  <h1>Equipo de Terapia Intensiva</h1>
+  <p>
+    Nuestro equipo de especialistas en medicina crítica cuenta con la más alta formación 
+    académica y experiencia clínica en el manejo integral del paciente en estado crítico. 
+    Certificados, comprometidos y en constante actualización para brindar la mejor atención.
+  </p>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+  
+  <div class="intro">
+    <h2>Especialistas Certificados en Medicina Crítica</h2>
+    <p>
+      Cada miembro de nuestro equipo de terapia intensiva es un profesional altamente calificado, 
+      con certificaciones vigentes y participación activa en docencia e investigación.
+    </p>
+  </div>
+
+  <!-- Doctors Grid -->
+  <div class="doctors-grid">
+    
+    <!-- Dr. José Gamaliel Velazco González -->
+    <div class="doctor-card">
+      <div class="doctor-photo">
+        <img src="images/foto-velazco.png" alt="Dr. José Gamaliel Velazco González">
+      </div>
+      <div class="doctor-info">
+        <h2 class="doctor-name">Dr. José Gamaliel Velazco González</h2>
+        <div class="doctor-specialty">Anestesiólogo Intensivista</div>
+        <p class="doctor-description">
+          Anestesiólogo intensivista y académico de la Universidad Nacional Autónoma de México. 
+          Proporciona atención médica de alta calidad a pacientes críticos, combinando conocimientos 
+          actualizados con habilidades técnicas avanzadas. Utiliza herramientas como la monitorización 
+          hemodinámica, la ventilación mecánica y el manejo del dolor para garantizar el bienestar de 
+          los pacientes durante procedimientos quirúrgicos y en la unidad de cuidados intensivos.
+        </p>
+        <div class="doctor-highlights">
+          <h4>Especialidades y Certificaciones</h4>
+          <ul>
+            <li>Especialista en Anestesiología (UAEMex)</li>
+            <li>Especialista en Medicina del Enfermo Adulto en Estado Crítico (UNAM)</li>
+            <li>Terapia Intensiva Neurológica (INNN)</li>
+            <li>Certificado en Medicina Crítica (2022-2027)</li>
+            <li>Profesor Asociado de Medicina Crítica - Hospital Ángeles Lomas</li>
+            <li>Coordinador del Centro de Innovación Educativa Lomas</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dra. Ariadna Hernández Luna -->
+    <div class="doctor-card">
+      <div class="doctor-photo">
+        <img src="images/foto-hernandez.jpeg" alt="Dra. Ariadna Hernández Luna">
+      </div>
+      <div class="doctor-info">
+        <h2 class="doctor-name">Dra. Ariadna Hernández Luna</h2>
+        <div class="doctor-specialty">Médica Intensivista y Neurocrítica</div>
+        <p class="doctor-description">
+          Médica intensivista con más de 20 años de experiencia clínica, académica y docente en 
+          unidades de cuidados intensivos de alta complejidad. Especialista en el manejo integral 
+          del paciente crítico y neurocrítico, con experiencia avanzada en sepsis, ventilación 
+          mecánica, monitoreo neurológico multimodal y soporte hemodinámico. Profesora de posgrado 
+          avalada por la UNAM con amplia trayectoria en formación de recursos humanos.
+        </p>
+        <div class="doctor-highlights">
+          <h4>Especialidades y Certificaciones</h4>
+          <ul>
+            <li>Medicina Interna (UAEMex)</li>
+            <li>Medicina del Enfermo en Estado Crítico (UNAM, Certificación vigente 2024-2029)</li>
+            <li>Terapia Intensiva Neurológica (INNN)</li>
+            <li>Profesora Titular de Medicina Crítica - Hospital Regional 251 IMSS</li>
+            <li>Faculty y Directora AHA - ACLS, BLS, FCCS</li>
+            <li>Múltiples publicaciones científicas en medicina crítica y neurocríticos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dr. Erick Vidal Andrade -->
+    <div class="doctor-card">
+      <div class="doctor-photo">
+        <img src="images/foto-vidal.png" alt="Dr. Erick Vidal Andrade">
+      </div>
+      <div class="doctor-info">
+        <h2 class="doctor-name">Dr. Erick Vidal Andrade</h2>
+        <div class="doctor-specialty">Especialista en Medicina Crítica</div>
+        <p class="doctor-description">
+          Especialista en Medicina Crítica con formación troncal de Medicina Interna y más de 20 años 
+          de actividad asistencial, académica y de investigación clínica en unidades de Terapia Intensiva 
+          polivalentes. Tiene particular experiencia en soporte cardiopulmonar/renal, ecocardiografía y 
+          ultrasonografía del enfermo grave, coagulación, traqueostomía percutánea e investigación.
+        </p>
+        <div class="doctor-highlights">
+          <h4>Especialidades y Certificaciones</h4>
+          <ul>
+            <li>Medicina Interna (UNAM)</li>
+            <li>Medicina Crítica (UNAM, Re-certificado 2025-2030)</li>
+            <li>Diplomado en Ecocardiografía del Enfermo Crítico (UAEMex)</li>
+            <li>Diplomado en Soporte de Vida Extracorpórea - ECMO (UDEM)</li>
+            <li>Instructor certificado AHA (ACLS, BLS, ACLS-P) y FCCS</li>
+            <li>Miembro del equipo de ECMO Hospital Ángeles Lomas</li>
+            <li>Profesor Colaborador Académico UNAM</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <p>
+    <strong>Hospital Noor</strong> · Equipo de Terapia Intensiva · 2025<br>
+    Atención médica de excelencia con los más altos estándares de calidad
+  </p>
+</div>
+
+</body>
+</html>
