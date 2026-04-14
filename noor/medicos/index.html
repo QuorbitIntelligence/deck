@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.1.8</title>
+<title>Portal Médicos — Hospital Noor | v1.1.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -664,6 +664,8 @@ footer strong{color:var(--azul-noor)}
           </div>
         </div>
 
+        <a href="terapia-intensiva.html" class="nav-link">Equipo de Terapia Intensiva</a>
+
         <div class="nav-item">
           <span class="nav-link">Listas de Materiales y Medicamentos</span>
           <div class="dropdown">
@@ -745,6 +747,10 @@ footer strong{color:var(--azul-noor)}
       </div>
 
       <div class="mobile-nav-item">
+        <a href="terapia-intensiva.html" class="mobile-nav-link">👨‍⚕️ Equipo de Terapia Intensiva</a>
+      </div>
+
+      <div class="mobile-nav-item">
         <span class="mobile-nav-link" onclick="toggleDropdown('listasMobile')">📋 Listas de Materiales y Medicamentos ▼</span>
         <div class="mobile-dropdown" id="listasMobile">
           <div class="mobile-dropdown-item" onclick="solicitarPassword('pdfs/lista_apendicectomia_2026.pdf', 'Apendicectomía', 'noor-apen-2026')">📄 Apendicectomía</div>
@@ -792,6 +798,35 @@ footer strong{color:var(--azul-noor)}
     
     <!-- Promociones -->
     <div class="cards-grid">
+      <!-- Programa de Fidelización - EN CONSTRUCCIÓN -->
+      <div class="promo-card" style="border: 3px solid #d4af37; grid-column: 1 / -1;">
+        <div class="promo-content" style="background: linear-gradient(135deg, #f8f4e6 0%, #fff9e6 100%); padding: 40px; text-align: center; position: relative;">
+          <div style="position: absolute; top: 20px; right: 20px; background: #d4af37; color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Próximamente
+          </div>
+          <span class="promo-badge" style="background: linear-gradient(135deg, #d4af37, #f4c542); color: #1a3d7a; font-size: 1rem; padding: 12px 24px; display: inline-block; margin-bottom: 16px;">
+            ⭐ Programa Especial
+          </span>
+          <h2 style="font-size: 2rem; color: #1a3d7a; margin: 16px 0; font-weight: 800;">
+            Programa de Fidelización de Médicos
+          </h2>
+          <p style="font-size: 1.1rem; color: #444; max-width: 700px; margin: 16px auto; line-height: 1.8;">
+            Estamos desarrollando un <strong>programa exclusivo de beneficios acumulables</strong> para médicos 
+            que programan y ejecutan cirugías en Hospital Noor. Sistema de puntaje, recompensas y ventajas 
+            especiales diseñadas para crear una relación de largo plazo.
+          </p>
+          <div style="margin-top: 24px; padding: 20px; background: rgba(212, 175, 55, 0.1); border-radius: 12px; display: inline-block;">
+            <p style="font-size: 0.95rem; color: #666; margin: 0;">
+              📅 <strong>Vigencia:</strong> Hasta el 31 de diciembre de 2027<br>
+              🎯 <strong>Objetivo:</strong> Crear pertenencia del médico hacia Hospital Noor
+            </p>
+          </div>
+          <div style="margin-top: 20px; font-size: 0.85rem; color: #888; font-style: italic;">
+            Información detallada disponible muy pronto
+          </div>
+        </div>
+      </div>
+
       <!-- Beneficio Exclusivo -->
       <div class="promo-card">
         <div class="promo-content" style="background:linear-gradient(135deg, var(--dorado) 0%, var(--dorado-d) 100%); color:#fff; padding:32px; min-height:100%">
@@ -977,7 +1012,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.8 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.9 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1063,7 +1098,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.1.8</strong>
+      <strong>v1.1.9</strong>
     </div>
   </div>
 </header>
@@ -1309,7 +1344,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.8<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.9<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
@@ -1345,6 +1380,73 @@ function toggleDropdown(id) {
   const dropdown = document.getElementById(id);
   dropdown.classList.toggle('active');
 }
+
+// ══════════════════════════════════════════════════════
+//  MANEJO DE TOUCH PARA SAFARI/TABLETS
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  // Detectar si es dispositivo táctil
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  if (isTouchDevice) {
+    // Agregar comportamiento de click para dispositivos táctiles
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+      const navLink = item.querySelector('.nav-link');
+      const dropdown = item.querySelector('.dropdown');
+      
+      if (navLink && dropdown) {
+        // Prevenir comportamiento hover en touch devices
+        item.addEventListener('touchstart', function(e) {
+          // Cerrar otros dropdowns abiertos
+          navItems.forEach(otherItem => {
+            if (otherItem !== item) {
+              const otherDropdown = otherItem.querySelector('.dropdown');
+              if (otherDropdown) {
+                otherDropdown.style.display = 'none';
+              }
+            }
+          });
+          
+          // Toggle dropdown actual
+          if (dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+          } else {
+            dropdown.style.display = 'block';
+          }
+          
+          e.preventDefault();
+        }, { passive: false });
+        
+        // Click en items del dropdown
+        navLink.addEventListener('click', function(e) {
+          if (isTouchDevice) {
+            e.preventDefault();
+            // Toggle dropdown
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+          }
+        });
+      }
+    });
+    
+    // Cerrar dropdowns al tocar fuera
+    document.addEventListener('touchstart', function(e) {
+      const isNavItem = e.target.closest('.nav-item');
+      const isDropdown = e.target.closest('.dropdown');
+      
+      if (!isNavItem && !isDropdown) {
+        navItems.forEach(item => {
+          const dropdown = item.querySelector('.dropdown');
+          if (dropdown) {
+            dropdown.style.display = 'none';
+          }
+        });
+      }
+    });
+  }
+});
 
 // ══════════════════════════════════════════════════════
 //  FORMULARIO DE CREDENCIALIZACIÓN
