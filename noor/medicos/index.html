@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.1.9</title>
+<title>Portal Médicos — Hospital Noor | v1.2.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1005,6 +1005,42 @@ footer strong{color:var(--azul-noor)}
           Iniciar Registro
         </button>
       </div>
+
+      <!-- Primera Cirugía - 2 Horas Sin Costo -->
+      <div class="promo-card">
+        <img src="images/primera-cirugia-2hrs.jpg" alt="Primera Cirugía - 2 Horas Sin Costo" class="promo-img">
+        <div class="promo-content">
+          <span class="promo-badge">🎁 Beneficio Extraordinario</span>
+          <h3 class="promo-title">Primera Cirugía - 2 Horas Sin Costo</h3>
+          <p class="promo-desc">
+            <strong>Médicos que programen cirugía por primera vez</strong> en Hospital Noor reciben 
+            <strong>2 horas de tiempo quirúrgico sin costo</strong> en su primera programación.
+          </p>
+          <p class="promo-desc" style="font-size:.85rem; margin-top:12px">
+            Este beneficio extraordinario es para <strong>el paciente</strong>, facilitando el acceso 
+            a procedimientos quirúrgicos de calidad.
+          </p>
+          <div class="promo-disclaimer">
+            <strong>Requisitos:</strong>
+            <ul style="margin:8px 0 0 20px; font-size:.82rem; line-height:1.6">
+              <li>Médico debe estar debidamente <strong>credencializado</strong></li>
+              <li>Solicitar <strong>cotización o presupuesto membretado</strong></li>
+              <li>Recibir lista y especificaciones del procedimiento programado</li>
+              <li>Contactar al <strong>55 7657 6669</strong> para solicitar el beneficio</li>
+            </ul>
+            <p style="margin-top:8px; font-size:.75rem; font-style:italic">
+              * Aplican restricciones. Válido solo para primera cirugía programada.
+            </p>
+          </div>
+          <div class="promo-footer">
+            <span class="promo-validity">🎯 Beneficio para Nuevos Médicos</span>
+            <a href="https://wa.me/5215576576669?text=Hola%2C%20soy%20médico%20y%20quiero%20información%20sobre%20el%20beneficio%20de%202%20horas%20sin%20costo%20en%20mi%20primera%20cirugía" class="promo-cta" target="_blank">
+              <span>Solicitar Beneficio</span>
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8.5 11.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1012,7 +1048,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.1.9 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.2.0 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1098,7 +1134,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.1.9</strong>
+      <strong>v1.2.0</strong>
     </div>
   </div>
 </header>
@@ -1344,7 +1380,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.1.9<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.2.0<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
@@ -1444,6 +1480,33 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         });
       }
+    });
+    
+    // Manejar clicks en items de lista para abrir modal de contraseña en tablets
+    const dropdownItems = document.querySelectorAll('.dropdown-list li[onclick]');
+    dropdownItems.forEach(item => {
+      item.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Ejecutar la función onclick manualmente
+        const onclickAttr = this.getAttribute('onclick');
+        if (onclickAttr) {
+          eval(onclickAttr);
+        }
+      }, { passive: false });
+    });
+    
+    // También para dropdown móvil
+    const mobileDropdownItems = document.querySelectorAll('.mobile-dropdown-item[onclick]');
+    mobileDropdownItems.forEach(item => {
+      item.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const onclickAttr = this.getAttribute('onclick');
+        if (onclickAttr) {
+          eval(onclickAttr);
+        }
+      }, { passive: false });
     });
   }
 });
