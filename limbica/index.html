@@ -3,1548 +3,2008 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Propuesta Digital — Límbica Mérida | Quorbitt Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Límbica Mérida — Centro de Especialidades en Salud Mental</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --navy: #0B1829;
-    --navy-mid: #122240;
-    --teal: #0D7B6F;
-    --teal-light: #12A08F;
-    --teal-pale: #E6F4F2;
-    --gold: #C9A96E;
-    --gold-light: #E8C98A;
-    --white: #FAFAFA;
-    --gray-100: #F2F4F7;
-    --gray-300: #C8CDD8;
-    --gray-500: #7A8399;
-    --gray-700: #3D4459;
-    --text: #1A2235;
-    --radius: 16px;
-    --radius-sm: 8px;
-  }
+/* ═══════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════ */
+:root {
+  --white: #FFFFFF;
+  --off-white: #F7F9FC;
+  --gray-50: #F2F5F9;
+  --gray-100: #E4EAF2;
+  --gray-300: #B8C4D4;
+  --gray-500: #6E7F9A;
+  --gray-700: #2E3F58;
+  --navy: #1A2D5A;
+  --navy-mid: #1E3468;
+  --teal: #2A7A6F;
+  --teal-light: #3A9E8F;
+  --teal-pale: #E3F3F1;
+  --teal-xpale: #EEF9F7;
+  --blue: #1A6EBF;
+  --blue-pale: #EAF3FC;
+  --accent: #2A7A6F;
+  --gold: #B8936A;
+  --radius: 20px;
+  --radius-sm: 10px;
+  --shadow: 0 4px 32px rgba(13,31,53,0.08);
+  --shadow-lg: 0 12px 60px rgba(13,31,53,0.14);
+  --version: "v1.1.1";
+}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--white);
+  color: var(--navy);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; }
 
-  html { scroll-behavior: smooth; }
+/* ═══════════════════════════════════════
+   VERSION BADGE
+═══════════════════════════════════════ */
+.version-badge {
+  position: fixed;
+  bottom: 12px;
+  left: 16px;
+  background: rgba(13,31,53,0.75);
+  color: rgba(255,255,255,0.5);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 9000;
+  backdrop-filter: blur(8px);
+  letter-spacing: 0.5px;
+}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--white);
-    color: var(--text);
-    overflow-x: hidden;
-  }
+/* ═══════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════ */
+.topbar {
+  background: var(--navy);
+  color: rgba(255,255,255,0.7);
+  font-size: 12.5px;
+  padding: 8px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.topbar a { color: var(--teal-light); }
+.topbar-right { display: flex; gap: 24px; align-items: center; }
 
-  /* ── TOP BANNER ── */
-  .top-banner {
-    background: linear-gradient(90deg, var(--teal) 0%, var(--navy-mid) 100%);
-    color: white;
-    text-align: center;
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-  }
-  .top-banner span.highlight {
-    background: rgba(255,255,255,0.15);
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-  }
-  .banner-close {
-    position: absolute;
-    right: 16px;
-    cursor: pointer;
-    opacity: 0.6;
-    font-size: 18px;
-    line-height: 1;
-    background: none;
-    border: none;
-    color: white;
-  }
-  .banner-close:hover { opacity: 1; }
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+nav {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--gray-100);
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  box-shadow: 0 2px 20px rgba(13,31,53,0.06);
+}
+.nav-logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.nav-logo-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: -0.3px;
+}
+.nav-logo-sub {
+  font-size: 10px;
+  color: var(--teal);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.nav-links {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+  align-items: center;
+}
+.nav-links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-700);
+  transition: color 0.2s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--teal);
+  transition: width 0.3s;
+}
+.nav-links a:hover { color: var(--teal); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta {
+  background: var(--teal);
+  color: white !important;
+  padding: 10px 22px;
+  border-radius: 30px;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  transition: background 0.2s, transform 0.2s !important;
+}
+.nav-cta:hover { background: var(--teal-light) !important; transform: translateY(-1px); }
+.nav-cta::after { display: none !important; }
 
-  /* ── NAV ── */
-  nav {
-    background: rgba(11,24,41,0.97);
-    backdrop-filter: blur(12px);
-    padding: 16px 48px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 41px;
-    z-index: 999;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .nav-logo {
-    font-family: 'DM Mono', monospace;
-    color: var(--teal-light);
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-  .nav-links {
-    display: flex;
-    gap: 32px;
-    list-style: none;
-  }
-  .nav-links a {
-    color: rgba(255,255,255,0.6);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    transition: color 0.2s;
-  }
-  .nav-links a:hover { color: var(--teal-light); }
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero {
+  min-height: 92vh;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 80px 48px;
+}
+.hero-bg-shape {
+  position: absolute;
+  right: -5%;
+  top: -10%;
+  width: 55%;
+  height: 120%;
+  background: linear-gradient(135deg, var(--teal-xpale) 0%, var(--blue-pale) 50%, #F0F8FF 100%);
+  border-radius: 40% 0 0 40%;
+  z-index: 0;
+}
+.hero-dots {
+  position: absolute;
+  right: 8%;
+  top: 15%;
+  width: 280px;
+  height: 280px;
+  background-image: radial-gradient(circle, var(--teal) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  opacity: 0.12;
+  z-index: 1;
+}
+.hero-circle {
+  position: absolute;
+  right: 18%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 1px solid rgba(10,123,111,0.12);
+  z-index: 1;
+}
+.hero-circle::before {
+  content: '';
+  position: absolute;
+  inset: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(10,123,111,0.08);
+}
+.hero-circle::after {
+  content: '';
+  position: absolute;
+  inset: 56px;
+  border-radius: 50%;
+  border: 1px dashed rgba(10,123,111,0.1);
+  animation: spin-slow 30s linear infinite;
+}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
 
-  /* ── HERO ── */
-  .hero {
-    min-height: 100vh;
-    background: var(--navy);
-    position: relative;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-  }
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 70% 50%, rgba(13,123,111,0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 80% at 20% 80%, rgba(201,169,110,0.08) 0%, transparent 50%),
-      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230D7B6F' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-  .hero-grid-line {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(13,123,111,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(13,123,111,0.05) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
-  .hero-content {
-    position: relative;
-    z-index: 2;
-    padding: 80px 80px 80px 80px;
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-  }
-  .hero-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--teal-light);
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .hero-eyebrow::before {
-    content: '';
-    width: 32px;
-    height: 1px;
-    background: var(--teal-light);
-  }
-  .hero-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(52px, 7vw, 96px);
-    font-weight: 300;
-    color: white;
-    line-height: 1.0;
-    margin-bottom: 8px;
-  }
-  .hero-title em {
-    font-style: italic;
-    color: var(--gold);
-  }
-  .hero-title-sub {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(28px, 4vw, 52px);
-    font-weight: 300;
-    color: rgba(255,255,255,0.45);
-    line-height: 1.1;
-    margin-bottom: 40px;
-  }
-  .hero-divider {
-    width: 80px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--gold), transparent);
-    margin-bottom: 40px;
-  }
-  .hero-desc {
-    font-size: 16px;
-    color: rgba(255,255,255,0.55);
-    line-height: 1.8;
-    max-width: 520px;
-    margin-bottom: 48px;
-  }
-  .hero-meta {
-    display: flex;
-    gap: 40px;
-    flex-wrap: wrap;
-  }
-  .hero-meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .hero-meta-label {
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--gray-500);
-    font-family: 'DM Mono', monospace;
-  }
-  .hero-meta-value {
-    font-size: 15px;
-    color: white;
-    font-weight: 500;
-  }
-  .hero-visual {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 45%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .brain-svg-wrap {
-    width: 420px;
-    height: 420px;
-    opacity: 0.12;
-  }
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 30px;
+  margin-bottom: 28px;
+  border: 1px solid rgba(10,123,111,0.15);
+}
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(40px, 5.5vw, 68px);
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--navy);
+  margin-bottom: 12px;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--teal);
+}
+.hero-subtitle {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 400;
+  color: var(--gray-500);
+  font-style: italic;
+  margin-bottom: 28px;
+}
+.hero-desc {
+  font-size: 16px;
+  color: var(--gray-700);
+  line-height: 1.8;
+  margin-bottom: 40px;
+  max-width: 520px;
+}
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+.btn-primary {
+  background: var(--teal);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 40px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.25s;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary:hover { background: var(--teal-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(10,123,111,0.25); }
+.btn-outline {
+  background: transparent;
+  color: var(--navy);
+  padding: 14px 32px;
+  border-radius: 40px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 1.5px solid var(--gray-300);
+  transition: all 0.25s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+.hero-stats {
+  display: flex;
+  gap: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--gray-100);
+}
+.hero-stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--teal);
+  line-height: 1;
+}
+.hero-stat-label {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 4px;
+}
 
-  /* ── SECTIONS GENERAL ── */
-  section {
-    padding: 100px 80px;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  .section-full {
-    max-width: 100%;
-    padding: 100px 80px;
-  }
-  .section-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-eyebrow::before {
-    content: '';
-    width: 24px;
-    height: 1px;
-    background: var(--teal);
-  }
-  .section-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(36px, 4vw, 56px);
-    font-weight: 400;
-    color: var(--navy);
-    line-height: 1.1;
-    margin-bottom: 20px;
-  }
-  .section-title em {
-    font-style: italic;
-    color: var(--teal);
-  }
-  .section-subtitle {
-    font-size: 16px;
-    color: var(--gray-500);
-    line-height: 1.8;
-    max-width: 600px;
-    margin-bottom: 60px;
-  }
+/* Hero floating card */
+.hero-card {
+  position: absolute;
+  right: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  background: white;
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  box-shadow: var(--shadow-lg);
+  width: 300px;
+  border: 1px solid var(--gray-100);
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(-50%) translateY(0); }
+  50% { transform: translateY(-50%) translateY(-12px); }
+}
+.hero-card-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--teal-pale);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.hero-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.hero-card p {
+  font-size: 13px;
+  color: var(--gray-500);
+  line-height: 1.7;
+}
+.hero-card-badge {
+  display: inline-block;
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-top: 12px;
+}
 
-  /* ── WHY QUORBITT ── */
-  .why-section {
-    background: var(--navy);
-    padding: 100px 80px;
-  }
-  .why-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  .why-section .section-title { color: white; }
-  .why-section .section-subtitle { color: rgba(255,255,255,0.5); }
-  .why-section .section-eyebrow { color: var(--gold); }
-  .why-section .section-eyebrow::before { background: var(--gold); }
-  .why-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 60px;
-  }
-  .why-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: var(--radius);
-    padding: 36px 32px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .why-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--teal), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .why-card:hover { background: rgba(13,123,111,0.08); border-color: rgba(13,123,111,0.25); }
-  .why-card:hover::before { opacity: 1; }
-  .why-icon {
-    width: 44px;
-    height: 44px;
-    background: rgba(13,123,111,0.15);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    font-size: 20px;
-  }
-  .why-card h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 12px;
-  }
-  .why-card p {
-    font-size: 14px;
-    color: rgba(255,255,255,0.5);
-    line-height: 1.8;
-  }
+/* ═══════════════════════════════════════
+   SECTION COMMONS
+═══════════════════════════════════════ */
+.section { padding: 96px 48px; }
+.section-inner { max-width: 1180px; margin: 0 auto; }
+.section-dark { background: var(--navy); }
+.section-light { background: var(--off-white); }
+.section-teal { background: var(--teal-xpale); }
 
-  /* ── CLIENT UNDERSTANDING ── */
-  .understanding-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: start;
-  }
-  .understanding-left {}
-  .understanding-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 32px;
-  }
-  .tag {
-    background: var(--teal-pale);
-    color: var(--teal);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    border: 1px solid rgba(13,123,111,0.15);
-  }
-  .understanding-card {
-    background: var(--navy);
-    border-radius: var(--radius);
-    padding: 40px;
-    color: white;
-  }
-  .understanding-card h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    font-weight: 400;
-    margin-bottom: 8px;
-  }
-  .understanding-card .location {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--teal-light);
-    letter-spacing: 1px;
-    margin-bottom: 24px;
-  }
-  .understanding-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .understanding-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    font-size: 14px;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.6;
-  }
-  .understanding-list li::before {
-    content: '→';
-    color: var(--teal-light);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 14px;
+}
+.eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 1.5px;
+  background: var(--teal);
+}
+.eyebrow-white { color: rgba(255,255,255,0.6); }
+.eyebrow-white::before { background: rgba(255,255,255,0.4); }
 
-  /* ── COMPARISON TABLE ── */
-  .table-section {
-    background: var(--gray-100);
-    padding: 100px 80px;
-  }
-  .table-inner { max-width: 1200px; margin: 0 auto; }
-  .compare-table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: 0 4px 40px rgba(11,24,41,0.08);
-    background: white;
-  }
-  .compare-table th {
-    padding: 28px 24px;
-    text-align: center;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-  }
-  .compare-table th:first-child {
-    text-align: left;
-    background: white;
-    color: var(--gray-500);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-family: 'DM Mono', monospace;
-  }
-  .th-esencial { background: var(--teal-pale); color: var(--teal) !important; }
-  .th-avanzado { background: var(--navy); color: white !important; }
-  .th-elite { background: linear-gradient(135deg, var(--navy) 0%, #1a3a5c 100%); color: white !important; position: relative; }
-  .elite-badge {
-    display: inline-block;
-    background: var(--gold);
-    color: var(--navy);
-    font-size: 9px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 8px;
-    font-weight: 700;
-    vertical-align: middle;
-  }
-  .th-price {
-    display: block;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
-    font-weight: 600;
-    margin-top: 8px;
-    letter-spacing: -1px;
-  }
-  .th-price-label {
-    display: block;
-    font-size: 11px;
-    font-weight: 400;
-    opacity: 0.6;
-    margin-top: 2px;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .compare-table td {
-    padding: 14px 24px;
-    font-size: 14px;
-    border-bottom: 1px solid var(--gray-100);
-    vertical-align: middle;
-  }
-  .compare-table td:first-child {
-    color: var(--gray-700);
-    font-weight: 500;
-  }
-  .compare-table td:not(:first-child) {
-    text-align: center;
-  }
-  .compare-table tr:hover td { background: rgba(13,123,111,0.03); }
-  .compare-table tr:last-child td { border-bottom: none; }
-  .row-category td {
-    background: var(--gray-100) !important;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--gray-500) !important;
-    padding: 10px 24px;
-    font-weight: 400 !important;
-  }
-  .check { color: var(--teal); font-size: 18px; }
-  .cross { color: var(--gray-300); font-size: 18px; }
-  .check-gold { color: var(--gold); font-size: 18px; }
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(30px, 3.5vw, 48px);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--navy);
+  margin-bottom: 16px;
+}
+.section-title em { font-style: italic; color: var(--teal); }
+.section-title-white { color: white; }
+.section-subtitle {
+  font-size: 16px;
+  color: var(--gray-500);
+  line-height: 1.8;
+  max-width: 580px;
+  margin-bottom: 56px;
+}
+.section-subtitle-white { color: rgba(255,255,255,0.55); }
 
-  /* ── PACKAGES ── */
-  .packages-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 28px;
-    margin-top: 60px;
-  }
-  .pkg-card {
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--gray-300);
-    transition: transform 0.3s, box-shadow 0.3s;
-    background: white;
-  }
-  .pkg-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 60px rgba(11,24,41,0.12);
-  }
-  .pkg-card.featured {
-    border-color: var(--teal);
-    box-shadow: 0 8px 40px rgba(13,123,111,0.15);
-  }
-  .pkg-header {
-    padding: 36px 32px 28px;
-  }
-  .pkg-header.esencial { background: var(--teal-pale); }
-  .pkg-header.avanzado { background: var(--navy); }
-  .pkg-header.elite { background: linear-gradient(135deg, var(--navy) 0%, #0B2A45 100%); }
-  .pkg-name {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .pkg-name.esencial { color: var(--teal); }
-  .pkg-name.avanzado, .pkg-name.elite { color: var(--teal-light); }
-  .pkg-price {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 52px;
-    font-weight: 600;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .pkg-price.esencial { color: var(--navy); }
-  .pkg-price.avanzado, .pkg-price.elite { color: white; }
-  .pkg-currency {
-    font-size: 22px;
-    font-weight: 300;
-    vertical-align: super;
-  }
-  .pkg-period {
-    font-size: 13px;
-    font-weight: 400;
-    opacity: 0.5;
-  }
-  .pkg-desc {
-    font-size: 13px;
-    line-height: 1.6;
-    margin-top: 12px;
-  }
-  .pkg-desc.esencial { color: var(--gray-700); }
-  .pkg-desc.avanzado, .pkg-desc.elite { color: rgba(255,255,255,0.55); }
-  .pkg-body {
-    padding: 32px;
-  }
-  .pkg-features {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 32px;
-  }
-  .pkg-features li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 14px;
-    color: var(--gray-700);
-    line-height: 1.5;
-  }
-  .pkg-features li .icon { flex-shrink: 0; margin-top: 1px; }
-  .pkg-features li .feat-check { color: var(--teal); }
-  .pkg-features li .feat-gold { color: var(--gold); }
-  .pkg-cta {
-    display: block;
-    width: 100%;
-    padding: 14px 24px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    text-decoration: none;
-  }
-  .pkg-cta.esencial {
-    background: var(--teal);
-    color: white;
-  }
-  .pkg-cta.esencial:hover { background: var(--teal-light); }
-  .pkg-cta.avanzado {
-    background: var(--navy);
-    color: white;
-  }
-  .pkg-cta.avanzado:hover { background: var(--navy-mid); }
-  .pkg-cta.elite {
-    background: var(--gold);
-    color: var(--navy);
-  }
-  .pkg-cta.elite:hover { background: var(--gold-light); }
+/* ═══════════════════════════════════════
+   ABOUT SECTION
+═══════════════════════════════════════ */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: center;
+}
+.about-image-wrap {
+  position: relative;
+}
+.about-image-placeholder {
+  width: 100%;
+  aspect-ratio: 4/5;
+  background: linear-gradient(135deg, var(--teal-pale) 0%, var(--blue-pale) 100%);
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--teal);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+.about-image-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%230A7B6F' fill-opacity='0.06'%3E%3Ccircle cx='20' cy='20' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+}
+.about-float-card {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-100);
+  min-width: 180px;
+}
+.about-float-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--teal);
+  line-height: 1;
+}
+.about-float-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
 
-  /* ── RECURRENTES ── */
-  .recurrent-section {
-    background: var(--teal-pale);
-    padding: 80px 80px;
-  }
-  .recurrent-inner { max-width: 1200px; margin: 0 auto; }
-  .recurrent-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-top: 48px;
-  }
-  .recurrent-card {
-    background: white;
-    border-radius: var(--radius);
-    padding: 28px 24px;
-    border: 1px solid rgba(13,123,111,0.1);
-  }
-  .recurrent-icon { font-size: 28px; margin-bottom: 12px; }
-  .recurrent-card h4 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--navy);
-    margin-bottom: 8px;
-  }
-  .recurrent-card p {
-    font-size: 13px;
-    color: var(--gray-500);
-    line-height: 1.6;
-  }
-  .recurrent-note {
-    background: white;
-    border-left: 3px solid var(--teal);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    padding: 16px 20px;
-    margin-top: 32px;
-    font-size: 14px;
-    color: var(--gray-700);
-  }
-  .recurrent-note strong { color: var(--teal); }
+.about-pillars { display: flex; flex-direction: column; gap: 20px; margin-top: 32px; }
+.pillar {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-100);
+  transition: all 0.3s;
+}
+.pillar:hover { background: var(--teal-xpale); border-color: rgba(10,123,111,0.2); transform: translateX(4px); }
+.pillar-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--teal-pale);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+.pillar h4 { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.pillar p { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
 
-  /* ── IMPLEMENTATION ── */
-  .impl-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
-  }
-  .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  .tl-item {
-    display: flex;
-    gap: 20px;
-    position: relative;
-  }
-  .tl-item:not(:last-child) .tl-line {
-    position: absolute;
-    left: 19px;
-    top: 40px;
-    width: 2px;
-    height: calc(100% - 8px);
-    background: linear-gradient(var(--teal-pale), var(--teal-pale));
-  }
-  .tl-dot {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--teal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-  }
-  .tl-content {
-    padding-bottom: 32px;
-  }
-  .tl-content h4 {
-    font-weight: 600;
-    font-size: 16px;
-    color: var(--navy);
-    margin-bottom: 4px;
-    margin-top: 8px;
-  }
-  .tl-content p {
-    font-size: 13px;
-    color: var(--gray-500);
-    line-height: 1.6;
-  }
-  .impl-right {
-    background: var(--navy);
-    border-radius: var(--radius);
-    padding: 40px;
-    color: white;
-  }
-  .impl-right h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    font-weight: 400;
-    margin-bottom: 20px;
-  }
-  .impl-right p {
-    font-size: 14px;
-    color: rgba(255,255,255,0.6);
-    line-height: 1.8;
-    margin-bottom: 16px;
-  }
-  .impl-alert {
-    background: rgba(201,169,110,0.1);
-    border: 1px solid rgba(201,169,110,0.25);
-    border-radius: var(--radius-sm);
-    padding: 16px 20px;
-    font-size: 13px;
-    color: var(--gold-light);
-    line-height: 1.6;
-    margin-top: 24px;
-  }
+/* ═══════════════════════════════════════
+   SERVICES
+═══════════════════════════════════════ */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.service-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px 28px;
+  border: 1px solid var(--gray-100);
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal), var(--teal-light));
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+.service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(10,123,111,0.15);
+}
+.service-card:hover::before { transform: scaleX(1); }
+.service-icon-wrap {
+  width: 60px;
+  height: 60px;
+  background: var(--teal-pale);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 26px;
+  transition: all 0.3s;
+}
+.service-card:hover .service-icon-wrap {
+  background: var(--teal);
+  transform: scale(1.05) rotate(-3deg);
+}
+.service-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.service-card p {
+  font-size: 14px;
+  color: var(--gray-500);
+  line-height: 1.75;
+}
 
-  /* ── CONDITIONS ── */
-  .conditions-section {
-    background: var(--gray-100);
-    padding: 100px 80px;
-  }
-  .conditions-inner { max-width: 1200px; margin: 0 auto; }
-  .conditions-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-top: 48px;
-  }
-  .cond-card {
-    background: white;
-    border-radius: var(--radius);
-    padding: 32px 28px;
-    border: 1px solid var(--gray-300);
-  }
-  .cond-icon { font-size: 32px; margin-bottom: 16px; }
-  .cond-card h4 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--navy);
-    margin-bottom: 8px;
-  }
-  .cond-card p {
-    font-size: 14px;
-    color: var(--gray-500);
-    line-height: 1.7;
-  }
-  .cond-card strong { color: var(--navy); }
+/* ═══════════════════════════════════════
+   EMT SECTION
+═══════════════════════════════════════ */
+.emt-section {
+  background: var(--navy);
+  padding: 100px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.emt-bg-glow {
+  position: absolute;
+  left: -10%;
+  top: -20%;
+  width: 60%;
+  height: 140%;
+  background: radial-gradient(ellipse, rgba(10,123,111,0.15) 0%, transparent 65%);
+  pointer-events: none;
+}
+.emt-bg-glow2 {
+  position: absolute;
+  right: -5%;
+  bottom: -10%;
+  width: 40%;
+  height: 80%;
+  background: radial-gradient(ellipse, rgba(26,110,191,0.1) 0%, transparent 65%);
+  pointer-events: none;
+}
+.emt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.emt-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emt-ring {
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  border: 1px solid rgba(10,123,111,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: pulse-ring 4s ease-in-out infinite;
+}
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(10,123,111,0); }
+  50% { box-shadow: 0 0 0 20px rgba(10,123,111,0.08); }
+}
+.emt-ring::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(10,123,111,0.2);
+  animation: spin-slow 20s linear infinite reverse;
+}
+.emt-ring-inner {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(10,123,111,0.1);
+  border: 1px solid rgba(10,123,111,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.emt-ring-inner svg { opacity: 0.8; }
+.emt-ring-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--teal-light);
+  text-transform: uppercase;
+}
 
-  /* ── NEXT STEPS ── */
-  .steps-section {
-    padding: 100px 80px;
-    background: var(--navy);
-  }
-  .steps-inner { max-width: 1200px; margin: 0 auto; }
-  .steps-section .section-title { color: white; }
-  .steps-section .section-subtitle { color: rgba(255,255,255,0.5); }
-  .steps-section .section-eyebrow { color: var(--gold); }
-  .steps-section .section-eyebrow::before { background: var(--gold); }
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-top: 60px;
-  }
-  .step-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: var(--radius);
-    padding: 32px 28px;
-    position: relative;
-  }
-  .step-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 64px;
-    font-weight: 300;
-    color: rgba(13,123,111,0.2);
-    line-height: 1;
-    margin-bottom: 16px;
-  }
-  .step-card h4 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 10px;
-  }
-  .step-card p {
-    font-size: 13px;
-    color: rgba(255,255,255,0.5);
-    line-height: 1.7;
-  }
-  .step-connector {
-    position: absolute;
-    right: -12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--teal-light);
-    font-size: 20px;
-    z-index: 2;
-  }
+/* Orbiting dots */
+.emt-orbit-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--teal-light);
+  animation: orbit 8s linear infinite;
+}
+.emt-orbit-dot:nth-child(2) { animation-delay: -2.67s; background: var(--blue); }
+.emt-orbit-dot:nth-child(3) { animation-delay: -5.33s; background: var(--gold); }
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(170px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(170px) rotate(-360deg); }
+}
 
-  /* ── VALUE VS INVESTMENT (CIERRE) ── */
-  .value-section {
-    background: linear-gradient(135deg, var(--teal) 0%, #085F56 40%, var(--navy) 100%);
-    padding: 120px 80px;
-    position: relative;
-    overflow: hidden;
-  }
-  .value-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-  .value-inner {
-    max-width: 1000px;
-    margin: 0 auto;
-    text-align: center;
-    position: relative;
-    z-index: 2;
-  }
-  .value-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.6);
-    margin-bottom: 24px;
-  }
-  .value-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(40px, 5vw, 68px);
-    font-weight: 300;
-    color: white;
-    line-height: 1.1;
-    margin-bottom: 32px;
-  }
-  .value-title em {
-    font-style: italic;
-    color: var(--gold-light);
-  }
-  .value-text {
-    font-size: 16px;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.9;
-    max-width: 720px;
-    margin: 0 auto 48px;
-  }
-  .value-comparison {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    align-items: center;
-    margin-bottom: 56px;
-  }
-  .value-box {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: var(--radius);
-    padding: 28px 36px;
-    text-align: center;
-  }
-  .value-box.highlight-box {
-    background: rgba(201,169,110,0.12);
-    border-color: rgba(201,169,110,0.3);
-  }
-  .value-box-label {
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-family: 'DM Mono', monospace;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 8px;
-  }
-  .value-box-amount {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 44px;
-    font-weight: 600;
-    color: white;
-    line-height: 1;
-  }
-  .value-box.highlight-box .value-box-amount { color: var(--gold-light); }
-  .value-arrow { font-size: 28px; color: rgba(255,255,255,0.3); }
-  .value-cta-group {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .btn-primary {
-    background: var(--gold);
-    color: var(--navy);
-    padding: 16px 36px;
-    border-radius: 40px;
-    font-weight: 700;
-    font-size: 15px;
-    text-decoration: none;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: none;
-    cursor: pointer;
-  }
-  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
-  .btn-secondary {
-    background: transparent;
-    color: white;
-    padding: 16px 36px;
-    border-radius: 40px;
-    font-weight: 500;
-    font-size: 15px;
-    text-decoration: none;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid rgba(255,255,255,0.25);
-    cursor: pointer;
-  }
-  .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+.emt-content .section-title { color: white; }
+.emt-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 32px 0;
+}
+.emt-stat {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  transition: all 0.3s;
+}
+.emt-stat:hover { background: rgba(10,123,111,0.12); border-color: rgba(10,123,111,0.3); }
+.emt-stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--teal-light);
+}
+.emt-stat-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+.emt-features { display: flex; flex-direction: column; gap: 14px; margin-top: 24px; }
+.emt-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+}
+.emt-feature-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal-light);
+  flex-shrink: 0;
+}
 
-  /* ── FOOTER ── */
-  footer {
-    background: #070F1A;
-    padding: 60px 80px;
-    color: rgba(255,255,255,0.4);
-    font-size: 13px;
-  }
-  .footer-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  .footer-brand {
-    font-family: 'DM Mono', monospace;
-    color: var(--teal-light);
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-  .footer-contact {
-    text-align: right;
-    line-height: 1.8;
-  }
-  .footer-contact a { color: var(--teal-light); text-decoration: none; }
+/* ═══════════════════════════════════════
+   TEAM
+═══════════════════════════════════════ */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.team-card {
+  background: white;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--gray-100);
+  transition: all 0.3s;
+  text-align: center;
+}
+.team-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+.team-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--teal-pale) 0%, var(--blue-pale) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 42px;
+  position: relative;
+}
+.team-photo-label {
+  font-size: 10px;
+  color: var(--teal);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+}
+.team-info { padding: 20px 16px; }
+.team-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.team-role {
+  font-size: 12px;
+  color: var(--teal);
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+.team-spec { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+.team-dev-badge {
+  display: inline-block;
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 9px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  margin-top: 8px;
+}
 
-  /* ── WHATSAPP FLOAT ── */
-  .wa-float {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #25D366;
-    color: white;
-    padding: 14px 20px 14px 16px;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 8px 32px rgba(37,211,102,0.35);
-    transition: all 0.3s ease;
-    animation: pulse-wa 3s infinite;
-  }
-  .wa-float:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 12px 40px rgba(37,211,102,0.45);
-    background: #1fba59;
-    animation: none;
-  }
-  .wa-float svg { width: 22px; height: 22px; flex-shrink: 0; }
-  @keyframes pulse-wa {
-    0%, 100% { box-shadow: 0 8px 32px rgba(37,211,102,0.35); }
-    50% { box-shadow: 0 8px 32px rgba(37,211,102,0.6), 0 0 0 8px rgba(37,211,102,0.08); }
-  }
+/* ═══════════════════════════════════════
+   TESTIMONIALS CAROUSEL
+═══════════════════════════════════════ */
+.testimonials-section {
+  background: var(--off-white);
+  padding: 96px 48px;
+  overflow: hidden;
+}
+.testimonials-inner { max-width: 1180px; margin: 0 auto; }
+.carousel-wrap { position: relative; margin-top: 48px; }
+.carousel-track-outer {
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+.carousel-track {
+  display: flex;
+  gap: 24px;
+  transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.testimonial-card {
+  min-width: calc(33.333% - 16px);
+  background: white;
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  border: 1px solid var(--gray-100);
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+  position: relative;
+}
+.testimonial-quote {
+  font-size: 48px;
+  line-height: 1;
+  color: var(--teal-pale);
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 4px;
+  color: var(--teal);
+  opacity: 0.3;
+}
+.testimonial-text {
+  font-size: 14px;
+  color: var(--gray-700);
+  line-height: 1.8;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.testimonial-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal-pale), var(--blue-pale));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--teal);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.testimonial-name { font-size: 14px; font-weight: 600; color: var(--navy); }
+.testimonial-service { font-size: 12px; color: var(--teal); }
+.testimonial-stars { color: #F59E0B; font-size: 13px; margin-top: 2px; }
 
-  /* ── ANIMATIONS ── */
-  .fade-in {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .fade-in.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+.carousel-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gray-300);
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--navy);
+  transition: all 0.2s;
+}
+.carousel-btn:hover { border-color: var(--teal); color: var(--teal); }
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.carousel-dot.active { background: var(--teal); width: 24px; border-radius: 4px; }
+.carousel-progress {
+  height: 2px;
+  background: var(--gray-100);
+  border-radius: 2px;
+  margin-top: 20px;
+  overflow: hidden;
+}
+.carousel-progress-bar {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
 
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    section, .section-full, .why-section, .table-section,
-    .recurrent-section, .conditions-section, .steps-section,
-    .value-section, footer { padding: 60px 24px; }
-    nav { padding: 14px 24px; }
-    .nav-links { display: none; }
-    .hero-content { padding: 60px 24px; }
-    .why-grid, .packages-grid, .conditions-grid { grid-template-columns: 1fr; }
-    .recurrent-grid { grid-template-columns: 1fr 1fr; }
-    .steps-grid { grid-template-columns: 1fr 1fr; }
-    .understanding-grid, .impl-grid { grid-template-columns: 1fr; }
-    .hero-visual { display: none; }
-    .compare-table { font-size: 12px; }
-    .compare-table th, .compare-table td { padding: 10px 12px; }
-    .value-comparison { flex-direction: column; gap: 20px; }
-  }
+/* ═══════════════════════════════════════
+   SUCURSALES
+═══════════════════════════════════════ */
+.sucursales-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+.sucursal-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  border: 1px solid var(--gray-100);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.sucursal-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal), var(--teal-light));
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+.sucursal-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+.sucursal-card:hover::after { transform: scaleX(1); }
+.sucursal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+.sucursal-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.sucursal-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--gray-500);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.sucursal-detail span:first-child { flex-shrink: 0; margin-top: 1px; }
+.sucursal-coming {
+  background: var(--gray-50);
+  border: 1.5px dashed var(--gray-300);
+}
+
+/* ═══════════════════════════════════════
+   CONTACT / FORM
+═══════════════════════════════════════ */
+.contact-section {
+  background: var(--navy);
+  padding: 100px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.contact-bg {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 45%;
+  background: linear-gradient(135deg, rgba(10,123,111,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 72px;
+  align-items: start;
+  max-width: 1180px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+.contact-info { }
+.contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.contact-info-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(10,123,111,0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  border: 1px solid rgba(10,123,111,0.2);
+}
+.contact-info-label { font-size: 11px; color: var(--teal-light); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+.contact-info-value { font-size: 15px; color: rgba(255,255,255,0.85); }
+
+/* Form */
+.contact-form {
+  background: white;
+  border-radius: var(--radius);
+  padding: 40px 36px;
+  box-shadow: var(--shadow-lg);
+}
+.form-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.form-subtitle { font-size: 14px; color: var(--gray-500); margin-bottom: 28px; line-height: 1.6; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--gray-200, #E8ECF2);
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--navy);
+  background: var(--gray-50);
+  transition: all 0.2s;
+  outline: none;
+  appearance: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--teal);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(10,123,111,0.08);
+}
+.form-group textarea { resize: vertical; min-height: 100px; }
+.form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M6 8L0 0h12z' fill='%237E8FA6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.form-submit {
+  width: 100%;
+  padding: 14px;
+  background: var(--teal);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-top: 8px;
+}
+.form-submit:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(10,123,111,0.25); }
+.form-note { font-size: 11.5px; color: var(--gray-500); text-align: center; margin-top: 12px; line-height: 1.5; }
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer {
+  background: #070F1A;
+  padding: 56px 48px 32px;
+}
+.footer-inner { max-width: 1180px; margin: 0 auto; }
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 28px;
+}
+.footer-brand-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+.footer-brand-sub { font-size: 11px; color: var(--teal-light); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+.footer-brand-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.8; max-width: 280px; }
+.footer-col h4 { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col ul li a { font-size: 14px; color: rgba(255,255,255,0.6); transition: color 0.2s; }
+.footer-col ul li a:hover { color: var(--teal-light); }
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-bottom a { color: rgba(255,255,255,0.35); }
+
+/* ═══════════════════════════════════════
+   FLOATING BUTTONS
+═══════════════════════════════════════ */
+.float-group {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 9999;
+  align-items: flex-end;
+}
+.float-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  border: none;
+  text-decoration: none;
+}
+.float-btn:hover { transform: scale(1.12); }
+.float-btn svg { width: 24px; height: 24px; }
+
+/* WhatsApp */
+.float-wa {
+  background: #25D366;
+  width: auto;
+  border-radius: 40px;
+  padding: 0 20px 0 14px;
+  gap: 10px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  animation: pulse-wa 3s infinite;
+  height: 52px;
+  display: flex;
+  align-items: center;
+}
+.float-wa:hover { animation: none; box-shadow: 0 8px 28px rgba(37,211,102,0.4); }
+@keyframes pulse-wa {
+  0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.3); }
+  50% { box-shadow: 0 4px 20px rgba(37,211,102,0.5), 0 0 0 8px rgba(37,211,102,0.08); }
+}
+
+/* Facebook - disabled */
+.float-fb {
+  background: #1877F2;
+  opacity: 0.45;
+  cursor: not-allowed;
+  position: relative;
+}
+.float-fb::after {
+  content: 'Próximamente';
+  position: absolute;
+  right: 60px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.float-fb:hover::after, .float-ig:hover::after { opacity: 1; }
+.float-fb:hover { transform: none; }
+
+/* Instagram - disabled */
+.float-ig {
+  background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF);
+  opacity: 0.45;
+  cursor: not-allowed;
+  position: relative;
+}
+.float-ig::after {
+  content: 'Próximamente';
+  position: absolute;
+  right: 60px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.float-ig:hover { transform: none; }
+
+/* ═══════════════════════════════════════
+   ANIMATED ICONS (SVG inline animations)
+═══════════════════════════════════════ */
+.icon-animated { display: inline-flex; }
+.icon-pulse { animation: icon-pulse 2.5s ease-in-out infinite; }
+@keyframes icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.icon-bounce { animation: icon-bounce 2s ease-in-out infinite; }
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.icon-spin { animation: icon-spin 8s linear infinite; }
+@keyframes icon-spin { to { transform: rotate(360deg); } }
+.icon-wave { animation: icon-wave 2.5s ease-in-out infinite; }
+@keyframes icon-wave {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+/* ═══════════════════════════════════════
+   FADE-IN SCROLL ANIMATIONS
+═══════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  nav { padding: 0 24px; }
+  .section { padding: 72px 24px; }
+  .hero { padding: 60px 24px; min-height: auto; }
+  .hero-card { display: none; }
+  .hero-bg-shape { width: 45%; }
+  .about-grid { grid-template-columns: 1fr; gap: 40px; }
+  .services-grid { grid-template-columns: 1fr 1fr; }
+  .team-grid { grid-template-columns: 1fr 1fr; }
+  .emt-grid { grid-template-columns: 1fr; gap: 48px; }
+  .emt-visual { justify-content: center; }
+  .sucursales-grid { grid-template-columns: 1fr; }
+  .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+  .testimonial-card { min-width: calc(50% - 12px); }
+  .topbar { padding: 8px 24px; font-size: 11px; }
+  .emt-section, .contact-section, .testimonials-section { padding: 72px 24px; }
+}
+@media (max-width: 640px) {
+  .services-grid { grid-template-columns: 1fr; }
+  .team-grid { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .hero-stats { gap: 20px; }
+  .testimonial-card { min-width: calc(100% - 0px); }
+  .topbar-right { display: none; }
+}
 </style>
 </head>
 <body>
 
-<!-- TOP BANNER -->
-<div class="top-banner" id="topBanner">
-  <span>✅ Propuesta personalizada para <strong>Límbica Mérida</strong></span>
-  <span class="highlight">Válida hasta el 15 de abril, 2026</span>
-  <button class="banner-close" onclick="document.getElementById('topBanner').style.display='none'">×</button>
+<!-- VERSION BADGE -->
+<div class="version-badge">portal_limbica_merida_v1.1.1</div>
+
+<!-- FLOATING BUTTONS -->
+<div class="float-group">
+  <a class="float-btn float-fb" title="Facebook — Próximamente" onclick="return false;">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+  </a>
+  <a class="float-btn float-ig" title="Instagram — Próximamente" onclick="return false;">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+  </a>
+  <a class="float-btn float-wa" href="https://wa.me/525540998044?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20informaci%C3%B3n%20sobre%20los%20servicios%20de%20L%C3%ADmbica%20M%C3%A9rida." target="_blank">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Contáctanos
+  </a>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span>📍 Mérida, Yucatán &nbsp;|&nbsp; Monterrey, N.L. &nbsp;—&nbsp; Dos sucursales a tu servicio</span>
+  <div class="topbar-right">
+    <span>📞 <a href="tel:5540998044">55 4099 8044</a></span>
+    <span>✉️ <a href="mailto:psicologalgv@gmail.com">psicologalgv@gmail.com</a></span>
+  </div>
 </div>
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">Quorbitt Intelligence</div>
+  <div class="nav-logo">
+    <img src="data:image/jpeg;base64,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" alt="Límbica Mérida" style="height:52px;width:auto;object-fit:contain;border-radius:4px;">
+  </div>
   <ul class="nav-links">
-    <li><a href="#por-que-quorbitt">¿Por qué Quorbitt?</a></li>
-    <li><a href="#comparativa">Comparativa</a></li>
-    <li><a href="#paquetes">Paquetes</a></li>
-    <li><a href="#implementacion">Implementación</a></li>
-    <li><a href="#siguientes-pasos">Siguientes pasos</a></li>
+    <li><a href="#nosotros">Nosotros</a></li>
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#emt">Tecnología EMT</a></li>
+    <li><a href="#equipo">Equipo</a></li>
+    <li><a href="#testimonios">Testimonios</a></li>
+    <li><a href="#sucursales">Sucursales</a></li>
+    <li><a href="#contacto" class="nav-cta">Agendar cita</a></li>
   </ul>
 </nav>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid-line"></div>
+<!-- ══════════ HERO ══════════ -->
+<section class="hero" id="inicio">
+  <div class="hero-bg-shape"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-circle"></div>
   <div class="hero-content">
-    <div class="hero-eyebrow">Propuesta Digital Personalizada</div>
-    <h1 class="hero-title">Límbica<br><em>Mérida</em></h1>
-    <div class="hero-title-sub">Presencia digital que<br>transforma vidas</div>
-    <div class="hero-divider"></div>
-    <p class="hero-desc">Diseñamos una estrategia digital a la medida de su clínica de salud mental, uniendo tecnología de vanguardia con una experiencia humana y cercana.</p>
-    <div class="hero-meta">
-      <div class="hero-meta-item">
-        <span class="hero-meta-label">Preparada para</span>
-        <span class="hero-meta-value">Lili Carelly Güemes Ventura</span>
-      </div>
-      <div class="hero-meta-item">
-        <span class="hero-meta-label">Cargo</span>
-        <span class="hero-meta-value">Directora General</span>
-      </div>
-      <div class="hero-meta-item">
-        <span class="hero-meta-label">Fecha</span>
-        <span class="hero-meta-value">24 de marzo, 2026</span>
-      </div>
-      <div class="hero-meta-item">
-        <span class="hero-meta-label">Vigencia</span>
-        <span class="hero-meta-value">15 abril, 2026</span>
-      </div>
+    <div style="margin-bottom:20px;">
+      <img src="data:image/jpeg;base64,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" alt="Límbica Mérida" style="height:70px;width:auto;object-fit:contain;border-radius:6px;">
     </div>
-  </div>
-  <!-- Brain SVG decorative -->
-  <div class="hero-visual">
-    <svg class="brain-svg-wrap" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="100" cy="100" r="90" stroke="#0D7B6F" stroke-width="1" stroke-dasharray="4 6"/>
-      <circle cx="100" cy="100" r="70" stroke="#0D7B6F" stroke-width="0.5"/>
-      <circle cx="100" cy="100" r="50" stroke="#C9A96E" stroke-width="0.5" stroke-dasharray="2 4"/>
-      <line x1="100" y1="10" x2="100" y2="190" stroke="#0D7B6F" stroke-width="0.4"/>
-      <line x1="10" y1="100" x2="190" y2="100" stroke="#0D7B6F" stroke-width="0.4"/>
-      <line x1="36" y1="36" x2="164" y2="164" stroke="#0D7B6F" stroke-width="0.3" stroke-dasharray="3 5"/>
-      <line x1="164" y1="36" x2="36" y2="164" stroke="#0D7B6F" stroke-width="0.3" stroke-dasharray="3 5"/>
-      <circle cx="100" cy="100" r="6" fill="#0D7B6F" opacity="0.6"/>
-      <circle cx="100" cy="30" r="3" fill="#C9A96E" opacity="0.5"/>
-      <circle cx="170" cy="100" r="3" fill="#C9A96E" opacity="0.5"/>
-      <circle cx="100" cy="170" r="3" fill="#C9A96E" opacity="0.5"/>
-      <circle cx="30" cy="100" r="3" fill="#C9A96E" opacity="0.5"/>
-    </svg>
-  </div>
-</div>
-
-<!-- WHY QUORBITT -->
-<div class="why-section" id="por-que-quorbitt">
-  <div class="why-inner">
-    <div class="section-eyebrow fade-in">¿Por qué Quorbitt?</div>
-    <h2 class="section-title fade-in">Tecnología e inteligencia<br><em>al servicio de la salud</em></h2>
-    <p class="section-subtitle fade-in">No somos una agencia genérica. Somos especialistas en transformación digital con enfoque estratégico, datos e inteligencia artificial aplicada a negocios reales.</p>
-    <div class="why-grid">
-      <div class="why-card fade-in">
-        <div class="why-icon">🧠</div>
-        <h3>IA & Estrategia Digital</h3>
-        <p>Aplicamos inteligencia artificial y estrategia de datos para construir presencias digitales que no solo se ven bien, sino que convierten y generan resultados medibles.</p>
-      </div>
-      <div class="why-card fade-in">
-        <div class="why-icon">🔒</div>
-        <h3>Ciberseguridad integrada</h3>
-        <p>Tu sitio clínico necesita estándares de seguridad robustos. Implementamos buenas prácticas desde el inicio para proteger la información de tus pacientes.</p>
-      </div>
-      <div class="why-card fade-in">
-        <div class="why-icon">📈</div>
-        <h3>Marketing con propósito</h3>
-        <p>Cada decisión de diseño, contenido y publicidad tiene un objetivo claro: atraer al paciente correcto, en el momento adecuado, con el mensaje que genera confianza.</p>
-      </div>
-      <div class="why-card fade-in">
-        <div class="why-icon">🤝</div>
-        <h3>Acompañamiento real</h3>
-        <p>No desaparecemos tras la entrega. Los primeros dos meses incluyen capacitación, implementación y ajustes sin costo. Tu éxito es nuestro compromiso.</p>
-      </div>
-      <div class="why-card fade-in">
-        <div class="why-icon">⚡</div>
-        <h3>Entrega en 2–4 semanas</h3>
-        <p>Procesos ágiles y equipo especializado para que tu clínica tenga presencia digital profesional sin esperas interminables.</p>
-      </div>
-      <div class="why-card fade-in">
-        <div class="why-icon">🌐</div>
-        <h3>Bilingüe desde el día uno</h3>
-        <p>Español e inglés desde el paquete base. Porque la salud mental no tiene fronteras y tus pacientes tampoco.</p>
-      </div>
+    <div class="hero-eyebrow">
+      <span class="icon-animated icon-pulse">🧠</span>
+      Centro de Especialidades en Salud Mental
     </div>
-    <!-- Responsable -->
-    <div style="margin-top:56px; padding:32px 36px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); display:flex; align-items:center; gap:28px; flex-wrap:wrap;" class="fade-in">
-      <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy-mid));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:26px;color:white;flex-shrink:0;">JC</div>
+    <h1 class="hero-title">
+      Tu bienestar<br>
+      mental <em>es</em><br>
+      nuestra misión
+    </h1>
+    <p class="hero-subtitle">Tecnología de vanguardia al servicio de tu mente</p>
+    <p class="hero-desc">Somos una clínica especializada en salud mental que combina la calidez humana con tecnología de vanguardia. Tratamos la depresión, ansiedad y otros trastornos con los métodos más avanzados disponibles.</p>
+    <div class="hero-actions">
+      <a href="#contacto" class="btn-primary">Agendar cita <span>→</span></a>
+      <a href="#emt" class="btn-outline">Conocer EMT <span>↓</span></a>
+    </div>
+    <div class="hero-stats">
       <div>
-        <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--teal-light);text-transform:uppercase;margin-bottom:6px;">Responsable de esta propuesta</div>
-        <div style="font-size:18px;font-weight:600;color:white;margin-bottom:4px;">Juan Carlos Cruz Estrada</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.5);">ICI &nbsp;·&nbsp; M. en IA y Ciberseguridad &nbsp;·&nbsp; M. en MKT &nbsp;·&nbsp; Fundador de Quorbitt Intelligence</div>
+        <div class="hero-stat-num">+1,200</div>
+        <div class="hero-stat-label">Pacientes atendidos</div>
       </div>
-      <a href="https://wa.me/525576576669" style="margin-left:auto;background:var(--teal);color:white;padding:12px 24px;border-radius:30px;text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap;">📱 55 7657 6669</a>
+      <div>
+        <div class="hero-stat-num">2</div>
+        <div class="hero-stat-label">Sucursales activas</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">98%</div>
+        <div class="hero-stat-label">Satisfacción del paciente</div>
+      </div>
     </div>
   </div>
-</div>
-
-<!-- CLIENT UNDERSTANDING -->
-<section id="cliente">
-  <div class="section-eyebrow fade-in">Entendimiento del cliente</div>
-  <h2 class="section-title fade-in">Conocemos tu <em>contexto</em></h2>
-  <div class="understanding-grid">
-    <div class="understanding-left fade-in">
-      <p style="font-size:16px;color:var(--gray-500);line-height:1.9;margin-bottom:28px;">
-        Límbica Mérida es una clínica de especialidades en salud mental con un año de operación y un diferenciador poderoso: el uso de Estimulación Magnética Transcraneal (EMT) para tratamientos de depresión, ansiedad y otros trastornos. Con presencia en Mérida y Monterrey, el momento de digitalizar es ahora.
-      </p>
-      <p style="font-size:16px;color:var(--gray-500);line-height:1.9;margin-bottom:32px;">
-        El objetivo es construir una presencia digital que refleje el nivel de innovación clínica que ya tienen en sus tratamientos: profesional, confiable, humana y a la vanguardia.
-      </p>
-      <div class="understanding-tags">
-        <span class="tag">Salud Mental</span>
-        <span class="tag">Estimulación Magnética Transcraneal</span>
-        <span class="tag">Psicología</span>
-        <span class="tag">Psiquiatría</span>
-        <span class="tag">Neuropsiquiatría</span>
-        <span class="tag">Terapia de Lenguaje</span>
-        <span class="tag">Orientación Vocacional</span>
-        <span class="tag">Mérida + Monterrey</span>
-        <span class="tag">Bilingüe</span>
-      </div>
+  <!-- Floating card -->
+  <div class="hero-card">
+    <div class="hero-card-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0A7B6F" stroke-width="1.8"><path d="M12 2a9 9 0 110 18A9 9 0 0112 2z"/><path d="M12 7v5l3 3"/></svg>
     </div>
-    <div class="understanding-card fade-in">
-      <h3>Límbica Mérida</h3>
-      <div class="location">📍 MÉRIDA, YUCATÁN &nbsp;·&nbsp; MONTERREY, NL</div>
-      <ul class="understanding-list">
-        <li>Clínica de especialidades en salud mental con tecnología de vanguardia</li>
-        <li>Sin presencia digital actual — oportunidad de posicionarse como líderes del sector</li>
-        <li>Dos sucursales con micrositios independientes por construir</li>
-        <li>Equipo de especialistas con fotos y perfiles completos disponibles</li>
-        <li>Necesita agenda en línea, WhatsApp integrado y blog activo</li>
-        <li>Audiencia amplia, comunicación bilingüe (ES/EN)</li>
-        <li>Dominio y hosting a contratar y gestionar por Quorbitt</li>
-      </ul>
-    </div>
+    <h3>Estimulación Magnética Transcraneal</h3>
+    <p>Tratamiento no invasivo y altamente efectivo para depresión y ansiedad sin medicación.</p>
+    <span class="hero-card-badge">✓ Tecnología certificada</span>
   </div>
 </section>
 
-<!-- COMPARISON TABLE -->
-<div class="table-section" id="comparativa">
-  <div class="table-inner">
-    <div class="section-eyebrow fade-in">Comparativa de paquetes</div>
-    <h2 class="section-title fade-in">Todo en <em>un vistazo</em></h2>
-    <p class="section-subtitle fade-in">Cada paquete aplica por sucursal. Elige el nivel que mejor se adapta a tus objetivos actuales.</p>
-    <div style="overflow-x:auto;" class="fade-in">
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th>Característica</th>
-            <th class="th-esencial">
-              ESENCIAL
-              <span class="th-price">$12,000</span>
-              <span class="th-price-label">MXN por sucursal</span>
-            </th>
-            <th class="th-avanzado">
-              AVANZADO
-              <span class="th-price">$22,000</span>
-              <span class="th-price-label">MXN por sucursal</span>
-            </th>
-            <th class="th-elite">
-              ÉLITE <span class="elite-badge">⭐ RECOMENDADO</span>
-              <span class="th-price">$35,000</span>
-              <span class="th-price-label">MXN por sucursal</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="row-category"><td colspan="4">Fundamentos digitales</td></tr>
-          <tr><td>Sitio web por sucursal (micrositio)</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Diseño responsivo (móvil + desktop)</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Sitio bilingüe (Español / Inglés)</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Sección de servicios y especialidades</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Catálogo de servicios (contenido del cliente)</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Perfil del equipo con foto y descripción</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Formulario de contacto</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Gestión de dominio y hosting (por Quorbitt)</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr class="row-category"><td colspan="4">Funcionalidades avanzadas</td></tr>
-          <tr><td>Agenda de citas en línea</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Chat / WhatsApp integrado</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Mapa interactivo por sucursal</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Blog con actualización frecuente</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Sección de testimonios</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Integración de redes sociales</td><td><span class="cross">—</span></td><td><span class="check">✓</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr class="row-category"><td colspan="4">Estrategia digital & publicidad</td></tr>
-          <tr><td>Campañas Meta Ads (Facebook / Instagram)</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Campañas Google Ads</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Diseños y posts mensuales (recurrente)</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check-gold">✓</span></td></tr>
-          <tr><td>Videos estándar mensuales (recurrente)</td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check-gold">✓</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- PACKAGES DETAIL -->
-<section id="paquetes">
-  <div class="section-eyebrow fade-in">Detalle de paquetes</div>
-  <h2 class="section-title fade-in">Tu inversión, <em>tu decisión</em></h2>
-  <p class="section-subtitle fade-in">Cada paquete está pensado para un momento distinto de crecimiento. No hay una opción incorrecta, solo la que mejor se alinea a tu meta actual.</p>
-  <div class="packages-grid">
-
-    <!-- ESENCIAL -->
-    <div class="pkg-card fade-in">
-      <div class="pkg-header esencial">
-        <div class="pkg-name esencial">Paquete Esencial</div>
-        <div class="pkg-price esencial"><span class="pkg-currency">$</span>12,000</div>
-        <div class="pkg-period" style="color:var(--gray-500);">MXN por sucursal · pago único</div>
-        <p class="pkg-desc esencial">Ideal para establecer tu presencia digital con una base sólida, profesional y bilingüe.</p>
+<!-- ══════════ ABOUT ══════════ -->
+<section class="section" id="nosotros">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-image-wrap reveal">
+        <div class="about-image-placeholder">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0A7B6F" stroke-width="1.2" opacity="0.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <span style="font-size:12px;color:#0A7B6F;opacity:0.6;font-family:'DM Mono',monospace;letter-spacing:1px;">[IMAGEN DEL ESPACIO CLÍNICO]</span>
+        </div>
+        <div class="about-float-card">
+          <div class="about-float-num">1+</div>
+          <div class="about-float-label">Año transformando vidas en Mérida</div>
+        </div>
       </div>
-      <div class="pkg-body">
-        <ul class="pkg-features">
-          <li><span class="icon feat-check">✓</span> Micrositio por sucursal (diseño personalizado)</li>
-          <li><span class="icon feat-check">✓</span> Diseño responsivo para móvil y desktop</li>
-          <li><span class="icon feat-check">✓</span> Sitio bilingüe Español / Inglés</li>
-          <li><span class="icon feat-check">✓</span> Sección de servicios y especialidades</li>
-          <li><span class="icon feat-check">✓</span> Catálogo de servicios (contenido del cliente)</li>
-          <li><span class="icon feat-check">✓</span> Perfil completo del equipo con fotos</li>
-          <li><span class="icon feat-check">✓</span> Formulario de contacto</li>
-          <li><span class="icon feat-check">✓</span> Dominio y hosting gestionados por Quorbitt</li>
-          <li><span class="icon feat-check">✓</span> 2 meses de soporte, capacitación e implementación</li>
-        </ul>
-        <a href="https://wa.me/525576576669?text=Hola%20Juan%20Carlos%2C%20rev%C3%ADs%C3%A9%20la%20propuesta%20de%20L%C3%ADmbica%20M%C3%A9rida%20y%20me%20interesa%20el%20paquete%20Esencial%20%E2%80%94%20quiero%20iniciar%20mi%20proyecto." class="pkg-cta esencial">Quiero iniciar mi proyecto →</a>
-      </div>
-    </div>
-
-    <!-- AVANZADO -->
-    <div class="pkg-card featured fade-in">
-      <div class="pkg-header avanzado">
-        <div class="pkg-name avanzado">Paquete Avanzado</div>
-        <div class="pkg-price avanzado"><span class="pkg-currency">$</span>22,000</div>
-        <div class="pkg-period" style="color:rgba(255,255,255,0.4);">MXN por sucursal · pago único</div>
-        <p class="pkg-desc avanzado">Para clínicas que quieren captar pacientes activamente con funcionalidades completas de atención digital.</p>
-      </div>
-      <div class="pkg-body">
-        <ul class="pkg-features">
-          <li><span class="icon feat-check">✓</span> Todo lo del paquete Esencial</li>
-          <li><span class="icon feat-check">✓</span> Agenda de citas en línea</li>
-          <li><span class="icon feat-check">✓</span> Chat / WhatsApp integrado</li>
-          <li><span class="icon feat-check">✓</span> Mapa interactivo por sucursal</li>
-          <li><span class="icon feat-check">✓</span> Blog con gestor de contenidos</li>
-          <li><span class="icon feat-check">✓</span> Sección de testimonios de pacientes</li>
-          <li><span class="icon feat-check">✓</span> Integración con redes sociales</li>
-          <li><span class="icon feat-check">✓</span> 2 meses de soporte, capacitación e implementación</li>
-        </ul>
-        <a href="https://wa.me/525576576669?text=Hola%20Juan%20Carlos%2C%20rev%C3%ADs%C3%A9%20la%20propuesta%20de%20L%C3%ADmbica%20M%C3%A9rida%20y%20me%20interesa%20el%20paquete%20Avanzado%20%E2%80%94%20quiero%20iniciar%20mi%20proyecto." class="pkg-cta avanzado">Quiero iniciar mi proyecto →</a>
-      </div>
-    </div>
-
-    <!-- ÉLITE -->
-    <div class="pkg-card fade-in">
-      <div class="pkg-header elite">
-        <div class="pkg-name elite">Paquete Élite ⭐</div>
-        <div class="pkg-price elite"><span class="pkg-currency">$</span>35,000</div>
-        <div class="pkg-period" style="color:rgba(255,255,255,0.4);">MXN por sucursal · + mensualidad recurrente</div>
-        <p class="pkg-desc elite">La solución integral para posicionarte como la clínica de salud mental líder en tu ciudad, con publicidad activa y contenido constante.</p>
-      </div>
-      <div class="pkg-body">
-        <ul class="pkg-features">
-          <li><span class="icon feat-check">✓</span> Todo lo del paquete Avanzado</li>
-          <li><span class="icon feat-gold">★</span> Campañas activas en Meta Ads (Facebook/Instagram)</li>
-          <li><span class="icon feat-gold">★</span> Campañas activas en Google Ads</li>
-          <li><span class="icon feat-gold">★</span> Diseños y posts mensuales para redes</li>
-          <li><span class="icon feat-gold">★</span> Videos estándar mensuales</li>
-          <li><span class="icon feat-check">✓</span> 2 meses de soporte, capacitación e implementación</li>
-          <li style="color:var(--gray-500);font-size:12px;font-style:italic;"><span class="icon" style="color:var(--gray-300)">ℹ</span> Videos especializados con costo adicional según requerimiento</li>
-        </ul>
-        <a href="https://wa.me/525576576669?text=Hola%20Juan%20Carlos%2C%20rev%C3%ADs%C3%A9%20la%20propuesta%20de%20L%C3%ADmbica%20M%C3%A9rida%20y%20me%20interesa%20el%20paquete%20%C3%89lite%20%E2%80%94%20quiero%20iniciar%20mi%20proyecto." class="pkg-cta elite">Quiero iniciar mi proyecto →</a>
+      <div>
+        <div class="eyebrow reveal">Quiénes somos</div>
+        <h2 class="section-title reveal">Donde la <em>ciencia</em> y el cuidado humano <em>se unen</em></h2>
+        <p style="font-size:15px;color:var(--gray-500);line-height:1.85;margin-bottom:24px;" class="reveal">Límbica Mérida nació con la convicción de que la salud mental merece el mismo nivel de especialización y tecnología que cualquier otra área de la medicina. Con un año de operación, hemos construido un espacio donde cada paciente recibe atención personalizada, basada en evidencia científica y con acceso a los tratamientos más avanzados del mundo.</p>
+        <div class="about-pillars">
+          <div class="pillar reveal reveal-delay-1">
+            <div class="pillar-icon icon-animated icon-bounce">🎯</div>
+            <div>
+              <h4>Diagnóstico especializado</h4>
+              <p>Valoración neuropsicológica completa con baterías de pruebas certificadas para un diagnóstico preciso.</p>
+            </div>
+          </div>
+          <div class="pillar reveal reveal-delay-2">
+            <div class="pillar-icon icon-animated icon-pulse">⚡</div>
+            <div>
+              <h4>Tecnología de vanguardia</h4>
+              <p>Equipos de Estimulación Magnética Transcraneal de última generación para tratamientos sin medicación.</p>
+            </div>
+          </div>
+          <div class="pillar reveal reveal-delay-3">
+            <div class="pillar-icon icon-animated icon-wave">🤝</div>
+            <div>
+              <h4>Equipo multidisciplinario</h4>
+              <p>Psicólogos, psiquiatras, neuropsiquiatras y terapeutas trabajando en conjunto por tu bienestar.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- RECURRENTES -->
-<div class="recurrent-section">
-  <div class="recurrent-inner">
-    <div class="section-eyebrow fade-in">Servicios recurrentes</div>
-    <h2 class="section-title fade-in">Contenido que <em>nunca para</em></h2>
-    <p class="section-subtitle fade-in">El paquete Élite incluye servicios de contenido mensual. El precio de la mensualidad se cotiza por separado según tus necesidades específicas.</p>
-    <div class="recurrent-grid">
-      <div class="recurrent-card fade-in">
-        <div class="recurrent-icon">🎨</div>
-        <h4>Diseños mensuales</h4>
-        <p>Piezas gráficas para redes sociales y comunicación digital alineadas a la identidad de Límbica.</p>
+<!-- ══════════ SERVICES ══════════ -->
+<section class="section section-light" id="servicios">
+  <div class="section-inner">
+    <div class="eyebrow reveal">Nuestros servicios</div>
+    <h2 class="section-title reveal">Atención integral para tu <em>salud mental</em></h2>
+    <p class="section-subtitle reveal">Un equipo de especialistas comprometidos con brindarte la atención más completa y personalizada.</p>
+    <div class="services-grid">
+      <div class="service-card reveal reveal-delay-1">
+        <div class="service-icon-wrap icon-animated icon-pulse">🧠</div>
+        <h3>Consulta de Psicología</h3>
+        <p>Acompañamiento terapéutico personalizado para el manejo de emociones, conductas y bienestar mental desde un enfoque humanista y basado en evidencia.</p>
       </div>
-      <div class="recurrent-card fade-in">
-        <div class="recurrent-icon">📱</div>
-        <h4>Posts para redes</h4>
-        <p>Publicaciones estratégicas para Instagram, Facebook y más, con copy y diseño incluidos.</p>
+      <div class="service-card reveal reveal-delay-2">
+        <div class="service-icon-wrap icon-animated icon-bounce">💊</div>
+        <h3>Psiquiatría</h3>
+        <p>Evaluación, diagnóstico y tratamiento médico de trastornos mentales. Manejo farmacológico especializado combinado con intervención terapéutica.</p>
       </div>
-      <div class="recurrent-card fade-in">
-        <div class="recurrent-icon">🎬</div>
-        <h4>Videos estándar</h4>
-        <p>Videos de formato corto para redes sociales: reels, historias, presentaciones del equipo.</p>
+      <div class="service-card reveal reveal-delay-3">
+        <div class="service-icon-wrap icon-animated icon-pulse">🔬</div>
+        <h3>Neuropsiquiatría</h3>
+        <p>Atención especializada en la intersección entre neurología y psiquiatría, para trastornos con base neurológica compleja.</p>
       </div>
-      <div class="recurrent-card fade-in">
-        <div class="recurrent-icon">📊</div>
-        <h4>Campañas de pauta</h4>
-        <p>Gestión activa de Meta Ads y Google Ads para atraer pacientes de forma constante y medible.</p>
+      <div class="service-card reveal reveal-delay-1">
+        <div class="service-icon-wrap icon-animated icon-wave">📊</div>
+        <h3>Valoración Neuropsicológica</h3>
+        <p>Evaluación completa de funciones cognitivas, conductuales y emocionales mediante baterías de pruebas estandarizadas y certificadas.</p>
       </div>
-    </div>
-    <div class="recurrent-note fade-in">
-      <strong>Nota:</strong> Los servicios recurrentes se cotizan de forma independiente según el volumen y tipo de contenido requerido mensualmente. Los videos con producción especializada tienen un costo adicional según el requerimiento específico.
-    </div>
-  </div>
-</div>
-
-<!-- IMPLEMENTATION -->
-<section id="implementacion">
-  <div class="section-eyebrow fade-in">Implementación</div>
-  <h2 class="section-title fade-in">Dos meses de <em>acompañamiento total</em></h2>
-  <p class="section-subtitle fade-in">Desde la firma hasta que tu equipo domina la plataforma, estamos contigo en cada paso.</p>
-  <div class="impl-grid">
-    <div class="timeline fade-in">
-      <div class="tl-item">
-        <div class="tl-line"></div>
-        <div class="tl-dot">01</div>
-        <div class="tl-content">
-          <h4>Kick-off & Recopilación</h4>
-          <p>Reunión de inicio, recopilación de materiales (logo, fotos, textos, contenido del catálogo).</p>
-        </div>
+      <div class="service-card reveal reveal-delay-2">
+        <div class="service-icon-wrap icon-animated icon-bounce">🗣️</div>
+        <h3>Terapia de Lenguaje y Aprendizaje</h3>
+        <p>Intervención especializada en comunicación, lenguaje, habla y aprendizaje para niños, adolescentes y adultos.</p>
       </div>
-      <div class="tl-item">
-        <div class="tl-line"></div>
-        <div class="tl-dot">02</div>
-        <div class="tl-content">
-          <h4>Diseño y desarrollo</h4>
-          <p>Construcción del sitio con revisiones y ajustes incluidos durante el proceso.</p>
-        </div>
-      </div>
-      <div class="tl-item">
-        <div class="tl-line"></div>
-        <div class="tl-dot">03</div>
-        <div class="tl-content">
-          <h4>Revisión y aprobación</h4>
-          <p>Presentación del sitio, ronda de cambios y aprobación final antes del lanzamiento.</p>
-        </div>
-      </div>
-      <div class="tl-item">
-        <div class="tl-dot">04</div>
-        <div class="tl-content">
-          <h4>Lanzamiento + Capacitación</h4>
-          <p>Publicación del sitio, capacitación del equipo en el uso del panel y soporte durante el primer mes.</p>
-        </div>
-      </div>
-    </div>
-    <div class="impl-right fade-in">
-      <h3>¿Qué incluyen los 2 meses?</h3>
-      <p>Durante los primeros dos meses posteriores a la firma, cualquier ajuste, cambio de contenido o modificación requerida está incluida sin costo adicional.</p>
-      <p>Esto cubre: cambios de texto, imágenes, actualización de servicios, ajustes de diseño menores, resolución de incidencias técnicas y sesiones de capacitación para el equipo.</p>
-      <div class="impl-alert">
-        ⚠️ <strong>Posterior a los 2 meses:</strong> cada modificación o actualización solicitada generará un costo adicional según el tipo de cambio requerido. Esto garantiza la sostenibilidad del servicio y la prioridad de atención.
+      <div class="service-card reveal reveal-delay-3">
+        <div class="service-icon-wrap icon-animated icon-pulse">🎓</div>
+        <h3>Orientación Vocacional</h3>
+        <p>Aplicación de baterías de pruebas vocacionales y acompañamiento profesional para una toma de decisiones consciente e informada.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- CONDITIONS -->
-<div class="conditions-section">
-  <div class="conditions-inner">
-    <div class="section-eyebrow fade-in">Condiciones comerciales</div>
-    <h2 class="section-title fade-in">Claro, <em>transparente y justo</em></h2>
-    <div class="conditions-grid">
-      <div class="cond-card fade-in">
-        <div class="cond-icon">📅</div>
-        <h4>Vigencia de propuesta</h4>
-        <p>Esta propuesta es válida por <strong>15 días hábiles</strong> a partir de la fecha de envío, con vencimiento el <strong>15 de abril de 2026</strong>. Posterior a esa fecha, los precios pueden estar sujetos a actualización.</p>
+<!-- ══════════ EMT SECTION ══════════ -->
+<div class="emt-section" id="emt">
+  <div class="emt-bg-glow"></div>
+  <div class="emt-bg-glow2"></div>
+  <div class="emt-grid">
+    <div class="emt-visual reveal">
+      <div class="emt-ring">
+        <div class="emt-orbit-dot"></div>
+        <div class="emt-orbit-dot"></div>
+        <div class="emt-orbit-dot"></div>
+        <div class="emt-ring-inner">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#12A394" stroke-width="1.4"><path d="M12 2a9 9 0 110 18A9 9 0 0112 2z"/><path d="M8 12s1-2 4-2 4 2 4 2"/><path d="M9 9h.01M15 9h.01"/></svg>
+          <div class="emt-ring-label">EMT</div>
+        </div>
       </div>
-      <div class="cond-card fade-in">
-        <div class="cond-icon">💳</div>
-        <h4>Esquema de pago</h4>
-        <p><strong>50% de anticipo</strong> para iniciar el proyecto de inmediato. El <strong>50% restante</strong> se liquida al momento del cierre y entrega del proyecto. Sin costos ocultos ni sorpresas.</p>
+    </div>
+    <div class="emt-content">
+      <div class="eyebrow eyebrow-white reveal">Tecnología de vanguardia</div>
+      <h2 class="section-title section-title-white reveal">Estimulación Magnética <em>Transcraneal</em></h2>
+      <p class="section-subtitle section-subtitle-white reveal">Un tratamiento revolucionario, no invasivo y sin medicación que activa zonas específicas del cerebro para aliviar la depresión, ansiedad y otros trastornos neurológicos.</p>
+      <div class="emt-stats reveal">
+        <div class="emt-stat">
+          <div class="emt-stat-num">80%</div>
+          <div class="emt-stat-label">Tasa de respuesta positiva en depresión</div>
+        </div>
+        <div class="emt-stat">
+          <div class="emt-stat-num">0</div>
+          <div class="emt-stat-label">Efectos secundarios sistémicos</div>
+        </div>
+        <div class="emt-stat">
+          <div class="emt-stat-num">30 min</div>
+          <div class="emt-stat-label">Duración de cada sesión</div>
+        </div>
+        <div class="emt-stat">
+          <div class="emt-stat-num">FDA</div>
+          <div class="emt-stat-label">Aprobación regulatoria internacional</div>
+        </div>
       </div>
-      <div class="cond-card fade-in">
-        <div class="cond-icon">🗂️</div>
-        <h4>Materiales del cliente</h4>
-        <p>El cliente proporciona: <strong>logotipo</strong> en alta resolución, <strong>fotografías del equipo</strong>, textos de servicios y cualquier material de marca. Quorbitt gestiona dominio y hosting.</p>
+      <div class="emt-features reveal">
+        <div class="emt-feature"><div class="emt-feature-dot"></div>Tratamiento 100% no invasivo, sin cirugía ni anestesia</div>
+        <div class="emt-feature"><div class="emt-feature-dot"></div>Efectivo para depresión resistente a medicamentos</div>
+        <div class="emt-feature"><div class="emt-feature-dot"></div>Aplicable en trastornos de ansiedad, TOC y más</div>
+        <div class="emt-feature"><div class="emt-feature-dot"></div>El paciente regresa a sus actividades de inmediato</div>
+        <div class="emt-feature"><div class="emt-feature-dot"></div>Resultados visibles desde las primeras semanas</div>
+      </div>
+      <div style="margin-top:32px;" class="reveal">
+        <a href="#contacto" class="btn-primary" style="display:inline-flex;">Consultar sobre EMT →</a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- NEXT STEPS -->
-<div class="steps-section" id="siguientes-pasos">
-  <div class="steps-inner">
-    <div class="section-eyebrow fade-in">Siguientes pasos</div>
-    <h2 class="section-title fade-in">Así de <em>sencillo</em> es empezar</h2>
-    <p class="section-subtitle fade-in">Cuatro pasos y Límbica Mérida tendrá la presencia digital que merece.</p>
-    <div class="steps-grid">
-      <div class="step-card fade-in">
-        <div class="step-connector">→</div>
-        <div class="step-num">01</div>
-        <h4>Aprobación</h4>
-        <p>Selecciona el paquete que mejor se adapta a tu momento actual y da el visto bueno a esta propuesta.</p>
+<!-- ══════════ TEAM ══════════ -->
+<section class="section" id="equipo">
+  <div class="section-inner">
+    <div class="eyebrow reveal">Nuestro equipo</div>
+    <h2 class="section-title reveal">Especialistas <em>dedicados</em> a tu bienestar</h2>
+    <p class="section-subtitle reveal">Profesionales de la salud mental con formación de alto nivel y vocación de servicio.</p>
+    <div class="team-grid">
+      <div class="team-card reveal reveal-delay-1">
+        <div class="team-photo">👩‍⚕️<div class="team-photo-label">[Foto del especialista]</div></div>
+        <div class="team-info">
+          <div class="team-name">Dra. [Nombre Apellido]</div>
+          <div class="team-role">Psiquiatra</div>
+          <div class="team-spec">Especialidad en trastornos del estado de ánimo y terapia EMT</div>
+          <div class="team-dev-badge">DEV · Por actualizar</div>
+        </div>
       </div>
-      <div class="step-card fade-in">
-        <div class="step-connector">→</div>
-        <div class="step-num">02</div>
-        <h4>Anticipo del 50%</h4>
-        <p>Con el anticipo confirmado, agendamos el kick-off y arrancamos de inmediato. Sin trámites complicados.</p>
+      <div class="team-card reveal reveal-delay-2">
+        <div class="team-photo">👨‍⚕️<div class="team-photo-label">[Foto del especialista]</div></div>
+        <div class="team-info">
+          <div class="team-name">Dr. [Nombre Apellido]</div>
+          <div class="team-role">Neuropsiquiatra</div>
+          <div class="team-spec">Experto en diagnóstico neuropsicológico y trastornos complejos</div>
+          <div class="team-dev-badge">DEV · Por actualizar</div>
+        </div>
       </div>
-      <div class="step-card fade-in">
-        <div class="step-connector">→</div>
-        <div class="step-num">03</div>
-        <h4>Kick-off & Materiales</h4>
-        <p>Reunión de inicio, compartes logo, fotos y textos. Nosotros hacemos el resto con acompañamiento constante.</p>
+      <div class="team-card reveal reveal-delay-3">
+        <div class="team-photo">👩‍💼<div class="team-photo-label">[Foto del especialista]</div></div>
+        <div class="team-info">
+          <div class="team-name">Mtra. [Nombre Apellido]</div>
+          <div class="team-role">Psicóloga Clínica</div>
+          <div class="team-spec">Terapia cognitivo-conductual y orientación vocacional</div>
+          <div class="team-dev-badge">DEV · Por actualizar</div>
+        </div>
       </div>
-      <div class="step-card fade-in">
-        <div class="step-num">04</div>
-        <h4>¡Lanzamiento!</h4>
-        <p>En 2 a 4 semanas, Límbica Mérida tiene presencia digital profesional activa. Pago del 50% restante al cierre.</p>
+      <div class="team-card reveal reveal-delay-4">
+        <div class="team-photo">👩‍🔬<div class="team-photo-label">[Foto del especialista]</div></div>
+        <div class="team-info">
+          <div class="team-name">Lic. [Nombre Apellido]</div>
+          <div class="team-role">Terapeuta de Lenguaje</div>
+          <div class="team-spec">Rehabilitación del lenguaje, habla y aprendizaje</div>
+          <div class="team-dev-badge">DEV · Por actualizar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ TESTIMONIALS ══════════ -->
+<div class="testimonials-section" id="testimonios">
+  <div class="testimonials-inner">
+    <div class="eyebrow reveal">Testimonios</div>
+    <h2 class="section-title reveal">Lo que dicen nuestros <em>pacientes</em></h2>
+    <p class="section-subtitle reveal">Experiencias reales de personas que transformaron su bienestar mental con nosotros.</p>
+    <div class="carousel-wrap reveal">
+      <div class="carousel-track-outer">
+        <div class="carousel-track" id="carouselTrack">
+          <!-- 14 testimonios -->
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">El tratamiento EMT cambió mi vida. Llevaba años luchando contra la depresión sin resultados con medicamentos. Después de 4 semanas de sesiones, sentí una diferencia que nunca había experimentado.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">M</div>
+              <div>
+                <div class="testimonial-name">María G.</div>
+                <div class="testimonial-service">Tratamiento EMT · Depresión</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">El equipo de Límbica es excepcional. Desde el primer día me hicieron sentir en un espacio seguro y sin juicios. La valoración neuropsicológica fue muy completa y los resultados muy claros.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">R</div>
+              <div>
+                <div class="testimonial-name">Roberto A.</div>
+                <div class="testimonial-service">Valoración Neuropsicológica</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Mi hijo tiene 8 años y gracias a la terapia de lenguaje su comunicación mejoró enormemente en pocos meses. La terapeuta es paciente, cariñosa y muy profesional. Totalmente recomendada.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">C</div>
+              <div>
+                <div class="testimonial-name">Claudia P.</div>
+                <div class="testimonial-service">Terapia de Lenguaje Infantil</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Fui muy escéptico al principio sobre la EMT, pero los resultados me sorprendieron. Mi ansiedad social disminuyó considerablemente y puedo llevar una vida mucho más plena. Gracias Límbica.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">J</div>
+              <div>
+                <div class="testimonial-name">Jorge M.</div>
+                <div class="testimonial-service">EMT · Ansiedad Social</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">La orientación vocacional fue exactamente lo que necesitaba antes de elegir mi carrera. Las pruebas y el análisis del psicólogo me dieron claridad y confianza en mi decisión. Excelente servicio.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">S</div>
+              <div>
+                <div class="testimonial-name">Sofía L.</div>
+                <div class="testimonial-service">Orientación Vocacional</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">La atención en Límbica es de primer nivel. El Dr. que me atendió en psiquiatría fue muy empático y el plan de tratamiento ha funcionado increíblemente. Me siento como una persona nueva.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">A</div>
+              <div>
+                <div class="testimonial-name">Ana R.</div>
+                <div class="testimonial-service">Consulta Psiquiátrica</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Nunca pensé que hablar con un psicólogo me ayudaría tanto. Llevo 6 meses de terapia y ha sido transformador. El espacio es cómodo, privado y el profesional siempre está presente.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">D</div>
+              <div>
+                <div class="testimonial-name">Daniel F.</div>
+                <div class="testimonial-service">Psicología Clínica</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Vine con diagnóstico de depresión resistente. Tres psiquiatras antes no habían logrado estabilizarme. La EMT en Límbica fue la solución. Son expertos en lo que hacen y la atención es impecable.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">V</div>
+              <div>
+                <div class="testimonial-name">Valeria T.</div>
+                <div class="testimonial-service">EMT · Depresión Resistente</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">La clínica es moderna, limpia y el ambiente es muy tranquilizador. Mi hija tenía dificultades de aprendizaje y en Límbica le hicieron una evaluación completa. El proceso fue claro y los resultados, reveladores.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">L</div>
+              <div>
+                <div class="testimonial-name">Laura S.</div>
+                <div class="testimonial-service">Valoración Aprendizaje</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">El Dr. me explicó todo el proceso de EMT con paciencia y sin apresurarme. Se nota que genuinamente les importa el bienestar del paciente. Los resultados en mi TOC han sido notables.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">E</div>
+              <div>
+                <div class="testimonial-name">Eduardo B.</div>
+                <div class="testimonial-service">EMT · Trastorno Obsesivo</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Recomendé Límbica a tres amigos después de mi experiencia. La combinación de psiquiatría y psicología en un mismo lugar hace todo mucho más eficiente. El seguimiento es constante y personalizado.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">P</div>
+              <div>
+                <div class="testimonial-name">Patricia O.</div>
+                <div class="testimonial-service">Psiquiatría + Psicología</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Jamás imaginé que la terapia de lenguaje me ayudaría a superar mi tartamudez en la edad adulta. El trabajo en Límbica fue gradual, constante y sumamente efectivo. Hoy hablo con mucha más fluidez.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">H</div>
+              <div>
+                <div class="testimonial-name">Héctor M.</div>
+                <div class="testimonial-service">Terapia de Lenguaje Adultos</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Mi proceso de orientación vocacional fue una revelación. Descubrí habilidades que no sabía que tenía. El enfoque es muy profesional y el reporte que me entregaron fue extremadamente detallado y útil.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">F</div>
+              <div>
+                <div class="testimonial-name">Fernanda C.</div>
+                <div class="testimonial-service">Orientación Vocacional</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-card">
+            <div class="testimonial-quote">"</div>
+            <p class="testimonial-text">Después de un accidente, tuve secuelas cognitivas importantes. La rehabilitación neuropsicológica en Límbica fue fundamental para recuperar mi calidad de vida. Un equipo extraordinario.</p>
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">G</div>
+              <div>
+                <div class="testimonial-name">Guillermo N.</div>
+                <div class="testimonial-service">Rehabilitación Neuropsicológica</div>
+                <div class="testimonial-stars">★★★★★</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Progress bar -->
+      <div class="carousel-progress"><div class="carousel-progress-bar" id="progressBar"></div></div>
+      <div class="carousel-controls">
+        <button class="carousel-btn" id="prevBtn">←</button>
+        <div class="carousel-dots" id="carouselDots"></div>
+        <button class="carousel-btn" id="nextBtn">→</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- VALUE VS INVESTMENT -->
-<div class="value-section">
-  <div class="value-inner">
-    <div class="value-eyebrow fade-in">Valor vs. Inversión</div>
-    <h2 class="value-title fade-in">No es un gasto.<br>Es tu <em>activo digital más importante.</em></h2>
-    <p class="value-text fade-in">
-      Entendemos que cada peso importa. Por eso queremos ser directos: la diferencia entre $10,000 y $12,000 no es solo de precio — es la diferencia entre un sitio genérico y una presencia digital que realmente representa el nivel clínico y tecnológico que Límbica Mérida ya tiene. Un paciente que llega por tu sitio web y agenda en línea vale diez veces esa inversión desde el primer mes.
-    </p>
-    <div class="value-comparison fade-in">
-      <div class="value-box">
-        <div class="value-box-label">Presupuesto inicial</div>
-        <div class="value-box-amount">$10,000</div>
+<!-- ══════════ SUCURSALES ══════════ -->
+<section class="section section-teal" id="sucursales">
+  <div class="section-inner">
+    <div class="eyebrow reveal">Encuéntranos</div>
+    <h2 class="section-title reveal">Dos sucursales, <em>una misma</em> calidad</h2>
+    <p class="section-subtitle reveal">Atendemos en Mérida y Monterrey para estar más cerca de quienes nos necesitan.</p>
+    <div class="sucursales-grid">
+      <div class="sucursal-card reveal reveal-delay-1">
+        <div class="sucursal-badge">📍 Sede Principal</div>
+        <h3>Límbica Mérida</h3>
+        <div class="sucursal-detail"><span>📍</span><span>[Dirección completa por confirmar] — Mérida, Yucatán</span></div>
+        <div class="sucursal-detail"><span>📞</span><span><a href="tel:5540998044" style="color:var(--teal);">55 4099 8044</a></span></div>
+        <div class="sucursal-detail"><span>✉️</span><span><a href="mailto:psicologalgv@gmail.com" style="color:var(--teal);">psicologalgv@gmail.com</a></span></div>
+        <div class="sucursal-detail"><span>🕐</span><span>Lunes a Viernes: 9:00 — 19:00 hrs<br>Sábado: 9:00 — 14:00 hrs</span></div>
+        <div style="margin-top:20px;">
+          <a href="#contacto" class="btn-primary" style="font-size:13px;padding:10px 22px;">Agendar en Mérida →</a>
+        </div>
       </div>
-      <div class="value-arrow">→</div>
-      <div class="value-box highlight-box">
-        <div class="value-box-label">Inversión real · Paquete Esencial</div>
-        <div class="value-box-amount">$12,000</div>
+      <div class="sucursal-card sucursal-coming reveal reveal-delay-2">
+        <div class="sucursal-badge" style="background:var(--gray-100);color:var(--gray-500);">🔜 Próximamente</div>
+        <h3 style="color:var(--gray-500);">Límbica Monterrey</h3>
+        <div class="sucursal-detail"><span>📍</span><span style="color:var(--gray-300);">Monterrey, Nuevo León — Información próximamente</span></div>
+        <div class="sucursal-detail"><span>📞</span><span style="color:var(--gray-300);">Teléfono por confirmar</span></div>
+        <div class="sucursal-detail"><span>✉️</span><span style="color:var(--gray-300);">Correo por confirmar</span></div>
+        <div class="sucursal-detail"><span>🕐</span><span style="color:var(--gray-300);">Horarios por confirmar</span></div>
+        <div style="margin-top:20px;">
+          <button class="btn-outline" style="font-size:13px;padding:10px 22px;cursor:default;opacity:0.5;">Información próximamente</button>
+        </div>
       </div>
     </div>
-    <p class="value-text fade-in" style="font-size:15px;opacity:0.8;">
-      Solo <strong style="color:white;">$2,000 MXN de diferencia</strong> separan tu negocio de una presencia digital profesional, bilingüe y con dos meses de soporte incluido. ¿Vale la pena? Creemos que sí. Y tú también lo sabes.
-    </p>
-    <div class="value-cta-group fade-in">
-      <a href="https://wa.me/525576576669?text=Hola%20Juan%20Carlos%2C%20rev%C3%ADs%C3%A9%20la%20propuesta%20de%20L%C3%ADmbica%20M%C3%A9rida%20y%20quiero%20iniciar%20mi%20proyecto." class="btn-primary">
-        Quiero iniciar mi proyecto 🚀
-      </a>
-      <a href="https://wa.me/525576576669?text=Hola%20Juan%20Carlos%2C%20tengo%20algunas%20preguntas%20sobre%20la%20propuesta%20de%20L%C3%ADmbica%20M%C3%A9rida." class="btn-secondary">
-        Tengo preguntas
-      </a>
+  </div>
+</section>
+
+<!-- ══════════ CONTACT / FORM ══════════ -->
+<div class="contact-section" id="contacto">
+  <div class="contact-bg"></div>
+  <div class="contact-grid">
+    <div class="contact-info reveal">
+      <div class="eyebrow eyebrow-white">Contáctanos</div>
+      <h2 class="section-title section-title-white">Agenda tu <em>consulta</em> hoy</h2>
+      <p class="section-subtitle section-subtitle-white">Estamos aquí para escucharte. Da el primer paso hacia tu bienestar mental.</p>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📞</div>
+        <div>
+          <div class="contact-info-label">Teléfono / WhatsApp</div>
+          <div class="contact-info-value">55 4099 8044</div>
+        </div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">✉️</div>
+        <div>
+          <div class="contact-info-label">Correo electrónico</div>
+          <div class="contact-info-value">psicologalgv@gmail.com</div>
+        </div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📍</div>
+        <div>
+          <div class="contact-info-label">Ubicación</div>
+          <div class="contact-info-value">Mérida, Yucatán<br><span style="font-size:13px;opacity:0.6;">Monterrey, N.L. — Próximamente</span></div>
+        </div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">🕐</div>
+        <div>
+          <div class="contact-info-label">Horario de atención</div>
+          <div class="contact-info-value">Lun–Vie: 9:00–19:00<br>Sáb: 9:00–14:00 hrs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM via FormSubmit -->
+    <div class="reveal reveal-delay-2">
+      <div class="contact-form">
+        <div class="form-title">Solicitud de Consulta</div>
+        <p class="form-subtitle">Completa el formulario y nos pondremos en contacto contigo a la brevedad para confirmar tu cita.</p>
+        <form action="https://formsubmit.co/psicologalgv@gmail.com" method="POST">
+          <!-- FormSubmit config -->
+          <input type="hidden" name="_subject" value="Nueva solicitud de consulta — Límbica Mérida">
+          <input type="hidden" name="_captcha" value="false">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_next" value="https://limbica.com/gracias">
+          <input type="text" name="_honey" style="display:none">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre completo *</label>
+              <input type="text" name="nombre_completo" placeholder="Tu nombre" required>
+            </div>
+            <div class="form-group">
+              <label>Teléfono / WhatsApp *</label>
+              <input type="tel" name="telefono" placeholder="55 0000 0000" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Correo electrónico *</label>
+            <input type="email" name="correo" placeholder="tu@correo.com" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Servicio de interés *</label>
+              <select name="servicio" required>
+                <option value="" disabled selected>Selecciona un servicio</option>
+                <option>Consulta de Psicología</option>
+                <option>Psiquiatría</option>
+                <option>Neuropsiquiatría</option>
+                <option>Estimulación Magnética Transcraneal (EMT)</option>
+                <option>Valoración Neuropsicológica</option>
+                <option>Terapia de Lenguaje y Aprendizaje</option>
+                <option>Orientación Vocacional</option>
+                <option>No sé, necesito orientación</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>¿Cómo nos conociste?</label>
+              <select name="como_nos_conociste">
+                <option value="" disabled selected>Selecciona una opción</option>
+                <option>Recomendación personal</option>
+                <option>Búsqueda en Google</option>
+                <option>Redes sociales</option>
+                <option>Médico referente</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Motivo de consulta</label>
+            <textarea name="motivo_consulta" placeholder="Cuéntanos brevemente qué te trae con nosotros. Esta información es confidencial y nos ayuda a preparar mejor tu atención."></textarea>
+          </div>
+          <button type="submit" class="form-submit">Enviar solicitud de consulta →</button>
+          <p class="form-note">🔒 Tu información es completamente confidencial. Nos comunicaremos contigo dentro de las próximas 24 horas hábiles.</p>
+        </form>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- FOOTER -->
+<!-- ══════════ FOOTER ══════════ -->
 <footer>
   <div class="footer-inner">
-    <div>
-      <div class="footer-brand" style="margin-bottom:8px;">Quorbitt Intelligence</div>
-      <div>Propuesta preparada por Juan Carlos Cruz Estrada</div>
-      <div>ICI · M. en IA y Ciberseguridad · M. en MKT · Fundador</div>
+    <div class="footer-top">
+      <div>
+        <img src="data:image/jpeg;base64,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" alt="Límbica Mérida" style="height:64px;width:auto;object-fit:contain;border-radius:6px;margin-bottom:16px;filter:brightness(0) invert(1);opacity:0.85;">
+        <div class="footer-brand-sub">Centro de Especialidades en Salud Mental</div>
+        <p class="footer-brand-desc">Combinamos la calidez humana con tecnología de vanguardia para transformar el bienestar mental de nuestros pacientes en Mérida y Monterrey.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Servicios</h4>
+        <ul>
+          <li><a href="#servicios">Psicología Clínica</a></li>
+          <li><a href="#servicios">Psiquiatría</a></li>
+          <li><a href="#servicios">Neuropsiquiatría</a></li>
+          <li><a href="#emt">Tratamiento EMT</a></li>
+          <li><a href="#servicios">Terapia de Lenguaje</a></li>
+          <li><a href="#servicios">Orientación Vocacional</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Información</h4>
+        <ul>
+          <li><a href="#nosotros">Quiénes somos</a></li>
+          <li><a href="#equipo">Nuestro equipo</a></li>
+          <li><a href="#sucursales">Sucursales</a></li>
+          <li><a href="#testimonios">Testimonios</a></li>
+          <li><a href="#contacto">Agendar cita</a></li>
+          <li><a href="tel:5540998044">55 4099 8044</a></li>
+        </ul>
+      </div>
     </div>
-    <div class="footer-contact">
-      <div>📱 <a href="tel:5576576669">55 7657 6669</a></div>
-      <div>Válida hasta el 15 de abril, 2026</div>
-      <div style="margin-top:8px;font-size:11px;opacity:0.4;">© 2026 Quorbitt Intelligence — Todos los derechos reservados</div>
+    <div class="footer-bottom">
+      <span>© 2026 Límbica Mérida — Todos los derechos reservados</span>
+      <span>Desarrollado por <a href="https://quorbitintelligence.github.io/index/" target="_blank">Quorbitt Intelligence</a></span>
     </div>
   </div>
 </footer>
 
-<!-- WHATSAPP FLOAT -->
-<a class="wa-float" href="https://wa.me/525576576669?text=Hola%20Juan%20Carlos%2C%20rev%C3%ADs%C3%A9%20la%20propuesta%20de%20L%C3%ADmbica%20M%C3%A9rida%20y%20quiero%20iniciar%20mi%20proyecto." target="_blank">
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-  </svg>
-  Quiero iniciar mi proyecto
-</a>
-
 <script>
-  // Intersection Observer for fade-in animations
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
-      if (entry.isIntersecting) {
-        setTimeout(() => {
-          entry.target.classList.add('visible');
-        }, 80);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-  // Staggered children in grids
-  document.querySelectorAll('.why-grid, .packages-grid, .recurrent-grid, .steps-grid, .conditions-grid').forEach(grid => {
-    grid.querySelectorAll('.fade-in').forEach((child, i) => {
-      child.style.transitionDelay = `${i * 0.1}s`;
-    });
+// ═══════════════════════════════════
+//   SCROLL REVEAL
+// ═══════════════════════════════════
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
   });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ═══════════════════════════════════
+//   CAROUSEL
+// ═══════════════════════════════════
+const track = document.getElementById('carouselTrack');
+const dotsContainer = document.getElementById('carouselDots');
+const progressBar = document.getElementById('progressBar');
+const cards = track.querySelectorAll('.testimonial-card');
+const totalCards = cards.length;
+const visibleCards = window.innerWidth > 1024 ? 3 : window.innerWidth > 640 ? 2 : 1;
+const totalSlides = totalCards - visibleCards + 1;
+let current = 0;
+let autoTimer = null;
+let progressTimer = null;
+const INTERVAL = 4500;
+
+// Build dots
+for (let i = 0; i < totalSlides; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => goTo(i));
+  dotsContainer.appendChild(dot);
+}
+
+function getCardWidth() {
+  const gap = 24;
+  const containerWidth = track.parentElement.offsetWidth;
+  return (containerWidth - gap * (visibleCards - 1)) / visibleCards + gap;
+}
+
+function goTo(index) {
+  current = Math.max(0, Math.min(index, totalSlides - 1));
+  track.style.transform = `translateX(-${current * getCardWidth()}px)`;
+  document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === current);
+  });
+  resetProgress();
+}
+
+function next() { goTo(current < totalSlides - 1 ? current + 1 : 0); }
+function prev() { goTo(current > 0 ? current - 1 : totalSlides - 1); }
+
+document.getElementById('nextBtn').addEventListener('click', () => { next(); resetAuto(); });
+document.getElementById('prevBtn').addEventListener('click', () => { prev(); resetAuto(); });
+
+// Progress bar
+let progressValue = 0;
+function resetProgress() {
+  clearInterval(progressTimer);
+  progressValue = 0;
+  progressBar.style.width = '0%';
+  progressTimer = setInterval(() => {
+    progressValue += 100 / (INTERVAL / 100);
+    progressBar.style.width = Math.min(progressValue, 100) + '%';
+  }, 100);
+}
+
+function startAuto() {
+  autoTimer = setInterval(next, INTERVAL);
+}
+function resetAuto() {
+  clearInterval(autoTimer);
+  startAuto();
+}
+
+// Touch support
+let touchStartX = 0;
+track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+track.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); resetAuto(); }
+});
+
+// Init
+resetProgress();
+startAuto();
 </script>
 </body>
 </html>
