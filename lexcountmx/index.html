@@ -1,1 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LexCount MX — Mtra. Sarit Tapia Pérez</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
+:root {
+  --morado:     #5B1FA8;
+  --morado-mid: #7C3AED;
+  --lila:       #A78BFA;
+  --lila-light: #EDE9FE;
+  --lila-pale:  #F5F3FF;
+  --blanco:     #FFFFFF;
+  --gris:       #6B7280;
+  --texto:      #1E1B4B;
+  --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); color: var(--texto); background: var(--blanco); overflow-x: hidden; }
+h1,h2,h3,h4 { font-family: var(--serif); }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(255,255,255,0.97);
+  border-bottom: 1px solid rgba(167,139,250,0.2);
+  padding: 0 2.5rem; height: 70px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 1px 16px rgba(91,31,168,0.07);
+  transition: box-shadow .3s;
+}
+/* Logo nav SVG inline */
+.nav-logo-wrap { display: flex; align-items: center; gap: .75rem; text-decoration: none; }
+.nav-logo-circle {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--morado);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; position: relative;
+  box-shadow: 0 2px 10px rgba(91,31,168,.3);
+}
+.nav-logo-circle::after {
+  content: ''; position: absolute; inset: 3px; border-radius: 50%;
+  border: 1px solid rgba(167,139,250,.5); pointer-events: none;
+}
+.nav-logo-circle svg { width: 22px; height: 22px; }
+.nav-logo-text { line-height: 1.15; }
+.nav-logo-name { font-family: var(--serif); font-size: 1.15rem; font-weight: 700; color: var(--texto); letter-spacing: .02em; }
+.nav-logo-name span { color: var(--morado); }
+.nav-logo-sub { font-size: .68rem; color: var(--gris); letter-spacing: .06em; text-transform: uppercase; }
+
+.nav-links { display: flex; gap: 1.8rem; list-style: none; }
+.nav-links a { text-decoration: none; font-size: .875rem; font-weight: 500; color: var(--texto); transition: color .2s; }
+.nav-links a:hover { color: var(--morado); }
+.nav-cta {
+  background: var(--morado); color: #fff;
+  padding: .45rem 1.25rem; border-radius: 50px;
+  text-decoration: none; font-size: .85rem; font-weight: 500;
+  transition: background .2s, transform .15s;
+}
+.nav-cta:hover { background: var(--morado-mid); transform: translateY(-1px); }
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+.hamburger span { display: block; width: 22px; height: 2px; background: var(--morado); border-radius: 2px; }
+.mobile-menu {
+  display: none; position: fixed; top: 70px; left: 0; right: 0;
+  background: #fff; border-bottom: 1px solid rgba(167,139,250,.2);
+  padding: 1.5rem 2rem; z-index: 999; flex-direction: column; gap: 1rem;
+  box-shadow: 0 8px 24px rgba(91,31,168,.1);
+}
+.mobile-menu.open { display: flex; }
+.mobile-menu a { text-decoration: none; color: var(--texto); font-weight: 500; padding: .5rem 0; border-bottom: 1px solid var(--lila-light); }
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh; display: flex; align-items: center;
+  padding-top: 70px;
+  background: linear-gradient(140deg, var(--lila-pale) 0%, #fff 55%, var(--lila-light) 100%);
+  position: relative; overflow: hidden;
+}
+#hero::before {
+  content: ''; position: absolute; top: -100px; right: -100px;
+  width: 560px; height: 560px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(167,139,250,.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+#hero::after {
+  content: ''; position: absolute; bottom: -60px; left: -60px;
+  width: 360px; height: 360px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(91,31,168,.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-wrap {
+  max-width: 1200px; margin: 0 auto; padding: 4.5rem 2rem;
+  display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: var(--lila-light); border: 1px solid rgba(167,139,250,.5);
+  color: var(--morado); border-radius: 50px;
+  padding: .3rem 1rem; font-size: .78rem; font-weight: 600;
+  margin-bottom: 1.5rem; letter-spacing: .02em;
+}
+.hero-title { font-size: clamp(2.4rem,5vw,3.8rem); line-height: 1.1; margin-bottom: .6rem; }
+.hero-title em { font-style: normal; color: var(--morado); }
+.hero-sub { font-size: 1.05rem; color: var(--gris); line-height: 1.65; margin-bottom: 1.8rem; font-weight: 300; }
+.tags { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 2rem; }
+.tag { background: #fff; border: 1px solid rgba(167,139,250,.4); color: var(--morado-mid); border-radius: 5px; padding: .28rem .7rem; font-size: .76rem; font-weight: 500; }
+.hero-btns { display: flex; gap: .9rem; flex-wrap: wrap; }
+.btn-p { background: var(--morado); color: #fff; padding: .82rem 1.9rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: .92rem; transition: all .2s; box-shadow: 0 4px 18px rgba(91,31,168,.28); }
+.btn-p:hover { background: var(--morado-mid); transform: translateY(-2px); }
+.btn-s { border: 2px solid var(--morado); color: var(--morado); padding: .82rem 1.9rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: .92rem; transition: all .2s; }
+.btn-s:hover { background: var(--lila-pale); transform: translateY(-2px); }
+
+/* Hero visual — logotipo grande + stats */
+.hero-visual { display: flex; justify-content: center; position: relative; padding-bottom: 3.5rem; }
+.hero-logo-card {
+  width: 320px; height: 380px;
+  background: linear-gradient(145deg, var(--lila-pale) 0%, var(--lila-light) 60%, rgba(167,139,250,.25) 100%);
+  border-radius: 24px 24px 60px 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1.4rem;
+  box-shadow: 0 20px 56px rgba(91,31,168,.18);
+  border: 1px solid rgba(167,139,250,.25);
+  position: relative; overflow: hidden;
+}
+.hero-logo-card::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(167,139,250,.12); pointer-events: none;
+}
+/* Círculo grande del logotipo en el hero */
+.logo-circle-lg {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: var(--morado);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(91,31,168,.35);
+}
+.logo-circle-lg::before {
+  content: ''; position: absolute; inset: 6px; border-radius: 50%;
+  border: 1.5px solid rgba(167,139,250,.5);
+}
+.logo-circle-lg::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid rgba(167,139,250,.3);
+}
+.logo-circle-lg svg { width: 68px; height: 68px; }
+.hero-logo-wordmark { text-align: center; }
+.hero-logo-wordmark .wm-name { font-family: var(--serif); font-size: 1.6rem; font-weight: 700; color: var(--texto); letter-spacing: .06em; line-height: 1; }
+.hero-logo-wordmark .wm-name span { color: var(--morado); }
+.hero-logo-wordmark .wm-mx {
+  display: inline-block; margin-top: .35rem;
+  background: var(--morado); color: #fff;
+  font-size: .72rem; font-weight: 700; letter-spacing: .2em;
+  padding: .2rem .7rem; border-radius: 4px;
+}
+.hero-logo-wordmark .wm-tag { font-family: var(--serif); font-size: .72rem; color: var(--gris); letter-spacing: .04em; margin-top: .4rem; font-style: italic; }
+.hero-logo-wordmark .wm-sep { width: 60px; height: 1px; background: rgba(167,139,250,.4); margin: .5rem auto; }
+
+.hero-stats {
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  background: #fff; border-radius: 14px;
+  padding: .9rem 1.4rem; display: flex; gap: 1.4rem;
+  box-shadow: 0 6px 28px rgba(91,31,168,.14); white-space: nowrap;
+}
+.stat { text-align: center; }
+.stat-n { font-family: var(--serif); font-size: 1.5rem; font-weight: 700; color: var(--morado); line-height: 1; }
+.stat-l { font-size: .68rem; color: var(--gris); margin-top: 2px; }
+.stat-sep { width: 1px; background: rgba(167,139,250,.25); }
+
+/* ── SECTIONS ── */
+section { padding: 5rem 2rem; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+.lbl { display: inline-flex; align-items: center; gap: .5rem; color: var(--morado-mid); font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-bottom: .7rem; }
+.lbl::before { content: ''; display: block; width: 22px; height: 2px; background: var(--lila); }
+.sec-title { font-size: clamp(1.9rem,3.5vw,2.9rem); line-height: 1.15; margin-bottom: 1rem; }
+.sec-desc { color: var(--gris); max-width: 580px; line-height: 1.72; }
+
+/* ── SOBRE ── */
+#sobre { background: #fff; }
+.sobre-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 4.5rem; align-items: center; }
+.sobre-card { background: linear-gradient(145deg, var(--lila-pale), var(--lila-light)); border-radius: 18px; padding: 2.5rem; border: 1px solid rgba(167,139,250,.2); position: relative; overflow: hidden; }
+.sobre-card::before { content: '"'; position: absolute; top: -28px; left: 14px; font-size: 10rem; color: rgba(167,139,250,.12); font-family: var(--serif); line-height: 1; pointer-events: none; }
+.sobre-quote { font-family: var(--serif); font-size: 1.25rem; color: var(--morado); line-height: 1.55; position: relative; z-index: 1; }
+.sobre-items { margin-top: 1.8rem; display: flex; flex-direction: column; gap: .9rem; }
+.s-item { display: flex; align-items: flex-start; gap: .7rem; }
+.s-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--morado); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .95rem; flex-shrink: 0; }
+.s-text strong { display: block; font-size: .88rem; color: var(--texto); }
+.s-text span { font-size: .8rem; color: var(--gris); }
+.sobre-txt p { color: var(--gris); line-height: 1.8; margin-bottom: .9rem; }
+.inst-wrap { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.4rem; }
+.inst { background: var(--lila-pale); border: 1px solid rgba(167,139,250,.3); color: var(--morado); border-radius: 7px; padding: .35rem .85rem; font-size: .78rem; font-weight: 700; }
+
+/* ── SERVICIOS ── */
+#servicios { background: var(--lila-pale); }
+.srv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px,1fr)); gap: 1.3rem; margin-top: 2.8rem; }
+.srv-card { background: #fff; border-radius: 14px; padding: 1.6rem; border: 1px solid rgba(167,139,250,.12); transition: all .3s; position: relative; overflow: hidden; }
+.srv-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--morado), var(--lila)); transform: scaleX(0); transform-origin: left; transition: transform .3s; }
+.srv-card:hover { transform: translateY(-4px); box-shadow: 0 10px 36px rgba(91,31,168,.1); }
+.srv-card:hover::after { transform: scaleX(1); }
+.srv-ico { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--morado), var(--lila)); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: .9rem; }
+.srv-card h3 { font-family: var(--sans); font-size: 1rem; font-weight: 600; margin-bottom: .4rem; }
+.srv-card p { font-size: .84rem; color: var(--gris); line-height: 1.58; }
+.srv-type { display: inline-block; margin-top: .65rem; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--lila); }
+
+/* ── DIFERENCIADORES ── */
+#dif { background: #fff; }
+.dif-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.6rem; margin-top: 2.8rem; }
+.dif-card { text-align: center; padding: 1.8rem 1.4rem; border-radius: 14px; background: var(--lila-pale); border: 1px solid rgba(167,139,250,.18); transition: all .3s; }
+.dif-card:hover { background: var(--lila-light); transform: translateY(-2px); }
+.dif-ico { font-size: 2.2rem; margin-bottom: .9rem; display: block; }
+.dif-card h3 { font-size: 1.05rem; margin-bottom: .4rem; }
+.dif-card p { font-size: .83rem; color: var(--gris); line-height: 1.6; }
+
+/* ── TESTIMONIOS ── */
+#testimonios { background: linear-gradient(135deg, var(--morado) 0%, var(--morado-mid) 100%); overflow: hidden; }
+#testimonios .lbl { color: var(--lila); }
+#testimonios .lbl::before { background: var(--lila); }
+#testimonios .sec-title { color: #fff; }
+.t-carousel { position: relative; overflow: hidden; margin-top: 2.8rem; }
+.t-track { display: flex; transition: transform .6s cubic-bezier(.25,.46,.45,.94); }
+.t-slide { min-width: 100%; padding: 0 1rem; display: flex; justify-content: center; }
+.t-card { background: rgba(255,255,255,.1); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.2); border-radius: 18px; padding: 2.2rem; max-width: 660px; width: 100%; text-align: center; }
+.t-stars { color: #FCD34D; font-size: 1.1rem; margin-bottom: .9rem; letter-spacing: 2px; }
+.t-text { font-family: var(--serif); font-size: 1.25rem; color: rgba(255,255,255,.95); line-height: 1.6; margin-bottom: 1.4rem; font-style: italic; }
+.t-author { color: rgba(255,255,255,.75); font-size: .88rem; }
+.t-author strong { display: block; color: #fff; font-size: .96rem; margin-bottom: 1px; }
+.t-dots { display: flex; justify-content: center; gap: .45rem; margin-top: 1.8rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.3); cursor: pointer; transition: all .3s; border: none; }
+.dot.active { background: #fff; width: 22px; border-radius: 4px; }
+
+/* ── CONTACTO ── */
+#contacto { background: var(--lila-pale); }
+.c-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3.5rem; align-items: start; margin-top: 2.8rem; }
+.c-info h3 { font-size: 1.5rem; margin-bottom: .9rem; }
+.c-info p { color: var(--gris); line-height: 1.7; margin-bottom: 1.8rem; }
+.c-dato { display: flex; align-items: center; gap: .9rem; margin-bottom: .9rem; }
+.c-ico { width: 42px; height: 42px; border-radius: 10px; background: var(--morado); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.c-ico-txt strong { display: block; font-size: .75rem; color: var(--morado); text-transform: uppercase; letter-spacing: .05em; }
+.c-ico-txt span { font-size: .92rem; color: var(--texto); }
+.c-form { background: #fff; border-radius: 18px; padding: 2.2rem; box-shadow: 0 6px 36px rgba(91,31,168,.07); border: 1px solid rgba(167,139,250,.14); }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+.f-grp { margin-bottom: 1.1rem; }
+.f-grp label { display: block; font-size: .8rem; font-weight: 500; color: var(--texto); margin-bottom: .35rem; }
+.f-grp input, .f-grp select, .f-grp textarea { width: 100%; padding: .7rem .95rem; border-radius: 9px; border: 1.5px solid rgba(167,139,250,.3); background: var(--lila-pale); font-family: var(--sans); font-size: .88rem; color: var(--texto); transition: border-color .2s, box-shadow .2s; outline: none; }
+.f-grp input:focus, .f-grp select:focus, .f-grp textarea:focus { border-color: var(--morado-mid); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+.f-grp textarea { resize: vertical; min-height: 95px; }
+.f-submit { width: 100%; padding: .85rem; border-radius: 50px; background: var(--morado); color: #fff; border: none; font-family: var(--sans); font-size: .96rem; font-weight: 600; cursor: pointer; transition: all .2s; box-shadow: 0 4px 18px rgba(91,31,168,.28); }
+.f-submit:hover { background: var(--morado-mid); transform: translateY(-1px); }
+.f-ok { display: none; text-align: center; padding: 1.5rem; background: var(--lila-pale); border-radius: 10px; margin-top: .9rem; color: var(--morado); font-family: var(--serif); font-size: 1.1rem; }
+
+/* ── FOOTER ── */
+footer { background: var(--texto); color: rgba(255,255,255,.65); padding: 3.5rem 2rem 2rem; }
+.footer-inner { max-width: 1200px; margin: 0 auto; }
+.footer-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; flex-wrap: wrap; padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 1.5rem; }
+/* Logotipo en footer */
+.footer-logo-wrap { display: flex; align-items: center; gap: .9rem; }
+.footer-logo-circle {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--morado);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; position: relative;
+  box-shadow: 0 4px 18px rgba(91,31,168,.4);
+}
+.footer-logo-circle::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1px solid rgba(167,139,250,.45); }
+.footer-logo-circle svg { width: 28px; height: 28px; }
+.footer-logo-text .fl-name { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: .04em; }
+.footer-logo-text .fl-name span { color: var(--lila); }
+.footer-logo-text .fl-mx { display: inline-block; background: var(--morado); color: #fff; font-size: .62rem; font-weight: 700; letter-spacing: .18em; padding: .15rem .5rem; border-radius: 3px; margin-left: .3rem; vertical-align: middle; }
+.footer-logo-text .fl-tag { font-size: .73rem; color: rgba(255,255,255,.4); margin-top: .2rem; font-style: italic; font-family: var(--serif); }
+.footer-links { display: flex; flex-direction: column; gap: .5rem; }
+.footer-links a { text-decoration: none; font-size: .85rem; color: rgba(255,255,255,.5); transition: color .2s; }
+.footer-links a:hover { color: var(--lila); }
+.footer-contact { font-size: .85rem; }
+.footer-contact p { margin-bottom: .3rem; color: rgba(255,255,255,.5); }
+.footer-contact strong { color: rgba(255,255,255,.8); }
+.f-socials { display: flex; gap: .75rem; margin-top: 1rem; }
+.soc { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all .2s; position: relative; }
+.soc.off { background: rgba(255,255,255,.07); color: rgba(255,255,255,.25); cursor: not-allowed; pointer-events: none; }
+.soc.off::after { content: 'Próximamente'; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: .58rem; color: rgba(255,255,255,.3); white-space: nowrap; }
+.footer-copy { text-align: center; font-size: .75rem; color: rgba(255,255,255,.25); }
+
+/* ── FLOTANTE WHATSAPP ── */
+.floats { position: fixed; bottom: 1.8rem; right: 1.8rem; z-index: 2000; }
+.fw { display: flex; align-items: center; gap: .55rem; background: #25D366; color: #fff; border-radius: 50px; padding: .6rem 1.1rem; box-shadow: 0 4px 20px rgba(0,0,0,.2); text-decoration: none; font-size: .84rem; font-weight: 600; transition: all .25s; white-space: nowrap; animation: floatUp .5s ease forwards; }
+.fw:hover { background: #1ebe5b; transform: translateX(-3px) scale(1.03); }
+.fw-ico { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; }
+@keyframes floatUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── FADE UP ── */
+.fu { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
+.fu.vis { opacity: 1; transform: translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .nav-links, .nav-cta { display: none; }
+  .hamburger { display: flex; }
+  .hero-wrap { grid-template-columns: 1fr; text-align: center; gap: 2rem; }
+  .hero-visual { display: none; }
+  .hero-btns { justify-content: center; }
+  .tags { justify-content: center; }
+  .sobre-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .dif-grid { grid-template-columns: 1fr 1fr; }
+  .c-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .f-row { grid-template-columns: 1fr; }
+  .footer-top { flex-direction: column; gap: 2rem; }
+}
+@media (max-width: 560px) {
+  .dif-grid { grid-template-columns: 1fr; }
+  section { padding: 3.5rem 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav id="mainNav">
+  <a href="#hero" class="nav-logo-wrap">
+    <!-- Logotipo círculo LC en nav -->
+    <div class="nav-logo-circle">
+      <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="22" r="18" stroke="rgba(167,139,250,0.5)" stroke-width="1"/>
+        <text x="11" y="28" font-family="Georgia,serif" font-size="15" font-weight="700" fill="white">L</text>
+        <text x="24" y="28" font-family="Georgia,serif" font-size="11" font-weight="400" fill="rgba(167,139,250,0.9)">C</text>
+        <line x1="10" y1="32" x2="34" y2="32" stroke="rgba(255,255,255,0.18)" stroke-width="0.7"/>
+      </svg>
+    </div>
+    <div class="nav-logo-text">
+      <div class="nav-logo-name">Lex<span>Count</span> <span style="font-size:.62rem;background:var(--morado);color:#fff;padding:.1rem .4rem;border-radius:3px;letter-spacing:.15em;font-family:var(--sans);font-weight:700;vertical-align:middle;">MX</span></div>
+      <div class="nav-logo-sub">Despacho Fiscal &amp; Contable</div>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#sobre">Perfil</a></li>
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#testimonios">Testimonios</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="#contacto" class="nav-cta">Agendar consulta</a>
+  <button class="hamburger" onclick="document.querySelector('.mobile-menu').classList.toggle('open')" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu">
+  <a href="#sobre" onclick="this.closest('.mobile-menu').classList.remove('open')">Perfil</a>
+  <a href="#servicios" onclick="this.closest('.mobile-menu').classList.remove('open')">Servicios</a>
+  <a href="#testimonios" onclick="this.closest('.mobile-menu').classList.remove('open')">Testimonios</a>
+  <a href="#contacto" onclick="this.closest('.mobile-menu').classList.remove('open')">Contacto</a>
+  <a href="#contacto" onclick="this.closest('.mobile-menu').classList.remove('open')" style="background:var(--morado);color:#fff;border-radius:50px;text-align:center;padding:.7rem 1rem;font-weight:600;border-bottom:none;margin-top:.5rem;">Agendar consulta</a>
+</div>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="hero">
+  <div class="hero-wrap">
+    <div class="fu">
+      <div class="hero-badge">✦ Mtra. en Derecho Fiscal &nbsp;·&nbsp; 25 años de experiencia</div>
+      <h1 class="hero-title"><em>Mtra. Sarit</em><br>Tapia Pérez</h1>
+      <p class="hero-sub">Lic. en Contaduría &amp; Mtra. en Derecho Fiscal. Soluciones contables, fiscales y administrativas para personas físicas y personas morales.</p>
+      <div class="tags">
+        <span class="tag">SAT</span><span class="tag">IMSS</span><span class="tag">Infonavit</span>
+        <span class="tag">Personas Físicas</span><span class="tag">Personas Morales</span>
+        <span class="tag">RESICO</span><span class="tag">Nóminas</span><span class="tag">Recursos Humanos</span>
+      </div>
+      <div class="hero-btns">
+        <a href="#contacto" class="btn-p">✉ Solicitar asesoría</a>
+        <a href="#servicios" class="btn-s">Ver servicios →</a>
+      </div>
+    </div>
+
+    <!-- Logotipo grande en el hero -->
+    <div class="hero-visual fu" style="transition-delay:.2s">
+      <div class="hero-logo-card">
+        <div class="logo-circle-lg">
+          <svg viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="34" cy="34" r="28" stroke="rgba(167,139,250,0.45)" stroke-width="1.2"/>
+            <text x="14" y="44" font-family="Georgia,serif" font-size="30" font-weight="700" fill="white">L</text>
+            <text x="37" y="44" font-family="Georgia,serif" font-size="22" font-weight="400" fill="rgba(167,139,250,0.9)">C</text>
+            <line x1="12" y1="50" x2="56" y2="50" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
+          </svg>
+        </div>
+        <div class="hero-logo-wordmark">
+          <div class="wm-sep"></div>
+          <div class="wm-name">Lex<span>Count</span></div>
+          <div class="wm-mx">MX</div>
+          <div class="wm-sep" style="margin-top:.5rem"></div>
+          <div class="wm-tag">Despacho Fiscal &amp; Contable</div>
+          <div style="font-family:var(--serif);font-size:.65rem;color:var(--gris);margin-top:.5rem;font-style:italic;letter-spacing:.02em;">Donde la ley y los números protegen tu futuro</div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><div class="stat-n">25+</div><div class="stat-l">Años de<br>experiencia</div></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><div class="stat-n">200+</div><div class="stat-l">Clientes<br>atendidos</div></div>
+        <div class="stat-sep"></div>
+        <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Cumplimiento<br>fiscal</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SOBRE MÍ ══════════════ -->
+<section id="sobre">
+  <div class="wrap">
+    <div class="sobre-grid">
+      <div class="fu">
+        <div class="sobre-card">
+          <p class="sobre-quote">"Mi compromiso es proteger el patrimonio de mis clientes con soluciones fiscales precisas, éticas y personalizadas."</p>
+          <div class="sobre-items">
+            <div class="s-item"><div class="s-icon">🎓</div><div class="s-text"><strong>Mtra. en Derecho Fiscal</strong><span>Alta especialización en normativa fiscal mexicana</span></div></div>
+            <div class="s-item"><div class="s-icon">📋</div><div class="s-text"><strong>25 Años de Experiencia</strong><span>Contabilidad, administración y finanzas</span></div></div>
+            <div class="s-item"><div class="s-icon">🏛</div><div class="s-text"><strong>Dominio Institucional Pleno</strong><span>SAT, IMSS, Infonavit y más</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="sobre-txt fu" style="transition-delay:.15s">
+        <div class="lbl">Perfil profesional</div>
+        <h2 class="sec-title">Experiencia que<br>genera confianza</h2>
+        <p>La Mtra. Sarit Tapia Pérez cuenta con una sólida trayectoria de más de 25 años en el área contable, administrativa y financiera, respaldada por una Maestría en Derecho Fiscal que le permite ofrecer asesoría integral, actualizada y profundamente especializada.</p>
+        <p>Atiende tanto a personas físicas como morales, ofreciendo un servicio personalizado y confiable que va desde la contabilidad operativa hasta la planeación fiscal estratégica.</p>
+        <p>Su enfoque combina el rigor técnico con la cercanía humana, asegurando que cada cliente comprenda su situación fiscal y tome decisiones informadas.</p>
+        <div class="inst-wrap">
+          <span class="inst">SAT</span><span class="inst">IMSS</span><span class="inst">Infonavit</span>
+          <span class="inst">STPS</span><span class="inst">CFF</span><span class="inst">ISR</span>
+          <span class="inst">IVA</span><span class="inst">CFDI</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SERVICIOS ══════════════ -->
+<section id="servicios">
+  <div class="wrap">
+    <div class="fu" style="text-align:center">
+      <div class="lbl" style="justify-content:center">Lo que ofrezco</div>
+      <h2 class="sec-title">Servicios especializados</h2>
+      <p class="sec-desc" style="margin:0 auto">Soluciones contables, fiscales y administrativas diseñadas para cada tipo de cliente y necesidad.</p>
+    </div>
+    <div class="srv-grid">
+      <div class="srv-card fu"><div class="srv-ico">🧾</div><h3>Contabilidad General</h3><p>Registro, control y análisis de la información contable conforme a las NIF y disposiciones fiscales vigentes.</p><span class="srv-type">Personas Físicas &amp; Morales</span></div>
+      <div class="srv-card fu" style="transition-delay:.05s"><div class="srv-ico">📊</div><h3>Declaraciones Fiscales</h3><p>Elaboración y presentación de declaraciones mensuales, anuales, provisionales e informativas ante el SAT de forma oportuna.</p><span class="srv-type">SAT · ISR · IVA</span></div>
+      <div class="srv-card fu" style="transition-delay:.1s"><div class="srv-ico">🏥</div><h3>IMSS e Infonavit</h3><p>Alta, baja y modificación de trabajadores, determinación de cuotas obrero-patronales y cumplimiento ante IMSS e Infonavit.</p><span class="srv-type">Seguridad Social</span></div>
+      <div class="srv-card fu" style="transition-delay:.15s"><div class="srv-ico">👥</div><h3>Nóminas &amp; Recursos Humanos</h3><p>Cálculo y dispersión de nóminas, CFDI de nómina, finiquitos, liquidaciones y gestión integral del capital humano.</p><span class="srv-type">RRHH · STPS</span></div>
+      <div class="srv-card fu" style="transition-delay:.2s"><div class="srv-ico">🔍</div><h3>Auditoría Contable Preventiva</h3><p>Revisión sistemática de la información contable y fiscal para detectar riesgos antes de que se conviertan en problemas.</p><span class="srv-type">Prevención · Control</span></div>
+      <div class="srv-card fu" style="transition-delay:.25s"><div class="srv-ico">⚖️</div><h3>Atención a Requerimientos SAT</h3><p>Respuesta profesional a cartas invitación, auditorías, revisiones electrónicas y procedimientos de fiscalización.</p><span class="srv-type">Defensa Fiscal</span></div>
+      <div class="srv-card fu" style="transition-delay:.3s"><div class="srv-ico">📱</div><h3>Régimen RESICO</h3><p>Asesoría completa para personas físicas con actividad empresarial en el Régimen Simplificado de Confianza.</p><span class="srv-type">Personas Físicas</span></div>
+      <div class="srv-card fu" style="transition-delay:.35s"><div class="srv-ico">💡</div><h3>Consultoría &amp; Asesoría Fiscal</h3><p>Planeación fiscal estratégica, optimización de cargas tributarias y consultoría personalizada para cada cliente.</p><span class="srv-type">Estrategia Fiscal</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ DIFERENCIADORES ══════════════ -->
+<section id="dif">
+  <div class="wrap">
+    <div class="fu" style="text-align:center">
+      <div class="lbl" style="justify-content:center">¿Por qué elegirme?</div>
+      <h2 class="sec-title">Ventajas que marcan la diferencia</h2>
+    </div>
+    <div class="dif-grid">
+      <div class="dif-card fu"><span class="dif-ico">🎓</span><h3>Formación de Élite</h3><p>Maestría en Derecho Fiscal con actualización permanente en normativa fiscal y contable mexicana.</p></div>
+      <div class="dif-card fu" style="transition-delay:.08s"><span class="dif-ico">⏱</span><h3>Puntualidad Garantizada</h3><p>Cumplimiento estricto de fechas límite ante el SAT, IMSS e Infonavit. Cero multas por impuntualidad.</p></div>
+      <div class="dif-card fu" style="transition-delay:.16s"><span class="dif-ico">🤝</span><h3>Atención Personalizada</h3><p>Cada cliente es único. Soluciones a la medida, con comunicación directa y constante.</p></div>
+      <div class="dif-card fu" style="transition-delay:.08s"><span class="dif-ico">🔒</span><h3>Confidencialidad Total</h3><p>Tu información financiera y fiscal protegida bajo estrictos criterios de privacidad y ética profesional.</p></div>
+      <div class="dif-card fu" style="transition-delay:.16s"><span class="dif-ico">📈</span><h3>Visión Estratégica</h3><p>No solo cumplimos con el fisco, planificamos para que pagues lo justo y protejas tu patrimonio.</p></div>
+      <div class="dif-card fu" style="transition-delay:.24s"><span class="dif-ico">🌐</span><h3>Experiencia Integral</h3><p>25 años cubriendo contabilidad, administración y finanzas. Un solo punto de contacto para todo lo fiscal.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TESTIMONIOS ══════════════ -->
+<section id="testimonios">
+  <div class="wrap">
+    <div class="fu" style="text-align:center">
+      <div class="lbl" style="justify-content:center">Lo que dicen mis clientes</div>
+      <h2 class="sec-title">Casos de éxito &amp; testimonios</h2>
+    </div>
+    <div class="t-carousel fu" style="transition-delay:.2s">
+      <div class="t-track" id="tTrack">
+        <div class="t-slide"><div class="t-card"><div class="t-stars">★★★★★</div><p class="t-text">"La Mtra. Sarit nos ayudó a regularizarnos ante el SAT en tiempo récord. Su conocimiento en derecho fiscal es impresionante y su trato es siempre amable y profesional."</p><div class="t-author"><strong>Carlos M.</strong>Empresario — Persona Moral · Hidalgo</div></div></div>
+        <div class="t-slide"><div class="t-card"><div class="t-stars">★★★★★</div><p class="t-text">"Gracias a su asesoría en el régimen RESICO, ahora tengo claridad total sobre mis obligaciones. Pago lo que debo y tengo paz mental. La recomiendo ampliamente."</p><div class="t-author"><strong>Laura G.</strong>Profesionista Independiente · Persona Física</div></div></div>
+        <div class="t-slide"><div class="t-card"><div class="t-stars">★★★★★</div><p class="t-text">"Llevamos más de 5 años trabajando con la Maestra para toda nuestra nómina y contabilidad. La eficiencia y puntualidad son su sello. Es parte de nuestro equipo."</p><div class="t-author"><strong>Roberto S.</strong>Director General · PyME Familiar</div></div></div>
+        <div class="t-slide"><div class="t-card"><div class="t-stars">★★★★★</div><p class="t-text">"Cuando recibí una carta del SAT no supe qué hacer. La Mtra. Sarit resolvió todo de manera profesional. Sin su ayuda hubiera pagado multas enormes que no correspondían."</p><div class="t-author"><strong>Ana P.</strong>Comerciante · Actividad Empresarial</div></div></div>
+        <div class="t-slide"><div class="t-card"><div class="t-stars">★★★★★</div><p class="t-text">"Excelente asesora. Siempre explica con claridad cada proceso y cumple en tiempo y forma. Gracias a su trabajo mi empresa está completamente al corriente con todas las obligaciones."</p><div class="t-author"><strong>Miguel &amp; Sofía R.</strong>Socios Fundadores · Startup</div></div></div>
+      </div>
+      <div class="t-dots" id="tDots">
+        <button class="dot active" onclick="goTo(0)"></button>
+        <button class="dot" onclick="goTo(1)"></button>
+        <button class="dot" onclick="goTo(2)"></button>
+        <button class="dot" onclick="goTo(3)"></button>
+        <button class="dot" onclick="goTo(4)"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CONTACTO ══════════════ -->
+<section id="contacto">
+  <div class="wrap">
+    <div class="fu" style="text-align:center">
+      <div class="lbl" style="justify-content:center">Hablemos</div>
+      <h2 class="sec-title">¿Lista para ordenar<br>tu situación fiscal?</h2>
+      <p class="sec-desc" style="margin:0 auto">Completa el formulario y me comunico contigo en menos de 24 horas.</p>
+    </div>
+    <div class="c-grid">
+      <div class="fu">
+        <h3>Información de contacto</h3>
+        <p>Disponible para consultas personales, empresariales y corporativas. No esperes a que el SAT te llame primero.</p>
+        <div class="c-dato"><div class="c-ico">📞</div><div class="c-ico-txt"><strong>Teléfono &amp; WhatsApp</strong><span>77 11 99 4265</span></div></div>
+        <div class="c-dato"><div class="c-ico">✉</div><div class="c-ico-txt"><strong>Correo electrónico</strong><span>sarit.tapia&#64;gmail.com</span></div></div>
+        <div class="c-dato"><div class="c-ico">🏛</div><div class="c-ico-txt"><strong>Especialidades</strong><span>SAT · IMSS · Infonavit · RESICO</span></div></div>
+        <div class="c-dato"><div class="c-ico">👤</div><div class="c-ico-txt"><strong>Tipos de cliente</strong><span>Personas físicas y personas morales</span></div></div>
+      </div>
+      <div class="c-form fu" style="transition-delay:.15s">
+        <form id="cForm" action="https://formsubmit.co/d0c35fa79c5557939f296cccaacd9880" method="POST">
+          <input type="hidden" name="_subject" value="Nueva solicitud — LexCount MX">
+          <input type="hidden" name="_captcha" value="false">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_autoresponse" value="Gracias por contactarme. En breve me comunicaré contigo. — Mtra. Sarit Tapia Pérez · LexCount MX">
+          <div class="f-row">
+            <div class="f-grp"><label>Nombre completo *</label><input type="text" name="nombre" placeholder="Tu nombre" required></div>
+            <div class="f-grp"><label>Teléfono *</label><input type="tel" name="telefono" placeholder="10 dígitos" required></div>
+          </div>
+          <div class="f-grp"><label>Correo electrónico *</label><input type="email" name="email" placeholder="tu@correo.com" required></div>
+          <div class="f-grp">
+            <label>Tipo de cliente</label>
+            <select name="tipo_cliente">
+              <option value="">Selecciona una opción</option>
+              <option>Persona física</option>
+              <option>Persona moral</option>
+              <option>Persona física con actividad empresarial</option>
+              <option>Régimen RESICO</option>
+              <option>Asalariado</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="f-grp">
+            <label>Servicio de interés</label>
+            <select name="servicio">
+              <option value="">¿En qué puedo ayudarte?</option>
+              <option>Contabilidad general</option>
+              <option>Declaraciones fiscales</option>
+              <option>IMSS / Infonavit</option>
+              <option>Nóminas y Recursos Humanos</option>
+              <option>Auditoría preventiva</option>
+              <option>Atención a requerimientos SAT</option>
+              <option>Régimen RESICO</option>
+              <option>Consultoría fiscal</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="f-grp"><label>Mensaje</label><textarea name="mensaje" placeholder="Cuéntame brevemente tu situación o consulta..."></textarea></div>
+          <button type="submit" class="f-submit">Enviar solicitud ✉</button>
+        </form>
+        <div class="f-ok" id="fOk">✦ ¡Mensaje recibido! Me comunicaré contigo en menos de 24 horas.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+
+      <!-- Logotipo completo en footer -->
+      <div class="footer-logo-wrap">
+        <div class="footer-logo-circle">
+          <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="20" stroke="rgba(167,139,250,0.45)" stroke-width="1.2"/>
+            <text x="13" y="33" font-family="Georgia,serif" font-size="18" font-weight="700" fill="white">L</text>
+            <text x="28" y="33" font-family="Georgia,serif" font-size="13" font-weight="400" fill="rgba(167,139,250,0.85)">C</text>
+            <line x1="10" y1="37" x2="42" y2="37" stroke="rgba(255,255,255,0.15)" stroke-width="0.7"/>
+          </svg>
+        </div>
+        <div class="footer-logo-text">
+          <div class="fl-name">Lex<span>Count</span><span class="fl-mx">MX</span></div>
+          <div class="fl-tag">Donde la ley y los números protegen tu futuro</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:.2rem;">Mtra. Sarit Tapia Pérez</div>
+        </div>
+      </div>
+
+      <div class="footer-links">
+        <a href="#sobre">Perfil profesional</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#testimonios">Testimonios</a>
+        <a href="#contacto">Contacto</a>
+      </div>
+
+      <div class="footer-contact">
+        <p><strong>77 11 99 4265</strong></p>
+        <p>sarit.tapia&#64;gmail.com</p>
+        <p style="margin-top:.4rem;font-size:.78rem;">Lic. en Contaduría &amp;<br>Mtra. en Derecho Fiscal</p>
+        <div class="f-socials">
+          <span class="soc off" title="Instagram — Próximamente">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </span>
+          <span class="soc off" title="Facebook — Próximamente">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+    <p class="footer-copy">© 2025 LexCount MX — Mtra. Sarit Tapia Pérez · Todos los derechos reservados · Lic. en Contaduría y Mtra. en Derecho Fiscal</p>
+  </div>
+</footer>
+
+<!-- ══════════════ WHATSAPP FLOTANTE ══════════════ -->
+<div class="floats">
+  <a class="fw" href="https://wa.me/527711994265?text=Hola%20Mtra.%20Sarit%2C%20me%20gustar%C3%ADa%20recibir%20informaci%C3%B3n%20sobre%20los%20servicios%20de%20LexCount%20MX." target="_blank" rel="noopener">
+    <div class="fw-ico">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    </div>
+    WhatsApp
+  </a>
+</div>
+
+<script>
+// CARRUSEL
+let cur = 0;
+const track = document.getElementById('tTrack');
+const dots  = document.querySelectorAll('.dot');
+function goTo(n) {
+  cur = n;
+  track.style.transform = 'translateX(-' + (n * 100) + '%)';
+  dots.forEach((d,i) => d.classList.toggle('active', i === n));
+}
+setInterval(() => goTo((cur + 1) % dots.length), 4500);
+
+// FADE UP
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fu').forEach(el => obs.observe(el));
+
+// FORM
+document.getElementById('cForm').addEventListener('submit', function() {
+  setTimeout(() => { document.getElementById('fOk').style.display = 'block'; }, 600);
+});
+
+// NAV shadow on scroll
+window.addEventListener('scroll', () => {
+  document.getElementById('mainNav').style.boxShadow =
+    window.scrollY > 10 ? '0 2px 20px rgba(91,31,168,.1)' : '0 1px 16px rgba(91,31,168,.07)';
+});
+</script>
+</body>
+</html>
