@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.2.3</title>
+<title>Portal Médicos — Hospital Noor | v1.2.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -1194,7 +1194,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.2.3 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.2.4 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1280,7 +1280,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.2.3</strong>
+      <strong>v1.2.4</strong>
     </div>
   </div>
 </header>
@@ -1410,62 +1410,81 @@ footer strong{color:var(--azul-noor)}
   <!-- PASO 3 -->
   <div class="section" id="s3">
     <div class="sec-header">
-      <h2>Carga de Documentos</h2>
-      <p>Los archivos se subirán directamente a Google Drive de Noor Clinic al enviar el formulario.</p>
+      <h2>Documentos Requeridos</h2>
+      <p>Después de completar este registro, deberá subir los siguientes documentos a través de un formulario seguro de Google.</p>
     </div>
-    <div class="infobox">🔒 Los archivos se guardan de forma segura en Drive. El equipo de Credencialización los revisará y te contactará en 3-5 días hábiles.</div>
-    <div class="docs-grid">
-      <div class="doc-card" id="dc1">
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="doc_ine" onchange="prepararDoc('dc1','dst1','pb1',this,'INE')">
-        <span class="doc-icon">🪪</span>
-        <div class="doc-tag">Obligatorio</div>
-        <p class="doc-name">Copia de INE<br>(Anverso y Reverso)</p>
-        <span class="doc-status" id="dst1">Toca para seleccionar</span>
-        <div class="doc-progress"><div class="doc-progress-bar" id="pb1"></div></div>
-      </div>
-      <div class="doc-card" id="dc2">
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="doc_ced_prof" onchange="prepararDoc('dc2','dst2','pb2',this,'Cedula_Profesional')">
-        <span class="doc-icon">🎓</span>
-        <div class="doc-tag">Obligatorio</div>
-        <p class="doc-name">Cédula Profesional<br>(Médico General)</p>
-        <span class="doc-status" id="dst2">Toca para seleccionar</span>
-        <div class="doc-progress"><div class="doc-progress-bar" id="pb2"></div></div>
-      </div>
-      <div class="doc-card" id="dc3">
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="doc_ced_esp" onchange="prepararDoc('dc3','dst3','pb3',this,'Cedula_Especialidad')">
-        <span class="doc-icon">📜</span>
-        <div class="doc-tag">Obligatorio</div>
-        <p class="doc-name">Cédula de Especialidad<br>(SEP)</p>
-        <span class="doc-status" id="dst3">Toca para seleccionar</span>
-        <div class="doc-progress"><div class="doc-progress-bar" id="pb3"></div></div>
-      </div>
-      <div class="doc-card" id="dc4">
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="doc_cert" onchange="prepararDoc('dc4','dst4','pb4',this,'Certificado_Especialidad')">
-        <span class="doc-icon">🏅</span>
-        <div class="doc-tag req-live">Obligatorio · Vigente</div>
-        <p class="doc-name">Certificado de<br>Especialidad (Vigente)</p>
-        <span class="doc-status" id="dst4">Toca para seleccionar</span>
-        <div class="doc-progress"><div class="doc-progress-bar" id="pb4"></div></div>
-      </div>
-      <div class="doc-card" id="dc5">
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="doc_poliza" onchange="prepararDoc('dc5','dst5','pb5',this,'Poliza_Resp_Civil')">
-        <span class="doc-icon">🛡️</span>
-        <div class="doc-tag req-live">Obligatorio · Vigente</div>
-        <p class="doc-name">Póliza de Resp. Civil<br>(Vigente)</p>
-        <span class="doc-status" id="dst5">Toca para seleccionar</span>
-        <div class="doc-progress"><div class="doc-progress-bar" id="pb5"></div></div>
-      </div>
-      <div class="doc-card" id="dc6">
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="doc_fiscal" onchange="prepararDoc('dc6','dst6','pb6',this,'Constancia_Fiscal')">
-        <span class="doc-icon">🧾</span>
-        <div class="doc-tag req-live">Obligatorio · Actualizada</div>
-        <p class="doc-name">Constancia de Situación<br>Fiscal (SAT)</p>
-        <span class="doc-status" id="dst6">Toca para seleccionar</span>
-        <div class="doc-progress"><div class="doc-progress-bar" id="pb6"></div></div>
+    
+    <div class="infobox" style="background:var(--azul-suave); border-left:4px solid var(--azul-noor)">
+      📄 <strong>Prepare los siguientes documentos en formato digital (PDF, JPG o PNG)</strong>
+    </div>
+    
+    <div style="background:white; padding:24px; border-radius:12px; margin:20px 0">
+      <h3 style="color:var(--azul-noor); font-size:1.1rem; margin:0 0 20px 0">
+        Lista de documentos necesarios:
+      </h3>
+      
+      <div style="display:grid; gap:12px">
+        <div style="padding:12px; background:var(--azul-suave); border-radius:8px; display:flex; align-items:center; gap:12px">
+          <span style="font-size:1.5rem">🪪</span>
+          <div style="flex:1">
+            <strong style="color:var(--azul-noor)">INE o Identificación Oficial</strong>
+            <div style="font-size:.85rem; color:var(--gris)">Vigente · Anverso y reverso</div>
+          </div>
+          <span style="background:var(--error); color:white; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700">Obligatorio</span>
+        </div>
+        
+        <div style="padding:12px; background:var(--azul-suave); border-radius:8px; display:flex; align-items:center; gap:12px">
+          <span style="font-size:1.5rem">🎓</span>
+          <div style="flex:1">
+            <strong style="color:var(--azul-noor)">Cédula Profesional</strong>
+            <div style="font-size:.85rem; color:var(--gris)">Médico General</div>
+          </div>
+          <span style="background:var(--error); color:white; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700">Obligatorio</span>
+        </div>
+        
+        <div style="padding:12px; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; gap:12px">
+          <span style="font-size:1.5rem">📜</span>
+          <div style="flex:1">
+            <strong style="color:var(--azul-noor)">Cédula de Especialidad</strong>
+            <div style="font-size:.85rem; color:var(--gris)">Emitida por la SEP</div>
+          </div>
+          <span style="background:var(--gris); color:white; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700">Opcional</span>
+        </div>
+        
+        <div style="padding:12px; background:var(--azul-suave); border-radius:8px; display:flex; align-items:center; gap:12px">
+          <span style="font-size:1.5rem">🏅</span>
+          <div style="flex:1">
+            <strong style="color:var(--azul-noor)">Certificado de Especialidad</strong>
+            <div style="font-size:.85rem; color:var(--gris)">Emitido por el Consejo · Debe estar vigente</div>
+          </div>
+          <span style="background:var(--error); color:white; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700">Obligatorio</span>
+        </div>
+        
+        <div style="padding:12px; background:var(--azul-suave); border-radius:8px; display:flex; align-items:center; gap:12px">
+          <span style="font-size:1.5rem">🛡️</span>
+          <div style="flex:1">
+            <strong style="color:var(--azul-noor)">Póliza de Responsabilidad Civil</strong>
+            <div style="font-size:.85rem; color:var(--gris)">Vigente con cobertura adecuada</div>
+          </div>
+          <span style="background:var(--error); color:white; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700">Obligatorio</span>
+        </div>
+        
+        <div style="padding:12px; background:var(--azul-suave); border-radius:8px; display:flex; align-items:center; gap:12px">
+          <span style="font-size:1.5rem">🧾</span>
+          <div style="flex:1">
+            <strong style="color:var(--azul-noor)">Constancia de Situación Fiscal</strong>
+            <div style="font-size:.85rem; color:var(--gris)">Actualizada del SAT</div>
+          </div>
+          <span style="background:var(--error); color:white; padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700">Obligatorio</span>
+        </div>
       </div>
     </div>
+    
     <div class="divider"></div>
-    <p style="font-size:.72rem;color:var(--gris);line-height:1.7;">
+    <p style="font-size:.8rem;color:var(--gris);line-height:1.7; text-align:center">
+      <strong style="color:var(--azul-noor);">Formatos aceptados:</strong> PDF, JPG, PNG &nbsp;·&nbsp;
+      <strong style="color:var(--azul-noor);">Tamaño máximo:</strong> 10 MB por archivo
+    </p>
       <strong style="color:var(--azul-noor);">Formatos aceptados:</strong> PDF, JPG, PNG &nbsp;·&nbsp;
       <strong style="color:var(--azul-noor);">Tamaño máximo:</strong> 10 MB por archivo &nbsp;·&nbsp;
       Los archivos se suben al momento de enviar el formulario.
@@ -1497,21 +1516,38 @@ footer strong{color:var(--azul-noor)}
   <!-- ÉXITO -->
   <div class="success-screen" id="success">
     <div class="success-icon">✅</div>
-    <h2>¡Expediente Completo!</h2>
-    <p>Tus documentos han sido subidos a Drive y tus datos quedan registrados. El equipo de Credencialización recibirá un correo y te contactará en <strong>3 a 5 días hábiles</strong>.</p>
+    <h2>¡Registro Completado!</h2>
+    <p>Sus datos han sido registrados exitosamente. Ahora debe subir sus documentos para completar el proceso de credencialización.</p>
     <div class="folio-badge">
-      <span>Número de Folio</span>
-      <strong id="folio_show">NC-2025-0000</strong>
+      <span>Su Número de Folio</span>
+      <strong id="folio_show">NC-2026-0000</strong>
     </div>
-    <div class="success-docs">
-      <h4>Documentos registrados</h4>
-      <div id="docsResultados">
-        <div class="doc-result"><span>Cargando resultados…</span></div>
-      </div>
+    
+    <div style="background:var(--azul-suave); padding:24px; border-radius:12px; margin:24px 0; border-left:4px solid var(--azul-noor)">
+      <h4 style="color:var(--azul-noor); margin:0 0 12px 0; font-size:1.1rem">
+        📄 Siguiente Paso: Subir Documentos
+      </h4>
+      <p style="margin:0 0 16px 0; font-size:.9rem; line-height:1.7">
+        Para completar su credencialización, debe subir los <strong>6 documentos requeridos</strong> 
+        a través de nuestro formulario seguro de Google. Su folio ya está pre-llenado.
+      </p>
+      <button onclick="abrirFormularioDocumentos()" style="background:var(--azul-noor); color:white; padding:16px 32px; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.3s">
+        <span>📤 Subir Documentos Ahora</span>
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+      </button>
     </div>
+    
+    <div style="background:white; padding:20px; border-radius:8px; border:1px solid var(--borde); margin:16px 0">
+      <p style="margin:0; font-size:.85rem; color:var(--gris); line-height:1.7">
+        <strong style="color:var(--azul-noor)">Importante:</strong> El equipo de Credencialización 
+        revisará su expediente completo y le contactará en <strong>3-5 días hábiles</strong> una vez 
+        que haya subido todos los documentos.
+      </p>
+    </div>
+    
     <button onclick="volverInicio()" class="btn-volver" style="margin-top:24px">
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
-      Volver al inicio
+      Volver al Inicio
     </button>
   </div>
 
@@ -1526,7 +1562,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.2.3<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.2.4<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
@@ -1546,6 +1582,15 @@ function volverInicio() {
   document.getElementById('formpage').classList.remove('active');
   document.getElementById('homepage').classList.remove('hidden');
   window.scrollTo(0, 0);
+}
+
+function abrirFormularioDocumentos() {
+  if (window.googleFormURL) {
+    window.open(window.googleFormURL, '_blank');
+  } else {
+    // Fallback si no hay URL guardada
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSc7YBPRLS8Z2XS7Lk1hXzxsfvbya_sGRj8B-swNWn5EyC_5cg/viewform', '_blank');
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1739,43 +1784,6 @@ function chk(el, type) {
   el.classList.toggle('ok',  ok);
 }
 
-function prepararDoc(cardId, statusId, pbId, input, nombreClave) {
-  const file = input.files[0];
-  if (!file) return;
-  if (file.size > 10 * 1024 * 1024) {
-    document.getElementById(statusId).textContent = '⚠ Muy grande (máx. 10 MB)';
-    input.value = '';
-    return;
-  }
-
-  const card = document.getElementById(cardId);
-  card.classList.add('uploading');
-  document.getElementById(statusId).textContent = 'Leyendo archivo…';
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result.split(',')[1];
-    archivos[nombreClave] = {
-      nombre:   file.name,
-      tipo:     file.type,
-      base64:   base64,
-      tamano:   file.size
-    };
-    card.classList.remove('uploading');
-    card.classList.add('done');
-    const kb = (file.size / 1024).toFixed(0);
-    const n  = file.name.length > 22 ? file.name.substring(0,20) + '…' : file.name;
-    document.getElementById(statusId).textContent = `✓ ${n} (${kb} KB)`;
-  };
-  reader.onprogress = function(e) {
-    if (e.lengthComputable) {
-      const pct = Math.round((e.loaded / e.total) * 100);
-      document.getElementById(pbId).style.width = pct + '%';
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
 function buildResumen() {
   document.getElementById('r_nombre').textContent  = gv('f_nombre')   || '—';
   document.getElementById('r_email').textContent   = gv('f_email')    || '—';
@@ -1784,10 +1792,8 @@ function buildResumen() {
   document.getElementById('r_cedesp').textContent  = gv('f_ced_esp')  || '—';
   const fn = gv('f_fnac');
   document.getElementById('r_fnac').textContent    = fn ? fn.split('-').reverse().join('/') : '—';
-  const n = Object.keys(archivos).length;
-  document.getElementById('r_docs').innerHTML = n === 6
-    ? `<span style="color:var(--exito)">✓ 6/6 documentos listos para subir</span>`
-    : `<span style="color:#e67e22">⚠ ${n}/6 documentos seleccionados</span>`;
+  // No se muestran documentos porque se subirán después
+  document.getElementById('r_docs').innerHTML = `<span style="color:var(--azul-noor)">📄 Los documentos se subirán en el siguiente paso</span>`;
 }
 
 function setStep(n) {
@@ -1807,7 +1813,7 @@ async function submit() {
   const ahora = new Date().toLocaleString('es-MX', { timeZone:'America/Mexico_City' });
 
   setStep(1);
-  document.getElementById('loadingMsg').textContent = 'Preparando datos…';
+  document.getElementById('loadingMsg').textContent = 'Preparando registro…';
 
   const payload = {
     accion:           'registrar_medico',
@@ -1827,12 +1833,12 @@ async function submit() {
     vigencia_poliza:   gv('f_vig_poliza'),
     aseguradora:       gv('f_aseg'),
     estado:            'Pendiente',
-    archivos:          archivos
+    archivos:          {}  // No se envían archivos
   };
 
   try {
     setStep(2);
-    document.getElementById('loadingMsg').textContent = 'Subiendo documentos a Drive…';
+    document.getElementById('loadingMsg').textContent = 'Generando folio de registro…';
 
     const resp = await fetch(SCRIPT_URL, {
       method:  'POST',
@@ -1841,19 +1847,19 @@ async function submit() {
     });
 
     setStep(3);
-    document.getElementById('loadingMsg').textContent = 'Registrando en base de datos…';
+    document.getElementById('loadingMsg').textContent = 'Guardando información…';
 
     const resultado = await resp.json();
 
     setStep(4);
-    document.getElementById('loadingMsg').textContent = 'Enviando correo de confirmación…';
+    document.getElementById('loadingMsg').textContent = 'Finalizando registro…';
 
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 800));
 
     document.getElementById('loading').classList.remove('show');
 
     if (resultado.status === 'ok') {
-      mostrarExito(folio, resultado.links || {});
+      mostrarExito(folio, payload.nombre_completo);
     } else {
       alert('Hubo un error: ' + (resultado.msg || 'Error desconocido'));
       document.getElementById('fnav').style.display = '';
@@ -1866,32 +1872,19 @@ async function submit() {
   }
 }
 
-function mostrarExito(folio, links) {
+function mostrarExito(folio, nombreMedico) {
   document.getElementById('folio_show').textContent = folio;
-
-  const docNames = {
-    'INE':                   '🪪 Copia de INE',
-    'Cedula_Profesional':    '🎓 Cédula Profesional',
-    'Cedula_Especialidad':   '📜 Cédula de Especialidad',
-    'Certificado_Especialidad': '🏅 Certificado de Especialidad',
-    'Poliza_Resp_Civil':     '🛡️ Póliza de Resp. Civil',
-    'Constancia_Fiscal':     '🧾 Constancia Fiscal SAT',
-  };
-
-  let html = '';
-  for (const [clave, nombre] of Object.entries(docNames)) {
-    const link = links[clave];
-    const estado = (link && link !== 'No adjunto' && !link.includes('Error')) 
-      ? '<span class="doc-ok">✓ Recibido y Validado</span>'
-      : '<span class="doc-ok">✓ En Revisión</span>';
-    
-    html += `<div class="doc-result">
-      <span>${nombre}</span>
-      ${estado}
-    </div>`;
-  }
-  document.getElementById('docsResultados').innerHTML = html;
-
+  
+  // Construir URL del Google Form con folio y nombre pre-llenados
+  const formBaseURL = 'https://docs.google.com/forms/d/e/1FAIpQLSc7YBPRLS8Z2XS7Lk1hXzxsfvbya_sGRj8B-swNWn5EyC_5cg/viewform';
+  const folioEncoded = encodeURIComponent(folio);
+  const nombreEncoded = encodeURIComponent(nombreMedico);
+  const formURLWithData = `${formBaseURL}?usp=pp_url&entry.1992232427=${folioEncoded}&entry.1764634033=${nombreEncoded}`;
+  
+  // Guardar URL en variable global para el botón
+  window.googleFormURL = formURLWithData;
+  
+  // Mostrar pantalla de éxito
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('success').classList.add('show');
   document.getElementById('fnav').style.display = 'none';
