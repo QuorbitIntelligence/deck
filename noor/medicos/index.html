@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.2.5</title>
+<title>Portal Médicos — Hospital Noor | v1.2.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -800,29 +800,59 @@ footer strong{color:var(--azul-noor)}
     <div class="cards-grid">
       <!-- Programa de Fidelización - EN CONSTRUCCIÓN -->
       <div class="promo-card" style="border: 3px solid #d4af37; grid-column: 1 / -1;">
-        <div class="promo-content" style="background: linear-gradient(135deg, #f8f4e6 0%, #fff9e6 100%); padding: 40px; text-align: center; position: relative;">
+        <div class="promo-content" style="background: linear-gradient(135deg, #f8f4e6 0%, #fff9e6 100%); padding: 40px; position: relative;">
           <div style="position: absolute; top: 20px; right: 20px; background: #d4af37; color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
             Próximamente
           </div>
-          <span class="promo-badge" style="background: linear-gradient(135deg, #d4af37, #f4c542); color: #1a3d7a; font-size: 1rem; padding: 12px 24px; display: inline-block; margin-bottom: 16px;">
-            ⭐ Programa Especial
-          </span>
-          <h2 style="font-size: 2rem; color: #1a3d7a; margin: 16px 0; font-weight: 800;">
-            Programa de Fidelización de Médicos
-          </h2>
-          <p style="font-size: 1.1rem; color: #444; max-width: 700px; margin: 16px auto; line-height: 1.8;">
-            Estamos desarrollando un <strong>programa exclusivo de beneficios acumulables</strong> para médicos 
-            que programan y ejecutan cirugías en Hospital Noor. Sistema de puntaje, recompensas y ventajas 
-            especiales diseñadas para crear una relación de largo plazo.
-          </p>
-          <div style="margin-top: 24px; padding: 20px; background: rgba(212, 175, 55, 0.1); border-radius: 12px; display: inline-block;">
-            <p style="font-size: 0.95rem; color: #666; margin: 0;">
-              📅 <strong>Vigencia:</strong> Hasta el 31 de diciembre de 2027<br>
-              🎯 <strong>Objetivo:</strong> Crear pertenencia del médico hacia Hospital Noor
+          
+          <!-- Video Section -->
+          <div style="text-align: center; margin-bottom: 32px;">
+            <span class="promo-badge" style="background: linear-gradient(135deg, #d4af37, #f4c542); color: #1a3d7a; font-size: 0.9rem; padding: 10px 20px; display: inline-block; margin-bottom: 20px;">
+              🏥 Recorrido Virtual
+            </span>
+            <h3 style="font-size: 1.5rem; color: #1a3d7a; margin: 0 0 16px 0; font-weight: 700;">
+              Conoce Nuestras Instalaciones
+            </h3>
+            <p style="font-size: 1rem; color: #666; max-width: 600px; margin: 0 auto 24px auto; line-height: 1.7;">
+              Descubre los espacios y equipamiento de Hospital Noor. Instalaciones modernas diseñadas 
+              para brindar la mejor atención a tus pacientes.
             </p>
+            
+            <!-- Video Container -->
+            <div style="max-width: 900px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+              <video 
+                controls 
+                preload="metadata" 
+                style="width: 100%; height: auto; max-height: 500px; display: block; background: #000;"
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500'%3E%3Crect width='900' height='500' fill='%230a2d6e'/%3E%3Ctext x='50%25' y='50%25' fill='white' font-size='24' text-anchor='middle' dominant-baseline='middle'%3ERecorrido Hospital Noor%3C/text%3E%3C/svg%3E">
+                <source src="videos/recorrido-noor.mp4" type="video/mp4">
+                Tu navegador no soporta la reproducción de video.
+              </video>
+            </div>
           </div>
-          <div style="margin-top: 20px; font-size: 0.85rem; color: #888; font-style: italic;">
-            Información detallada disponible muy pronto
+          
+          <!-- Programa Info -->
+          <div style="border-top: 2px solid rgba(212, 175, 55, 0.3); padding-top: 32px; text-align: center;">
+            <span class="promo-badge" style="background: linear-gradient(135deg, #d4af37, #f4c542); color: #1a3d7a; font-size: 1rem; padding: 12px 24px; display: inline-block; margin-bottom: 16px;">
+              ⭐ Programa Especial
+            </span>
+            <h2 style="font-size: 2rem; color: #1a3d7a; margin: 16px 0; font-weight: 800;">
+              Programa de Fidelización de Médicos
+            </h2>
+            <p style="font-size: 1.1rem; color: #444; max-width: 700px; margin: 16px auto; line-height: 1.8;">
+              Estamos desarrollando un <strong>programa exclusivo de beneficios acumulables</strong> para médicos 
+              que programan y ejecutan cirugías en Hospital Noor. Sistema de puntaje, recompensas y ventajas 
+              especiales diseñadas para crear una relación de largo plazo.
+            </p>
+            <div style="margin-top: 24px; padding: 20px; background: rgba(212, 175, 55, 0.1); border-radius: 12px; display: inline-block;">
+              <p style="font-size: 0.95rem; color: #666; margin: 0;">
+                📅 <strong>Vigencia:</strong> Hasta el 31 de diciembre de 2027<br>
+                🎯 <strong>Objetivo:</strong> Crear pertenencia del médico hacia Hospital Noor
+              </p>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.85rem; color: #888; font-style: italic;">
+              Información detallada disponible muy pronto
+            </div>
           </div>
         </div>
       </div>
@@ -1193,7 +1223,7 @@ footer strong{color:var(--azul-noor)}
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.2.5 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.2.6 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1279,7 +1309,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.2.5</strong>
+      <strong>v1.2.6</strong>
     </div>
   </div>
 </header>
@@ -1561,7 +1591,7 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.2.5<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.2.6<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
