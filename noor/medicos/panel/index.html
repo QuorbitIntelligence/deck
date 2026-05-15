@@ -1,1 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noor Clinic · Portal de Credencialización v1.0.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0b0f14;
+    --surface:   #121820;
+    --card:      #181f28;
+    --border:    #1e2d3d;
+    --accent:    #00b4d8;
+    --accent2:   #0077b6;
+    --gold:      #c9a84c;
+    --text:      #e8edf2;
+    --muted:     #6b7f94;
+    --danger:    #e05c5c;
+    --success:   #3ecf8e;
+    --warn:      #f5a623;
+    --radius:    10px;
+    --font-head: 'Cormorant Garamond', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── SIDEBAR ─────────────────────────────── */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 220px; height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    z-index: 100;
+    padding: 28px 0 20px;
+  }
+
+  .sidebar-brand {
+    padding: 0 22px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand-name {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: .5px;
+    line-height: 1.1;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .version-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    background: var(--border);
+    color: var(--gold);
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-top: 8px;
+  }
+
+  .nav-section {
+    padding: 20px 12px 8px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 22px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    transition: all .2s;
+    border-left: 2px solid transparent;
+    user-select: none;
+  }
+
+  .nav-item:hover { color: var(--text); background: rgba(0,180,216,.06); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,180,216,.08); font-weight: 500; }
+
+  .nav-icon { width: 16px; text-align: center; font-size: 15px; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 22px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── MAIN ────────────────────────────────── */
+  .main {
+    margin-left: 220px;
+    padding: 32px 32px 60px;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: .3px;
+  }
+
+  .page-title span { color: var(--accent); }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* ── BUTTONS ─────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #009bbf; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-sm { padding: 5px 11px; font-size: 11px; }
+
+  /* ── KPI CARDS ───────────────────────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .kpi.accent::before  { background: var(--accent); }
+  .kpi.gold::before    { background: var(--gold); }
+  .kpi.success::before { background: var(--success); }
+  .kpi.warn::before    { background: var(--warn); }
+
+  .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; }
+  .kpi-value { font-family: var(--font-mono); font-size: 32px; font-weight: 500; color: var(--text); line-height: 1; }
+  .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .kpi-icon  { position: absolute; right: 18px; top: 18px; font-size: 22px; opacity: .25; }
+
+  /* ── SECTION TITLE ───────────────────────── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* ── CHARTS ROW ──────────────────────────── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .chart-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* ── TABLE ───────────────────────────────── */
+  .table-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .table-toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    flex: 1;
+    max-width: 320px;
+  }
+
+  .search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    width: 100%;
+  }
+
+  .search-box input::placeholder { color: var(--muted); }
+
+  .filter-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 11px 14px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(30,45,61,.6);
+    transition: background .15s;
+  }
+
+  tbody tr:hover { background: rgba(0,180,216,.04); }
+
+  td {
+    padding: 11px 14px;
+    font-size: 13px;
+    color: var(--text);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .td-mono { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+  /* Specialty badge */
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* Status pill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .pill.active  { color: var(--success); background: rgba(62,207,142,.12); }
+  .pill.pending { color: var(--warn);    background: rgba(245,166,35,.12); }
+  .pill.review  { color: var(--accent);  background: rgba(0,180,216,.12); }
+  .pill.inactive{ color: var(--muted);   background: rgba(107,127,148,.12); }
+
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .name-cell { display: flex; align-items: center; }
+
+  /* pagination */
+  .table-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .pag-info { font-size: 12px; color: var(--muted); }
+
+  .pag-btns { display: flex; gap: 5px; }
+
+  .pag-btn {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .pag-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .pag-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ── CONFIG MODAL ─────────────────────────── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    width: 520px;
+    max-width: 95vw;
+  }
+
+  .modal h3 {
+    font-family: var(--font-head);
+    font-size: 20px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .modal p { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  .form-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; display: block; }
+
+  .form-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    outline: none;
+    margin-bottom: 16px;
+  }
+
+  .form-input:focus { border-color: var(--accent); }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+  /* ── TOAST ────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+    z-index: 300;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .3s;
+    max-width: 340px;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.ok   { border-left: 3px solid var(--success); }
+  .toast.err  { border-left: 3px solid var(--danger); }
+  .toast.info { border-left: 3px solid var(--accent); }
+
+  /* ── VIEWS ────────────────────────────────── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── LOADING ──────────────────────────────── */
+  .loader {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px;
+    color: var(--muted);
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SCROLLBAR ────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Specialty colors cycle */
+  .sp-0  { background: rgba(0,180,216,.15); color: #00b4d8; }
+  .sp-1  { background: rgba(201,168,76,.15); color: #c9a84c; }
+  .sp-2  { background: rgba(62,207,142,.15); color: #3ecf8e; }
+  .sp-3  { background: rgba(224,92,92,.15);  color: #e05c5c; }
+  .sp-4  { background: rgba(155,110,230,.15);color: #9b6ee6; }
+  .sp-5  { background: rgba(245,166,35,.15); color: #f5a623; }
+  .sp-6  { background: rgba(70,190,180,.15); color: #46beb4; }
+  .sp-7  { background: rgba(220,100,160,.15);color: #dc64a0; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .em-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* Responsive tweak */
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .main { margin-left: 0; padding: 16px; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ──────────────── SIDEBAR ──────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Noor Clinic</div>
+    <div class="brand-sub">Credencialización</div>
+    <span class="version-badge">v1.0.0</span>
+  </div>
+
+  <div class="nav-section">Módulos</div>
+  <div class="nav-item active" onclick="showView('dashboard')">
+    <span class="nav-icon">⬛</span> Dashboard
+  </div>
+  <div class="nav-item" onclick="showView('medicos')">
+    <span class="nav-icon">👤</span> Médicos
+  </div>
+  <div class="nav-item" onclick="showView('especialidades')">
+    <span class="nav-icon">🏥</span> Especialidades
+  </div>
+
+  <div class="nav-section">Config</div>
+  <div class="nav-item" onclick="openConfig()">
+    <span class="nav-icon">⚙</span> Fuente de Datos
+  </div>
+
+  <div class="sidebar-footer">
+    Hospital Noor Clinic<br>
+    <span id="last-sync" style="font-size:10px;">Sin sincronizar</span>
+  </div>
+</aside>
+
+<!-- ──────────────── MAIN ──────────────── -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Dashboard <span>General</span></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="loadData()">↻ Sincronizar</button>
+      <button class="btn btn-primary" onclick="openConfig()">⚙ Configurar</button>
+    </div>
+  </div>
+
+  <!-- ── VIEW: DASHBOARD ── -->
+  <div class="view active" id="view-dashboard">
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi accent">
+        <div class="kpi-icon">👤</div>
+        <div class="kpi-label">Total Médicos</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">registrados en el sistema</div>
+      </div>
+      <div class="kpi gold">
+        <div class="kpi-icon">🏥</div>
+        <div class="kpi-label">Especialidades</div>
+        <div class="kpi-value" id="kpi-specs">—</div>
+        <div class="kpi-sub">áreas clínicas distintas</div>
+      </div>
+      <div class="kpi success">
+        <div class="kpi-icon">✓</div>
+        <div class="kpi-label">Credenciales Activas</div>
+        <div class="kpi-value" id="kpi-active">—</div>
+        <div class="kpi-sub">médicos habilitados</div>
+      </div>
+      <div class="kpi warn">
+        <div class="kpi-icon">⏳</div>
+        <div class="kpi-label">En Proceso</div>
+        <div class="kpi-value" id="kpi-pending">—</div>
+        <div class="kpi-sub">pendientes de revisión</div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="section-header">
+      <div class="section-title">Indicadores y Gráficas</div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Médicos por Especialidad</div>
+        <canvas id="chartSpec" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Estado de Credencialización</div>
+        <canvas id="chartStatus" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Registro Acumulado (Mensual)</div>
+        <canvas id="chartTime" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- RECENT TABLE (summary) -->
+    <div class="section-header">
+      <div class="section-title">Últimos Registros</div>
+      <button class="btn btn-ghost btn-sm" onclick="showView('medicos')">Ver todos →</button>
+    </div>
+    <div class="table-card" id="recent-table-wrap">
+      <div class="loader"><div class="spinner"></div>Cargando datos…</div>
+    </div>
+  </div>
+
+  <!-- ── VIEW: MÉDICOS (full) ── -->
+  <div class="view" id="view-medicos">
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <span style="color:var(--muted)">🔍</span>
+          <input type="text" id="search-input" placeholder="Buscar nombre, especialidad, cédula…" oninput="applyFilters()">
+        </div>
+        <select class="filter-select" id="filter-spec" onchange="applyFilters()">
+          <option value="">Todas las especialidades</option>
+        </select>
+        <select class="filter-select" id="filter-status" onchange="applyFilters()">
+          <option value="">Todos los estados</option>
+          <option value="Activo">Activo</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="En revisión">En revisión</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+        <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="record-count"></div>
+      </div>
+
+      <div class="table-wrap" id="main-table-wrap">
+        <div class="loader"><div class="spinner"></div>Cargando datos…</div>
+      </div>
+
+      <div class="table-footer">
+        <div class="pag-info" id="pag-info">—</div>
+        <div class="pag-btns" id="pag-btns"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VIEW: ESPECIALIDADES ── -->
+  <div class="view" id="view-especialidades">
+    <div id="spec-cards-wrap" class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="loader"><div class="spinner"></div>Cargando…</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ──────────────── CONFIG MODAL ──────────────── -->
+<div class="overlay" id="overlay" onclick="closeConfig(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Configurar Fuente de Datos</h3>
+    <p>
+      Ingresa el <strong>ID</strong> de tu Google Sheet y la <strong>GID</strong> de la hoja.<br>
+      La hoja debe estar publicada como CSV:<br>
+      <em>Archivo → Compartir → Publicar en la web → CSV → Hoja específica</em>
+    </p>
+
+    <label class="form-label">ID del Google Sheet</label>
+    <input class="form-input" id="cfg-sheet-id" placeholder="1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY" value="1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY">
+
+    <label class="form-label">GID de la Hoja (pestaña)</label>
+    <input class="form-input" id="cfg-gid" placeholder="0" value="0">
+
+    <label class="form-label">Columnas esperadas (separadas por coma, en orden)</label>
+    <input class="form-input" id="cfg-cols" placeholder="Nombre,Especialidad,Cédula,Correo,Teléfono,Estado,Fecha" value="Nombre,Especialidad,Cédula,Correo,Teléfono,Estado,Fecha">
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConfig()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConfig()">Guardar y Sincronizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────────── TOAST ──────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ──────────────── CHART.JS ──────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG & STATE
+═══════════════════════════════════════════ */
+let CONFIG = {
+  sheetId: '1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY',
+  gid:     '0',
+  cols:    ['Nombre','Especialidad','Cédula','Correo','Teléfono','Estado','Fecha']
+};
+
+let ALL_DATA      = [];
+let FILTERED_DATA = [];
+let PAGE          = 1;
+const PER_PAGE    = 15;
+
+let chartSpec   = null;
+let chartStatus = null;
+let chartTime   = null;
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelector('[onclick="showView(\'' + name + '\')"]').classList.add('active');
+  const titles = { dashboard: ['Dashboard', 'General'], medicos: ['Registro de', 'Médicos'], especialidades: ['Grupos por', 'Especialidad'] };
+  const t = titles[name];
+  document.getElementById('page-title').innerHTML = t[0] + ' <span>' + t[1] + '</span>';
+
+  if (name === 'especialidades') renderSpecCards();
+  if (name === 'medicos') { FILTERED_DATA = [...ALL_DATA]; applyFilters(); }
+}
+
+/* ═══════════════════════════════════════════
+   DATA FETCHING
+═══════════════════════════════════════════ */
+async function loadData() {
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/export?format=csv&gid=${CONFIG.gid}`;
+  showToast('info', '↻ Sincronizando datos…');
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const csv  = await resp.text();
+    ALL_DATA   = parseCSV(csv, CONFIG.cols);
+    FILTERED_DATA = [...ALL_DATA];
+    renderAll();
+    const now = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('last-sync').textContent = 'Sync: ' + now;
+    showToast('ok', `✓ ${ALL_DATA.length} registros cargados`);
+  } catch(e) {
+    showToast('err', '⚠ No se pudo conectar. Verifica permisos de la hoja.');
+    // Demo data so UI is not empty
+    ALL_DATA = generateDemoData();
+    FILTERED_DATA = [...ALL_DATA];
+    renderAll();
+    showToast('info', '⚠ Mostrando datos de demostración');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   CSV PARSER
+═══════════════════════════════════════════ */
+function parseCSV(text, colNames) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = splitCSVLine(lines[i]);
+    if (vals.every(v => !v.trim())) continue;
+    const obj = {};
+    colNames.forEach((col, ci) => {
+      // Try to match by header name first, then by index
+      const hi = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
+      obj[col] = (hi >= 0 ? vals[hi] : vals[ci] || '').trim().replace(/^"|"$/g,'');
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const result = [];
+  let cur = ''; let inQuotes = false;
+  for (let ch of line) {
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+/* ═══════════════════════════════════════════
+   DEMO DATA (fallback)
+═══════════════════════════════════════════ */
+function generateDemoData() {
+  const specs = ['Cardiología','Neurología','Ortopedia','Pediatría','Ginecología','Oncología','Radiología','Urgencias','Anestesiología','Medicina Interna'];
+  const estados = ['Activo','Activo','Activo','Pendiente','En revisión'];
+  const nombres = [
+    'Ana García López','Carlos Martínez Ruiz','María Hernández Soto','Juan Pérez Vega',
+    'Laura Torres Díaz','Roberto Sánchez Cruz','Patricia Jiménez Luna','Miguel Ángel Ramos',
+    'Sofía Morales Ríos','Fernando Castro Vidal','Daniela Núñez Bravo','Alejandro Reyes Mora',
+    'Carmen Flores Silva','Eduardo Vargas Fuentes','Valeria Guzmán Ortiz','José Luis Mendoza',
+    'Gabriela Salinas Paz','Ricardo Herrera Campos','Lucía Medina Torres','Pablo Aguilar Serna'
+  ];
+  return nombres.map((n, i) => ({
+    Nombre: 'Dr. ' + n,
+    Especialidad: specs[i % specs.length],
+    Cédula: '0' + (1000000 + i * 123457),
+    Correo: n.split(' ')[0].toLowerCase() + '@noorclinic.mx',
+    Teléfono: '55' + (10000000 + i * 999),
+    Estado: estados[i % estados.length],
+    Fecha: new Date(2024, i % 12, (i * 7 % 28) + 1).toLocaleDateString('es-MX')
+  }));
+}
+
+/* ═══════════════════════════════════════════
+   RENDER ALL
+═══════════════════════════════════════════ */
+function renderAll() {
+  renderKPIs();
+  renderCharts();
+  renderRecentTable();
+  renderMainTable();
+  populateSpecFilter();
+}
+
+/* ═══════════════════════════════════════════
+   KPIs
+═══════════════════════════════════════════ */
+function renderKPIs() {
+  const total  = ALL_DATA.length;
+  const specs  = new Set(ALL_DATA.map(r => r[CONFIG.cols[1]] || '')).size;
+  const active = ALL_DATA.filter(r => (r[CONFIG.cols[5]] || '').toLowerCase().includes('activo')).length;
+  const pend   = ALL_DATA.filter(r => !(r[CONFIG.cols[5]] || '').toLowerCase().includes('activo')).length;
+  document.getElementById('kpi-total').textContent  = total;
+  document.getElementById('kpi-specs').textContent  = specs;
+  document.getElementById('kpi-active').textContent = active;
+  document.getElementById('kpi-pending').textContent = pend;
+}
+
+/* ═══════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════ */
+const CHART_COLORS = ['#00b4d8','#c9a84c','#3ecf8e','#e05c5c','#9b6ee6','#f5a623','#46beb4','#dc64a0'];
+
+function renderCharts() {
+  // By specialty
+  const specCount = {};
+  ALL_DATA.forEach(r => {
+    const s = r[CONFIG.cols[1]] || 'Sin especificar';
+    specCount[s] = (specCount[s] || 0) + 1;
+  });
+  const specLabels = Object.keys(specCount);
+  const specVals   = Object.values(specCount);
+
+  if (chartSpec) chartSpec.destroy();
+  chartSpec = new Chart(document.getElementById('chartSpec'), {
+    type: 'bar',
+    data: {
+      labels: specLabels,
+      datasets: [{ data: specVals, backgroundColor: CHART_COLORS.slice(0, specLabels.length), borderRadius: 6, borderSkipped: false }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b7f94', font: { size: 10 }, maxRotation: 40 }, grid: { color: '#1e2d3d' } },
+        y: { ticks: { color: '#6b7f94', font: { size: 10 } }, grid: { color: '#1e2d3d' } }
+      }
+    }
+  });
+
+  // Status donut
+  const statusCount = {};
+  ALL_DATA.forEach(r => {
+    const s = r[CONFIG.cols[5]] || 'Sin estado';
+    statusCount[s] = (statusCount[s] || 0) + 1;
+  });
+
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusCount),
+      datasets: [{ data: Object.values(statusCount), backgroundColor: CHART_COLORS, borderWidth: 2, borderColor: '#181f28' }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#6b7f94', font: { size: 11 }, padding: 12 } }
+      }
+    }
+  });
+
+  // Monthly accumulation
+  const monthlyCount = {};
+  ALL_DATA.forEach(r => {
+    const raw = r[CONFIG.cols[6]] || '';
+    // Try multiple date formats
+    let d = new Date(raw);
+    if (isNaN(d.getTime())) {
+      const parts = raw.split('/');
+      if (parts.length === 3) d = new Date(parts[2], parts[1]-1, parts[0]);
+    }
+    if (!isNaN(d.getTime())) {
+      const key = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+      monthlyCount[key] = (monthlyCount[key] || 0) + 1;
+    }
+  });
+
+  const sortedMonths = Object.keys(monthlyCount);
+  const monthlyVals  = sortedMonths.map(k => monthlyCount[k]);
+
+  if (chartTime) chartTime.destroy();
+  if (sortedMonths.length > 0) {
+    chartTime = new Chart(document.getElementById('chartTime'), {
+      type: 'line',
+      data: {
+        labels: sortedMonths,
+        datasets: [{
+          data: monthlyVals,
+          borderColor: '#00b4d8',
+          backgroundColor: 'rgba(0,180,216,.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#00b4d8',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#6b7f94', font: { size: 10 } }, grid: { color: '#1e2d3d' } },
+          y: { ticks: { color: '#6b7f94', font: { size: 10 } }, grid: { color: '#1e2d3d' } }
+        }
+      }
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TABLES
+═══════════════════════════════════════════ */
+const STATUS_MAP = {
+  'activo':      ['active',  'Activo'],
+  'pendiente':   ['pending', 'Pendiente'],
+  'en revisión': ['review',  'En revisión'],
+  'inactivo':    ['inactive','Inactivo']
+};
+
+function statusPill(val) {
+  const key = (val || '').toLowerCase();
+  const [cls, label] = STATUS_MAP[key] || ['inactive', val || '—'];
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+
+function specBadge(val, idx) {
+  const ci = idx % CHART_COLORS.length;
+  return `<span class="badge sp-${ci}">${val || '—'}</span>`;
+}
+
+function initials(name) {
+  return (name || '?').split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+}
+
+function buildTableHTML(rows, cols, limit) {
+  const slice = limit ? rows.slice(0, limit) : rows;
+  if (!slice.length) return `<div class="empty-state"><div class="em-icon">📭</div><p>No se encontraron registros.</p></div>`;
+
+  const specList = [...new Set(ALL_DATA.map(r => r[cols[1]] || ''))];
+
+  const thead = cols.map(c => `<th>${c}</th>`).join('');
+  const tbody = slice.map(row => {
+    const specIdx = specList.indexOf(row[cols[1]]);
+    const tds = cols.map((col, ci) => {
+      let val = row[col] || '—';
+      if (ci === 0) return `<td><div class="name-cell"><div class="avatar">${initials(val)}</div>${val}</div></td>`;
+      if (ci === 1) return `<td>${specBadge(val, specIdx)}</td>`;
+      if (ci === 2) return `<td class="td-mono">${val}</td>`;
+      if (col.toLowerCase().includes('estado') || col.toLowerCase().includes('status'))
+        return `<td>${statusPill(val)}</td>`;
+      return `<td>${val}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+
+  return `<table><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+}
+
+function renderRecentTable() {
+  const w = document.getElementById('recent-table-wrap');
+  const cols = CONFIG.cols;
+  w.innerHTML = `<div class="table-wrap">${buildTableHTML(ALL_DATA, cols, 8)}</div>`;
+}
+
+function renderMainTable() {
+  PAGE = 1;
+  applyFilters();
+}
+
+function applyFilters() {
+  const q    = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const spec = document.getElementById('filter-spec')?.value || '';
+  const stat = document.getElementById('filter-status')?.value || '';
+  const cols = CONFIG.cols;
+
+  FILTERED_DATA = ALL_DATA.filter(r => {
+    const matchQ    = !q    || cols.some(c => (r[c] || '').toLowerCase().includes(q));
+    const matchSpec = !spec || r[cols[1]] === spec;
+    const matchStat = !stat || r[cols[5]] === stat;
+    return matchQ && matchSpec && matchStat;
+  });
+
+  document.getElementById('record-count').textContent = `${FILTERED_DATA.length} registros`;
+  renderPage();
+}
+
+function renderPage() {
+  const cols = CONFIG.cols;
+  const total = FILTERED_DATA.length;
+  const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+  PAGE = Math.min(PAGE, pages);
+  const slice = FILTERED_DATA.slice((PAGE-1)*PER_PAGE, PAGE*PER_PAGE);
+
+  document.getElementById('main-table-wrap').innerHTML =
+    `<div class="table-wrap">${buildTableHTML(slice, cols, null)}</div>`;
+
+  document.getElementById('pag-info').textContent =
+    `Página ${PAGE} de ${pages} · ${total} registros`;
+
+  const btns = document.getElementById('pag-btns');
+  btns.innerHTML = '';
+  for (let p = 1; p <= pages; p++) {
+    const b = document.createElement('div');
+    b.className = 'pag-btn' + (p === PAGE ? ' active' : '');
+    b.textContent = p;
+    b.onclick = () => { PAGE = p; renderPage(); };
+    btns.appendChild(b);
+  }
+}
+
+function populateSpecFilter() {
+  const sel = document.getElementById('filter-spec');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Todas las especialidades</option>';
+  const specs = [...new Set(ALL_DATA.map(r => r[CONFIG.cols[1]] || '').filter(Boolean))].sort();
+  specs.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    sel.appendChild(o);
+  });
+  sel.value = prev;
+}
+
+/* ═══════════════════════════════════════════
+   ESPECIALIDADES VIEW
+═══════════════════════════════════════════ */
+function renderSpecCards() {
+  const specCount = {};
+  ALL_DATA.forEach(r => {
+    const s = r[CONFIG.cols[1]] || 'Sin especificar';
+    if (!specCount[s]) specCount[s] = { total: 0, active: 0 };
+    specCount[s].total++;
+    if ((r[CONFIG.cols[5]] || '').toLowerCase().includes('activo')) specCount[s].active++;
+  });
+
+  const wrap = document.getElementById('spec-cards-wrap');
+  wrap.innerHTML = Object.entries(specCount).map(([spec, data], i) => `
+    <div class="kpi" style="cursor:pointer" onclick="filterBySpec('${spec}')">
+      <div class="kpi-icon">${['🫀','🧠','🦴','👶','🌸','🩻','☢','🚑','💉','🩺'][i%10]}</div>
+      <div class="kpi-label">${spec}</div>
+      <div class="kpi-value" style="font-size:26px">${data.total}</div>
+      <div class="kpi-sub">${data.active} activos · ${data.total - data.active} en proceso</div>
+    </div>
+  `).join('');
+}
+
+function filterBySpec(spec) {
+  showView('medicos');
+  document.getElementById('filter-spec').value = spec;
+  applyFilters();
+}
+
+/* ═══════════════════════════════════════════
+   CONFIG MODAL
+═══════════════════════════════════════════ */
+function openConfig() {
+  document.getElementById('cfg-sheet-id').value = CONFIG.sheetId;
+  document.getElementById('cfg-gid').value       = CONFIG.gid;
+  document.getElementById('cfg-cols').value      = CONFIG.cols.join(',');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeConfig(e) {
+  if (!e || e.target === document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('open');
+}
+
+function saveConfig() {
+  CONFIG.sheetId = document.getElementById('cfg-sheet-id').value.trim();
+  CONFIG.gid     = document.getElementById('cfg-gid').value.trim();
+  CONFIG.cols    = document.getElementById('cfg-cols').value.split(',').map(s => s.trim()).filter(Boolean);
+  document.getElementById('overlay').classList.remove('open');
+  loadData();
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+let _toastTimer = null;
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+loadData();
+</script>
+</body>
+</html>
