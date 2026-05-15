@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Noor Clinic · Portal de Credencialización v1.0.3</title>
+<title>Noor Clinic · Portal de Credencialización v1.0.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -19,7 +19,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 
-/* SIDEBAR */
+/* ── SIDEBAR ── */
 .sidebar{position:fixed;top:0;left:0;width:224px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;padding:28px 0 20px}
 .sidebar-brand{padding:0 22px 24px;border-bottom:1px solid var(--border)}
 .brand-name{font-family:var(--font-head);font-size:22px;font-weight:500;color:var(--accent);letter-spacing:.5px;line-height:1.1}
@@ -31,57 +31,46 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,180,216,.08);font-weight:500}
 .nav-icon{width:18px;text-align:center;font-size:15px}
 .sidebar-footer{margin-top:auto;padding:14px 22px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.7}
-.sync-status{display:flex;flex-direction:column;gap:3px}
-.sync-row{display:flex;align-items:center;gap:6px;font-size:10px}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
-.sync-dot.ok{background:var(--success)}
-.sync-dot.err{background:var(--danger)}
+.sync-row{display:flex;align-items:center;gap:6px;font-size:10px;margin-top:6px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.sync-dot.ok{background:var(--success)}.sync-dot.err{background:var(--danger)}
 .sync-dot.loading{background:var(--warn);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* MAIN */
+/* ── MAIN ── */
 .main{margin-left:224px;padding:30px 30px 60px;min-height:100vh}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:12px}
 .page-title{font-family:var(--font-head);font-size:27px;font-weight:400;color:var(--text)}
 .page-title span{color:var(--accent)}
 .topbar-actions{display:flex;gap:10px;align-items:center}
 
-/* BUTTONS */
+/* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s;text-decoration:none;white-space:nowrap}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:#009bbf}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-.btn-ghost:hover{color:var(--text);border-color:var(--accent)}
-.btn-gold{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
-.btn-gold:hover{background:rgba(201,168,76,.28)}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#009bbf}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text);border-color:var(--accent)}
+.btn-gold{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}.btn-gold:hover{background:rgba(201,168,76,.28)}
 .btn-sm{padding:5px 11px;font-size:11px}
-.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(224,92,92,.4)}
-.btn-danger:hover{background:rgba(224,92,92,.1)}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(224,92,92,.4)}.btn-danger:hover{background:rgba(224,92,92,.1)}
 
-/* KPI */
+/* ── KPI ── */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.kpi.c-accent::before{background:var(--accent)}
-.kpi.c-gold::before{background:var(--gold)}
-.kpi.c-success::before{background:var(--success)}
-.kpi.c-warn::before{background:var(--warn)}
-.kpi.c-danger::before{background:var(--danger)}
+.kpi.ca::before{background:var(--accent)}.kpi.cg::before{background:var(--gold)}
+.kpi.cs::before{background:var(--success)}.kpi.cw::before{background:var(--warn)}
 .kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px}
 .kpi-value{font-family:var(--font-mono);font-size:30px;font-weight:500;color:var(--text);line-height:1}
 .kpi-sub{font-size:11px;color:var(--muted);margin-top:5px}
 .kpi-icon{position:absolute;right:16px;top:16px;font-size:20px;opacity:.2}
 
-/* SECTION */
+/* ── CHARTS ── */
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .section-title{font-family:var(--font-head);font-size:18px;font-weight:500;color:var(--text)}
-
-/* CHARTS */
-.charts-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;margin-bottom:24px}
+.charts-row{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px;margin-bottom:24px}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
 .chart-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:14px}
 
-/* TABLE */
+/* ── TABLE ── */
 .table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .table-toolbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;flex:1;max-width:300px}
@@ -91,22 +80,24 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 thead tr{background:var(--surface);border-bottom:1px solid var(--border)}
-th{padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:500;text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
-th:hover{color:var(--accent)}
+th{padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:500;text-align:left;white-space:nowrap}
 tbody tr{border-bottom:1px solid rgba(30,45,61,.6);transition:background .15s;cursor:pointer}
 tbody tr:hover{background:rgba(0,180,216,.05)}
-td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;white-space:nowrap}
+td{padding:11px 14px;font-size:13px;color:var(--text);vertical-align:middle;white-space:nowrap}
 .td-mono{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
-.td-folio{font-family:var(--font-mono);font-size:11px;color:var(--gold)}
+.td-folio{font-family:var(--font-mono);font-size:12px;color:var(--gold);font-weight:500}
 
-/* DOC PILLS */
-.doc-pills{display:flex;gap:4px;flex-wrap:wrap}
-.doc-pill{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:500;cursor:pointer;border:1px solid rgba(0,180,216,.2);background:rgba(0,180,216,.1);color:var(--accent);transition:all .15s}
-.doc-pill:hover{background:rgba(0,180,216,.25);border-color:var(--accent);transform:scale(1.05)}
-.doc-pill.missing{background:rgba(107,127,148,.06);color:rgba(107,127,148,.35);border-color:rgba(107,127,148,.1);cursor:default;pointer-events:none}
-.doc-pill.no-link{background:rgba(245,166,35,.08);color:var(--warn);border-color:rgba(245,166,35,.2);cursor:default;pointer-events:none}
+/* ── DOC PILLS ── */
+.doc-pills{display:flex;gap:4px}
+.doc-pill{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;font-size:13px;cursor:pointer;border:1px solid rgba(0,180,216,.22);background:rgba(0,180,216,.1);transition:all .15s;flex-shrink:0}
+.doc-pill:hover{background:rgba(0,180,216,.28);border-color:var(--accent);transform:scale(1.12)}
+.doc-pill.missing{background:rgba(107,127,148,.06);color:rgba(107,127,148,.28);border-color:rgba(107,127,148,.1);cursor:default;pointer-events:none}
+.pct-wrap{display:flex;align-items:center;gap:7px;margin-top:5px}
+.pct-bar{width:56px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0}
+.pct-fill{height:100%;border-radius:2px}
+.pct-label{font-size:10px;font-family:var(--font-mono)}
 
-/* BADGES / STATUS */
+/* ── BADGES ── */
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
 .sp-0{background:rgba(0,180,216,.15);color:#00b4d8}.sp-1{background:rgba(201,168,76,.15);color:#c9a84c}
 .sp-2{background:rgba(62,207,142,.15);color:#3ecf8e}.sp-3{background:rgba(224,92,92,.15);color:#e05c5c}
@@ -119,132 +110,127 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
 .pill.review{color:var(--accent);background:rgba(0,180,216,.12)}
 .pill.inactive{color:var(--muted);background:rgba(107,127,148,.12)}
 
-.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;margin-right:8px;flex-shrink:0}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;margin-right:9px;flex-shrink:0}
 .name-cell{display:flex;align-items:center}
 
-/* PAGINATION */
+/* ── PAGINATION ── */
 .table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px}
 .pag-info{font-size:12px;color:var(--muted)}
-.pag-btns{display:flex;gap:5px;flex-wrap:wrap}
+.pag-btns{display:flex;gap:5px}
 .pag-btn{min-width:28px;height:28px;padding:0 6px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s}
 .pag-btn:hover{color:var(--accent);border-color:var(--accent)}
 .pag-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-/* DRAWER */
-.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:200;display:none}
+/* ── DRAWER ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:200;display:none}
 .drawer-overlay.open{display:block}
-.drawer{position:fixed;top:0;right:-720px;height:100vh;width:700px;background:var(--card);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.drawer{position:fixed;top:0;right:-740px;height:100vh;width:720px;background:var(--card);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right .32s cubic-bezier(.4,0,.2,1);overflow:hidden}
 .drawer.open{right:0}
 .drawer-head{padding:20px 26px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;background:var(--surface)}
-.drawer-name{font-family:var(--font-head);font-size:22px;font-weight:500;color:var(--text)}
-.drawer-sub{font-size:12px;color:var(--muted);margin-top:3px}
-.drawer-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px}
+.drawer-name{font-family:var(--font-head);font-size:23px;font-weight:500;color:var(--text)}
+.drawer-meta{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
+.drawer-folio{font-family:var(--font-mono);font-size:11px;color:var(--gold);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);padding:2px 8px;border-radius:5px}
+.drawer-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px;flex-shrink:0;margin-left:10px}
 .drawer-close:hover{color:var(--text);background:var(--border)}
 .drawer-body{flex:1;overflow-y:auto;padding:20px 26px}
-.drawer-section{margin-bottom:22px}
-.drawer-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drawer-tabs{display:flex;gap:2px;background:var(--surface);border-radius:9px;padding:3px;margin-bottom:20px}
+.drawer-tab{flex:1;padding:8px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);border:none;background:none;transition:all .15s;text-align:center}
+.drawer-tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.drawer-tab:hover:not(.active){color:var(--text)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.drawer-section{margin-bottom:20px}
+.drawer-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .info-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px}
 .info-value{font-size:13px;color:var(--text)}
 .info-value.mono{font-family:var(--font-mono);font-size:12px}
-.vig-warn{color:var(--warn)!important}
-.vig-ok{color:var(--success)!important}
-.vig-exp{color:var(--danger)!important}
+.vig-warn{color:var(--warn)!important}.vig-ok{color:var(--success)!important}.vig-exp{color:var(--danger)!important}
 
-/* DOC CARDS */
+/* ── DOC CARDS ── */
+.doc-completeness{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.doc-comp-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.doc-comp-label{font-size:12px;font-weight:500;color:var(--text)}
+.doc-comp-pct{font-family:var(--font-mono);font-size:14px;font-weight:600}
+.doc-comp-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.doc-comp-fill{height:100%;border-radius:3px;transition:width .5s}
 .doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.doc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:all .2s;min-height:124px;justify-content:center}
-.doc-card.available{border-color:rgba(0,180,216,.3)}
-.doc-card.missing{opacity:.38}
-.doc-card.no-link{border-color:rgba(245,166,35,.2);opacity:.65}
-.doc-card-icon{font-size:26px;line-height:1}
-.doc-card-name{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
+.doc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;min-height:130px;justify-content:center;transition:border-color .2s}
+.doc-card.has-doc{border-color:rgba(0,180,216,.3)}
+.doc-card.no-doc{opacity:.4}
+.doc-card-icon{font-size:28px;line-height:1}
+.doc-card-name{font-size:11px;font-weight:500;color:var(--text);line-height:1.35}
 .doc-card-status{font-size:10px;color:var(--muted)}
-.doc-card-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
-.doc-action-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;border:none;transition:all .15s;text-decoration:none;white-space:nowrap}
-.btn-view{background:rgba(0,180,216,.15);color:var(--accent)}
-.btn-view:hover{background:rgba(0,180,216,.3)}
-.btn-dl{background:rgba(201,168,76,.15);color:var(--gold)}
-.btn-dl:hover{background:rgba(201,168,76,.3)}
-
-/* DOC COMPLETION BAR */
-.doc-completion{margin-bottom:14px}
-.completion-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px}
-.completion-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-.completion-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .4s}
-
-/* FOLDER ROW */
-.folder-row{display:flex;align-items:center;gap:12px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:13px 16px}
+.doc-card-btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.dab{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;border:none;transition:all .15s;text-decoration:none}
+.dab-view{background:rgba(0,180,216,.15);color:var(--accent)}.dab-view:hover{background:rgba(0,180,216,.3)}
+.dab-dl{background:rgba(201,168,76,.15);color:var(--gold)}.dab-dl:hover{background:rgba(201,168,76,.3)}
+.folder-row{display:flex;align-items:center;gap:12px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:13px 16px;margin-top:14px}
 .folder-info{flex:1}
 .folder-title{font-size:13px;font-weight:500;color:var(--gold)}
 .folder-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.alert{display:flex;align-items:flex-start;gap:10px;border-radius:8px;padding:11px 14px;font-size:12px;line-height:1.6;margin-bottom:14px}
+.alert-warn{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.2);color:var(--muted)}
+.alert strong{color:var(--text)}
 
-/* ── VISOR MODAL ── */
-.viewer-modal{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:none;flex-direction:column}
+/* ── ESTADO DE CARGA ── */
+.load-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 30px;gap:16px;text-align:center}
+.load-state .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+.load-state p{font-size:13px;color:var(--muted)}
+.load-state.error .icon{font-size:44px}
+.load-state.error h3{font-family:var(--font-head);font-size:20px;color:var(--text)}
+.load-state.error p{max-width:480px;line-height:1.8}
+.load-state.error code{font-family:var(--font-mono);font-size:11px;background:var(--surface);border:1px solid var(--border);padding:2px 8px;border-radius:4px;color:var(--accent);word-break:break-all}
+
+/* ── VISOR ── */
+.viewer-modal{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.9);backdrop-filter:blur(8px);display:none;flex-direction:column}
 .viewer-modal.open{display:flex}
 .viewer-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
 .viewer-icon{font-size:20px}
-.viewer-label{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:100px}
-.viewer-body{flex:1;display:flex;overflow:hidden;position:relative;background:#1a1a1a}
-
-/* iframe container */
-.frame-wrap{flex:1;display:flex;flex-direction:column;position:relative}
+.viewer-label{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:80px}
+.viewer-body{flex:1;display:flex;overflow:hidden}
+.frame-wrap{flex:1;display:flex;flex-direction:column;position:relative;background:#111}
 .frame-wrap iframe{flex:1;border:none;width:100%;height:100%}
-
-/* Loading overlay inside viewer */
-.frame-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:16px;z-index:2}
+.frame-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:14px;z-index:2}
 .frame-loading .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 .frame-loading p{font-size:13px;color:var(--muted)}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* Error fallback */
-.frame-error{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:16px;padding:40px;text-align:center;z-index:3}
+.frame-error{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:14px;padding:40px;text-align:center;z-index:3}
 .frame-error.show{display:flex}
-.frame-error .err-icon{font-size:52px}
+.frame-error .err-icon{font-size:50px}
 .frame-error h3{font-family:var(--font-head);font-size:22px;color:var(--text)}
-.frame-error p{font-size:13px;color:var(--muted);max-width:460px;line-height:1.8}
+.frame-error p{font-size:13px;color:var(--muted);max-width:440px;line-height:1.8}
 .err-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 
-/* CONFIG */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:300;display:none;align-items:center;justify-content:center}
+/* ── CONFIG MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:300;display:none;align-items:center;justify-content:center}
 .overlay.open{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 30px;width:560px;max-width:96vw}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 30px;width:520px;max-width:96vw}
 .modal h3{font-family:var(--font-head);font-size:20px;margin-bottom:6px;color:var(--text)}
-.modal p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+.modal p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.7}
 .form-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;display:block}
-.form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:9px 13px;border-radius:8px;outline:none;margin-bottom:14px}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 13px;border-radius:8px;outline:none;margin-bottom:14px;word-break:break-all}
 .form-input:focus{border-color:var(--accent)}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
-.sheet-config-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
 
-/* TOAST */
-.toast{position:fixed;bottom:22px;right:22px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;z-index:500;transform:translateY(80px);opacity:0;transition:all .3s;max-width:380px}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;z-index:500;transform:translateY(80px);opacity:0;transition:all .3s;max-width:400px}
 .toast.show{transform:translateY(0);opacity:1}
-.toast.ok{border-left:3px solid var(--success)}
-.toast.err{border-left:3px solid var(--danger)}
-.toast.info{border-left:3px solid var(--accent)}
+.toast.ok{border-left:3px solid var(--success)}.toast.err{border-left:3px solid var(--danger)}.toast.info{border-left:3px solid var(--accent)}
 
-/* VIEWS */
+/* ── VIEWS ── */
 .view{display:none}.view.active{display:block}
-.loader{display:flex;align-items:center;justify-content:center;padding:56px;color:var(--muted);gap:12px;font-size:13px}
-.loader .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
-.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
-.empty-state .em-icon{font-size:36px;margin-bottom:10px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .em-icon{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:13px;line-height:1.7}
 
-/* Alert boxes */
-.alert{display:flex;align-items:flex-start;gap:10px;border-radius:8px;padding:11px 14px;font-size:12px;line-height:1.6;margin-bottom:16px}
-.alert-info{background:rgba(0,180,216,.07);border:1px solid rgba(0,180,216,.2);color:var(--muted)}
-.alert-warn{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);color:var(--muted)}
-.alert strong{color:var(--text)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
 @media(max-width:900px){
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .charts-row{grid-template-columns:1fr}
-  .main{margin-left:0;padding:14px}
-  .sidebar{display:none}
-  .drawer{width:100%}
-  .doc-grid{grid-template-columns:1fr 1fr}
-  .info-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}
+  .main{margin-left:0;padding:14px}.sidebar{display:none}
+  .drawer{width:100%;right:-100%}.doc-grid{grid-template-columns:1fr 1fr}.info-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -255,19 +241,19 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
   <div class="sidebar-brand">
     <div class="brand-name">Noor Clinic</div>
     <div class="brand-sub">Credencialización</div>
-    <span class="version-badge">v1.0.3</span>
+    <span class="version-badge">v1.0.6</span>
   </div>
   <div class="nav-section">Módulos</div>
   <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">⬛</span> Dashboard</div>
   <div class="nav-item" onclick="showView('medicos')"><span class="nav-icon">👤</span> Médicos</div>
   <div class="nav-item" onclick="showView('especialidades')"><span class="nav-icon">🏥</span> Especialidades</div>
   <div class="nav-section">Configuración</div>
-  <div class="nav-item" onclick="openConfig()"><span class="nav-icon">⚙</span> Fuentes de Datos</div>
+  <div class="nav-item" onclick="openConfig()"><span class="nav-icon">⚙</span> API</div>
   <div class="sidebar-footer">
     Hospital Noor Clinic
-    <div class="sync-status" style="margin-top:8px">
-      <div class="sync-row"><div class="sync-dot" id="dot-datos"></div><span id="lbl-datos">Datos: —</span></div>
-      <div class="sync-row"><div class="sync-dot" id="dot-docs"></div><span id="lbl-docs">Docs: —</span></div>
+    <div class="sync-row">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-lbl">Sin sincronizar</span>
     </div>
   </div>
 </aside>
@@ -277,30 +263,32 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
   <div class="topbar">
     <div class="page-title" id="page-title">Dashboard <span>General</span></div>
     <div class="topbar-actions">
-      <button class="btn btn-ghost" onclick="loadAll()">↻ Sincronizar</button>
-      <button class="btn btn-primary" onclick="openConfig()">⚙ Configurar</button>
+      <button class="btn btn-ghost" onclick="loadData()">↻ Sincronizar</button>
+      <button class="btn btn-primary" onclick="openConfig()">⚙ API</button>
     </div>
   </div>
 
   <!-- DASHBOARD -->
   <div class="view active" id="view-dashboard">
     <div class="kpi-grid">
-      <div class="kpi c-accent"><div class="kpi-icon">👤</div><div class="kpi-label">Total Médicos</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">registros en el sistema</div></div>
-      <div class="kpi c-gold"><div class="kpi-icon">🏥</div><div class="kpi-label">Especialidades</div><div class="kpi-value" id="kpi-specs">—</div><div class="kpi-sub">áreas clínicas</div></div>
-      <div class="kpi c-success"><div class="kpi-icon">✓</div><div class="kpi-label">Docs Completos</div><div class="kpi-value" id="kpi-complete">—</div><div class="kpi-sub">expedientes al 100%</div></div>
-      <div class="kpi c-warn"><div class="kpi-icon">📋</div><div class="kpi-label">Docs Pendientes</div><div class="kpi-value" id="kpi-incomplete">—</div><div class="kpi-sub">expedientes incompletos</div></div>
+      <div class="kpi ca"><div class="kpi-icon">📋</div><div class="kpi-label">Médicos Registrados</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">con documentos enviados</div></div>
+      <div class="kpi cs"><div class="kpi-icon">✓</div><div class="kpi-label">Expediente Completo</div><div class="kpi-value" id="kpi-complete">—</div><div class="kpi-sub">los 6 documentos</div></div>
+      <div class="kpi cw"><div class="kpi-icon">📎</div><div class="kpi-label">Expediente Parcial</div><div class="kpi-value" id="kpi-partial">—</div><div class="kpi-sub">documentos faltantes</div></div>
+      <div class="kpi cg"><div class="kpi-icon">🏥</div><div class="kpi-label">Especialidades</div><div class="kpi-value" id="kpi-specs">—</div><div class="kpi-sub">áreas representadas</div></div>
     </div>
-    <div class="section-header"><div class="section-title">Indicadores y Gráficas</div></div>
+    <div class="section-header"><div class="section-title">Indicadores</div></div>
     <div class="charts-row">
       <div class="chart-card"><div class="chart-title">Médicos por Especialidad</div><canvas id="chartSpec" height="180"></canvas></div>
-      <div class="chart-card"><div class="chart-title">Estado de Credencialización</div><canvas id="chartStatus" height="180"></canvas></div>
       <div class="chart-card"><div class="chart-title">Completitud de Expedientes</div><canvas id="chartDocs" height="180"></canvas></div>
+      <div class="chart-card"><div class="chart-title">Estado Credencialización</div><canvas id="chartStatus" height="180"></canvas></div>
     </div>
     <div class="section-header">
-      <div class="section-title">Últimos Registros</div>
+      <div class="section-title">Registros Recientes</div>
       <button class="btn btn-ghost btn-sm" onclick="showView('medicos')">Ver todos →</button>
     </div>
-    <div class="table-card" id="recent-table-wrap"><div class="loader"><div class="spinner"></div>Cargando…</div></div>
+    <div class="table-card" id="recent-wrap">
+      <div class="load-state"><div class="spinner"></div><p>Conectando con Google Sheets…</p></div>
+    </div>
   </div>
 
   <!-- MÉDICOS -->
@@ -309,7 +297,7 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
       <div class="table-toolbar">
         <div class="search-box">
           <span style="color:var(--muted)">🔍</span>
-          <input type="text" id="search-input" placeholder="Buscar nombre, folio, especialidad, cédula…" oninput="applyFilters()">
+          <input type="text" id="search-input" placeholder="Buscar nombre, folio, especialidad…" oninput="applyFilters()">
         </div>
         <select class="filter-select" id="filter-spec" onchange="applyFilters()"><option value="">Todas las especialidades</option></select>
         <select class="filter-select" id="filter-status" onchange="applyFilters()">
@@ -318,12 +306,14 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
         </select>
         <select class="filter-select" id="filter-docs" onchange="applyFilters()">
           <option value="">Todos los expedientes</option>
-          <option value="complete">Completos</option>
-          <option value="incomplete">Incompletos</option>
+          <option value="complete">Completo (6/6)</option>
+          <option value="partial">Parcial (&lt;6)</option>
         </select>
         <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="record-count"></div>
       </div>
-      <div class="table-wrap" id="main-table-wrap"><div class="loader"><div class="spinner"></div>Cargando…</div></div>
+      <div class="table-wrap" id="main-wrap">
+        <div class="load-state"><div class="spinner"></div><p>Cargando…</p></div>
+      </div>
       <div class="table-footer">
         <div class="pag-info" id="pag-info">—</div>
         <div class="pag-btns" id="pag-btns"></div>
@@ -334,7 +324,7 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
   <!-- ESPECIALIDADES -->
   <div class="view" id="view-especialidades">
     <div id="spec-cards-wrap" class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="loader"><div class="spinner"></div>Cargando…</div>
+      <div class="load-state"><div class="spinner"></div><p>Cargando…</p></div>
     </div>
   </div>
 </main>
@@ -343,69 +333,64 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-head">
-    <div><div class="drawer-name" id="drawer-name">—</div><div class="drawer-sub" id="drawer-sub">—</div></div>
+    <div style="flex:1">
+      <div class="drawer-name" id="drawer-name">—</div>
+      <div class="drawer-meta">
+        <span class="drawer-folio" id="drawer-folio">—</span>
+        <span id="drawer-esp"></span>
+        <span id="drawer-estado"></span>
+      </div>
+    </div>
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
-  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-body">
+    <div class="drawer-tabs">
+      <button class="drawer-tab active" onclick="switchTab('docs')">📎 Documentos</button>
+      <button class="drawer-tab" onclick="switchTab('datos')">👤 Datos del Médico</button>
+    </div>
+    <div class="tab-panel active" id="tab-docs"></div>
+    <div class="tab-panel"        id="tab-datos"></div>
+  </div>
 </div>
 
-<!-- ══ VISOR DOCUMENTOS ══ -->
+<!-- VISOR -->
 <div class="viewer-modal" id="viewer-modal">
   <div class="viewer-bar">
-    <span class="viewer-icon" id="viewer-icon">📄</span>
-    <span class="viewer-label" id="viewer-label">Documento</span>
-    <a id="btn-open-drive" href="#" target="_blank" class="btn btn-ghost btn-sm">↗ Abrir en Drive</a>
-    <a id="btn-download" href="#" target="_blank" class="btn btn-gold btn-sm">⬇ Descargar</a>
+    <span class="viewer-icon" id="v-icon">📄</span>
+    <span class="viewer-label" id="v-label">Documento</span>
+    <a id="v-open" href="#" target="_blank" class="btn btn-ghost btn-sm">↗ Abrir en Drive</a>
+    <a id="v-dl"   href="#" target="_blank" class="btn btn-gold btn-sm">⬇ Descargar</a>
     <button class="btn btn-danger btn-sm" onclick="closeViewer()">✕ Cerrar</button>
   </div>
   <div class="viewer-body">
     <div class="frame-wrap">
-      <!-- Loading state -->
       <div class="frame-loading" id="frame-loading">
-        <div class="spinner"></div>
-        <p>Cargando documento…</p>
+        <div class="spinner"></div><p>Cargando desde Google Drive…</p>
       </div>
-      <!-- iframe -->
-      <iframe id="viewer-frame" src="about:blank"
+      <iframe id="v-frame" src="about:blank"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
-        allowfullscreen>
-      </iframe>
-      <!-- Error fallback -->
+        allowfullscreen></iframe>
       <div class="frame-error" id="frame-error">
         <div class="err-icon">🔒</div>
         <h3>Vista previa no disponible</h3>
-        <p>
-          Google Drive requiere que el archivo esté compartido como
-          <strong style="color:var(--text)">"Cualquier persona con el enlace"</strong>
-          para poder previsualizarlo aquí.<br><br>
-          Usa los botones para abrirlo o descargarlo directamente en Drive.
-        </p>
+        <p>El archivo debe estar compartido como <strong style="color:var(--text)">"Cualquier persona con el enlace puede ver"</strong> en Google Drive para mostrarse aquí.<br><br>Usa los botones para abrirlo o descargarlo directamente.</p>
         <div class="err-actions">
-          <a id="err-open-btn" href="#" target="_blank" class="btn btn-primary">↗ Abrir en Google Drive</a>
-          <a id="err-dl-btn" href="#" target="_blank" class="btn btn-gold">⬇ Descargar</a>
+          <a id="err-open" href="#" target="_blank" class="btn btn-primary">↗ Abrir en Drive</a>
+          <a id="err-dl"   href="#" target="_blank" class="btn btn-gold">⬇ Descargar</a>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- CONFIG MODAL -->
+<!-- CONFIG -->
 <div class="overlay" id="overlay" onclick="closeConfig(event)">
   <div class="modal" onclick="event.stopPropagation()">
-    <h3>Fuentes de Datos</h3>
-    <p>Este portal conecta <strong>dos hojas de Google Sheets</strong> interconectadas por el <strong>Folio de Registro</strong>.<br>
-    Asegúrate de que ambas estén publicadas: <em>Archivo → Compartir → Publicar en la web → CSV</em></p>
-
-    <label class="form-label">📊 Hoja 1 — Datos de Médicos (ID del Sheet)</label>
-    <input class="form-input" id="cfg-id1" placeholder="ID del Sheet de datos" value="1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY">
-    <label class="form-label">GID de la hoja de datos</label>
-    <input class="form-input" id="cfg-gid1" placeholder="0" value="0">
-
-    <label class="form-label">📎 Hoja 2 — Documentos / Links (ID del Sheet)</label>
-    <input class="form-input" id="cfg-id2" placeholder="ID del Sheet de documentos" value="1mCRpPAQpog8_DqQDl1971mhYInIh7gQ9leh8_ZV5Y8o">
-    <label class="form-label">GID de la hoja de documentos</label>
-    <input class="form-input" id="cfg-gid2" placeholder="2128104265" value="2128104265">
-
+    <h3>URL del Apps Script</h3>
+    <p>Pega aquí la URL de tu Google Apps Script desplegado.<br>
+    Esta URL conecta el portal con ambos Google Sheets automáticamente.</p>
+    <label class="form-label">URL del Apps Script (.../exec)</label>
+    <input class="form-input" id="cfg-url" style="font-size:10px">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeConfig()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveConfig()">Guardar y Sincronizar</button>
@@ -414,654 +399,504 @@ td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;whit
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-/* ═══════════════════════════════════════
-   SHEET 1 — Datos de médicos
-   Campos: Folio | Fecha de registro | Nombre completo | Fecha de nacimiento |
-           Email | Teléfono | Ciudad | Especialidad | Cédula Prof. | Cédula Esp. |
-           Institución | Adscripción | Vigencia Certificado | Vigencia Póliza |
-           Aseguradora | Estado | (doc cols ignorados) | Carpeta Drive
-═══════════════════════════════════════ */
-const C = {
-  folio:'Folio', fecha:'Fecha de registro', nombre:'Nombre completo',
-  nacimiento:'Fecha de nacimiento', email:'Email', telefono:'Teléfono',
-  ciudad:'Ciudad', especialidad:'Especialidad',
-  cedProf:'Cédula Prof.', cedEsp:'Cédula Esp.',
-  institucion:'Institución', adscripcion:'Adscripción',
-  vigCert:'Vigencia Certificado', vigPoliza:'Vigencia Póliza',
-  aseguradora:'Aseguradora', estado:'Estado', carpeta:'Carpeta Drive'
-};
+/* ══════════════════════════════════════════════
+   URL DEL APPS SCRIPT — única fuente de datos
+══════════════════════════════════════════════ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzB9kLR6NDIe1if0P2B-GnuwVDl4u-s-Gyr2-GOsANQPTyf4_qiSiFj60ZhwuhZ4SblwA/exec';
 
-/* ═══════════════════════════════════════
-   SHEET 2 — Documentos (ligados por Folio)
-   Campos: Marca temporal | Folio de Registro | Nombre Completo del Médico |
-           INE o Identificación Oficial Vigente | Cédula Profesional |
-           Cédula de Especialidad | Certificado de Especialidad |
-           Póliza de Responsabilidad Civil | Constancia de Situación Fiscal
-═══════════════════════════════════════ */
-const D = {
-  timestamp: 'Marca temporal',
-  folio:     'Folio de Registro',
-  nombre:    'Nombre Completo del Médico',
-  ine:       'INE o Identificación Oficial Vigente',
-  cedProf:   'Cédula Profesional',
-  cedEsp:    'Cédula de Especialidad',
-  cert:      'Certificado de Especialidad',
-  poliza:    'Póliza de Responsabilidad Civil',
-  fiscal:    'Constancia de Situación Fiscal'
-};
-
+/* Catálogo de documentos — keys coinciden con JSON del script */
 const DOCS = [
-  { key:'ine',     label:'INE / ID Oficial',      icon:'🪪' },
-  { key:'cedProf', label:'Cédula Profesional',     icon:'📜' },
-  { key:'cedEsp',  label:'Cédula de Especialidad', icon:'🎓' },
-  { key:'cert',    label:'Certificado Especialidad',icon:'📋' },
-  { key:'poliza',  label:'Póliza RC',               icon:'🛡' },
-  { key:'fiscal',  label:'Const. Situación Fiscal', icon:'🧾' }
+  { key:'doc_ine',     label:'INE / ID Oficial',        icon:'🪪' },
+  { key:'doc_cedProf', label:'Cédula Profesional',       icon:'📜' },
+  { key:'doc_cedEsp',  label:'Cédula de Especialidad',   icon:'🎓' },
+  { key:'doc_cert',    label:'Certificado Especialidad',  icon:'📋' },
+  { key:'doc_poliza',  label:'Póliza RC',                icon:'🛡' },
+  { key:'doc_fiscal',  label:'Const. Situación Fiscal',  icon:'🧾' }
 ];
 
-/* ═══════════════════════════════════════
-   CONFIG & STATE
-═══════════════════════════════════════ */
-let CONFIG = {
-  sheetId1: '1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY', gid1: '0',
-  sheetId2: '1mCRpPAQpog8_DqQDl1971mhYInIh7gQ9leh8_ZV5Y8o',  gid2: '2128104265'
-};
+/* ══════════════════════════════════════════════
+   ESTADO
+══════════════════════════════════════════════ */
+let DATA     = [];   // array de médicos del API
+let FILTERED = [];
+let PAGE = 1;
+const PER = 15;
+let CH = {};
+let cfgUrl = API_URL;
 
-let MEDICOS    = [];   // rows from sheet 1
-let DOCS_MAP   = {};   // folio → doc row from sheet 2
-let MERGED     = [];   // combined
-let FILTERED   = [];
-let PAGE = 1; const PER_PAGE = 15;
-let charts = {};
-
-/* ═══════════════════════════════════════
-   DRIVE URL UTILS
-═══════════════════════════════════════ */
-function getDriveId(url) {
-  if (!url || typeof url !== 'string') return null;
-  url = url.trim();
-  // /file/d/ID
-  let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) return { type:'file', id:m[1] };
-  // open?id= or uc?id=
-  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (m) return { type:'file', id:m[1] };
-  // /folders/ID
-  m = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
-  if (m) return { type:'folder', id:m[1] };
+/* ══════════════════════════════════════════════
+   DRIVE UTILS
+══════════════════════════════════════════════ */
+function driveId(u){
+  if(!u) return null;
+  let m=u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return{t:'f',id:m[1]};
+  m=u.match(/[?&]id=([a-zA-Z0-9_-]+)/);         if(m) return{t:'f',id:m[1]};
   return null;
 }
+const embedU = u=>{const r=driveId(u);return r?`https://drive.google.com/file/d/${r.id}/preview`:u;};
+const viewU  = u=>{const r=driveId(u);return r?`https://drive.google.com/file/d/${r.id}/view`:u;};
+const dlU    = u=>{const r=driveId(u);return r?`https://drive.google.com/uc?export=download&id=${r.id}`:u;};
+const isUrl  = u=>!!(u&&u.trim().startsWith('http'));
 
-function embedUrl(url) {
-  const r = getDriveId(url);
-  if (!r) return url;
-  if (r.type === 'file')   return `https://drive.google.com/file/d/${r.id}/preview`;
-  if (r.type === 'folder') return `https://drive.google.com/embeddedfolderview?id=${r.id}#list`;
-  return url;
-}
-function viewUrl(url) {
-  const r = getDriveId(url);
-  if (r && r.type === 'file') return `https://drive.google.com/file/d/${r.id}/view`;
-  return url;
-}
-function downloadUrl(url) {
-  const r = getDriveId(url);
-  if (r && r.type === 'file') return `https://drive.google.com/uc?export=download&id=${r.id}`;
-  return url;
-}
-function isValidUrl(url) {
-  return !!(url && url.trim() && (url.startsWith('http://') || url.startsWith('https://')));
-}
+/* ══════════════════════════════════════════════
+   CARGA DE DATOS — via Apps Script JSON
+══════════════════════════════════════════════ */
+async function loadData(){
+  setSyncDot('loading','Conectando…');
+  showToast('info','↻ Cargando datos desde Google Sheets…');
 
-/* ═══════════════════════════════════════
-   FETCH & PARSE
-═══════════════════════════════════════ */
-function csvUrl(id, gid) {
-  return `https://docs.google.com/spreadsheets/d/${id}/pub?output=csv&gid=${gid}`;
-}
-
-async function fetchCSV(id, gid, dotEl, lblEl, label) {
-  setSyncStatus(dotEl, lblEl, label, 'loading');
-  try {
-    const r = await fetch(csvUrl(id, gid));
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    const text = await r.text();
-    const rows = parseCSV(text);
-    setSyncStatus(dotEl, lblEl, `${label}: ${rows.length} filas`, 'ok');
-    return rows;
-  } catch(e) {
-    setSyncStatus(dotEl, lblEl, `${label}: error`, 'err');
-    throw e;
-  }
-}
-
-function setSyncStatus(dotId, lblId, text, state) {
-  const dot = document.getElementById(dotId);
-  const lbl = document.getElementById(lblId);
-  if (dot) { dot.className = 'sync-dot ' + state; }
-  if (lbl) lbl.textContent = text;
-}
-
-async function loadAll() {
-  showToast('info', '↻ Sincronizando ambas hojas…');
-  let ok1 = false, ok2 = false;
+  // Marcamos carga en contenedores
+  setLoading('recent-wrap');
+  setLoading('main-wrap');
 
   try {
-    const rows1 = await fetchCSV(CONFIG.sheetId1, CONFIG.gid1, 'dot-datos', 'lbl-datos', 'Datos');
-    MEDICOS = rows1;
-    ok1 = true;
-  } catch(e) {
-    showToast('err', '⚠ No se pudo leer Hoja 1 (datos). Usando demo.');
-    MEDICOS = demoMedicos();
-    setSyncStatus('dot-datos','lbl-datos','Datos: demo','err');
+    // Apps Script requiere seguir la redirección
+    const res = await fetch(cfgUrl, { redirect:'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+
+    if (!json.ok) throw new Error(json.error || 'Error en el script');
+
+    DATA     = json.data || [];
+    FILTERED = [...DATA];
+
+    renderAll();
+    populateSpecFilter();
+
+    const now = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    setSyncDot('ok', `${DATA.length} médicos · ${now}`);
+    showToast('ok', `✓ ${DATA.length} médico${DATA.length!==1?'s':''} cargados correctamente`);
+
+  } catch(err) {
+    setSyncDot('err','Error de conexión');
+    showApiError(err.message);
+    showToast('err','⚠ No se pudo conectar con el Apps Script');
   }
-
-  try {
-    const rows2 = await fetchCSV(CONFIG.sheetId2, CONFIG.gid2, 'dot-docs', 'lbl-docs', 'Docs');
-    // Build map folio → doc row (last entry wins if duplicate)
-    DOCS_MAP = {};
-    rows2.forEach(r => {
-      const folio = (r[D.folio]||'').trim();
-      if (folio) DOCS_MAP[folio] = r;
-    });
-    ok2 = true;
-  } catch(e) {
-    showToast('err', '⚠ No se pudo leer Hoja 2 (documentos). Sin links.');
-    DOCS_MAP = {};
-    setSyncStatus('dot-docs','lbl-docs','Docs: sin datos','err');
-  }
-
-  // Merge
-  MERGED = MEDICOS.map(m => {
-    const folio = (m[C.folio]||'').trim();
-    const docRow = DOCS_MAP[folio] || null;
-    return { ...m, _docs: docRow, _folio: folio };
-  });
-
-  FILTERED = [...MERGED];
-  renderAll();
-
-  if (ok1 && ok2)   showToast('ok',  `✓ ${MERGED.length} médicos · ${Object.keys(DOCS_MAP).length} expedientes con documentos`);
-  else if (ok1)      showToast('info', `Datos OK · Sin documentos (revisa Hoja 2)`);
 }
 
-/* ═══════════════════════════════════════
-   CSV PARSER
-═══════════════════════════════════════ */
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = splitLine(lines[0]).map(h => h.trim().replace(/^"|"$/g,''));
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const vals = splitLine(lines[i]);
-    if (vals.every(v => !v.trim())) continue;
-    const obj = {};
-    headers.forEach((h, ci) => { obj[h] = (vals[ci]||'').trim().replace(/^"|"$/g,''); });
-    rows.push(obj);
-  }
-  return rows;
+function setLoading(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML=`<div class="load-state"><div class="spinner"></div><p>Conectando con Google Sheets…</p></div>`;
 }
 
-function splitLine(line) {
-  const r=[]; let cur=''; let q=false;
-  for (const ch of line) {
-    if (ch==='"') { q=!q; }
-    else if (ch===','&&!q) { r.push(cur); cur=''; }
-    else { cur+=ch; }
-  }
-  r.push(cur); return r;
+function showApiError(msg){
+  const html=`<div class="load-state error">
+    <div class="icon">⚠️</div>
+    <h3>No se pudo cargar</h3>
+    <p>${msg}</p>
+    <p style="margin-top:8px">Verifica que el Apps Script esté desplegado correctamente y con acceso <strong style="color:var(--text)">"Cualquier persona"</strong>.</p>
+    <p style="margin-top:6px">URL configurada:<br><code>${cfgUrl}</code></p>
+    <button class="btn btn-primary" style="margin-top:16px" onclick="loadData()">↻ Reintentar</button>
+  </div>`;
+  const rw=document.getElementById('recent-wrap'); if(rw) rw.innerHTML=html;
+  const mw=document.getElementById('main-wrap');   if(mw) mw.innerHTML=html;
 }
 
-/* ═══════════════════════════════════════
-   DEMO DATA
-═══════════════════════════════════════ */
-function demoMedicos() {
-  const sp=['Cardiología','Neurología','Ortopedia','Pediatría','Ginecología','Oncología','Radiología','Urgencias'];
-  const es=['Activo','Activo','Activo','Pendiente','En revisión'];
-  const ns=['Ana García López','Carlos Martínez','María Hernández','Juan Pérez Vega','Laura Torres','Roberto Sánchez','Patricia Jiménez','Miguel Ángel Ramos','Sofía Morales','Fernando Castro','Daniela Núñez','Alejandro Reyes'];
-  return ns.map((n,i)=>({
-    [C.folio]:'NC-'+String(1000+i).padStart(4,'0'),
-    [C.fecha]:new Date(2024,i%12,(i*7%28)+1).toLocaleDateString('es-MX'),
-    [C.nombre]:'Dr. '+n,
-    [C.nacimiento]:new Date(1970+i%20,i%12,15).toLocaleDateString('es-MX'),
-    [C.email]:n.split(' ')[0].toLowerCase()+'@noorclinic.mx',
-    [C.telefono]:'55'+(10000000+i*999),
-    [C.ciudad]:['CDMX','Guadalajara','Monterrey','Puebla','Querétaro'][i%5],
-    [C.especialidad]:sp[i%sp.length],
-    [C.cedProf]:'0'+(1000000+i*123457),
-    [C.cedEsp]:i%3===0?'':'9'+(800000+i*77777),
-    [C.institucion]:['IMSS','ISSSTE','UNAM','IPN','Hospital Privado'][i%5],
-    [C.adscripcion]:'Hospital Noor Clinic',
-    [C.vigCert]:new Date(2025+(i%2),(i*3)%12,1).toLocaleDateString('es-MX'),
-    [C.vigPoliza]:new Date(2025+(i%2),(i*5)%12,15).toLocaleDateString('es-MX'),
-    [C.aseguradora]:['GNP','AXA','Metlife','MAPFRE','Allianz'][i%5],
-    [C.estado]:es[i%es.length],
-    [C.carpeta]:''
-  }));
+function setSyncDot(state, text){
+  const d=document.getElementById('sync-dot'); if(d) d.className='sync-dot '+state;
+  const l=document.getElementById('sync-lbl'); if(l) l.textContent=text;
 }
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════════
    HELPERS
-═══════════════════════════════════════ */
-function docLinksForRow(merged) {
-  const docRow = merged._docs;
-  if (!docRow) return {};
-  const result = {};
-  DOCS.forEach(d => { result[d.key] = (docRow[D[d.key]]||'').trim(); });
-  return result;
+══════════════════════════════════════════════ */
+const docCnt    = r => DOCS.filter(d=>isUrl(r[d.key])).length;
+const isComplete= r => docCnt(r)===DOCS.length;
+const pctCol    = p => p===100?'var(--success)':p>0?'var(--warn)':'var(--danger)';
+const initials  = n => (n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const esc       = s => (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+
+const specList  = () => [...new Set(DATA.map(r=>r.especialidad||'').filter(Boolean))];
+
+function specBadge(v){
+  if(!v) return`<span class="badge" style="background:rgba(107,127,148,.1);color:var(--muted);font-size:10px">Sin datos</span>`;
+  const ci=specList().indexOf(v)%8;
+  return`<span class="badge sp-${Math.max(0,ci)}">${v}</span>`;
 }
 
-function docCount(merged) {
-  const links = docLinksForRow(merged);
-  return DOCS.filter(d => isValidUrl(links[d.key])).length;
-}
-
-function isComplete(merged) { return docCount(merged) === DOCS.length; }
-
-const specList = () => [...new Set(MERGED.map(r=>r[C.especialidad]||''))];
-
-function statusPill(v) {
+function statusPill(v){
   const k=(v||'').toLowerCase();
-  if(k.includes('activo'))   return`<span class="pill active">Activo</span>`;
-  if(k.includes('pendiente'))return`<span class="pill pending">Pendiente</span>`;
-  if(k.includes('revisión')||k.includes('revision'))return`<span class="pill review">En revisión</span>`;
-  return`<span class="pill inactive">${v||'—'}</span>`;
+  if(k.includes('activo'))    return`<span class="pill active">Activo</span>`;
+  if(k.includes('pendiente')) return`<span class="pill pending">Pendiente</span>`;
+  if(k.includes('revisión')||k.includes('revision')) return`<span class="pill review">En revisión</span>`;
+  if(!v) return`<span class="pill inactive">Sin estado</span>`;
+  return`<span class="pill inactive">${v}</span>`;
 }
 
-function specBadge(v) {
-  const ci = specList().indexOf(v)%8;
-  return`<span class="badge sp-${Math.max(0,ci)}">${v||'—'}</span>`;
-}
-
-function initials(n) { return(n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
-
-function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-
-function vigClass(dateStr) {
-  if(!dateStr) return '';
-  const p=dateStr.split('/');
-  const d=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(dateStr);
+function vigCls(s){
+  if(!s) return '';
+  const p=s.split('/'); const d=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(s);
   if(isNaN(d)) return '';
   const diff=(d-new Date())/86400000;
   return diff<0?'vig-exp':diff<60?'vig-warn':'vig-ok';
 }
 
-/* ═══════════════════════════════════════
-   DOC PILLS (table cell)
-═══════════════════════════════════════ */
-function docPillsHTML(merged) {
-  const links = docLinksForRow(merged);
-  const hasDocRow = !!merged._docs;
-  return '<div class="doc-pills">' + DOCS.map(d => {
-    const url = links[d.key];
-    if (!hasDocRow) return `<span class="doc-pill missing" title="${d.label} — Sin expediente">${d.icon}</span>`;
-    if (!isValidUrl(url)) return `<span class="doc-pill no-link" title="${d.label} — No cargado">${d.icon}</span>`;
-    return `<span class="doc-pill" title="Ver: ${d.label}"
-      onclick="event.stopPropagation();openViewer('${esc(url)}','${esc(d.label)}','${d.icon}')"
-    >${d.icon}</span>`;
-  }).join('') + '</div>';
-}
-
-/* ═══════════════════════════════════════
-   RENDER ALL
-═══════════════════════════════════════ */
-function renderAll() {
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function renderAll(){
   renderKPIs();
   renderCharts();
   renderRecentTable();
-  populateSpecFilter();
-  if(document.getElementById('view-medicos').classList.contains('active')) {
+  if(document.getElementById('view-medicos').classList.contains('active')){
     PAGE=1; applyFilters();
   }
 }
 
-function renderKPIs() {
-  const total    = MERGED.length;
-  const specs    = new Set(MERGED.map(r=>r[C.especialidad]||'').filter(Boolean)).size;
-  const complete = MERGED.filter(isComplete).length;
-  document.getElementById('kpi-total').textContent      = total;
-  document.getElementById('kpi-specs').textContent      = specs;
-  document.getElementById('kpi-complete').textContent   = complete;
-  document.getElementById('kpi-incomplete').textContent = total - complete;
+function renderKPIs(){
+  const total=DATA.length, comp=DATA.filter(isComplete).length;
+  const specs=new Set(DATA.map(r=>r.especialidad||'').filter(Boolean)).size;
+  document.getElementById('kpi-total').textContent   =total;
+  document.getElementById('kpi-complete').textContent=comp;
+  document.getElementById('kpi-partial').textContent =total-comp;
+  document.getElementById('kpi-specs').textContent   =specs||'—';
 }
 
-const CC = ['#00b4d8','#c9a84c','#3ecf8e','#e05c5c','#9b6ee6','#f5a623','#46beb4','#dc64a0'];
+const CC=['#00b4d8','#c9a84c','#3ecf8e','#e05c5c','#9b6ee6','#f5a623','#46beb4','#dc64a0'];
 
-function renderCharts() {
-  // Specialty bar
+function renderCharts(){
+  // Especialidad
   const sc={};
-  MERGED.forEach(r=>{const s=r[C.especialidad]||'Sin especificar';sc[s]=(sc[s]||0)+1;});
-  if(charts.spec) charts.spec.destroy();
-  charts.spec=new Chart(document.getElementById('chartSpec'),{type:'bar',data:{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:CC,borderRadius:6,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7f94',font:{size:10},maxRotation:35},grid:{color:'#1e2d3d'}},y:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}}}}});
-
-  // Status donut
-  const stc={};
-  MERGED.forEach(r=>{const s=r[C.estado]||'Sin estado';stc[s]=(stc[s]||0)+1;});
-  if(charts.status) charts.status.destroy();
-  charts.status=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:Object.keys(stc),datasets:[{data:Object.values(stc),backgroundColor:CC,borderWidth:2,borderColor:'#181f28'}]},options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#6b7f94',font:{size:11},padding:10}}}}});
-
-  // Doc completeness
-  const complete = MERGED.filter(isComplete).length;
-  const partial  = MERGED.filter(r=>!isComplete(r)&&docCount(r)>0).length;
-  const none     = MERGED.filter(r=>docCount(r)===0).length;
-  if(charts.docs) charts.docs.destroy();
-  charts.docs=new Chart(document.getElementById('chartDocs'),{type:'doughnut',data:{labels:['Completo','Parcial','Sin docs'],datasets:[{data:[complete,partial,none],backgroundColor:['#3ecf8e','#f5a623','#e05c5c'],borderWidth:2,borderColor:'#181f28'}]},options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#6b7f94',font:{size:11},padding:10}}}}});
-}
-
-/* ═══════════════════════════════════════
-   TABLE
-═══════════════════════════════════════ */
-function buildTable(rows, compact) {
-  const thead=`<tr><th>Folio</th><th>Médico</th><th>Especialidad</th><th>Cédula Prof.</th><th>Ciudad</th><th>Estado</th><th>Documentos (${DOCS.length})</th>${!compact?'<th>Registro</th>':''}</tr>`;
-  const tbody=rows.map(r=>`
-    <tr onclick="openDrawer(${MERGED.indexOf(r)})">
-      <td class="td-folio">${r[C.folio]||'—'}</td>
-      <td><div class="name-cell"><div class="avatar">${initials(r[C.nombre])}</div>${r[C.nombre]||'—'}</div></td>
-      <td>${specBadge(r[C.especialidad])}</td>
-      <td class="td-mono">${r[C.cedProf]||'—'}</td>
-      <td>${r[C.ciudad]||'—'}</td>
-      <td>${statusPill(r[C.estado])}</td>
-      <td>${docPillsHTML(r)}</td>
-      ${!compact?`<td class="td-mono">${r[C.fecha]||'—'}</td>`:''}
-    </tr>`).join('');
-  return`<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
-}
-
-function renderRecentTable() {
-  const el = document.getElementById('recent-table-wrap');
-  const sl = MERGED.slice(0,8);
-  el.innerHTML = sl.length ? `<div class="table-wrap">${buildTable(sl,true)}</div>`
-    : `<div class="empty-state"><div class="em-icon">📭</div><p>Sin registros.</p></div>`;
-}
-
-function applyFilters() {
-  const q   = (document.getElementById('search-input')?.value||'').toLowerCase();
-  const sp  = document.getElementById('filter-spec')?.value||'';
-  const st  = document.getElementById('filter-status')?.value||'';
-  const dc  = document.getElementById('filter-docs')?.value||'';
-  FILTERED = MERGED.filter(r => {
-    const txt = Object.values(r).filter(v=>typeof v==='string').join(' ').toLowerCase();
-    const matchQ  = !q  || txt.includes(q);
-    const matchSp = !sp || r[C.especialidad]===sp;
-    const matchSt = !st || r[C.estado]===st;
-    const matchDc = !dc || (dc==='complete'?isComplete(r):!isComplete(r));
-    return matchQ&&matchSp&&matchSt&&matchDc;
+  DATA.forEach(r=>{const s=r.especialidad||'Sin datos';sc[s]=(sc[s]||0)+1;});
+  if(CH.spec) CH.spec.destroy();
+  CH.spec=new Chart(document.getElementById('chartSpec'),{
+    type:'bar',
+    data:{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:CC,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7f94',font:{size:10},maxRotation:35},grid:{color:'#1e2d3d'}},y:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}}}}
   });
-  document.getElementById('record-count').textContent=`${FILTERED.length} registros`;
+
+  // Completitud
+  const comp=DATA.filter(isComplete).length;
+  const part=DATA.filter(r=>!isComplete(r)&&docCnt(r)>0).length;
+  const none=DATA.filter(r=>docCnt(r)===0).length;
+  if(CH.docs) CH.docs.destroy();
+  CH.docs=new Chart(document.getElementById('chartDocs'),{
+    type:'doughnut',
+    data:{labels:['Completo (6/6)','Parcial (1–5)','Sin docs'],datasets:[{data:[comp,part,none],backgroundColor:['#3ecf8e','#f5a623','#e05c5c'],borderWidth:2,borderColor:'#181f28'}]},
+    options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#6b7f94',font:{size:11},padding:10}}}}
+  });
+
+  // Estado
+  const stc={};
+  DATA.forEach(r=>{const s=r.estado||'Sin estado';stc[s]=(stc[s]||0)+1;});
+  if(CH.status) CH.status.destroy();
+  CH.status=new Chart(document.getElementById('chartStatus'),{
+    type:'doughnut',
+    data:{labels:Object.keys(stc),datasets:[{data:Object.values(stc),backgroundColor:CC,borderWidth:2,borderColor:'#181f28'}]},
+    options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#6b7f94',font:{size:11},padding:10}}}}
+  });
+}
+
+/* ══════════════════════════════════════════════
+   TABLA
+══════════════════════════════════════════════ */
+function pillsCell(r){
+  const cnt=docCnt(r), pct=Math.round(cnt/DOCS.length*100), col=pctCol(pct);
+  const pills=DOCS.map(d=>{
+    const url=r[d.key];
+    if(!isUrl(url)) return`<span class="doc-pill missing" title="${d.label}: no cargado">${d.icon}</span>`;
+    return`<span class="doc-pill" title="Ver: ${d.label}" onclick="event.stopPropagation();openViewer('${esc(url)}','${esc(d.label)}','${d.icon}')">${d.icon}</span>`;
+  }).join('');
+  return`<div>
+    <div class="doc-pills">${pills}</div>
+    <div class="pct-wrap">
+      <div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="pct-label" style="color:${col}">${cnt}/${DOCS.length}</span>
+    </div>
+  </div>`;
+}
+
+function buildTable(rows, compact){
+  if(!rows.length) return`<div class="empty-state"><div class="em-icon">📭</div><p>Sin registros que mostrar.</p></div>`;
+  const h=`<tr><th>Folio</th><th>Médico</th><th>Especialidad</th><th>Estado</th><th>Documentos</th>${!compact?'<th>Envío docs</th>':''}</tr>`;
+  const b=rows.map(r=>`<tr onclick="openDrawer(${DATA.indexOf(r)})">
+    <td class="td-folio">${r.folio||'—'}</td>
+    <td><div class="name-cell"><div class="avatar">${initials(r.nombre)}</div>${r.nombre||'—'}</div></td>
+    <td>${specBadge(r.especialidad||'')}</td>
+    <td>${statusPill(r.estado||'')}</td>
+    <td>${pillsCell(r)}</td>
+    ${!compact?`<td class="td-mono">${r.timestamp||'—'}</td>`:''}
+  </tr>`).join('');
+  return`<table><thead>${h}</thead><tbody>${b}</tbody></table>`;
+}
+
+function renderRecentTable(){
+  const el=document.getElementById('recent-wrap');
+  if(el) el.innerHTML=`<div class="table-wrap">${buildTable(DATA.slice(0,8),true)}</div>`;
+}
+
+function applyFilters(){
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  const sp=document.getElementById('filter-spec')?.value||'';
+  const st=document.getElementById('filter-status')?.value||'';
+  const dc=document.getElementById('filter-docs')?.value||'';
+  FILTERED=DATA.filter(r=>{
+    const txt=[r.nombre,r.folio,r.especialidad,r.ciudad].join(' ').toLowerCase();
+    return(!q||txt.includes(q))
+      &&(!sp||r.especialidad===sp)
+      &&(!st||r.estado===st)
+      &&(!dc||(dc==='complete'?isComplete(r):!isComplete(r)));
+  });
+  document.getElementById('record-count').textContent=`${FILTERED.length} registro${FILTERED.length!==1?'s':''}`;
   PAGE=1; renderPage();
 }
 
-function renderPage() {
-  const total=FILTERED.length, pages=Math.max(1,Math.ceil(total/PER_PAGE));
+function renderPage(){
+  const total=FILTERED.length, pages=Math.max(1,Math.ceil(total/PER));
   PAGE=Math.min(PAGE,pages);
-  const slice=FILTERED.slice((PAGE-1)*PER_PAGE,PAGE*PER_PAGE);
-  document.getElementById('main-table-wrap').innerHTML=slice.length
-    ?`<div class="table-wrap">${buildTable(slice,false)}</div>`
-    :`<div class="empty-state"><div class="em-icon">📭</div><p>Sin resultados.</p></div>`;
+  const el=document.getElementById('main-wrap');
+  if(el) el.innerHTML=`<div class="table-wrap">${buildTable(FILTERED.slice((PAGE-1)*PER,PAGE*PER),false)}</div>`;
   document.getElementById('pag-info').textContent=`Página ${PAGE} de ${pages} · ${total} registros`;
   const btns=document.getElementById('pag-btns'); btns.innerHTML='';
-  for(let p=1;p<=Math.min(pages,10);p++){const b=document.createElement('div');b.className='pag-btn'+(p===PAGE?' active':'');b.textContent=p;b.onclick=()=>{PAGE=p;renderPage();};btns.appendChild(b);}
+  for(let p=1;p<=Math.min(pages,10);p++){
+    const b=document.createElement('div');
+    b.className='pag-btn'+(p===PAGE?' active':'');
+    b.textContent=p; b.onclick=()=>{PAGE=p;renderPage();}; btns.appendChild(b);
+  }
 }
 
-function populateSpecFilter() {
+function populateSpecFilter(){
   const sel=document.getElementById('filter-spec'); if(!sel) return;
   const prev=sel.value; sel.innerHTML='<option value="">Todas las especialidades</option>';
-  [...new Set(MERGED.map(r=>r[C.especialidad]||'').filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+  [...new Set(DATA.map(r=>r.especialidad||'').filter(Boolean))].sort()
+    .forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
   sel.value=prev;
 }
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════════
    DRAWER
-═══════════════════════════════════════ */
-function openDrawer(idx) {
-  const r=MERGED[idx]; if(!r) return;
-  const links=docLinksForRow(r);
-  const cnt=docCount(r);
-  const pct=Math.round(cnt/DOCS.length*100);
-
-  document.getElementById('drawer-name').textContent=r[C.nombre]||'—';
-  document.getElementById('drawer-sub').textContent=`${r[C.especialidad]||''} · Folio: ${r[C.folio]||'—'}`;
-
-  const carpeta=(r[C.carpeta]||'').trim();
-
-  document.getElementById('drawer-body').innerHTML=`
-
-    <!-- Datos Generales -->
-    <div class="drawer-section">
-      <div class="drawer-section-title">Datos Generales</div>
-      <div class="info-grid">
-        <div><div class="info-label">Folio</div><div class="info-value mono">${r[C.folio]||'—'}</div></div>
-        <div><div class="info-label">Fecha de Registro</div><div class="info-value">${r[C.fecha]||'—'}</div></div>
-        <div><div class="info-label">Nombre Completo</div><div class="info-value">${r[C.nombre]||'—'}</div></div>
-        <div><div class="info-label">Fecha de Nacimiento</div><div class="info-value">${r[C.nacimiento]||'—'}</div></div>
-        <div><div class="info-label">Email</div><div class="info-value">${r[C.email]||'—'}</div></div>
-        <div><div class="info-label">Teléfono</div><div class="info-value mono">${r[C.telefono]||'—'}</div></div>
-        <div><div class="info-label">Ciudad</div><div class="info-value">${r[C.ciudad]||'—'}</div></div>
-        <div><div class="info-label">Estado</div><div class="info-value">${statusPill(r[C.estado])}</div></div>
-      </div>
-    </div>
-
-    <!-- Datos Profesionales -->
-    <div class="drawer-section">
-      <div class="drawer-section-title">Datos Profesionales</div>
-      <div class="info-grid">
-        <div><div class="info-label">Especialidad</div><div class="info-value">${specBadge(r[C.especialidad])}</div></div>
-        <div><div class="info-label">Institución</div><div class="info-value">${r[C.institucion]||'—'}</div></div>
-        <div><div class="info-label">Adscripción</div><div class="info-value">${r[C.adscripcion]||'—'}</div></div>
-        <div><div class="info-label">Cédula Prof.</div><div class="info-value mono">${r[C.cedProf]||'—'}</div></div>
-        <div><div class="info-label">Cédula Esp.</div><div class="info-value mono">${r[C.cedEsp]||'—'}</div></div>
-        <div><div class="info-label">Aseguradora</div><div class="info-value">${r[C.aseguradora]||'—'}</div></div>
-        <div><div class="info-label">Vigencia Certificado</div><div class="info-value ${vigClass(r[C.vigCert])}">${r[C.vigCert]||'—'}</div></div>
-        <div><div class="info-label">Vigencia Póliza RC</div><div class="info-value ${vigClass(r[C.vigPoliza])}">${r[C.vigPoliza]||'—'}</div></div>
-      </div>
-    </div>
-
-    <!-- Documentos -->
-    <div class="drawer-section">
-      <div class="drawer-section-title">Expediente Digital</div>
-
-      <!-- Completitud -->
-      <div class="doc-completion">
-        <div class="completion-label">
-          <span>Documentos cargados</span>
-          <span style="color:${pct===100?'var(--success)':pct>0?'var(--warn)':'var(--danger)'};font-weight:600">${cnt} / ${DOCS.length} · ${pct}%</span>
-        </div>
-        <div class="completion-bar"><div class="completion-fill" style="width:${pct}%"></div></div>
-      </div>
-
-      ${!r._docs ? `
-        <div class="alert alert-warn">
-          ⚠ <span>Este médico aún <strong>no ha subido documentos</strong> al formulario, o el <strong>Folio "${r._folio}"</strong> no coincide con ningún registro en la hoja de documentos.</span>
-        </div>` : ''}
-
-      <div class="doc-grid">
-        ${DOCS.map(d=>{
-          const url=links[d.key];
-          const has=isValidUrl(url);
-          return `<div class="doc-card ${!r._docs?'missing':has?'available':'no-link'}">
-            <div class="doc-card-icon">${d.icon}</div>
-            <div class="doc-card-name">${d.label}</div>
-            ${has?`<div class="doc-card-btns">
-              <button class="doc-action-btn btn-view" onclick="openViewer('${esc(url)}','${esc(d.label)}','${d.icon}')">👁 Ver</button>
-              <a class="doc-action-btn btn-dl" href="${downloadUrl(url)}" target="_blank">⬇ Bajar</a>
-            </div>`:`<div class="doc-card-status">${!r._docs?'Sin expediente':'No cargado'}</div>`}
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-
-    ${carpeta?`
-    <div class="drawer-section">
-      <div class="drawer-section-title">Carpeta Completa en Drive</div>
-      <div class="folder-row">
-        <div style="font-size:28px">📁</div>
-        <div class="folder-info">
-          <div class="folder-title">Carpeta de documentos</div>
-          <div class="folder-sub">Archivos originales del médico en Google Drive</div>
-        </div>
-        <a class="btn btn-gold btn-sm" href="${carpeta}" target="_blank">↗ Abrir carpeta</a>
-      </div>
-    </div>`:''}
-  `;
-
+══════════════════════════════════════════════ */
+function openDrawer(idx){
+  const r=DATA[idx]; if(!r) return;
+  document.getElementById('drawer-name').textContent  =r.nombre||'—';
+  document.getElementById('drawer-folio').textContent =r.folio||'—';
+  document.getElementById('drawer-esp').innerHTML     =specBadge(r.especialidad||'');
+  document.getElementById('drawer-estado').innerHTML  =statusPill(r.estado||'');
+  renderTabDocs(r); renderTabDatos(r); switchTab('docs');
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
 }
 
-function closeDrawer() {
+function switchTab(t){
+  document.querySelectorAll('.drawer-tab').forEach((el,i)=>
+    el.classList.toggle('active',(i===0&&t==='docs')||(i===1&&t==='datos')));
+  document.getElementById('tab-docs').classList.toggle('active',t==='docs');
+  document.getElementById('tab-datos').classList.toggle('active',t==='datos');
+}
+
+function renderTabDocs(r){
+  const cnt=docCnt(r), pct=Math.round(cnt/DOCS.length*100), col=pctCol(pct);
+  document.getElementById('tab-docs').innerHTML=`
+    <div class="doc-completeness">
+      <div class="doc-comp-top">
+        <span class="doc-comp-label">Completitud del expediente</span>
+        <span class="doc-comp-pct" style="color:${col}">${cnt} / ${DOCS.length} · ${pct}%</span>
+      </div>
+      <div class="doc-comp-bar"><div class="doc-comp-fill" style="width:${pct}%;background:${col}"></div></div>
+    </div>
+    <div class="doc-grid">
+      ${DOCS.map(d=>{
+        const url=r[d.key]||'', has=isUrl(url);
+        return`<div class="doc-card ${has?'has-doc':'no-doc'}">
+          <div class="doc-card-icon">${d.icon}</div>
+          <div class="doc-card-name">${d.label}</div>
+          ${has
+            ?`<div class="doc-card-btns">
+                <button class="dab dab-view" onclick="openViewer('${esc(url)}','${esc(d.label)}','${d.icon}')">👁 Ver</button>
+                <a class="dab dab-dl" href="${dlU(url)}" target="_blank">⬇ Bajar</a>
+              </div>`
+            :`<div class="doc-card-status">No cargado</div>`}
+        </div>`;
+      }).join('')}
+    </div>
+    ${r.carpeta_drive?`
+    <div class="folder-row">
+      <div style="font-size:26px">📁</div>
+      <div class="folder-info">
+        <div class="folder-title">Carpeta completa en Drive</div>
+        <div class="folder-sub">Todos los archivos del médico</div>
+      </div>
+      <a class="btn btn-gold btn-sm" href="${r.carpeta_drive}" target="_blank">↗ Abrir</a>
+    </div>`:''}
+    <div style="margin-top:14px;font-size:11px;color:var(--muted);text-align:right">
+      📅 Documentos enviados: <strong style="color:var(--text)">${r.timestamp||'Fecha desconocida'}</strong>
+    </div>`;
+}
+
+function renderTabDatos(r){
+  if(!r.tiene_datos_h1){
+    document.getElementById('tab-datos').innerHTML=`
+      <div class="alert alert-warn">
+        ⚠ <span>No se encontraron datos complementarios para el folio <strong>${r.folio}</strong> en la Hoja 1.</span>
+      </div>
+      <div class="info-grid">
+        <div><div class="info-label">Nombre</div><div class="info-value">${r.nombre||'—'}</div></div>
+        <div><div class="info-label">Folio</div><div class="info-value mono">${r.folio||'—'}</div></div>
+        <div><div class="info-label">Fecha envío</div><div class="info-value">${r.timestamp||'—'}</div></div>
+      </div>`;
+    return;
+  }
+  document.getElementById('tab-datos').innerHTML=`
+    <div class="drawer-section">
+      <div class="drawer-section-title">Información Personal</div>
+      <div class="info-grid">
+        <div><div class="info-label">Nombre Completo</div><div class="info-value">${r.nombre||'—'}</div></div>
+        <div><div class="info-label">Fecha de Nacimiento</div><div class="info-value">${r.nacimiento||'—'}</div></div>
+        <div><div class="info-label">Email</div><div class="info-value">${r.email||'—'}</div></div>
+        <div><div class="info-label">Teléfono</div><div class="info-value mono">${r.telefono||'—'}</div></div>
+        <div><div class="info-label">Ciudad</div><div class="info-value">${r.ciudad||'—'}</div></div>
+        <div><div class="info-label">Fecha de Registro</div><div class="info-value">${r.fecha_registro||'—'}</div></div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Información Profesional</div>
+      <div class="info-grid">
+        <div><div class="info-label">Especialidad</div><div class="info-value">${specBadge(r.especialidad)}</div></div>
+        <div><div class="info-label">Estado</div><div class="info-value">${statusPill(r.estado)}</div></div>
+        <div><div class="info-label">Institución</div><div class="info-value">${r.institucion||'—'}</div></div>
+        <div><div class="info-label">Adscripción</div><div class="info-value">${r.adscripcion||'—'}</div></div>
+        <div><div class="info-label">Cédula Profesional</div><div class="info-value mono">${r.cedula_prof||'—'}</div></div>
+        <div><div class="info-label">Cédula de Especialidad</div><div class="info-value mono">${r.cedula_esp||'—'}</div></div>
+        <div><div class="info-label">Aseguradora</div><div class="info-value">${r.aseguradora||'—'}</div></div>
+        <div><div class="info-label">Vigencia Certificado</div><div class="info-value ${vigCls(r.vigencia_cert)}">${r.vigencia_cert||'—'}</div></div>
+        <div><div class="info-label">Vigencia Póliza RC</div><div class="info-value ${vigCls(r.vigencia_poliza)}">${r.vigencia_poliza||'—'}</div></div>
+      </div>
+    </div>`;
+}
+
+function closeDrawer(){
   document.getElementById('drawer-overlay').classList.remove('open');
   document.getElementById('drawer').classList.remove('open');
 }
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════════
    ESPECIALIDADES
-═══════════════════════════════════════ */
-function renderSpecCards() {
+══════════════════════════════════════════════ */
+function renderSpecCards(){
   const sc={};
-  MERGED.forEach(r=>{
-    const s=r[C.especialidad]||'Sin especificar';
-    if(!sc[s]) sc[s]={total:0,active:0,docs:0,complete:0};
-    sc[s].total++;
-    if((r[C.estado]||'').toLowerCase().includes('activo')) sc[s].active++;
-    sc[s].docs+=docCount(r);
-    if(isComplete(r)) sc[s].complete++;
+  DATA.forEach(r=>{
+    const s=r.especialidad||'Sin datos';
+    if(!sc[s]) sc[s]={total:0,complete:0};
+    sc[s].total++; if(isComplete(r)) sc[s].complete++;
   });
   const em=['🫀','🧠','🦴','👶','🌸','🩻','☢','🚑','💉','🩺','👁','🦷','🫁','🧬','💊'];
-  document.getElementById('spec-cards-wrap').innerHTML=Object.entries(sc).map(([spec,d],i)=>`
-    <div class="kpi" style="cursor:pointer" onclick="filterBySpec('${esc(spec)}')">
+  document.getElementById('spec-cards-wrap').innerHTML=Object.entries(sc).map(([s,d],i)=>{
+    const pct=Math.round(d.complete/d.total*100), col=pctCol(pct);
+    return`<div class="kpi" style="cursor:pointer" onclick="filterBySpec('${esc(s)}')">
       <div class="kpi-icon">${em[i%em.length]}</div>
-      <div class="kpi-label">${spec}</div>
+      <div class="kpi-label">${s}</div>
       <div class="kpi-value" style="font-size:26px">${d.total}</div>
-      <div class="kpi-sub">${d.active} activos · ${d.total-d.active} en proceso</div>
-      <div style="margin-top:6px;font-size:11px;color:${d.complete===d.total?'var(--success)':'var(--warn)'}">
-        ${d.complete}/${d.total} expedientes completos
+      <div class="kpi-sub">${d.complete} expediente${d.complete!==1?'s':''} completo${d.complete!==1?'s':''}</div>
+      <div style="margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
+          <span>Completitud docs</span>
+          <span style="color:${col};font-weight:600">${pct}%</span>
+        </div>
+        <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${col};border-radius:2px"></div>
+        </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+function filterBySpec(s){showView('medicos');document.getElementById('filter-spec').value=s;applyFilters();}
 
-function filterBySpec(spec) { showView('medicos'); document.getElementById('filter-spec').value=spec; applyFilters(); }
+/* ══════════════════════════════════════════════
+   VISOR
+══════════════════════════════════════════════ */
+let _vt=null;
+function openViewer(url,label,icon){
+  const vU=viewU(url), dU=dlU(url), eU=embedU(url);
+  document.getElementById('v-icon').textContent =icon||'📄';
+  document.getElementById('v-label').textContent=label;
+  document.getElementById('v-open').href=vU;
+  document.getElementById('v-dl').href  =dU;
+  document.getElementById('err-open').href=vU;
+  document.getElementById('err-dl').href  =dU;
 
-/* ═══════════════════════════════════════
-   VISOR DE DOCUMENTOS
-═══════════════════════════════════════ */
-let _viewerUrl = '';
-let _iframeTimer = null;
+  const frame=document.getElementById('v-frame');
+  const loading=document.getElementById('frame-loading');
+  const errP=document.getElementById('frame-error');
 
-function openViewer(url, label, icon) {
-  _viewerUrl = url;
-  document.getElementById('viewer-label').textContent = label;
-  document.getElementById('viewer-icon').textContent  = icon||'📄';
-
-  const vUrl = viewUrl(url);
-  const dUrl = downloadUrl(url);
-  const eUrl = embedUrl(url);
-
-  document.getElementById('btn-open-drive').href = vUrl;
-  document.getElementById('btn-download').href   = dUrl;
-  document.getElementById('err-open-btn').href   = vUrl;
-  document.getElementById('err-dl-btn').href     = dUrl;
-
-  // Reset state
-  const frame = document.getElementById('viewer-frame');
-  const loading = document.getElementById('frame-loading');
-  const errPanel = document.getElementById('frame-error');
-
-  frame.style.display = 'block';
-  loading.style.display = 'flex';
-  errPanel.classList.remove('show');
-  frame.src = 'about:blank';
-
+  frame.style.display='block'; loading.style.display='flex'; errP.classList.remove('show');
+  frame.src='about:blank';
   document.getElementById('viewer-modal').classList.add('open');
 
-  // Load after small delay so modal renders first
-  setTimeout(() => {
-    frame.src = eUrl;
-
-    // Show error fallback after 12s if still loading
-    // (Google Drive /preview will either load or show a permissions page)
-    clearTimeout(_iframeTimer);
-    _iframeTimer = setTimeout(() => {
-      loading.style.display = 'none';
-    }, 3000);
-
-    frame.onload = () => {
-      loading.style.display = 'none';
-      // Try to detect if Drive showed a "can't open" page
-      // We can't read cross-origin content, but if the frame is tiny/empty we show fallback
-      setTimeout(() => {
-        try {
-          const h = frame.contentWindow?.document?.body?.innerHTML || '';
-          if (h.includes('accounts.google.com') || h.length < 50) {
-            showFrameError();
-          }
-        } catch(e) {
-          // cross-origin = normal, file loaded
-        }
-      }, 1500);
+  setTimeout(()=>{
+    frame.src=eU;
+    clearTimeout(_vt);
+    _vt=setTimeout(()=>{ loading.style.display='none'; },4000);
+    frame.onload=()=>{
+      loading.style.display='none';
+      setTimeout(()=>{
+        try{
+          const b=frame.contentWindow?.document?.body?.innerHTML||'';
+          if(b.length<100||b.includes('accounts.google')) showFE();
+        }catch(e){/* cross-origin normal */}
+      },1200);
     };
-
-    frame.onerror = () => showFrameError();
-  }, 150);
+    frame.onerror=showFE;
+  },150);
 }
-
-function showFrameError() {
-  document.getElementById('frame-loading').style.display = 'none';
-  document.getElementById('viewer-frame').style.display  = 'none';
+function showFE(){
+  document.getElementById('frame-loading').style.display='none';
+  document.getElementById('v-frame').style.display='none';
   document.getElementById('frame-error').classList.add('show');
 }
-
-function closeViewer() {
-  clearTimeout(_iframeTimer);
+function closeViewer(){
+  clearTimeout(_vt);
   document.getElementById('viewer-modal').classList.remove('open');
-  document.getElementById('viewer-frame').src = 'about:blank';
+  document.getElementById('v-frame').src='about:blank';
+  document.getElementById('v-frame').style.display='block';
+  document.getElementById('frame-loading').style.display='flex';
   document.getElementById('frame-error').classList.remove('show');
-  document.getElementById('frame-loading').style.display = 'flex';
-  document.getElementById('viewer-frame').style.display  = 'block';
 }
 
-/* ═══════════════════════════════════════
-   NAVIGATION
-═══════════════════════════════════════ */
-function showView(name) {
+/* ══════════════════════════════════════════════
+   NAVEGACIÓN / CONFIG
+══════════════════════════════════════════════ */
+function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
-  const el=document.querySelector(`[onclick="showView('${name}')"]`);
-  if(el) el.classList.add('active');
-  const t={dashboard:['Dashboard','General'],medicos:['Registro de','Médicos'],especialidades:['Grupos por','Especialidad']}[name]||[name,''];
+  const el=document.querySelector(`[onclick="showView('${name}')"]`); if(el) el.classList.add('active');
+  const t={
+    dashboard   :['Dashboard','General'],
+    medicos     :['Médicos con','Documentos'],
+    especialidades:['Grupos por','Especialidad']
+  }[name]||[name,''];
   document.getElementById('page-title').innerHTML=`${t[0]} <span>${t[1]}</span>`;
   if(name==='especialidades') renderSpecCards();
-  if(name==='medicos'){FILTERED=[...MERGED];PAGE=1;applyFilters();}
+  if(name==='medicos'){FILTERED=[...DATA];PAGE=1;applyFilters();}
 }
 
-/* CONFIG */
 function openConfig(){
-  document.getElementById('cfg-id1').value=CONFIG.sheetId1;
-  document.getElementById('cfg-gid1').value=CONFIG.gid1;
-  document.getElementById('cfg-id2').value=CONFIG.sheetId2;
-  document.getElementById('cfg-gid2').value=CONFIG.gid2;
+  document.getElementById('cfg-url').value=cfgUrl;
   document.getElementById('overlay').classList.add('open');
 }
-function closeConfig(e){if(!e||e.target===document.getElementById('overlay'))document.getElementById('overlay').classList.remove('open');}
+function closeConfig(e){
+  if(!e||e.target===document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('open');
+}
 function saveConfig(){
-  CONFIG.sheetId1=document.getElementById('cfg-id1').value.trim();
-  CONFIG.gid1=document.getElementById('cfg-gid1').value.trim();
-  CONFIG.sheetId2=document.getElementById('cfg-id2').value.trim();
-  CONFIG.gid2=document.getElementById('cfg-gid2').value.trim();
+  cfgUrl=document.getElementById('cfg-url').value.trim();
   document.getElementById('overlay').classList.remove('open');
-  loadAll();
+  loadData();
 }
 
-/* TOAST */
 let _tt=null;
-function showToast(type,msg){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),4000);}
+function showToast(type,msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),4500);
+}
 
 /* INIT */
-loadAll();
+document.getElementById('cfg-url').value=cfgUrl;
+loadData();
 </script>
 </body>
 </html>
