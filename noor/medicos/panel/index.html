@@ -3,133 +3,107 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Noor Clinic · Portal de Credencialización v1.0.1</title>
+<title>Noor Clinic · Portal de Credencialización v1.0.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:        #0b0f14;
-    --surface:   #121820;
-    --card:      #181f28;
-    --border:    #1e2d3d;
-    --accent:    #00b4d8;
-    --accent2:   #0077b6;
-    --gold:      #c9a84c;
-    --text:      #e8edf2;
-    --muted:     #6b7f94;
-    --danger:    #e05c5c;
-    --success:   #3ecf8e;
-    --warn:      #f5a623;
-    --radius:    10px;
-    --font-head: 'Cormorant Garamond', serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --bg:#0b0f14; --surface:#121820; --card:#181f28; --border:#1e2d3d;
+    --accent:#00b4d8; --accent2:#0077b6; --gold:#c9a84c;
+    --text:#e8edf2; --muted:#6b7f94;
+    --danger:#e05c5c; --success:#3ecf8e; --warn:#f5a623;
+    --radius:10px;
+    --font-head:'Cormorant Garamond',serif;
+    --font-body:'DM Sans',sans-serif;
+    --font-mono:'DM Mono',monospace;
   }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* SIDEBAR */
+  .sidebar{position:fixed;top:0;left:0;width:224px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;padding:28px 0 20px}
+  .sidebar-brand{padding:0 22px 24px;border-bottom:1px solid var(--border)}
+  .brand-name{font-family:var(--font-head);font-size:22px;font-weight:500;color:var(--accent);letter-spacing:.5px;line-height:1.1}
+  .brand-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+  .version-badge{display:inline-block;font-size:9px;font-family:var(--font-mono);background:var(--border);color:var(--gold);padding:2px 7px;border-radius:20px;margin-top:8px}
+  .nav-section{padding:18px 12px 6px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 22px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .2s;border-left:2px solid transparent;user-select:none}
+  .nav-item:hover{color:var(--text);background:rgba(0,180,216,.06)}
+  .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,180,216,.08);font-weight:500}
+  .nav-icon{width:18px;text-align:center;font-size:15px}
+  .sidebar-footer{margin-top:auto;padding:14px 22px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6}
 
-  body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+  /* MAIN */
+  .main{margin-left:224px;padding:30px 30px 60px;min-height:100vh}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+  .page-title{font-family:var(--font-head);font-size:27px;font-weight:400;color:var(--text)}
+  .page-title span{color:var(--accent)}
+  .topbar-actions{display:flex;gap:10px;align-items:center}
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    position: fixed; top: 0; left: 0;
-    width: 224px; height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    z-index: 100; padding: 28px 0 20px;
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#009bbf}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{color:var(--text);border-color:var(--accent)}
+  .btn-gold{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+  .btn-gold:hover{background:rgba(201,168,76,.28)}
+  .btn-sm{padding:5px 11px;font-size:11px}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(224,92,92,.4)}
+  .btn-danger:hover{background:rgba(224,92,92,.1)}
+
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .kpi.accent::before{background:var(--accent)}
+  .kpi.gold::before{background:var(--gold)}
+  .kpi.success::before{background:var(--success)}
+  .kpi.warn::before{background:var(--warn)}
+  .kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px}
+  .kpi-value{font-family:var(--font-mono);font-size:30px;font-weight:500;color:var(--text);line-height:1}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:5px}
+  .kpi-icon{position:absolute;right:16px;top:16px;font-size:20px;opacity:.2}
+
+  /* SECTION */
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .section-title{font-family:var(--font-head);font-size:18px;font-weight:500;color:var(--text)}
+
+  /* CHARTS */
+  .charts-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;margin-bottom:24px}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+  .chart-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:14px}
+
+  /* TABLE */
+  .table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .table-toolbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;flex:1;max-width:300px}
+  .search-box input{background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font-body);font-size:13px;width:100%}
+  .search-box input::placeholder{color:var(--muted)}
+  .filter-select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:12px;padding:7px 10px;border-radius:8px;outline:none;cursor:pointer}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:var(--surface);border-bottom:1px solid var(--border)}
+  th{padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:500;text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
+  th:hover{color:var(--accent)}
+  tbody tr{border-bottom:1px solid rgba(30,45,61,.6);transition:background .15s;cursor:pointer}
+  tbody tr:hover{background:rgba(0,180,216,.05)}
+  td{padding:10px 12px;font-size:13px;color:var(--text);vertical-align:middle;white-space:nowrap}
+  .td-mono{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+  .td-folio{font-family:var(--font-mono);font-size:11px;color:var(--gold)}
+
+  /* DOC PILLS in table */
+  .doc-pills{display:flex;gap:4px;flex-wrap:wrap}
+  .doc-pill{
+    display:inline-flex;align-items:center;gap:3px;
+    padding:3px 8px;border-radius:6px;font-size:10px;font-weight:500;
+    cursor:pointer;border:none;transition:all .15s;
+    background:rgba(0,180,216,.1);color:var(--accent);border:1px solid rgba(0,180,216,.2);
   }
-  .sidebar-brand { padding: 0 22px 24px; border-bottom: 1px solid var(--border); }
-  .brand-name { font-family: var(--font-head); font-size: 22px; font-weight: 500; color: var(--accent); letter-spacing: .5px; line-height: 1.1; }
-  .brand-sub  { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
-  .version-badge { display: inline-block; font-size: 9px; font-family: var(--font-mono); background: var(--border); color: var(--gold); padding: 2px 7px; border-radius: 20px; margin-top: 8px; }
-  .nav-section { padding: 18px 12px 6px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 22px; cursor: pointer; color: var(--muted); font-size: 13px; transition: all .2s; border-left: 2px solid transparent; user-select: none; }
-  .nav-item:hover { color: var(--text); background: rgba(0,180,216,.06); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,180,216,.08); font-weight: 500; }
-  .nav-icon { width: 18px; text-align: center; font-size: 15px; }
-  .sidebar-footer { margin-top: auto; padding: 14px 22px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .doc-pill:hover{background:rgba(0,180,216,.22);border-color:var(--accent);transform:scale(1.05)}
+  .doc-pill.missing{background:rgba(107,127,148,.06);color:rgba(107,127,148,.4);border-color:rgba(107,127,148,.12);cursor:default;pointer-events:none}
 
-  /* ── MAIN ── */
-  .main { margin-left: 224px; padding: 30px 30px 60px; min-height: 100vh; }
-  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
-  .page-title { font-family: var(--font-head); font-size: 27px; font-weight: 400; color: var(--text); }
-  .page-title span { color: var(--accent); }
-  .topbar-actions { display: flex; gap: 10px; align-items: center; }
-
-  /* ── BUTTONS ── */
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: var(--radius); font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .2s; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #009bbf; }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
-  .btn-sm { padding: 5px 11px; font-size: 11px; }
-  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-  .btn-danger:hover { background: rgba(224,92,92,.1); }
-
-  /* ── KPI ── */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
-  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden; }
-  .kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
-  .kpi.accent::before  { background: var(--accent); }
-  .kpi.gold::before    { background: var(--gold); }
-  .kpi.success::before { background: var(--success); }
-  .kpi.warn::before    { background: var(--warn); }
-  .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
-  .kpi-value { font-family: var(--font-mono); font-size: 30px; font-weight: 500; color: var(--text); line-height: 1; }
-  .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
-  .kpi-icon  { position: absolute; right: 16px; top: 16px; font-size: 20px; opacity: .2; }
-
-  /* ── SECTION ── */
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .section-title  { font-family: var(--font-head); font-size: 18px; font-weight: 500; color: var(--text); }
-
-  /* ── CHARTS ── */
-  .charts-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
-  .chart-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
-
-  /* ── TABLE CARD ── */
-  .table-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .table-toolbar { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-  .search-box { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; flex: 1; max-width: 300px; }
-  .search-box input { background: transparent; border: none; outline: none; color: var(--text); font-family: var(--font-body); font-size: 13px; width: 100%; }
-  .search-box input::placeholder { color: var(--muted); }
-  .filter-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: var(--font-body); font-size: 12px; padding: 7px 10px; border-radius: 8px; outline: none; cursor: pointer; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  thead tr { background: var(--surface); border-bottom: 1px solid var(--border); }
-  th { padding: 10px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
-  th:hover { color: var(--accent); }
-  tbody tr { border-bottom: 1px solid rgba(30,45,61,.6); transition: background .15s; cursor: pointer; }
-  tbody tr:hover { background: rgba(0,180,216,.05); }
-  td { padding: 10px 12px; font-size: 13px; color: var(--text); vertical-align: middle; white-space: nowrap; }
-  .td-mono { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
-  .td-folio { font-family: var(--font-mono); font-size: 11px; color: var(--gold); }
-
-  /* docs icons in table */
-  .doc-icons { display: flex; gap: 5px; flex-wrap: wrap; }
-  .doc-icon-btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 6px;
-    background: rgba(0,180,216,.1); border: 1px solid rgba(0,180,216,.25);
-    color: var(--accent); font-size: 13px; cursor: pointer;
-    transition: all .15s; text-decoration: none;
-    position: relative;
-  }
-  .doc-icon-btn:hover { background: rgba(0,180,216,.22); border-color: var(--accent); transform: scale(1.1); }
-  .doc-icon-btn.missing { background: rgba(107,127,148,.08); border-color: rgba(107,127,148,.2); color: var(--muted); cursor: default; opacity: .5; }
-  .doc-icon-btn.missing:hover { transform: none; }
-  .doc-icon-btn[title]:hover::after {
-    content: attr(title);
-    position: absolute; bottom: calc(100% + 6px); left: 50%;
-    transform: translateX(-50%);
-    background: #0d1520; border: 1px solid var(--border);
-    color: var(--text); font-size: 10px; white-space: nowrap;
-    padding: 3px 8px; border-radius: 4px; pointer-events: none; z-index: 10;
-  }
-
-  /* badges / pills */
-  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  /* BADGES / PILLS */
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
   .sp-0{background:rgba(0,180,216,.15);color:#00b4d8}
   .sp-1{background:rgba(201,168,76,.15);color:#c9a84c}
   .sp-2{background:rgba(62,207,142,.15);color:#3ecf8e}
@@ -138,185 +112,161 @@
   .sp-5{background:rgba(245,166,35,.15);color:#f5a623}
   .sp-6{background:rgba(70,190,180,.15);color:#46beb4}
   .sp-7{background:rgba(220,100,160,.15);color:#dc64a0}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+  .pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+  .pill.active{color:var(--success);background:rgba(62,207,142,.12)}
+  .pill.pending{color:var(--warn);background:rgba(245,166,35,.12)}
+  .pill.review{color:var(--accent);background:rgba(0,180,216,.12)}
+  .pill.inactive{color:var(--muted);background:rgba(107,127,148,.12)}
 
-  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-  .pill::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
-  .pill.active   { color:var(--success); background:rgba(62,207,142,.12); }
-  .pill.pending  { color:var(--warn);    background:rgba(245,166,35,.12); }
-  .pill.review   { color:var(--accent);  background:rgba(0,180,216,.12); }
-  .pill.inactive { color:var(--muted);   background:rgba(107,127,148,.12); }
+  .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;margin-right:8px;flex-shrink:0}
+  .name-cell{display:flex;align-items:center}
 
-  .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--accent2),var(--accent)); display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:#fff; margin-right:8px; flex-shrink:0; }
-  .name-cell { display:flex; align-items:center; }
+  /* PAGINATION */
+  .table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px}
+  .pag-info{font-size:12px;color:var(--muted)}
+  .pag-btns{display:flex;gap:5px;flex-wrap:wrap}
+  .pag-btn{min-width:28px;height:28px;padding:0 6px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s}
+  .pag-btn:hover{color:var(--accent);border-color:var(--accent)}
+  .pag-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-  /* pagination */
-  .table-footer { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-top:1px solid var(--border); flex-wrap:wrap; gap:8px; }
-  .pag-info { font-size:12px; color:var(--muted); }
-  .pag-btns { display:flex; gap:5px; flex-wrap:wrap; }
-  .pag-btn { min-width:28px; height:28px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--muted); font-size:12px; cursor:pointer; transition:all .15s; }
-  .pag-btn:hover { color:var(--accent); border-color:var(--accent); }
-  .pag-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  /* DRAWER */
+  .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:200;display:none}
+  .drawer-overlay.open{display:block}
+  .drawer{position:fixed;top:0;right:-700px;height:100vh;width:680px;background:var(--card);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);overflow:hidden}
+  .drawer.open{right:0}
+  .drawer-head{padding:20px 26px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;background:var(--surface)}
+  .drawer-name{font-family:var(--font-head);font-size:22px;font-weight:500;color:var(--text)}
+  .drawer-sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .drawer-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px}
+  .drawer-close:hover{color:var(--text);background:var(--border)}
+  .drawer-body{flex:1;overflow-y:auto;padding:20px 26px}
+  .drawer-section{margin-bottom:22px}
+  .drawer-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .info-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px}
+  .info-value{font-size:13px;color:var(--text)}
+  .info-value.mono{font-family:var(--font-mono);font-size:12px}
+  .vig-warn{color:var(--warn)!important}
+  .vig-ok{color:var(--success)!important}
+  .vig-exp{color:var(--danger)!important}
 
-  /* ── DETAIL DRAWER ── */
-  .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(3px); z-index:200; display:none; }
-  .drawer-overlay.open { display:block; }
+  /* DOC CARDS IN DRAWER */
+  .doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .doc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:all .2s;min-height:120px;justify-content:center}
+  .doc-card.available{border-color:rgba(0,180,216,.25)}
+  .doc-card.missing{opacity:.4}
+  .doc-card-icon{font-size:26px;line-height:1}
+  .doc-card-name{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
+  .doc-card-status{font-size:10px;color:var(--muted)}
+  .doc-card-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 
-  .drawer {
-    position: fixed; top: 0; right: -680px; height: 100vh; width: 660px;
-    background: var(--card); border-left: 1px solid var(--border);
-    z-index: 201; display: flex; flex-direction: column;
-    transition: right .3s cubic-bezier(.4,0,.2,1);
-    overflow: hidden;
+  /* Action buttons for docs */
+  .doc-action-btn{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:5px 10px;border-radius:7px;font-size:11px;font-weight:500;
+    cursor:pointer;border:none;transition:all .15s;text-decoration:none;
+    white-space:nowrap;
   }
-  .drawer.open { right: 0; }
+  .btn-view{background:rgba(0,180,216,.15);color:var(--accent)}
+  .btn-view:hover{background:rgba(0,180,216,.3)}
+  .btn-dl{background:rgba(201,168,76,.15);color:var(--gold)}
+  .btn-dl:hover{background:rgba(201,168,76,.3)}
 
-  .drawer-head {
-    padding: 22px 26px 18px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: flex-start; justify-content: space-between;
-    flex-shrink: 0;
-    background: var(--surface);
+  /* FOLDER ROW */
+  .folder-row{display:flex;align-items:center;gap:12px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:13px 16px}
+  .folder-info{flex:1}
+  .folder-title{font-size:13px;font-weight:500;color:var(--gold)}
+  .folder-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .folder-actions{display:flex;gap:8px}
+
+  /* ── DOC VIEWER MODAL ── */
+  .viewer-modal{
+    position:fixed;inset:0;z-index:300;
+    background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+    display:none;flex-direction:column;
   }
-  .drawer-name { font-family: var(--font-head); font-size: 22px; font-weight: 500; color: var(--text); }
-  .drawer-sub  { font-size: 12px; color: var(--muted); margin-top: 3px; }
-  .drawer-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 6px; }
-  .drawer-close:hover { color: var(--text); background: var(--border); }
+  .viewer-modal.open{display:flex}
 
-  .drawer-body { flex: 1; overflow-y: auto; padding: 22px 26px; }
-
-  .drawer-section { margin-bottom: 22px; }
-  .drawer-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .info-item { }
-  .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 3px; }
-  .info-value { font-size: 13px; color: var(--text); font-weight: 400; }
-  .info-value.mono { font-family: var(--font-mono); font-size: 12px; }
-
-  /* Document cards in drawer */
-  .doc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-
-  .doc-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 12px;
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    text-align: center;
-    transition: all .2s;
-    min-height: 110px;
-    justify-content: center;
+  .viewer-bar{
+    background:var(--surface);border-bottom:1px solid var(--border);
+    padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+    flex-wrap:wrap;
   }
-  .doc-card.available { border-color: rgba(0,180,216,.3); cursor: pointer; }
-  .doc-card.available:hover { background: rgba(0,180,216,.07); border-color: var(--accent); transform: translateY(-2px); }
-  .doc-card.missing { opacity: .4; }
+  .viewer-label{font-size:13px;font-weight:500;color:var(--text);flex:1;min-width:120px}
+  .viewer-hint{font-size:11px;color:var(--muted)}
 
-  .doc-card-icon { font-size: 26px; line-height: 1; }
-  .doc-card-name { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.3; }
-  .doc-card-action { font-size: 10px; color: var(--accent); }
-  .doc-card.missing .doc-card-action { color: var(--muted); }
+  /* Tabs for view modes */
+  .view-tabs{display:flex;gap:4px;background:var(--card);border-radius:8px;padding:3px}
+  .view-tab{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s;border:none;background:none}
+  .view-tab.active{background:var(--accent);color:#fff}
+  .view-tab:hover:not(.active){color:var(--text)}
 
-  .doc-card-btns { display: flex; gap: 6px; }
-  .doc-mini-btn {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 9px; border-radius: 6px; font-size: 10px; font-weight: 500;
-    cursor: pointer; border: none; transition: all .15s; text-decoration: none;
-  }
-  .doc-mini-btn.view-btn { background: rgba(0,180,216,.15); color: var(--accent); }
-  .doc-mini-btn.view-btn:hover { background: rgba(0,180,216,.3); }
-  .doc-mini-btn.dl-btn { background: rgba(201,168,76,.15); color: var(--gold); }
-  .doc-mini-btn.dl-btn:hover { background: rgba(201,168,76,.3); }
+  .viewer-body{flex:1;display:flex;overflow:hidden;position:relative}
 
-  /* Folder link */
-  .folder-btn {
-    display: flex; align-items: center; gap: 10px;
-    background: rgba(201,168,76,.08); border: 1px solid rgba(201,168,76,.25);
-    border-radius: 10px; padding: 12px 16px;
-    color: var(--gold); font-size: 13px; font-weight: 500;
-    cursor: pointer; text-decoration: none; transition: all .2s;
-    width: 100%;
-  }
-  .folder-btn:hover { background: rgba(201,168,76,.16); border-color: var(--gold); }
-  .folder-btn .folder-icon { font-size: 20px; }
-  .folder-btn .folder-text { display: flex; flex-direction: column; }
-  .folder-btn .folder-sub { font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+  /* Embed panel */
+  .embed-panel{flex:1;display:flex;flex-direction:column;background:#f0f0f0}
+  .embed-panel iframe{flex:1;border:none;width:100%;height:100%}
+  .embed-error{display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center;flex:1}
+  .embed-error.show{display:flex}
+  .embed-error .err-icon{font-size:48px}
+  .embed-error h3{font-family:var(--font-head);font-size:22px;color:var(--text)}
+  .embed-error p{font-size:13px;color:var(--muted);max-width:400px;line-height:1.7}
+  .embed-error-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 
-  /* Doc preview iframe */
-  .doc-preview-wrap {
-    position: fixed; inset: 0; z-index: 300;
-    background: rgba(0,0,0,.8); backdrop-filter: blur(6px);
-    display: none; flex-direction: column;
-  }
-  .doc-preview-wrap.open { display: flex; }
-  .doc-preview-bar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 10px 18px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-  }
-  .doc-preview-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
-  .doc-preview-bar .btn { padding: 6px 14px; font-size: 12px; }
-  .doc-preview-frame { flex: 1; width: 100%; border: none; background: #fff; }
+  /* CONFIG MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:250;display:none;align-items:center;justify-content:center}
+  .overlay.open{display:flex}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 30px;width:500px;max-width:95vw}
+  .modal h3{font-family:var(--font-head);font-size:20px;margin-bottom:6px;color:var(--text)}
+  .modal p{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+  .form-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px;display:block}
+  .form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:9px 13px;border-radius:8px;outline:none;margin-bottom:14px}
+  .form-input:focus{border-color:var(--accent)}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
 
-  /* Config modal */
-  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); z-index:250; display:none; align-items:center; justify-content:center; }
-  .overlay.open { display:flex; }
-  .modal { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:26px 30px; width:500px; max-width:95vw; }
-  .modal h3 { font-family:var(--font-head); font-size:20px; margin-bottom:6px; color:var(--text); }
-  .modal p { font-size:12px; color:var(--muted); margin-bottom:18px; line-height:1.6; }
-  .form-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:5px; display:block; }
-  .form-input { width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:var(--font-mono); font-size:12px; padding:9px 13px; border-radius:8px; outline:none; margin-bottom:14px; }
-  .form-input:focus { border-color:var(--accent); }
-  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
+  /* TOAST */
+  .toast{position:fixed;bottom:22px;right:22px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;z-index:500;transform:translateY(80px);opacity:0;transition:all .3s;max-width:340px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.ok{border-left:3px solid var(--success)}
+  .toast.err{border-left:3px solid var(--danger)}
+  .toast.info{border-left:3px solid var(--accent)}
 
-  /* Toast */
-  .toast { position:fixed; bottom:22px; right:22px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 16px; font-size:13px; color:var(--text); display:flex; align-items:center; gap:10px; z-index:400; transform:translateY(80px); opacity:0; transition:all .3s; max-width:320px; }
-  .toast.show { transform:translateY(0); opacity:1; }
-  .toast.ok   { border-left:3px solid var(--success); }
-  .toast.err  { border-left:3px solid var(--danger); }
-  .toast.info { border-left:3px solid var(--accent); }
+  /* INFO BANNER */
+  .info-banner{display:flex;align-items:flex-start;gap:12px;background:rgba(0,180,216,.07);border:1px solid rgba(0,180,216,.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6}
+  .info-banner strong{color:var(--accent)}
 
-  /* Views */
-  .view { display:none; }
-  .view.active { display:block; }
+  /* VIEWS */
+  .view{display:none}
+  .view.active{display:block}
+  .loader{display:flex;align-items:center;justify-content:center;padding:56px;color:var(--muted);gap:12px;font-size:13px}
+  .spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+  .empty-state .em-icon{font-size:36px;margin-bottom:10px}
 
-  /* Loader */
-  .loader { display:flex; align-items:center; justify-content:center; padding:56px; color:var(--muted); gap:12px; font-size:13px; }
-  .spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width:5px; height:5px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
-
-  /* Empty */
-  .empty-state { text-align:center; padding:50px 20px; color:var(--muted); }
-  .empty-state .em-icon { font-size:36px; margin-bottom:10px; }
-  .empty-state p { font-size:13px; line-height:1.6; }
-
-  /* Vigs warning */
-  .vig-warn  { color: var(--warn); font-size:11px; }
-  .vig-ok    { color: var(--success); font-size:11px; }
-  .vig-exp   { color: var(--danger); font-size:11px; }
-
-  @media (max-width:900px) {
-    .kpi-grid { grid-template-columns:repeat(2,1fr); }
-    .charts-row { grid-template-columns:1fr; }
-    .main { margin-left:0; padding:14px; }
-    .sidebar { display:none; }
-    .drawer { width:100%; }
-    .doc-grid { grid-template-columns:1fr 1fr; }
-    .info-grid { grid-template-columns:1fr; }
+  @media(max-width:900px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .charts-row{grid-template-columns:1fr}
+    .main{margin-left:0;padding:14px}
+    .sidebar{display:none}
+    .drawer{width:100%}
+    .doc-grid{grid-template-columns:1fr 1fr}
+    .info-grid{grid-template-columns:1fr}
   }
 </style>
 </head>
 <body>
 
-<!-- ── SIDEBAR ── -->
+<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-brand">
     <div class="brand-name">Noor Clinic</div>
     <div class="brand-sub">Credencialización</div>
-    <span class="version-badge">v1.0.1</span>
+    <span class="version-badge">v1.0.2</span>
   </div>
   <div class="nav-section">Módulos</div>
   <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">⬛</span> Dashboard</div>
@@ -324,13 +274,10 @@
   <div class="nav-item" onclick="showView('especialidades')"><span class="nav-icon">🏥</span> Especialidades</div>
   <div class="nav-section">Config</div>
   <div class="nav-item" onclick="openConfig()"><span class="nav-icon">⚙</span> Fuente de Datos</div>
-  <div class="sidebar-footer">
-    Hospital Noor Clinic<br>
-    <span id="last-sync" style="font-size:10px">Sin sincronizar</span>
-  </div>
+  <div class="sidebar-footer">Hospital Noor Clinic<br><span id="last-sync" style="font-size:10px">Sin sincronizar</span></div>
 </aside>
 
-<!-- ── MAIN ── -->
+<!-- MAIN -->
 <main class="main">
   <div class="topbar">
     <div class="page-title" id="page-title">Dashboard <span>General</span></div>
@@ -340,7 +287,7 @@
     </div>
   </div>
 
-  <!-- ── DASHBOARD ── -->
+  <!-- DASHBOARD -->
   <div class="view active" id="view-dashboard">
     <div class="kpi-grid">
       <div class="kpi accent"><div class="kpi-icon">👤</div><div class="kpi-label">Total Médicos</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">registros en el sistema</div></div>
@@ -358,10 +305,10 @@
       <div class="section-title">Últimos Registros</div>
       <button class="btn btn-ghost btn-sm" onclick="showView('medicos')">Ver todos →</button>
     </div>
-    <div class="table-card" id="recent-table-wrap"><div class="loader"><div class="spinner"></div>Cargando datos…</div></div>
+    <div class="table-card" id="recent-table-wrap"><div class="loader"><div class="spinner"></div>Cargando…</div></div>
   </div>
 
-  <!-- ── MÉDICOS ── -->
+  <!-- MÉDICOS -->
   <div class="view" id="view-medicos">
     <div class="table-card">
       <div class="table-toolbar">
@@ -369,15 +316,10 @@
           <span style="color:var(--muted)">🔍</span>
           <input type="text" id="search-input" placeholder="Buscar nombre, folio, especialidad, cédula…" oninput="applyFilters()">
         </div>
-        <select class="filter-select" id="filter-spec" onchange="applyFilters()">
-          <option value="">Todas las especialidades</option>
-        </select>
+        <select class="filter-select" id="filter-spec" onchange="applyFilters()"><option value="">Todas las especialidades</option></select>
         <select class="filter-select" id="filter-status" onchange="applyFilters()">
           <option value="">Todos los estados</option>
-          <option value="Activo">Activo</option>
-          <option value="Pendiente">Pendiente</option>
-          <option value="En revisión">En revisión</option>
-          <option value="Inactivo">Inactivo</option>
+          <option>Activo</option><option>Pendiente</option><option>En revisión</option><option>Inactivo</option>
         </select>
         <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="record-count"></div>
       </div>
@@ -389,7 +331,7 @@
     </div>
   </div>
 
-  <!-- ── ESPECIALIDADES ── -->
+  <!-- ESPECIALIDADES -->
   <div class="view" id="view-especialidades">
     <div id="spec-cards-wrap" class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
       <div class="loader"><div class="spinner"></div>Cargando…</div>
@@ -397,38 +339,59 @@
   </div>
 </main>
 
-<!-- ── DETAIL DRAWER ── -->
+<!-- DRAWER -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-head">
-    <div>
-      <div class="drawer-name" id="drawer-name">—</div>
-      <div class="drawer-sub" id="drawer-sub">—</div>
-    </div>
+    <div><div class="drawer-name" id="drawer-name">—</div><div class="drawer-sub" id="drawer-sub">—</div></div>
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
   <div class="drawer-body" id="drawer-body"></div>
 </div>
 
-<!-- ── DOC PREVIEW ── -->
-<div class="doc-preview-wrap" id="doc-preview">
-  <div class="doc-preview-bar">
-    <div class="doc-preview-title" id="preview-title">Documento</div>
-    <a id="preview-dl-btn" href="#" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:6px 13px;">⬇ Abrir en Drive</a>
-    <button class="btn btn-danger btn-sm" onclick="closePreview()">✕ Cerrar</button>
+<!-- ══ VISOR DE DOCUMENTOS ══ -->
+<div class="viewer-modal" id="viewer-modal">
+  <div class="viewer-bar">
+    <div style="font-size:20px" id="viewer-icon">📄</div>
+    <div class="viewer-label" id="viewer-label">Documento</div>
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab-embed" onclick="setViewMode('embed')">👁 Visualizar</button>
+      <button class="view-tab" id="tab-direct" onclick="setViewMode('direct')">↗ Abrir Drive</button>
+    </div>
+    <a id="viewer-dl-btn" href="#" target="_blank" class="btn btn-gold btn-sm">⬇ Descargar</a>
+    <button class="btn btn-danger btn-sm" onclick="closeViewer()">✕ Cerrar</button>
   </div>
-  <iframe class="doc-preview-frame" id="preview-frame" src="about:blank" allowfullscreen></iframe>
+
+  <div class="viewer-body" id="viewer-body">
+    <!-- Embed panel -->
+    <div class="embed-panel" id="embed-panel" style="display:flex;flex-direction:column">
+      <iframe id="viewer-frame" src="about:blank" allowfullscreen allow="autoplay"></iframe>
+      <!-- Fallback shown if iframe fails -->
+      <div class="embed-error" id="embed-error" style="background:var(--bg)">
+        <div class="err-icon">🔒</div>
+        <h3>No se puede previsualizar aquí</h3>
+        <p>
+          Google Drive restringe la visualización incrustada por seguridad.<br>
+          Usa los botones de abajo para abrir o descargar el archivo directamente.
+        </p>
+        <div class="embed-error-actions">
+          <a id="err-open-btn" href="#" target="_blank" class="btn btn-primary">↗ Abrir en Google Drive</a>
+          <a id="err-dl-btn" href="#" target="_blank" class="btn btn-gold">⬇ Descargar archivo</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ── CONFIG MODAL ── -->
+<!-- CONFIG MODAL -->
 <div class="overlay" id="overlay" onclick="closeConfig(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <h3>Configurar Fuente de Datos</h3>
-    <p>Ingresa el <strong>ID</strong> de tu Google Sheet (ya publicada como CSV).<br>
+    <p>Ingresa el ID de tu Google Sheet ya publicada como CSV.<br>
     <em>Archivo → Compartir → Publicar en la web → CSV → Publicar</em></p>
     <label class="form-label">ID del Google Sheet</label>
     <input class="form-input" id="cfg-sheet-id" value="1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY">
-    <label class="form-label">GID de la hoja (pestaña)</label>
+    <label class="form-label">GID de la hoja</label>
     <input class="form-input" id="cfg-gid" value="0">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeConfig()">Cancelar</button>
@@ -441,292 +404,313 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-/* ═══════════════════════════
-   COLUMN MAP — real sheet headers
-═══════════════════════════ */
+/* ═══════════════════════════════════
+   COLUMN MAP
+═══════════════════════════════════ */
 const COL = {
-  folio:       'Folio',
-  fecha:       'Fecha de registro',
-  nombre:      'Nombre completo',
-  nacimiento:  'Fecha de nacimiento',
-  email:       'Email',
-  telefono:    'Teléfono',
-  ciudad:      'Ciudad',
-  especialidad:'Especialidad',
-  cedProf:     'Cédula Prof.',
-  cedEsp:      'Cédula Esp.',
-  institucion: 'Institución',
-  adscripcion: 'Adscripción',
-  vigCert:     'Vigencia Certificado',
-  vigPoliza:   'Vigencia Póliza',
-  aseguradora: 'Aseguradora',
-  estado:      'Estado',
-  docINE:      'Doc: INE',
-  docCedProf:  'Doc: Céd. Prof.',
-  docCedEsp:   'Doc: Céd. Esp.',
-  docCert:     'Doc: Certificado',
-  docPoliza:   'Doc: Póliza RC',
-  docFiscal:   'Doc: Const. Fiscal',
-  carpeta:     'Carpeta Drive'
+  folio:'Folio', fecha:'Fecha de registro', nombre:'Nombre completo',
+  nacimiento:'Fecha de nacimiento', email:'Email', telefono:'Teléfono',
+  ciudad:'Ciudad', especialidad:'Especialidad',
+  cedProf:'Cédula Prof.', cedEsp:'Cédula Esp.',
+  institucion:'Institución', adscripcion:'Adscripción',
+  vigCert:'Vigencia Certificado', vigPoliza:'Vigencia Póliza',
+  aseguradora:'Aseguradora', estado:'Estado',
+  docINE:'Doc: INE', docCedProf:'Doc: Céd. Prof.', docCedEsp:'Doc: Céd. Esp.',
+  docCert:'Doc: Certificado', docPoliza:'Doc: Póliza RC',
+  docFiscal:'Doc: Const. Fiscal', carpeta:'Carpeta Drive'
 };
 
-const ALL_COLS = Object.values(COL);
-
 const DOCS = [
-  { key: 'docINE',     label: 'INE',              icon: '🪪' },
-  { key: 'docCedProf', label: 'Céd. Profesional', icon: '📜' },
-  { key: 'docCedEsp',  label: 'Céd. Especialidad',icon: '🎓' },
-  { key: 'docCert',    label: 'Certificado',       icon: '📋' },
-  { key: 'docPoliza',  label: 'Póliza RC',         icon: '🛡' },
-  { key: 'docFiscal',  label: 'Const. Fiscal',     icon: '🧾' }
+  {key:'docINE',     label:'INE',               icon:'🪪'},
+  {key:'docCedProf', label:'Céd. Profesional',  icon:'📜'},
+  {key:'docCedEsp',  label:'Céd. Especialidad', icon:'🎓'},
+  {key:'docCert',    label:'Certificado',        icon:'📋'},
+  {key:'docPoliza',  label:'Póliza RC',          icon:'🛡'},
+  {key:'docFiscal',  label:'Const. Fiscal',      icon:'🧾'}
 ];
 
-/* ═══════════════════════════
-   CONFIG & STATE
-═══════════════════════════ */
-let CONFIG = { sheetId: '1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY', gid: '0' };
-let ALL_DATA = [], FILTERED_DATA = [];
-let PAGE = 1; const PER_PAGE = 15;
-let charts = {};
+/* ═══════════════════════════════════
+   STATE
+═══════════════════════════════════ */
+let CONFIG = {sheetId:'1JgfL0fItV4KR-Xc4VSIb6McEN11w346oQkHFOaeTRDY', gid:'0'};
+let ALL_DATA=[], FILTERED_DATA=[];
+let PAGE=1; const PER_PAGE=15;
+let charts={};
+let currentDocUrl='', currentDocLabel='', currentDocIcon='';
 
-/* ═══════════════════════════
-   NAVIGATION
-═══════════════════════════ */
-function showView(name) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
-  const el = document.querySelector(`[onclick="showView('${name}')"]`);
-  if (el) el.classList.add('active');
-  const titles = { dashboard:['Dashboard','General'], medicos:['Registro de','Médicos'], especialidades:['Grupos por','Especialidad'] };
-  const t = titles[name] || [name,''];
-  document.getElementById('page-title').innerHTML = `${t[0]} <span>${t[1]}</span>`;
-  if (name === 'especialidades') renderSpecCards();
-  if (name === 'medicos') { FILTERED_DATA = [...ALL_DATA]; PAGE = 1; applyFilters(); }
+/* ═══════════════════════════════════
+   DRIVE URL UTILITIES
+   Handles all Google Drive URL formats
+═══════════════════════════════════ */
+function extractDriveFileId(url) {
+  if (!url) return null;
+  // /file/d/FILE_ID/
+  let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  // open?id=FILE_ID
+  m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  // uc?id=FILE_ID
+  m = url.match(/uc\?.*id=([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  return null;
 }
 
-/* ═══════════════════════════
-   DATA FETCH
-═══════════════════════════ */
-async function loadData() {
-  showToast('info', '↻ Sincronizando con Google Sheets…');
-  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/pub?output=csv&gid=${CONFIG.gid}`;
-  try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const csv = await r.text();
-    ALL_DATA = parseCSV(csv);
-    if (!ALL_DATA.length) throw new Error('Sin datos');
-    FILTERED_DATA = [...ALL_DATA];
-    renderAll();
-    const now = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('last-sync').textContent = 'Sync: ' + now;
-    showToast('ok', `✓ ${ALL_DATA.length} médicos cargados`);
-  } catch(e) {
-    showToast('err', '⚠ No se pudo leer la hoja. Verifica que está publicada como CSV.');
-    ALL_DATA = demoData();
-    FILTERED_DATA = [...ALL_DATA];
-    renderAll();
-    showToast('info', '📊 Mostrando datos de demostración');
+function isDriveFolder(url) {
+  return url && url.includes('/folders/');
+}
+
+// Embed URL for iframe — uses /preview which works for publicly shared files
+function toEmbedUrl(url) {
+  const id = extractDriveFileId(url);
+  if (id) return `https://drive.google.com/file/d/${id}/preview`;
+  return url;
+}
+
+// Download URL — forces download dialog
+function toDownloadUrl(url) {
+  const id = extractDriveFileId(url);
+  if (id) return `https://drive.google.com/uc?export=download&id=${id}`;
+  return url;
+}
+
+// View URL — opens in Drive viewer (new tab)
+function toViewUrl(url) {
+  const id = extractDriveFileId(url);
+  if (id) return `https://drive.google.com/file/d/${id}/view`;
+  return url;
+}
+
+/* ═══════════════════════════════════
+   VIEWER
+═══════════════════════════════════ */
+let viewMode = 'embed';
+
+function openViewer(url, label, icon) {
+  currentDocUrl   = url;
+  currentDocLabel = label;
+  currentDocIcon  = icon || '📄';
+
+  document.getElementById('viewer-label').textContent = label;
+  document.getElementById('viewer-icon').textContent  = icon || '📄';
+
+  // Download button always points to download URL
+  const dlUrl = toDownloadUrl(url);
+  document.getElementById('viewer-dl-btn').href = dlUrl;
+
+  // Error fallback buttons
+  document.getElementById('err-open-btn').href = toViewUrl(url);
+  document.getElementById('err-dl-btn').href   = dlUrl;
+
+  viewMode = 'embed';
+  document.getElementById('tab-embed').classList.add('active');
+  document.getElementById('tab-direct').classList.remove('active');
+  document.getElementById('embed-error').classList.remove('show');
+
+  loadEmbed(url);
+  document.getElementById('viewer-modal').classList.add('open');
+}
+
+function loadEmbed(url) {
+  const frame = document.getElementById('viewer-frame');
+  const errPanel = document.getElementById('embed-error');
+
+  frame.style.display = 'block';
+  errPanel.classList.remove('show');
+
+  const embedUrl = toEmbedUrl(url);
+  frame.src = embedUrl;
+
+  // Detect if iframe was blocked (some browsers fire error, others don't)
+  // We use a timer fallback — if the frame can't be sized after 5s, show error panel
+  frame.onerror = () => { showEmbedError(); };
+
+  // Additional heuristic: listen for load, if contentWindow is null → blocked
+  frame.onload = () => {
+    try {
+      // If we can access this, it loaded ok
+      void frame.contentWindow.location.href;
+    } catch(e) {
+      // Cross-origin is expected — file likely loaded fine
+    }
+  };
+}
+
+function showEmbedError() {
+  document.getElementById('viewer-frame').style.display = 'none';
+  document.getElementById('embed-error').classList.add('show');
+}
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('tab-embed').classList.toggle('active', mode==='embed');
+  document.getElementById('tab-direct').classList.toggle('active', mode==='direct');
+  if (mode === 'embed') {
+    loadEmbed(currentDocUrl);
+  } else {
+    // Open in Drive directly
+    window.open(toViewUrl(currentDocUrl), '_blank');
+    // Switch back to embed tab visually
+    setTimeout(() => setViewMode('embed'), 200);
   }
 }
 
-/* ═══════════════════════════
-   CSV PARSER
-═══════════════════════════ */
+function closeViewer() {
+  document.getElementById('viewer-modal').classList.remove('open');
+  document.getElementById('viewer-frame').src = 'about:blank';
+}
+
+/* ═══════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════ */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  const el = document.querySelector(`[onclick="showView('${name}')"]`);
+  if(el) el.classList.add('active');
+  const t={dashboard:['Dashboard','General'],medicos:['Registro de','Médicos'],especialidades:['Grupos por','Especialidad']}[name]||[name,''];
+  document.getElementById('page-title').innerHTML=`${t[0]} <span>${t[1]}</span>`;
+  if(name==='especialidades') renderSpecCards();
+  if(name==='medicos'){FILTERED_DATA=[...ALL_DATA];PAGE=1;applyFilters();}
+}
+
+/* ═══════════════════════════════════
+   LOAD DATA
+═══════════════════════════════════ */
+async function loadData() {
+  showToast('info','↻ Sincronizando con Google Sheets…');
+  const url=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/pub?output=csv&gid=${CONFIG.gid}`;
+  try {
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const csv=await r.text();
+    ALL_DATA=parseCSV(csv);
+    if(!ALL_DATA.length) throw new Error('Sin datos');
+    FILTERED_DATA=[...ALL_DATA];
+    renderAll();
+    document.getElementById('last-sync').textContent='Sync: '+new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    showToast('ok',`✓ ${ALL_DATA.length} médicos cargados`);
+  } catch(e) {
+    showToast('err','⚠ Error al leer la hoja. Usando datos de demo.');
+    ALL_DATA=demoData(); FILTERED_DATA=[...ALL_DATA]; renderAll();
+  }
+}
+
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = splitLine(lines[0]).map(h => h.trim().replace(/^"|"$/g,''));
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const vals = splitLine(lines[i]);
-    if (vals.every(v => !v.trim())) continue;
-    const obj = {};
-    headers.forEach((h, ci) => { obj[h] = (vals[ci] || '').trim().replace(/^"|"$/g,''); });
+  const lines=text.trim().split('\n'); if(lines.length<2) return [];
+  const headers=splitLine(lines[0]).map(h=>h.trim().replace(/^"|"$/g,''));
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=splitLine(lines[i]);
+    if(vals.every(v=>!v.trim())) continue;
+    const obj={};
+    headers.forEach((h,ci)=>{obj[h]=(vals[ci]||'').trim().replace(/^"|"$/g,'');});
     rows.push(obj);
   }
   return rows;
 }
+function splitLine(line){const r=[];let cur='';let q=false;for(const ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){r.push(cur);cur='';}else{cur+=ch;}}r.push(cur);return r;}
 
-function splitLine(line) {
-  const r = []; let cur = ''; let q = false;
-  for (const ch of line) {
-    if (ch === '"') { q = !q; }
-    else if (ch === ',' && !q) { r.push(cur); cur = ''; }
-    else { cur += ch; }
-  }
-  r.push(cur); return r;
-}
-
-/* ═══════════════════════════
-   DEMO DATA
-═══════════════════════════ */
-function demoData() {
-  const specs = ['Cardiología','Neurología','Ortopedia','Pediatría','Ginecología','Oncología','Radiología','Urgencias'];
-  const estados = ['Activo','Activo','Activo','Pendiente','En revisión'];
-  const aseguradoras = ['GNP','AXA','Metlife','MAPFRE','Allianz'];
-  const instits = ['IMSS','ISSSTE','UNAM','IPN','Hospital Privado','SSA'];
-  const nombres = [
-    'Ana García López','Carlos Martínez Ruiz','María Hernández Soto','Juan Pérez Vega',
-    'Laura Torres Díaz','Roberto Sánchez Cruz','Patricia Jiménez Luna','Miguel Ángel Ramos',
-    'Sofía Morales Ríos','Fernando Castro Vidal','Daniela Núñez Bravo','Alejandro Reyes Mora',
-    'Carmen Flores Silva','Eduardo Vargas Fuentes','Valeria Guzmán Ortiz','José Luis Mendoza',
-    'Gabriela Salinas Paz','Ricardo Herrera Campos','Lucía Medina Torres','Pablo Aguilar Serna'
-  ];
-  const fakeLink = 'https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs/view';
-  return nombres.map((n, i) => ({
-    [COL.folio]:       'NC-' + String(1000+i).padStart(4,'0'),
-    [COL.fecha]:       new Date(2024, i%12, (i*7%28)+1).toLocaleDateString('es-MX'),
-    [COL.nombre]:      'Dr. ' + n,
-    [COL.nacimiento]:  new Date(1970+i%20, i%12, 15).toLocaleDateString('es-MX'),
-    [COL.email]:       n.split(' ')[0].toLowerCase() + '@noorclinic.mx',
-    [COL.telefono]:    '55' + (10000000+i*999),
-    [COL.ciudad]:      ['Ciudad de México','Guadalajara','Monterrey','Puebla','Querétaro'][i%5],
+function demoData(){
+  const specs=['Cardiología','Neurología','Ortopedia','Pediatría','Ginecología','Oncología','Radiología','Urgencias'];
+  const estados=['Activo','Activo','Activo','Pendiente','En revisión'];
+  const aseg=['GNP','AXA','Metlife','MAPFRE','Allianz'];
+  const inst=['IMSS','ISSSTE','UNAM','IPN','Hospital Privado'];
+  const nombres=['Ana García López','Carlos Martínez Ruiz','María Hernández Soto','Juan Pérez Vega','Laura Torres Díaz','Roberto Sánchez Cruz','Patricia Jiménez Luna','Miguel Ángel Ramos','Sofía Morales Ríos','Fernando Castro Vidal','Daniela Núñez Bravo','Alejandro Reyes Mora','Carmen Flores Silva','Eduardo Vargas Fuentes','Valeria Guzmán Ortiz'];
+  // Demo Drive links — using a real public PDF for preview testing
+  const sampleFile='https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs/view';
+  const sampleFolder='https://drive.google.com/drive/folders/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs';
+  return nombres.map((n,i)=>({
+    [COL.folio]:'NC-'+String(1000+i).padStart(4,'0'),
+    [COL.fecha]:new Date(2024,i%12,(i*7%28)+1).toLocaleDateString('es-MX'),
+    [COL.nombre]:'Dr. '+n,
+    [COL.nacimiento]:new Date(1970+i%20,i%12,15).toLocaleDateString('es-MX'),
+    [COL.email]:n.split(' ')[0].toLowerCase()+'@noorclinic.mx',
+    [COL.telefono]:'55'+(10000000+i*999),
+    [COL.ciudad]:['Ciudad de México','Guadalajara','Monterrey','Puebla','Querétaro'][i%5],
     [COL.especialidad]:specs[i%specs.length],
-    [COL.cedProf]:     '0' + (1000000+i*123457),
-    [COL.cedEsp]:      i%3===0 ? '' : '9' + (800000+i*77777),
-    [COL.institucion]: instits[i%instits.length],
-    [COL.adscripcion]: 'Hospital Noor Clinic',
-    [COL.vigCert]:     new Date(2025+(i%2), (i*3)%12, 1).toLocaleDateString('es-MX'),
-    [COL.vigPoliza]:   new Date(2025+(i%2), (i*5)%12, 15).toLocaleDateString('es-MX'),
-    [COL.aseguradora]: aseguradoras[i%aseguradoras.length],
-    [COL.estado]:      estados[i%estados.length],
-    [COL.docINE]:      i%4===0 ? '' : fakeLink,
-    [COL.docCedProf]:  i%5===0 ? '' : fakeLink,
-    [COL.docCedEsp]:   i%3===0 ? '' : fakeLink,
-    [COL.docCert]:     i%6===0 ? '' : fakeLink,
-    [COL.docPoliza]:   i%4===1 ? '' : fakeLink,
-    [COL.docFiscal]:   i%7===0 ? '' : fakeLink,
-    [COL.carpeta]:     i%3===0 ? '' : 'https://drive.google.com/drive/folders/1a2b3c4d5e'
+    [COL.cedProf]:'0'+(1000000+i*123457),
+    [COL.cedEsp]:i%3===0?'':'9'+(800000+i*77777),
+    [COL.institucion]:inst[i%inst.length],
+    [COL.adscripcion]:'Hospital Noor Clinic',
+    [COL.vigCert]:new Date(2025+(i%2),(i*3)%12,1).toLocaleDateString('es-MX'),
+    [COL.vigPoliza]:new Date(2025+(i%2),(i*5)%12,15).toLocaleDateString('es-MX'),
+    [COL.aseguradora]:aseg[i%aseg.length],
+    [COL.estado]:estados[i%estados.length],
+    [COL.docINE]:i%4===0?'':sampleFile,
+    [COL.docCedProf]:i%5===0?'':sampleFile,
+    [COL.docCedEsp]:i%3===0?'':sampleFile,
+    [COL.docCert]:i%6===0?'':sampleFile,
+    [COL.docPoliza]:i%4===1?'':sampleFile,
+    [COL.docFiscal]:i%7===0?'':sampleFile,
+    [COL.carpeta]:i%3===0?'':sampleFolder
   }));
 }
 
-/* ═══════════════════════════
-   RENDER ALL
-═══════════════════════════ */
-function renderAll() {
-  renderKPIs();
-  renderCharts();
-  renderRecentTable();
-  populateSpecFilter();
-  if (document.getElementById('view-medicos').classList.contains('active')) {
-    PAGE = 1; applyFilters();
-  }
+/* ═══════════════════════════════════
+   RENDER
+═══════════════════════════════════ */
+function renderAll(){renderKPIs();renderCharts();renderRecentTable();populateSpecFilter();}
+
+function renderKPIs(){
+  const total=ALL_DATA.length;
+  const specs=new Set(ALL_DATA.map(r=>r[COL.especialidad]||'').filter(Boolean)).size;
+  const active=ALL_DATA.filter(r=>(r[COL.estado]||'').toLowerCase().includes('activo')).length;
+  document.getElementById('kpi-total').textContent=total;
+  document.getElementById('kpi-specs').textContent=specs;
+  document.getElementById('kpi-active').textContent=active;
+  document.getElementById('kpi-pending').textContent=total-active;
 }
 
-/* ═══════════════════════════
-   KPIs
-═══════════════════════════ */
-function renderKPIs() {
-  const total  = ALL_DATA.length;
-  const specs  = new Set(ALL_DATA.map(r => r[COL.especialidad]||'').filter(Boolean)).size;
-  const active = ALL_DATA.filter(r => (r[COL.estado]||'').toLowerCase().includes('activo')).length;
-  const pend   = total - active;
-  document.getElementById('kpi-total').textContent   = total;
-  document.getElementById('kpi-specs').textContent   = specs;
-  document.getElementById('kpi-active').textContent  = active;
-  document.getElementById('kpi-pending').textContent = pend;
+const CC=['#00b4d8','#c9a84c','#3ecf8e','#e05c5c','#9b6ee6','#f5a623','#46beb4','#dc64a0'];
+
+function renderCharts(){
+  const sc={};
+  ALL_DATA.forEach(r=>{const s=r[COL.especialidad]||'Sin especificar';sc[s]=(sc[s]||0)+1;});
+  if(charts.spec) charts.spec.destroy();
+  charts.spec=new Chart(document.getElementById('chartSpec'),{type:'bar',data:{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:CC,borderRadius:6,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7f94',font:{size:10},maxRotation:35},grid:{color:'#1e2d3d'}},y:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}}}}});
+
+  const stc={};
+  ALL_DATA.forEach(r=>{const s=r[COL.estado]||'Sin estado';stc[s]=(stc[s]||0)+1;});
+  if(charts.status) charts.status.destroy();
+  charts.status=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:Object.keys(stc),datasets:[{data:Object.values(stc),backgroundColor:CC,borderWidth:2,borderColor:'#181f28'}]},options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#6b7f94',font:{size:11},padding:10}}}}});
+
+  const mc={};
+  ALL_DATA.forEach(r=>{const raw=r[COL.fecha]||'';let d=new Date(raw);if(isNaN(d)){const p=raw.split('/');if(p.length===3)d=new Date(p[2],p[1]-1,p[0]);}if(!isNaN(d.getTime())){const k=d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'});mc[k]=(mc[k]||0)+1;}});
+  if(charts.time) charts.time.destroy();
+  if(Object.keys(mc).length) charts.time=new Chart(document.getElementById('chartTime'),{type:'line',data:{labels:Object.keys(mc),datasets:[{data:Object.values(mc),borderColor:'#00b4d8',backgroundColor:'rgba(0,180,216,.1)',borderWidth:2,tension:.4,fill:true,pointBackgroundColor:'#00b4d8',pointRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}},y:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}}}}});
 }
 
-/* ═══════════════════════════
-   CHARTS
-═══════════════════════════ */
-const CC = ['#00b4d8','#c9a84c','#3ecf8e','#e05c5c','#9b6ee6','#f5a623','#46beb4','#dc64a0'];
+/* ═══════════════════════════════════
+   TABLE HELPERS
+═══════════════════════════════════ */
+const specList=()=>[...new Set(ALL_DATA.map(r=>r[COL.especialidad]||''))];
+function statusPill(v){const k=(v||'').toLowerCase();if(k.includes('activo'))return`<span class="pill active">Activo</span>`;if(k.includes('pendiente'))return`<span class="pill pending">Pendiente</span>`;if(k.includes('revisión')||k.includes('revision'))return`<span class="pill review">En revisión</span>`;return`<span class="pill inactive">${v||'—'}</span>`;}
+function specBadge(v){const ci=specList().indexOf(v)%8;return`<span class="badge sp-${Math.max(0,ci)}">${v||'—'}</span>`;}
+function initials(n){return(n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 
-function renderCharts() {
-  // By specialty
-  const sc = {};
-  ALL_DATA.forEach(r => { const s = r[COL.especialidad]||'Sin especificar'; sc[s]=(sc[s]||0)+1; });
-  if (charts.spec) charts.spec.destroy();
-  charts.spec = new Chart(document.getElementById('chartSpec'), {
-    type: 'bar',
-    data: { labels: Object.keys(sc), datasets: [{ data: Object.values(sc), backgroundColor: CC, borderRadius: 6, borderSkipped: false }] },
-    options: { responsive: true, plugins: { legend: { display: false } },
-      scales: { x: { ticks: { color:'#6b7f94', font:{size:10}, maxRotation:35 }, grid:{color:'#1e2d3d'} }, y: { ticks:{color:'#6b7f94',font:{size:10}}, grid:{color:'#1e2d3d'} } } }
-  });
-
-  // Status donut
-  const stc = {};
-  ALL_DATA.forEach(r => { const s = r[COL.estado]||'Sin estado'; stc[s]=(stc[s]||0)+1; });
-  if (charts.status) charts.status.destroy();
-  charts.status = new Chart(document.getElementById('chartStatus'), {
-    type: 'doughnut',
-    data: { labels: Object.keys(stc), datasets: [{ data: Object.values(stc), backgroundColor: CC, borderWidth: 2, borderColor: '#181f28' }] },
-    options: { responsive: true, cutout: '62%', plugins: { legend: { position:'bottom', labels:{ color:'#6b7f94', font:{size:11}, padding:10 } } } }
-  });
-
-  // Monthly line
-  const mc = {};
-  ALL_DATA.forEach(r => {
-    const raw = r[COL.fecha]||'';
-    let d = new Date(raw);
-    if (isNaN(d)) { const p = raw.split('/'); if(p.length===3) d = new Date(p[2], p[1]-1, p[0]); }
-    if (!isNaN(d.getTime())) { const k = d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'}); mc[k]=(mc[k]||0)+1; }
-  });
-  if (charts.time) charts.time.destroy();
-  if (Object.keys(mc).length) {
-    charts.time = new Chart(document.getElementById('chartTime'), {
-      type: 'line',
-      data: { labels: Object.keys(mc), datasets: [{ data: Object.values(mc), borderColor:'#00b4d8', backgroundColor:'rgba(0,180,216,.1)', borderWidth:2, tension:.4, fill:true, pointBackgroundColor:'#00b4d8', pointRadius:4 }] },
-      options: { responsive: true, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}}, y:{ticks:{color:'#6b7f94',font:{size:10}},grid:{color:'#1e2d3d'}} } }
-    });
-  }
-}
-
-/* ═══════════════════════════
-   TABLES
-═══════════════════════════ */
-const SPEC_LIST = () => [...new Set(ALL_DATA.map(r=>r[COL.especialidad]||''))];
-
-function statusPill(val) {
-  const k = (val||'').toLowerCase();
-  if (k.includes('activo'))   return `<span class="pill active">Activo</span>`;
-  if (k.includes('pendiente'))return `<span class="pill pending">Pendiente</span>`;
-  if (k.includes('revisión') || k.includes('revision')) return `<span class="pill review">En revisión</span>`;
-  return `<span class="pill inactive">${val||'—'}</span>`;
-}
-
-function specBadge(val) {
-  const sl = SPEC_LIST(); const ci = sl.indexOf(val) % 8;
-  return `<span class="badge sp-${ci}">${val||'—'}</span>`;
-}
-
-function initials(n) { return (n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
-
-// Count docs for a row
-function docCount(row) {
-  return DOCS.filter(d => !!(row[COL[d.key]]||'').trim()).length;
-}
-
-// Small doc icons for table
-function docIconsHTML(row) {
-  return '<div class="doc-icons">' + DOCS.map(d => {
+// Doc pills shown in table cell — click opens viewer
+function docPillsHTML(row) {
+  return '<div class="doc-pills">' + DOCS.map(d => {
     const url = (row[COL[d.key]]||'').trim();
-    if (!url) return `<span class="doc-icon-btn missing" title="${d.label}">${d.icon}</span>`;
-    return `<a class="doc-icon-btn" title="${d.label}" href="javascript:void(0)" onclick="event.stopPropagation();openPreview('${encodeURIComponent(url)}','${d.label}')">${d.icon}</a>`;
+    if (!url) return `<span class="doc-pill missing" title="${d.label} — No cargado">${d.icon}</span>`;
+    return `<span class="doc-pill" title="${d.label}"
+      onclick="event.stopPropagation();openViewer('${escJs(url)}','${escJs(d.label)}','${d.icon}')"
+    >${d.icon}</span>`;
   }).join('') + '</div>';
 }
 
-function renderRecentTable() {
-  const slice = ALL_DATA.slice(0, 8);
-  document.getElementById('recent-table-wrap').innerHTML = slice.length
-    ? `<div class="table-wrap">${buildTable(slice, true)}</div>`
-    : `<div class="empty-state"><div class="em-icon">📭</div><p>Sin registros.</p></div>`;
+function escJs(s){ return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+function renderRecentTable(){
+  const slice=ALL_DATA.slice(0,8);
+  document.getElementById('recent-table-wrap').innerHTML=slice.length?`<div class="table-wrap">${buildTable(slice,true)}</div>`:`<div class="empty-state"><div class="em-icon">📭</div><p>Sin registros.</p></div>`;
 }
 
-function buildTable(rows, compact) {
-  const thead = `<tr>
-    <th>Folio</th>
-    <th>Médico</th>
-    <th>Especialidad</th>
-    <th>Cédula Prof.</th>
-    <th>Ciudad</th>
-    <th>Estado</th>
-    <th>Docs</th>
-    ${!compact ? '<th>Fecha</th>' : ''}
-  </tr>`;
-  const tbody = rows.map((r,i) => `
+function buildTable(rows, compact){
+  const thead=`<tr><th>Folio</th><th>Médico</th><th>Especialidad</th><th>Cédula Prof.</th><th>Ciudad</th><th>Estado</th><th>Documentos</th>${!compact?'<th>Fecha</th>':''}</tr>`;
+  const tbody=rows.map(r=>`
     <tr onclick="openDrawer(${ALL_DATA.indexOf(r)})">
       <td class="td-folio">${r[COL.folio]||'—'}</td>
       <td><div class="name-cell"><div class="avatar">${initials(r[COL.nombre])}</div>${r[COL.nombre]||'—'}</div></td>
@@ -734,120 +718,81 @@ function buildTable(rows, compact) {
       <td class="td-mono">${r[COL.cedProf]||'—'}</td>
       <td>${r[COL.ciudad]||'—'}</td>
       <td>${statusPill(r[COL.estado])}</td>
-      <td>${docIconsHTML(r)}</td>
-      ${!compact ? `<td class="td-mono">${r[COL.fecha]||'—'}</td>` : ''}
+      <td>${docPillsHTML(r)}</td>
+      ${!compact?`<td class="td-mono">${r[COL.fecha]||'—'}</td>`:''}
     </tr>`).join('');
   return `<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
 }
 
-function applyFilters() {
-  const q    = (document.getElementById('search-input')?.value||'').toLowerCase();
-  const spec = document.getElementById('filter-spec')?.value||'';
-  const stat = document.getElementById('filter-status')?.value||'';
-  FILTERED_DATA = ALL_DATA.filter(r => {
-    const txt = Object.values(r).join(' ').toLowerCase();
-    return (!q || txt.includes(q))
-      && (!spec || r[COL.especialidad] === spec)
-      && (!stat || r[COL.estado] === stat);
+function applyFilters(){
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  const spec=document.getElementById('filter-spec')?.value||'';
+  const stat=document.getElementById('filter-status')?.value||'';
+  FILTERED_DATA=ALL_DATA.filter(r=>{
+    const txt=Object.values(r).join(' ').toLowerCase();
+    return(!q||txt.includes(q))&&(!spec||r[COL.especialidad]===spec)&&(!stat||r[COL.estado]===stat);
   });
-  document.getElementById('record-count').textContent = `${FILTERED_DATA.length} registros`;
-  PAGE = 1; renderPage();
+  document.getElementById('record-count').textContent=`${FILTERED_DATA.length} registros`;
+  PAGE=1; renderPage();
 }
 
-function renderPage() {
-  const total = FILTERED_DATA.length;
-  const pages = Math.max(1, Math.ceil(total/PER_PAGE));
-  PAGE = Math.min(PAGE, pages);
-  const slice = FILTERED_DATA.slice((PAGE-1)*PER_PAGE, PAGE*PER_PAGE);
-  document.getElementById('main-table-wrap').innerHTML = slice.length
-    ? `<div class="table-wrap">${buildTable(slice, false)}</div>`
-    : `<div class="empty-state"><div class="em-icon">📭</div><p>Sin resultados para esta búsqueda.</p></div>`;
-  document.getElementById('pag-info').textContent = `Página ${PAGE} de ${pages} · ${total} registros`;
-  const btns = document.getElementById('pag-btns');
-  btns.innerHTML = '';
-  const maxPgs = Math.min(pages, 10);
-  for (let p=1; p<=maxPgs; p++) {
-    const b = document.createElement('div');
-    b.className = 'pag-btn' + (p===PAGE?' active':'');
-    b.textContent = p; b.onclick = () => { PAGE=p; renderPage(); };
-    btns.appendChild(b);
-  }
-  if (pages > maxPgs) {
-    const e = document.createElement('div'); e.className='pag-btn'; e.textContent='…'; btns.appendChild(e);
-  }
+function renderPage(){
+  const total=FILTERED_DATA.length, pages=Math.max(1,Math.ceil(total/PER_PAGE));
+  PAGE=Math.min(PAGE,pages);
+  const slice=FILTERED_DATA.slice((PAGE-1)*PER_PAGE,PAGE*PER_PAGE);
+  document.getElementById('main-table-wrap').innerHTML=slice.length?`<div class="table-wrap">${buildTable(slice,false)}</div>`:`<div class="empty-state"><div class="em-icon">📭</div><p>Sin resultados.</p></div>`;
+  document.getElementById('pag-info').textContent=`Página ${PAGE} de ${pages} · ${total} registros`;
+  const btns=document.getElementById('pag-btns'); btns.innerHTML='';
+  for(let p=1;p<=Math.min(pages,10);p++){const b=document.createElement('div');b.className='pag-btn'+(p===PAGE?' active':'');b.textContent=p;b.onclick=()=>{PAGE=p;renderPage();};btns.appendChild(b);}
 }
 
-function populateSpecFilter() {
-  const sel = document.getElementById('filter-spec'); if(!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">Todas las especialidades</option>';
-  [...new Set(ALL_DATA.map(r=>r[COL.especialidad]||'').filter(Boolean))].sort()
-    .forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
-  sel.value = prev;
+function populateSpecFilter(){
+  const sel=document.getElementById('filter-spec'); if(!sel) return;
+  const prev=sel.value; sel.innerHTML='<option value="">Todas las especialidades</option>';
+  [...new Set(ALL_DATA.map(r=>r[COL.especialidad]||'').filter(Boolean))].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+  sel.value=prev;
 }
 
-/* ═══════════════════════════
-   ESPECIALIDADES VIEW
-═══════════════════════════ */
-function renderSpecCards() {
-  const sc = {};
-  ALL_DATA.forEach(r => {
-    const s = r[COL.especialidad]||'Sin especificar';
-    if (!sc[s]) sc[s]={total:0,active:0,docs:0};
-    sc[s].total++;
-    if ((r[COL.estado]||'').toLowerCase().includes('activo')) sc[s].active++;
-    sc[s].docs += docCount(r);
-  });
-  const emojis = ['🫀','🧠','🦴','👶','🌸','🩻','☢','🚑','💉','🩺','👁','🦷','🫁','🧬','💊'];
-  document.getElementById('spec-cards-wrap').innerHTML = Object.entries(sc).map(([spec,d],i) => `
-    <div class="kpi" style="cursor:pointer" onclick="filterBySpec('${spec.replace(/'/g,"\\'")}')">
-      <div class="kpi-icon">${emojis[i%emojis.length]}</div>
-      <div class="kpi-label">${spec}</div>
-      <div class="kpi-value" style="font-size:26px">${d.total}</div>
-      <div class="kpi-sub">${d.active} activos · ${d.total-d.active} en proceso</div>
-      <div style="margin-top:6px;font-size:11px;color:var(--accent)">${d.docs} docs subidos</div>
-    </div>`).join('');
+/* ═══════════════════════════════════
+   DRAWER
+═══════════════════════════════════ */
+function vigClass(dateStr){
+  if(!dateStr) return '';
+  const p=dateStr.split('/');
+  const d=p.length===3?new Date(p[2],p[1]-1,p[0]):new Date(dateStr);
+  if(isNaN(d)) return '';
+  const diff=(d-new Date())/(86400000);
+  return diff<0?'vig-exp':diff<60?'vig-warn':'vig-ok';
 }
 
-function filterBySpec(spec) {
-  showView('medicos');
-  document.getElementById('filter-spec').value = spec;
-  applyFilters();
-}
+function openDrawer(idx){
+  const r=ALL_DATA[idx]; if(!r) return;
+  document.getElementById('drawer-name').textContent=r[COL.nombre]||'—';
+  document.getElementById('drawer-sub').textContent=`${r[COL.especialidad]||''} · Folio: ${r[COL.folio]||'—'}`;
 
-/* ═══════════════════════════
-   DETAIL DRAWER
-═══════════════════════════ */
-function openDrawer(idx) {
-  const r = ALL_DATA[idx]; if(!r) return;
-  document.getElementById('drawer-name').textContent = r[COL.nombre]||'—';
-  document.getElementById('drawer-sub').textContent  = `${r[COL.especialidad]||''} · Folio: ${r[COL.folio]||'—'}`;
+  const carpetaUrl=(r[COL.carpeta]||'').trim();
 
-  const vigClass = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('/');
-    const d = parts.length===3 ? new Date(parts[2],parts[1]-1,parts[0]) : new Date(dateStr);
-    if (isNaN(d)) return '';
-    const diff = (d - new Date()) / (1000*60*60*24);
-    if (diff < 0)  return 'vig-exp';
-    if (diff < 60) return 'vig-warn';
-    return 'vig-ok';
-  };
+  document.getElementById('drawer-body').innerHTML=`
 
-  document.getElementById('drawer-body').innerHTML = `
+    <!-- Info banner -->
+    <div class="info-banner">
+      💡 Haz clic en <strong>👁 Ver</strong> para previsualizar el documento dentro del portal,
+      o en <strong>⬇ Descargar</strong> para abrirlo directamente en Google Drive.<br>
+      <em>Nota: la previsualización requiere que el archivo esté compartido con tu cuenta de Google.</em>
+    </div>
 
     <!-- DATOS GENERALES -->
     <div class="drawer-section">
       <div class="drawer-section-title">Datos Generales</div>
       <div class="info-grid">
-        <div class="info-item"><div class="info-label">Folio</div><div class="info-value mono">${r[COL.folio]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Fecha de Registro</div><div class="info-value">${r[COL.fecha]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Nombre Completo</div><div class="info-value">${r[COL.nombre]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Fecha de Nacimiento</div><div class="info-value">${r[COL.nacimiento]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Email</div><div class="info-value">${r[COL.email]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Teléfono</div><div class="info-value mono">${r[COL.telefono]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Ciudad</div><div class="info-value">${r[COL.ciudad]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Estado</div><div class="info-value">${statusPill(r[COL.estado])}</div></div>
+        <div><div class="info-label">Folio</div><div class="info-value mono">${r[COL.folio]||'—'}</div></div>
+        <div><div class="info-label">Fecha de Registro</div><div class="info-value">${r[COL.fecha]||'—'}</div></div>
+        <div><div class="info-label">Nombre Completo</div><div class="info-value">${r[COL.nombre]||'—'}</div></div>
+        <div><div class="info-label">Fecha de Nacimiento</div><div class="info-value">${r[COL.nacimiento]||'—'}</div></div>
+        <div><div class="info-label">Email</div><div class="info-value">${r[COL.email]||'—'}</div></div>
+        <div><div class="info-label">Teléfono</div><div class="info-value mono">${r[COL.telefono]||'—'}</div></div>
+        <div><div class="info-label">Ciudad</div><div class="info-value">${r[COL.ciudad]||'—'}</div></div>
+        <div><div class="info-label">Estado</div><div class="info-value">${statusPill(r[COL.estado])}</div></div>
       </div>
     </div>
 
@@ -855,127 +800,92 @@ function openDrawer(idx) {
     <div class="drawer-section">
       <div class="drawer-section-title">Datos Profesionales</div>
       <div class="info-grid">
-        <div class="info-item"><div class="info-label">Especialidad</div><div class="info-value">${specBadge(r[COL.especialidad])}</div></div>
-        <div class="info-item"><div class="info-label">Institución</div><div class="info-value">${r[COL.institucion]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Adscripción</div><div class="info-value">${r[COL.adscripcion]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Cédula Prof.</div><div class="info-value mono">${r[COL.cedProf]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Cédula Esp.</div><div class="info-value mono">${r[COL.cedEsp]||'—'}</div></div>
-        <div class="info-item"><div class="info-label">Aseguradora</div><div class="info-value">${r[COL.aseguradora]||'—'}</div></div>
-        <div class="info-item">
-          <div class="info-label">Vigencia Certificado</div>
-          <div class="info-value ${vigClass(r[COL.vigCert])}">${r[COL.vigCert]||'—'}</div>
-        </div>
-        <div class="info-item">
-          <div class="info-label">Vigencia Póliza RC</div>
-          <div class="info-value ${vigClass(r[COL.vigPoliza])}">${r[COL.vigPoliza]||'—'}</div>
-        </div>
+        <div><div class="info-label">Especialidad</div><div class="info-value">${specBadge(r[COL.especialidad])}</div></div>
+        <div><div class="info-label">Institución</div><div class="info-value">${r[COL.institucion]||'—'}</div></div>
+        <div><div class="info-label">Adscripción</div><div class="info-value">${r[COL.adscripcion]||'—'}</div></div>
+        <div><div class="info-label">Cédula Prof.</div><div class="info-value mono">${r[COL.cedProf]||'—'}</div></div>
+        <div><div class="info-label">Cédula Esp.</div><div class="info-value mono">${r[COL.cedEsp]||'—'}</div></div>
+        <div><div class="info-label">Aseguradora</div><div class="info-value">${r[COL.aseguradora]||'—'}</div></div>
+        <div><div class="info-label">Vigencia Certificado</div><div class="info-value ${vigClass(r[COL.vigCert])}">${r[COL.vigCert]||'—'}</div></div>
+        <div><div class="info-label">Vigencia Póliza RC</div><div class="info-value ${vigClass(r[COL.vigPoliza])}">${r[COL.vigPoliza]||'—'}</div></div>
       </div>
     </div>
 
     <!-- DOCUMENTOS -->
     <div class="drawer-section">
-      <div class="drawer-section-title">Documentos Cargados</div>
+      <div class="drawer-section-title">Documentos del Médico</div>
       <div class="doc-grid">
-        ${DOCS.map(d => {
-          const url = (r[COL[d.key]]||'').trim();
-          const has = !!url;
-          const previewUrl = toPreviewUrl(url);
-          return `<div class="doc-card ${has?'available':'missing'}" ${has?`onclick="openPreview('${encodeURIComponent(url)}','${d.label}')"`:''}> 
+        ${DOCS.map(d=>{
+          const url=(r[COL[d.key]]||'').trim();
+          const has=!!url;
+          return `<div class="doc-card ${has?'available':'missing'}">
             <div class="doc-card-icon">${d.icon}</div>
             <div class="doc-card-name">${d.label}</div>
-            ${has ? `
-              <div class="doc-card-btns">
-                <a class="doc-mini-btn view-btn" href="javascript:void(0)" onclick="event.stopPropagation();openPreview('${encodeURIComponent(url)}','${d.label}')">👁 Ver</a>
-                <a class="doc-mini-btn dl-btn" href="${url}" target="_blank" onclick="event.stopPropagation()">⬇ Drive</a>
-              </div>` 
-            : `<div class="doc-card-action">No cargado</div>`}
+            ${has?`<div class="doc-card-btns">
+              <button class="doc-action-btn btn-view" onclick="openViewer('${escJs(url)}','${escJs(d.label)}','${d.icon}')">👁 Ver</button>
+              <a class="doc-action-btn btn-dl" href="${toDownloadUrl(url)}" target="_blank">⬇ Descargar</a>
+            </div>`:`<div class="doc-card-status">No cargado</div>`}
           </div>`;
         }).join('')}
       </div>
     </div>
 
     <!-- CARPETA DRIVE -->
-    ${(r[COL.carpeta]||'').trim() ? `
-    <div class="drawer-section">
-      <div class="drawer-section-title">Carpeta Completa</div>
-      <a class="folder-btn" href="${r[COL.carpeta]}" target="_blank">
-        <span class="folder-icon">📁</span>
-        <span class="folder-text">
-          Abrir carpeta en Google Drive
-          <span class="folder-sub">Ver todos los archivos del médico</span>
-        </span>
-        <span style="margin-left:auto;font-size:18px;opacity:.6">↗</span>
-      </a>
-    </div>` : ''}
+    ${carpetaUrl?`<div class="drawer-section">
+      <div class="drawer-section-title">Carpeta Completa en Drive</div>
+      <div class="folder-row">
+        <div style="font-size:28px">📁</div>
+        <div class="folder-info">
+          <div class="folder-title">Carpeta de documentos</div>
+          <div class="folder-sub">Todos los archivos originales del médico</div>
+        </div>
+        <div class="folder-actions">
+          <a class="btn btn-gold btn-sm" href="${carpetaUrl}" target="_blank">↗ Abrir carpeta</a>
+        </div>
+      </div>
+    </div>`:''}
   `;
 
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
 }
 
-function closeDrawer() {
+function closeDrawer(){
   document.getElementById('drawer-overlay').classList.remove('open');
   document.getElementById('drawer').classList.remove('open');
 }
 
-/* ═══════════════════════════
-   DOC PREVIEW
-═══════════════════════════ */
-function toPreviewUrl(url) {
-  if (!url) return '';
-  // Google Drive file → preview embed
-  const fileMatch = url.match(/\/file\/d\/([^/]+)/);
-  if (fileMatch) return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
-  // Google Drive folder → keep as is (open in new tab)
-  return url;
+/* ═══════════════════════════════════
+   ESPECIALIDADES
+═══════════════════════════════════ */
+function renderSpecCards(){
+  const sc={};
+  ALL_DATA.forEach(r=>{const s=r[COL.especialidad]||'Sin especificar';if(!sc[s])sc[s]={total:0,active:0,docs:0};sc[s].total++;if((r[COL.estado]||'').toLowerCase().includes('activo'))sc[s].active++;sc[s].docs+=DOCS.filter(d=>!!(r[COL[d.key]]||'').trim()).length;});
+  const em=['🫀','🧠','🦴','👶','🌸','🩻','☢','🚑','💉','🩺','👁','🦷','🫁','🧬','💊'];
+  document.getElementById('spec-cards-wrap').innerHTML=Object.entries(sc).map(([spec,d],i)=>`
+    <div class="kpi" style="cursor:pointer" onclick="filterBySpec('${escJs(spec)}')">
+      <div class="kpi-icon">${em[i%em.length]}</div>
+      <div class="kpi-label">${spec}</div>
+      <div class="kpi-value" style="font-size:26px">${d.total}</div>
+      <div class="kpi-sub">${d.active} activos · ${d.total-d.active} en proceso</div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent)">${d.docs} docs cargados</div>
+    </div>`).join('');
 }
 
-function openPreview(encodedUrl, label) {
-  const url = decodeURIComponent(encodedUrl);
-  const preview = toPreviewUrl(url);
-  document.getElementById('preview-title').textContent = label;
-  document.getElementById('preview-dl-btn').href = url;
-  document.getElementById('preview-frame').src = preview;
-  document.getElementById('doc-preview').classList.add('open');
-}
+function filterBySpec(spec){showView('medicos');document.getElementById('filter-spec').value=spec;applyFilters();}
 
-function closePreview() {
-  document.getElementById('doc-preview').classList.remove('open');
-  document.getElementById('preview-frame').src = 'about:blank';
-}
-
-/* ═══════════════════════════
+/* ═══════════════════════════════════
    CONFIG
-═══════════════════════════ */
-function openConfig() {
-  document.getElementById('cfg-sheet-id').value = CONFIG.sheetId;
-  document.getElementById('cfg-gid').value = CONFIG.gid;
-  document.getElementById('overlay').classList.add('open');
-}
-function closeConfig(e) {
-  if (!e || e.target===document.getElementById('overlay'))
-    document.getElementById('overlay').classList.remove('open');
-}
-function saveConfig() {
-  CONFIG.sheetId = document.getElementById('cfg-sheet-id').value.trim();
-  CONFIG.gid     = document.getElementById('cfg-gid').value.trim();
-  document.getElementById('overlay').classList.remove('open');
-  loadData();
-}
+═══════════════════════════════════ */
+function openConfig(){document.getElementById('cfg-sheet-id').value=CONFIG.sheetId;document.getElementById('cfg-gid').value=CONFIG.gid;document.getElementById('overlay').classList.add('open');}
+function closeConfig(e){if(!e||e.target===document.getElementById('overlay'))document.getElementById('overlay').classList.remove('open');}
+function saveConfig(){CONFIG.sheetId=document.getElementById('cfg-sheet-id').value.trim();CONFIG.gid=document.getElementById('cfg-gid').value.trim();document.getElementById('overlay').classList.remove('open');loadData();}
 
-/* ═══════════════════════════
-   TOAST
-═══════════════════════════ */
-let _tt = null;
-function showToast(type, msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast ${type} show`;
-  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 3500);
-}
+/* TOAST */
+let _tt=null;
+function showToast(type,msg){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3500);}
 
-/* ═══════════════════════════
-   INIT
-═══════════════════════════ */
+/* INIT */
 loadData();
 </script>
 </body>
