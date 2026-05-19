@@ -1,1 +1,906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATM Servicio Mecánico — Solicitud de Servicio · v1.0.4</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:         #9E7C2A;
+  --gold-light:   #B8922E;
+  --gold-pale:    #FBF4E0;
+  --gold-dark:    #7A5E1A;
+  --gold-accent:  #C4972E;
+  --bg-base:      #F4F1EC;
+  --bg-card:      #FFFFFF;
+  --bg-header:    #FFFFFF;
+  --bg-section:   #F9F7F3;
+  --bg-input:     #FAFAF8;
+  --bg-muted:     #F0EDE6;
+  --text-main:    #2C2620;
+  --text-muted:   #6B6259;
+  --text-hint:    #A09485;
+  --border:       rgba(158,124,42,0.22);
+  --border-card:  rgba(139,127,114,0.18);
+  --border-slate: rgba(139,127,114,0.22);
+}
 
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-main);
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 70px, rgba(158,124,42,0.04) 70px, rgba(158,124,42,0.04) 71px),
+    repeating-linear-gradient(90deg, transparent, transparent 70px, rgba(158,124,42,0.04) 70px, rgba(158,124,42,0.04) 71px);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; top: 0; right: 0;
+  width: 360px; height: 360px;
+  background: radial-gradient(ellipse at top right, rgba(158,124,42,0.07) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid var(--border-card);
+  background: var(--bg-header);
+  box-shadow: 0 1px 16px rgba(44,38,32,0.07);
+}
+.logo-wrap { display: flex; align-items: center; gap: 16px; }
+.logo-emblem { width: 54px; height: 54px; flex-shrink: 0; }
+.logo-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px; font-weight: 900;
+  color: var(--text-main); letter-spacing: 3px; line-height: 1;
+}
+.logo-text p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 10px; color: var(--gold);
+  letter-spacing: 4px; margin-top: 3px; font-weight: 500;
+}
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.header-badge {
+  font-size: 10px; color: var(--gold-dark); letter-spacing: 2px;
+  border: 1px solid var(--border); padding: 5px 12px; border-radius: 2px;
+  background: var(--gold-pale);
+}
+.header-version { font-size: 9px; color: var(--text-hint); letter-spacing: 1px; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 1;
+  text-align: center;
+  padding: 52px 48px 36px;
+  background: linear-gradient(180deg, rgba(251,244,224,0.55) 0%, transparent 100%);
+}
+.hero-tag {
+  display: inline-block; font-size: 10px; letter-spacing: 4px; color: var(--gold-dark);
+  border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold);
+  padding: 5px 20px; margin-bottom: 20px;
+}
+.hero h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px,5vw,48px); font-weight: 700;
+  color: var(--text-main); line-height: 1.15; margin-bottom: 12px;
+}
+.hero h2 span { color: var(--gold-accent); }
+.hero p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; color: var(--text-muted);
+  max-width: 460px; margin: 0 auto; line-height: 1.6;
+}
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  max-width: 300px; margin: 22px auto 0;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 0.5px; background: var(--border);
+}
+.divider-diamond {
+  width: 6px; height: 6px;
+  background: var(--gold); transform: rotate(45deg); flex-shrink: 0;
+}
+
+/* ── FORM SECTION ── */
+.form-section {
+  position: relative; z-index: 1;
+  max-width: 840px; margin: 0 auto; padding: 0 24px 80px;
+}
+.form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 8px; overflow: hidden;
+  box-shadow: 0 4px 32px rgba(44,38,32,0.09);
+}
+.form-card-header {
+  background: var(--bg-section);
+  border-bottom: 1px solid var(--border-card);
+  padding: 16px 36px;
+  display: flex; align-items: center; gap: 12px;
+}
+.form-card-header svg { width: 16px; height: 16px; color: var(--gold); }
+.form-card-header h3 {
+  font-family: 'Playfair Display', serif; font-size: 14px;
+  font-weight: 700; color: var(--gold-dark); letter-spacing: 2px;
+}
+.form-card-header span {
+  margin-left: auto; font-size: 10px; color: var(--text-hint); letter-spacing: 1px;
+}
+.form-body { padding: 30px 36px; }
+
+/* ── SECTION LABELS ── */
+.section-label {
+  font-size: 9px; letter-spacing: 4px; color: var(--gold-dark);
+  border-left: 2px solid var(--gold); padding-left: 10px;
+  margin-bottom: 16px; margin-top: 28px;
+  font-family: 'Jost', sans-serif;
+}
+.section-label:first-of-type { margin-top: 0; }
+
+/* ── GRIDS ── */
+.field-grid        { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-grid.single { grid-template-columns: 1fr; }
+.field-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+
+/* ── LABELS ── */
+label {
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--text-muted); font-weight: 400;
+  font-family: 'Jost', sans-serif;
+}
+label span.req { color: var(--gold-accent); margin-left: 2px; }
+
+/* ── INPUTS ── */
+input, select, textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border-slate);
+  border-radius: 4px; color: var(--text-main);
+  font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 300;
+  padding: 11px 14px; outline: none;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(158,124,42,0.10);
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(106,98,89,0.45); font-size: 13px;
+}
+select option { background: var(--bg-card); color: var(--text-main); }
+input[readonly] {
+  color: var(--gold-dark); cursor: default;
+  border-color: rgba(158,124,42,0.18);
+  background: var(--gold-pale); font-size: 13px;
+}
+textarea { resize: vertical; min-height: 80px; }
+
+.email-wrap { position: relative; }
+.email-wrap input { padding-right: 54px; }
+.email-auto-badge {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: var(--gold-pale); border: 1px solid var(--border);
+  border-radius: 2px; font-size: 8px; color: var(--gold-dark);
+  letter-spacing: 1px; padding: 2px 6px; pointer-events: none; display: none;
+}
+.field-hint {
+  font-size: 10px; color: var(--text-hint); margin-top: 2px; letter-spacing: .5px;
+}
+
+/* ── CHIPS ── */
+.service-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  padding: 7px 13px;
+  border: 1px solid var(--border-slate);
+  border-radius: 4px; font-size: 11px; cursor: pointer;
+  transition: all .15s; color: var(--text-muted);
+  background: transparent; user-select: none;
+  font-family: 'Jost', sans-serif;
+}
+.chip:hover { border-color: var(--gold); color: var(--text-main); background: var(--gold-pale); }
+.chip.chip-active {
+  background: var(--gold-pale); border-color: var(--gold-accent); color: var(--gold-dark);
+  font-weight: 500;
+}
+
+/* ── UPLOAD ZONES ── */
+.upload-zone {
+  border: 1.5px dashed rgba(158,124,42,0.35);
+  border-radius: 6px; padding: 24px 16px;
+  text-align: center; cursor: pointer;
+  transition: border-color .2s, background .2s;
+  background: rgba(251,244,224,0.45);
+  position: relative;
+}
+.upload-zone:hover {
+  border-color: var(--gold-accent);
+  background: var(--gold-pale);
+}
+.upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  width: 100%; height: 100%; padding: 0; border: none; background: none;
+}
+.upload-icon {
+  width: 34px; height: 34px; margin: 0 auto 10px;
+  color: var(--gold-accent); opacity: .8;
+}
+.upload-title { font-size: 13px; color: var(--text-main); margin-bottom: 4px; }
+.upload-sub { font-size: 10px; color: var(--text-hint); letter-spacing: 1px; }
+.upload-limit {
+  display: inline-block; margin-top: 8px;
+  font-size: 9px; color: var(--gold-dark);
+  border: 1px solid rgba(158,124,42,0.22); background: var(--bg-card);
+  padding: 2px 10px; border-radius: 2px; letter-spacing: 1px;
+}
+.upload-counter {
+  font-size: 10px; color: var(--text-hint); margin-top: 8px; letter-spacing: 1px;
+}
+.upload-counter span { color: var(--gold-dark); font-weight: 500; }
+
+/* Preview grid */
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px,1fr));
+  gap: 8px; margin-top: 12px;
+}
+.preview-item {
+  position: relative; border-radius: 5px; overflow: hidden;
+  border: 1px solid var(--border-slate);
+  aspect-ratio: 1; background: var(--bg-muted);
+}
+.preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.preview-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.remove-btn {
+  position: absolute; top: 4px; right: 4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,0.92); border: 1px solid rgba(180,50,50,0.3);
+  color: rgba(160,40,40,0.9); font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; line-height: 1; transition: background .15s;
+}
+.remove-btn:hover { background: rgba(220,60,60,0.12); }
+.media-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.88);
+  font-size: 9px; color: var(--text-muted); padding: 3px 5px;
+  letter-spacing: .4px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.video-badge {
+  position: absolute; top: 4px; left: 4px;
+  background: rgba(158,124,42,0.88); border-radius: 2px;
+  font-size: 8px; color: #fff; padding: 2px 5px;
+  letter-spacing: 1px; font-weight: 500;
+}
+
+/* ── CALENDAR ── */
+.calendar-wrap {
+  background: var(--bg-section);
+  border: 1px solid var(--border-card);
+  border-radius: 6px; padding: 20px;
+}
+.cal-nav {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 14px;
+}
+.cal-nav button {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  color: var(--gold-dark); width: 30px; height: 30px; border-radius: 4px;
+  cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s; box-shadow: 0 1px 4px rgba(44,38,32,0.06);
+}
+.cal-nav button:hover { background: var(--gold-pale); border-color: var(--gold); }
+.cal-month {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; font-weight: 700; color: var(--text-main); letter-spacing: 2px;
+}
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 6px;
+}
+.cal-weekdays span {
+  text-align: center; font-size: 9px; letter-spacing: 1px;
+  color: var(--gold-dark); padding: 4px; font-family: 'Jost', sans-serif;
+}
+.cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cal-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; border-radius: 4px; cursor: pointer;
+  transition: all .15s; border: 1px solid transparent;
+  color: var(--text-main); font-family: 'Jost', sans-serif;
+  background: transparent;
+}
+.cal-day:hover:not(.disabled):not(.occupied) {
+  background: var(--gold-pale); border-color: var(--border);
+}
+.cal-day.selected {
+  background: var(--gold); color: #fff; font-weight: 500; border-color: var(--gold-dark);
+}
+.cal-day.occupied {
+  background: rgba(210,60,40,0.07); color: rgba(180,60,40,.5);
+  cursor: not-allowed; text-decoration: line-through;
+}
+.cal-day.disabled { color: rgba(44,38,32,0.2); cursor: not-allowed; }
+.cal-day.today { border-color: var(--gold-accent); color: var(--gold-dark); font-weight: 500; }
+.cal-day.empty { cursor: default; }
+.cal-day.saturday { color: var(--gold-dark); }
+
+.cal-legend {
+  display: flex; gap: 18px; margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--border-card); flex-wrap: wrap;
+}
+.cal-legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; color: var(--text-muted);
+  font-family: 'Jost', sans-serif;
+}
+.cal-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+/* Time slots */
+.time-slots {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 7px; margin-top: 12px;
+}
+.time-slot {
+  padding: 9px 4px; text-align: center;
+  border: 1px solid var(--border-slate); border-radius: 4px;
+  font-size: 12px; cursor: pointer; transition: all .15s;
+  color: var(--text-main); background: var(--bg-card);
+  font-family: 'Jost', sans-serif;
+}
+.time-slot:hover:not(.slot-taken) {
+  background: var(--gold-pale); border-color: var(--gold); color: var(--gold-dark);
+}
+.time-slot.slot-selected {
+  background: var(--gold); color: #fff; border-color: var(--gold-dark); font-weight: 500;
+}
+.time-slot.slot-taken {
+  background: rgba(210,60,40,0.05); color: rgba(180,60,40,.4);
+  cursor: not-allowed; text-decoration: line-through; border-color: rgba(210,60,40,0.12);
+}
+
+/* ── FORM FOOTER ── */
+.form-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 36px;
+  border-top: 1px solid var(--border-card);
+  background: var(--bg-section);
+  flex-wrap: wrap; gap: 14px;
+}
+.folio-text { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+.folio-text strong { color: var(--gold-dark); }
+.btn-submit {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--gold); border: none; border-radius: 4px;
+  color: #fff; font-family: 'Jost', sans-serif;
+  font-size: 12px; font-weight: 500; letter-spacing: 3px;
+  padding: 14px 34px; cursor: pointer;
+  transition: background .2s, transform .1s;
+  box-shadow: 0 2px 12px rgba(158,124,42,0.25);
+}
+.btn-submit:hover { background: var(--gold-light); }
+.btn-submit:active { transform: scale(.98); }
+
+/* ── WhatsApp FAB ── */
+.fab-wa {
+  position: fixed; bottom: 28px; right: 28px; z-index: 999;
+  width: 54px; height: 54px; background: #25D366; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(37,211,102,0.38);
+  transition: transform .2s, box-shadow .2s;
+}
+.fab-wa:hover { transform: scale(1.08); box-shadow: 0 6px 26px rgba(37,211,102,0.5); }
+.fab-wa svg { width: 27px; height: 27px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; top: 24px; left: 50%;
+  transform: translateX(-50%) translateY(-90px);
+  background: var(--bg-card); border: 1px solid var(--gold);
+  color: var(--text-main); padding: 14px 28px; border-radius: 4px;
+  font-size: 13px; z-index: 9999;
+  transition: transform .35s cubic-bezier(.22,1,.36,1);
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(44,38,32,0.12);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast span { color: var(--gold-dark); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate { animation: fadeUp .5s ease both; }
+.a1 { animation-delay: .05s; }
+.a2 { animation-delay: .15s; }
+.a3 { animation-delay: .25s; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:640px) {
+  header { padding: 14px 18px; }
+  .hero { padding: 36px 18px 28px; }
+  .form-body { padding: 18px; }
+  .form-footer { padding: 18px; flex-direction: column; align-items: stretch; }
+  .field-grid, .field-grid.triple { grid-template-columns: 1fr; }
+  .time-slots { grid-template-columns: repeat(3,1fr); }
+  .form-section { padding: 0 12px 60px; }
+  .btn-submit { justify-content: center; }
+  .preview-grid { grid-template-columns: repeat(auto-fill,minmax(75px,1fr)); }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="animate a1">
+  <div class="logo-wrap">
+    <svg class="logo-emblem" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#FFFFFF"/>
+      <line x1="8"  y1="8"  x2="22" y2="8"  stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="8"  y1="8"  x2="8"  y2="22" stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="92" y1="8"  x2="78" y2="8"  stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="92" y1="8"  x2="92" y2="22" stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="8"  y1="92" x2="22" y2="92" stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="8"  y1="92" x2="8"  y2="78" stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="92" y1="92" x2="78" y2="92" stroke="#9E7C2A" stroke-width="1.5"/>
+      <line x1="92" y1="92" x2="92" y2="78" stroke="#9E7C2A" stroke-width="1.5"/>
+      <circle cx="50" cy="50" r="30" stroke="#9E7C2A" stroke-width="1.5" fill="none"/>
+      <circle cx="50" cy="50" r="22" fill="#9E7C2A"/>
+      <circle cx="50" cy="50" r="12" fill="#FFFFFF"/>
+      <rect x="45" y="14" width="10" height="10" rx="2" fill="#9E7C2A"/>
+      <rect x="45" y="76" width="10" height="10" rx="2" fill="#9E7C2A"/>
+      <rect x="76" y="45" width="10" height="10" rx="2" fill="#9E7C2A"/>
+      <rect x="14" y="45" width="10" height="10" rx="2" fill="#9E7C2A"/>
+      <rect x="63" y="19" width="10" height="10" rx="2" fill="#9E7C2A" transform="rotate(45 68 24)"/>
+      <rect x="63" y="67" width="10" height="10" rx="2" fill="#9E7C2A" transform="rotate(-45 68 72)"/>
+      <rect x="17" y="19" width="10" height="10" rx="2" fill="#9E7C2A" transform="rotate(-45 22 24)"/>
+      <rect x="17" y="67" width="10" height="10" rx="2" fill="#9E7C2A" transform="rotate(45 22 72)"/>
+      <text x="50" y="54" text-anchor="middle" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#9E7C2A">ATM</text>
+    </svg>
+    <div class="logo-text">
+      <h1>ATM</h1>
+      <p>SERVICIO MECÁNICO · REFACCIONES</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge">GUANAJUATO, MX</div>
+    <div class="header-version">Web_ATM_Clientes_v1.0.4</div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero animate a2">
+  <div class="hero-tag">SOLICITUD DE SERVICIO</div>
+  <h2>Agenda tu cita<br>con <span>expertos</span></h2>
+  <p>Completa el formulario y nos ponemos en contacto para confirmar tu servicio.</p>
+  <div class="divider"><div class="divider-diamond"></div></div>
+</section>
+
+<!-- FORM -->
+<section class="form-section animate a3">
+  <div class="form-card">
+
+    <div class="form-card-header">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+      </svg>
+      <h3>NUEVO REGISTRO DE CLIENTE</h3>
+      <span id="folioHeader">FOLIO: ATM-000001</span>
+    </div>
+
+    <form id="mainForm" onsubmit="submitForm(event)">
+    <div class="form-body">
+
+      <!-- DATOS DE CONTACTO -->
+      <div class="section-label">DATOS DE CONTACTO</div>
+      <div class="field-grid">
+
+        <div class="field full">
+          <label>NOMBRE COMPLETO <span class="req">*</span></label>
+          <input type="text" id="nombreCompleto"
+            placeholder="Nombre · Apellido Paterno · Apellido Materno"
+            required autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label>CORREO ELECTRÓNICO <span class="req">*</span></label>
+          <div class="email-wrap">
+            <input type="email" id="emailField"
+              placeholder="tucorreo@email.com" required autocomplete="email">
+            <div class="email-auto-badge" id="emailBadge">AUTO</div>
+          </div>
+          <div class="field-hint">Se detecta automáticamente en dispositivos compatibles</div>
+        </div>
+
+        <div class="field">
+          <label>TELÉFONO DE CONTACTO <span class="req">*</span></label>
+          <input type="tel" id="telField"
+            placeholder="(466) 000-0000" maxlength="15" required autocomplete="tel">
+        </div>
+
+        <div class="field full">
+          <label>DIRECCIÓN / COLONIA</label>
+          <input type="text" id="direccion"
+            placeholder="Calle, número, colonia, ciudad" autocomplete="street-address">
+        </div>
+
+      </div>
+
+      <!-- DATOS DEL VEHÍCULO -->
+      <div class="section-label">DATOS DEL VEHÍCULO</div>
+      <div class="field-grid triple">
+        <div class="field">
+          <label>PLACAS <span class="req">*</span></label>
+          <input type="text" id="placas" placeholder="ABC-123-D" maxlength="10" required
+            oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
+          <label>MARCA</label>
+          <select id="marca">
+            <option value="">Seleccionar…</option>
+            <option>Chevrolet</option><option>Ford</option><option>Nissan</option>
+            <option>Toyota</option><option>Volkswagen</option><option>Honda</option>
+            <option>Hyundai</option><option>Kia</option><option>Dodge</option>
+            <option>Jeep</option><option>RAM</option><option>Mazda</option>
+            <option>Seat</option><option>Renault</option><option>Otra</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>MODELO / AÑO</label>
+          <input type="text" id="modelo" placeholder="Ej. Aveo 2019">
+        </div>
+        <div class="field">
+          <label>COLOR</label>
+          <input type="text" id="color" placeholder="Blanco, rojo…">
+        </div>
+        <div class="field">
+          <label>ÚLTIMOS 6 DÍGITOS N° SERIE</label>
+          <input type="text" id="nserie" placeholder="AB1234" maxlength="6"
+            oninput="this.value=this.value.toUpperCase()">
+          <div class="field-hint">Tablero o puerta del conductor</div>
+        </div>
+        <div class="field">
+          <label>KILOMETRAJE APROX.</label>
+          <input type="text" id="km" placeholder="65,000 km">
+        </div>
+      </div>
+
+      <!-- TIPO DE SERVICIO -->
+      <div class="section-label">TIPO DE SERVICIO REQUERIDO</div>
+      <div class="field" style="margin-bottom:14px">
+        <label>SELECCIONA EL O LOS SERVICIOS <span class="req">*</span></label>
+        <div class="service-chips">
+          <div class="chip" onclick="toggleChip(this)">Afinación</div>
+          <div class="chip" onclick="toggleChip(this)">Cambio de aceite</div>
+          <div class="chip" onclick="toggleChip(this)">Frenos</div>
+          <div class="chip" onclick="toggleChip(this)">Suspensión</div>
+          <div class="chip" onclick="toggleChip(this)">Sistema eléctrico</div>
+          <div class="chip" onclick="toggleChip(this)">Diagnóstico</div>
+          <div class="chip" onclick="toggleChip(this)">A/C y climatización</div>
+          <div class="chip" onclick="toggleChip(this)">Transmisión</div>
+          <div class="chip" onclick="toggleChip(this)">Motor</div>
+          <div class="chip" onclick="toggleChip(this)">Refacciones</div>
+          <div class="chip" onclick="toggleChip(this)">Revisión general</div>
+          <div class="chip" onclick="toggleChip(this)">Otro</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>DESCRIPCIÓN DEL PROBLEMA O SERVICIO</label>
+        <textarea id="descripcion"
+          placeholder="Describe brevemente el problema. Ej: Ruido en frenos al frenar, revisión general antes de viaje largo…"></textarea>
+      </div>
+
+      <!-- EVIDENCIA -->
+      <div class="section-label">EVIDENCIA FOTOGRÁFICA Y VIDEO</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+
+        <div>
+          <label style="display:block; margin-bottom:8px;">
+            FOTOGRAFÍAS DEL VEHÍCULO (mín. 3) <span class="req">*</span>
+          </label>
+          <div class="upload-zone" id="photoZone">
+            <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(event)">
+            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+            </svg>
+            <div class="upload-title">Toca para agregar fotos</div>
+            <div class="upload-sub">JPG · PNG · HEIC</div>
+            <div class="upload-limit">MÁX. 10 FOTOS · 5 MB C/U</div>
+          </div>
+          <div class="upload-counter">Fotos: <span id="photoCount">0</span> / 10</div>
+          <div class="preview-grid" id="photoPreview"></div>
+        </div>
+
+        <div>
+          <label style="display:block; margin-bottom:8px;">VIDEO DEL PROBLEMA (opcional)</label>
+          <div class="upload-zone" id="videoZone">
+            <input type="file" id="videoInput" accept="video/*" onchange="handleVideo(event)">
+            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/>
+            </svg>
+            <div class="upload-title">Toca para agregar video</div>
+            <div class="upload-sub">MP4 · MOV · AVI</div>
+            <div class="upload-limit">MÁX. 1 VIDEO · 50 MB</div>
+          </div>
+          <div class="upload-counter">Video: <span id="videoName">Sin video</span></div>
+          <div class="preview-grid" id="videoPreview"></div>
+        </div>
+
+      </div>
+
+      <!-- AGENDA TU CITA -->
+      <div class="section-label">AGENDA TU CITA</div>
+      <div class="field-grid" style="margin-bottom:14px">
+        <div class="field">
+          <label>FECHA DE SOLICITUD (AUTOMÁTICA)</label>
+          <input type="text" id="fechaSolicitud" readonly>
+        </div>
+        <div class="field">
+          <label>FECHA Y HORA PROGRAMADA</label>
+          <input type="text" id="fechaSeleccionada" readonly placeholder="Elige en el calendario →">
+        </div>
+      </div>
+
+      <div class="calendar-wrap">
+        <div class="cal-nav">
+          <button type="button" onclick="changeMonth(-1)">&#8249;</button>
+          <div class="cal-month" id="calMonth"></div>
+          <button type="button" onclick="changeMonth(1)">&#8250;</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span>
+          <span>JUE</span><span>VIE</span><span>SÁB</span>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+
+        <div id="timeSection" style="display:none; margin-top:18px; padding-top:14px; border-top:1px solid var(--border-card);">
+          <div style="font-size:9px; letter-spacing:2px; color:var(--gold-dark); margin-bottom:10px;">SELECCIONA UN HORARIO</div>
+          <div class="time-slots" id="timeSlots"></div>
+        </div>
+
+        <div class="cal-legend">
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:var(--gold)"></div> Seleccionado
+          </div>
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="border:1px solid rgba(158,124,42,0.4); background:var(--gold-pale)"></div> Disponible
+          </div>
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:rgba(210,60,40,0.15)"></div> Ocupado
+          </div>
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:rgba(44,38,32,0.08)"></div> No disponible
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /form-body -->
+
+    <div class="form-footer">
+      <div class="folio-text">
+        Folio de registro: <strong id="folioFooter">ATM-000001</strong><br>
+        <span style="font-size:9px; margin-top:2px; display:block; color:var(--text-hint)">
+          Datos confidenciales · solo para tu cita
+        </span>
+      </div>
+      <button type="submit" class="btn-submit">
+        ENVIAR SOLICITUD
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+        </svg>
+      </button>
+    </div>
+    </form>
+
+  </div>
+</section>
+
+<!-- WhatsApp FAB -->
+<a class="fab-wa" href="https://wa.me/524666693503" target="_blank" rel="noopener" title="Contáctanos por WhatsApp">
+  <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+</a>
+
+<div class="toast" id="toast">
+  <span>&#10003;</span> ¡Solicitud enviada! Te contactaremos pronto para confirmar.
+</div>
+
+<script>
+  // FOLIO
+  const folio = 'ATM-' + String(Math.floor(Math.random()*99999)+1).padStart(6,'0');
+  document.getElementById('folioHeader').textContent = 'FOLIO: ' + folio;
+  document.getElementById('folioFooter').textContent = folio;
+
+  // FECHA SOLICITUD
+  const now = new Date();
+  document.getElementById('fechaSolicitud').value =
+    now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // EMAIL AUTO
+  const emailInput = document.getElementById('emailField');
+  const emailBadge = document.getElementById('emailBadge');
+  if ('contacts' in navigator && 'ContactsManager' in window) {
+    navigator.contacts.select(['email'],{multiple:false}).then(c=>{
+      if(c&&c[0]&&c[0].email&&c[0].email[0]){
+        emailInput.value = c[0].email[0];
+        emailBadge.style.display = 'block';
+      }
+    }).catch(()=>{});
+  }
+
+  // CHIPS
+  function toggleChip(el){ el.classList.toggle('chip-active'); }
+
+  // PHOTOS
+  const photos = [];
+  function handlePhotos(e){
+    Array.from(e.target.files).forEach(f => {
+      if(photos.length >= 10) return;
+      if(!f.type.startsWith('image/')) return;
+      photos.push(f);
+    });
+    renderPhotos(); e.target.value='';
+  }
+  function renderPhotos(){
+    const grid = document.getElementById('photoPreview');
+    document.getElementById('photoCount').textContent = photos.length;
+    grid.innerHTML = '';
+    document.getElementById('photoZone').style.borderColor =
+      photos.length >= 3 ? 'rgba(158,124,42,0.7)' : 'rgba(158,124,42,0.35)';
+    photos.forEach((f,i) => {
+      const url = URL.createObjectURL(f);
+      const el = document.createElement('div');
+      el.className = 'preview-item';
+      el.innerHTML = `<img src="${url}">
+        <div class="media-label">${trunc(f.name,14)}</div>
+        <div class="remove-btn" onclick="removePhoto(${i})">×</div>`;
+      grid.appendChild(el);
+    });
+  }
+  function removePhoto(i){ photos.splice(i,1); renderPhotos(); }
+
+  // VIDEO
+  let videoFile = null;
+  function handleVideo(e){
+    const f = e.target.files[0]; if(!f) return;
+    if(f.size > 50*1024*1024){ alert('El video no debe superar 50 MB'); e.target.value=''; return; }
+    videoFile = f; renderVideo(); e.target.value='';
+  }
+  function renderVideo(){
+    const grid = document.getElementById('videoPreview');
+    document.getElementById('videoName').textContent = videoFile ? trunc(videoFile.name,22) : 'Sin video';
+    grid.innerHTML = '';
+    if(!videoFile){ document.getElementById('videoZone').style.borderColor='rgba(158,124,42,0.35)'; return; }
+    document.getElementById('videoZone').style.borderColor='rgba(158,124,42,0.7)';
+    const url = URL.createObjectURL(videoFile);
+    const el = document.createElement('div');
+    el.className = 'preview-item'; el.style.aspectRatio='16/9';
+    el.innerHTML = `<video src="${url}" muted playsinline preload="metadata"></video>
+      <div class="video-badge">VIDEO</div>
+      <div class="media-label">${trunc(videoFile.name,18)}</div>
+      <div class="remove-btn" onclick="removeVideo()">×</div>`;
+    grid.appendChild(el);
+  }
+  function removeVideo(){ videoFile=null; renderVideo(); }
+  function trunc(s,n){ return s.length>n ? s.slice(0,n)+'…' : s; }
+
+  // CALENDAR
+  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const occupiedDays=[3,7,12,18,22,25];
+  const allSlots=['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+  let viewYear=now.getFullYear(), viewMonth=now.getMonth();
+  let selectedDay=null, selectedSlot=null;
+
+  function changeMonth(dir){
+    viewMonth+=dir;
+    if(viewMonth>11){viewMonth=0;viewYear++;}
+    if(viewMonth<0){viewMonth=11;viewYear--;}
+    renderCalendar();
+    document.getElementById('timeSection').style.display='none';
+    selectedDay=null; selectedSlot=null;
+  }
+
+  function renderCalendar(){
+    document.getElementById('calMonth').textContent=MONTHS[viewMonth]+' '+viewYear;
+    const days=document.getElementById('calDays');
+    days.innerHTML='';
+    const firstDay=new Date(viewYear,viewMonth,1).getDay();
+    const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+    const todayD=now.getDate();
+    const isCurr=viewYear===now.getFullYear()&&viewMonth===now.getMonth();
+
+    for(let i=0;i<firstDay;i++){
+      const e=document.createElement('div'); e.className='cal-day empty'; days.appendChild(e);
+    }
+    for(let d=1;d<=daysInMonth;d++){
+      const el=document.createElement('div'); el.textContent=d; el.className='cal-day';
+      const dDate=new Date(viewYear,viewMonth,d);
+      const isPast=isCurr&&d<todayD;
+      const isSun=dDate.getDay()===0;
+      const isSat=dDate.getDay()===6;
+      const isOcc=occupiedDays.includes(d)&&isCurr;
+      const isToday=isCurr&&d===todayD;
+
+      if(isPast||isSun){ el.classList.add('disabled'); }
+      else if(isOcc){ el.classList.add('occupied'); }
+      else { el.addEventListener('click',()=>selectDay(d,el)); }
+
+      if(isToday&&!isPast) el.classList.add('today');
+      if(isSat&&!isPast&&!isOcc) el.classList.add('saturday');
+      if(selectedDay===d&&isCurr) el.classList.add('selected');
+      days.appendChild(el);
+    }
+  }
+
+  function selectDay(d,el){
+    document.querySelectorAll('.cal-day.selected').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected'); selectedDay=d; selectedSlot=null;
+    const isSat=new Date(viewYear,viewMonth,d).getDay()===6;
+    document.getElementById('timeSection').style.display='block';
+    const dateKey=viewYear+'-'+(viewMonth+1)+'-'+d;
+    renderSlots(dateKey, isSat);
+    document.getElementById('fechaSeleccionada').value=d+' de '+MONTHS[viewMonth]+' '+viewYear;
+  }
+
+  function renderSlots(dateKey, isSat){
+    const container=document.getElementById('timeSlots'); container.innerHTML='';
+    const slots=isSat?allSlots.slice(0,6):allSlots;
+    slots.forEach((t,i)=>{
+      const el=document.createElement('div'); el.className='time-slot'; el.textContent=t;
+      el.addEventListener('click',()=>selectSlot(el,t));
+      container.appendChild(el);
+    });
+  }
+
+  function selectSlot(el,t){
+    document.querySelectorAll('.time-slot.slot-selected').forEach(e=>e.classList.remove('slot-selected'));
+    el.classList.add('slot-selected'); selectedSlot=t;
+    const cur=document.getElementById('fechaSeleccionada').value.split(' — ')[0];
+    document.getElementById('fechaSeleccionada').value=cur+' — '+t+' hrs';
+  }
+
+  // SUBMIT
+  function submitForm(e){
+    e.preventDefault();
+    if(photos.length < 3){
+      alert('Por favor agrega al menos 3 fotografías del vehículo.');
+      return;
+    }
+    const btn=document.querySelector('.btn-submit');
+    btn.textContent='ENVIANDO…'; btn.disabled=true;
+    setTimeout(()=>{
+      const toast=document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'),4500);
+      btn.textContent='SOLICITUD ENVIADA';
+      btn.style.background='#3a7a58';
+      btn.style.color='#fff';
+    },1200);
+  }
+
+  renderCalendar();
+</script>
+</body>
+</html>
