@@ -3,272 +3,291 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATM Servicio Mecánico · v1.3.0</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<title>ATM Servicio Mecánico v1.5.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --red:#C0392B;--red-d:#8E1B12;--red-p:#FDEDEC;
-  --blue:#1A3A60;--blue-m:#2471A3;--blue-l:#3498DB;--blue-p:#EBF5FB;
-  --green:#1a6e45;
-  --g900:#1C1C1E;--g700:#3A3A3C;--g500:#636366;
-  --g300:#AEAEB2;--g100:#F2F2F7;--g50:#F9F9FB;--white:#fff;
-  --brd:rgba(174,174,178,0.28);--brd-r:rgba(192,57,43,0.3);--brd-b:rgba(36,113,163,0.3);
-  --shadow:0 4px 24px rgba(28,28,30,0.10);
-}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--g100);color:var(--g900);font-family:'Open Sans',Arial,sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
-.top-stripe{height:4px;background:linear-gradient(90deg,var(--red-d),var(--red) 40%,var(--blue-m) 70%,var(--blue));}
+:root{
+  --red:#C0392B;--redd:#8E1B12;--redp:#FDEDEC;
+  --blue:#1A3A60;--bluem:#2471A3;--bluel:#3498DB;--bluep:#EBF5FB;
+  --green:#1a6e45;--gray:#607D8B;
+  --g9:#1C1C1E;--g7:#3A3A3C;--g5:#636366;--g3:#AEAEB2;
+  --g1:#F2F2F7;--g05:#F9F9FB;--w:#ffffff;
+  --br:rgba(174,174,178,0.3);--brr:rgba(192,57,43,0.3);--brb:rgba(36,113,163,0.3);
+}
+body{font-family:"Open Sans",Arial,sans-serif;background:var(--g1);color:var(--g9);min-height:100vh;}
+
+/* TOP STRIPE */
+.stripe{height:4px;background:linear-gradient(90deg,var(--redd),var(--red) 35%,var(--bluem) 65%,var(--blue));}
 
 /* HEADER */
-header{position:relative;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:12px 28px;background:var(--white);border-bottom:1px solid var(--brd);box-shadow:0 2px 12px rgba(28,28,30,0.07);gap:10px;flex-wrap:wrap;}
-.logo-wrap{display:flex;align-items:center;gap:11px;flex-shrink:0;}
-.logo-emblem{width:44px;height:44px;}
-.logo-text h1{font-family:'Oswald',Arial,sans-serif;font-size:20px;font-weight:700;color:var(--g900);letter-spacing:4px;line-height:1;}
-.logo-text p{font-size:9px;color:var(--red);letter-spacing:3px;margin-top:3px;font-weight:600;text-transform:uppercase;}
+.hdr{display:flex;align-items:center;gap:12px;padding:10px 24px;background:var(--w);border-bottom:1px solid var(--br);box-shadow:0 2px 8px rgba(0,0,0,.07);flex-wrap:wrap;position:relative;z-index:100;}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo svg{width:42px;height:42px;}
+.logo h1{font-family:"Oswald",Arial,sans-serif;font-size:20px;font-weight:700;letter-spacing:4px;color:var(--g9);}
+.logo p{font-size:9px;color:var(--red);letter-spacing:3px;font-weight:600;text-transform:uppercase;margin-top:2px;}
 
 /* SEARCH */
-.search-wrap{position:relative;flex:1;min-width:200px;max-width:320px;}
-.search-row{display:flex;align-items:center;background:var(--g50);border:1px solid var(--brd);border-radius:4px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
-.search-row:focus-within{border-color:var(--blue-l);box-shadow:0 0 0 3px rgba(52,152,219,0.10);}
-.si{padding:0 9px;color:var(--g300);display:flex;align-items:center;}
-.si svg{width:14px;height:14px;}
-#searchInput{border:none;background:transparent;font-family:'Open Sans',Arial,sans-serif;font-size:13px;color:var(--g900);padding:9px 0;outline:none;width:100%;}
-#searchInput::placeholder{color:var(--g300);}
-.sc{padding:0 8px;color:var(--g300);cursor:pointer;font-size:16px;display:none;align-items:center;background:none;border:none;transition:color .15s;}
-.sc:hover{color:var(--red);}
-.sc.on{display:flex;}
-.sd{position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--white);border:1px solid var(--brd);border-radius:5px;box-shadow:0 8px 28px rgba(28,28,30,0.13);z-index:500;max-height:300px;overflow-y:auto;display:none;}
-.sd.open{display:block;}
-.sd-hdr{padding:7px 13px;font-family:'Oswald',Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;color:var(--g300);text-transform:uppercase;border-bottom:1px solid var(--brd);background:var(--g50);}
-.sd-sec{padding:5px 13px 3px;font-family:'Oswald',Arial,sans-serif;font-size:9px;font-weight:600;letter-spacing:2px;color:var(--g300);text-transform:uppercase;background:var(--g50);border-bottom:1px solid var(--brd);}
-.sd-item{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--brd);transition:background .15s;display:flex;align-items:center;gap:9px;}
-.sd-item:last-child{border-bottom:none;}
-.sd-item:hover{background:var(--blue-p);}
-.sd-badge{font-family:'Oswald',Arial,sans-serif;font-size:9px;font-weight:600;letter-spacing:1px;padding:2px 5px;border-radius:2px;flex-shrink:0;}
-.bd-cot{background:var(--red-p);color:var(--red);border:1px solid var(--brd-r);}
-.sd-info{flex:1;min-width:0;}
-.sd-name{font-size:13px;font-weight:600;color:var(--g900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sd-meta{font-size:11px;color:var(--g500);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sd-date{font-size:10px;color:var(--g300);flex-shrink:0;}
-.sd-empty{padding:16px 13px;text-align:center;font-size:13px;color:var(--g300);}
+.srch{flex:1;min-width:180px;max-width:280px;position:relative;}
+.srch-box{display:flex;align-items:center;border:1px solid var(--br);border-radius:4px;background:var(--g05);overflow:hidden;}
+.srch-box:focus-within{border-color:var(--bluel);box-shadow:0 0 0 3px rgba(52,152,219,.1);}
+.srch-box input{border:none;background:transparent;padding:8px 8px 8px 0;font-size:13px;outline:none;width:100%;color:var(--g9);}
+.srch-box input::placeholder{color:var(--g3);}
+.srch-ic{padding:0 8px;color:var(--g3);display:flex;}
+.srch-ic svg{width:14px;height:14px;}
+.srch-x{padding:0 8px;background:none;border:none;color:var(--g3);cursor:pointer;font-size:16px;display:none;}
+.srch-x.vis{display:block;}
+.dd{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--w);border:1px solid var(--br);border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.13);z-index:400;max-height:280px;overflow-y:auto;}
+.dd.open{display:block;}
+.dd-hdr{padding:6px 12px;font-family:"Oswald",Arial,sans-serif;font-size:10px;letter-spacing:2px;color:var(--g3);background:var(--g05);border-bottom:1px solid var(--br);text-transform:uppercase;}
+.dd-row{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:8px;transition:background .15s;}
+.dd-row:last-child{border-bottom:none;}
+.dd-row:hover{background:var(--bluep);}
+.dd-tag{font-family:"Oswald",Arial,sans-serif;font-size:9px;font-weight:600;padding:2px 5px;border-radius:2px;flex-shrink:0;background:var(--bluep);color:var(--blue);border:1px solid var(--brb);}
+.dd-info{flex:1;min-width:0;}
+.dd-name{font-size:13px;font-weight:600;color:var(--g9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dd-sub{font-size:11px;color:var(--g5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dd-date{font-size:10px;color:var(--g3);flex-shrink:0;}
+.dd-empty{padding:16px 12px;text-align:center;font-size:13px;color:var(--g3);}
 
-/* NAV */
-.header-nav{display:flex;align-items:center;gap:7px;flex-shrink:0;}
-.btn-nav{display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:3px;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:all .18s;}
-.sn{width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.22);}
-.btn-nav-cot{background:var(--red);color:#fff;} .btn-nav-cot:hover,.btn-nav-cot.active{background:var(--red-d);}
-.btn-nav-os{background:var(--blue);color:#fff;} .btn-nav-os:hover,.btn-nav-os.active{background:var(--blue-m);}
-.btn-nav svg{width:12px;height:12px;}
-.step-arrow{color:var(--g300);font-size:16px;}
-.hv{font-size:9px;color:var(--g300);letter-spacing:1px;}
+/* TABS */
+.tabs{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tab{display:flex;align-items:center;gap:6px;padding:8px 14px;border:none;border-radius:3px;font-family:"Oswald",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .15s;color:#fff;}
+.tab svg{width:12px;height:12px;}
+.tab .n{width:16px;height:16px;border-radius:50%;font-size:9px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;}
+.tab-os{background:var(--blue);} .tab-os:hover,.tab-os.on{background:var(--bluem);}
+.tab-cot{background:var(--red);} .tab-cot:hover,.tab-cot.on{background:var(--redd);}
+.tab-cfg{background:var(--gray);} .tab-cfg:hover,.tab-cfg.on{background:var(--g7);}
+.ver{font-size:9px;color:var(--g3);letter-spacing:1px;}
 
 /* PROGRESS */
-.progress-bar{display:flex;align-items:center;justify-content:center;gap:0;padding:7px 40px;background:var(--white);border-bottom:1px solid var(--brd);}
-.ps{display:flex;align-items:center;gap:7px;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:2px;color:var(--g300);transition:all .2s;}
-.ps.done{color:var(--green);} .ps.active{color:var(--red);} .ps.active-os{color:var(--blue);}
-.ps .pn{width:18px;height:18px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.prog{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 24px;background:var(--w);border-bottom:1px solid var(--br);}
+.ps{display:flex;align-items:center;gap:6px;padding:4px 12px;font-family:"Oswald",Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--g3);transition:all .2s;}
+.ps .pn{width:17px;height:17px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.ps.a-os{color:var(--blue);} .ps.a-cot{color:var(--red);} .ps.done{color:var(--green);}
 .ps.done .pn{background:var(--green);border-color:var(--green);color:#fff;}
-.pa{color:var(--g300);font-size:16px;margin:0 2px;}
+.pa{color:var(--g3);font-size:14px;}
 
 /* PAGES */
-.page{display:none;animation:fadeIn .3s ease;}
-.page.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.pg{display:none;}
+.pg.on{display:block;}
+
+/* BANNER */
+.banner{display:none;max-width:860px;margin:12px auto 0;padding:10px 16px;border-radius:5px;align-items:center;gap:10px;border:1px solid var(--brb);background:linear-gradient(90deg,var(--bluep),var(--w));}
+.banner.on{display:flex;}
+.banner.red{border-color:var(--brr);background:linear-gradient(90deg,var(--redp),var(--w));}
+.ban-ic{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ban-ic.b{background:var(--blue);color:#fff;} .ban-ic.r{background:var(--red);color:#fff;}
+.ban-ic svg{width:13px;height:13px;}
+.ban-txt{flex:1;}
+.ban-title{font-family:"Oswald",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;}
+.ban-title.b{color:var(--blue);} .ban-title.r{color:var(--red);}
+.ban-meta{font-size:11px;color:var(--g5);margin-top:1px;}
+.ban-btn{background:none;border:1px solid var(--br);border-radius:2px;color:var(--g5);font-size:11px;padding:4px 9px;cursor:pointer;font-weight:600;white-space:nowrap;transition:all .15s;}
+.ban-btn:hover{border-color:var(--red);color:var(--red);}
 
 /* HERO */
-.hero{position:relative;z-index:1;text-align:center;padding:36px 48px 26px;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(255,255,255,0.015) 30px,rgba(255,255,255,0.015) 31px);}
-.hero-cot{background:linear-gradient(135deg,var(--red-d) 0%,var(--g900) 55%,var(--blue) 100%);}
-.hero-os {background:linear-gradient(135deg,var(--blue) 0%,var(--g900) 55%,var(--red-d) 100%);}
-.hero-tag{display:inline-flex;align-items:center;gap:7px;font-family:'Oswald',Arial,sans-serif;font-size:10px;font-weight:500;letter-spacing:4px;color:#fff;border:1px solid rgba(255,255,255,0.18);padding:4px 14px;margin-bottom:11px;background:rgba(255,255,255,0.07);border-radius:2px;}
-.htd{width:5px;height:5px;border-radius:50%;}
-.hero-cot .htd{background:var(--red);} .hero-os .htd{background:var(--blue-l);}
-.hero h2{font-family:'Oswald',Arial,sans-serif;font-size:clamp(22px,3.8vw,42px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:7px;letter-spacing:2px;text-transform:uppercase;}
-.ar{color:#E74C3C;} .ab{color:var(--blue-l);}
-.hero p{font-size:13px;color:rgba(255,255,255,0.6);max-width:400px;margin:0 auto;line-height:1.7;}
-.fb{display:inline-block;margin-top:10px;font-family:'Oswald',Arial,sans-serif;font-size:11px;letter-spacing:3px;color:#fff;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:4px 14px;border-radius:2px;}
+.hero{padding:34px 24px 24px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(255,255,255,.015) 30px,rgba(255,255,255,.015) 31px);}
+.h-os{background:linear-gradient(135deg,var(--blue),var(--g9) 55%,var(--redd));}
+.h-cot{background:linear-gradient(135deg,var(--redd),var(--g9) 55%,var(--blue));}
+.h-cfg{background:linear-gradient(135deg,var(--g7),var(--g9));}
+.htag{display:inline-flex;align-items:center;gap:7px;font-family:"Oswald",Arial,sans-serif;font-size:10px;letter-spacing:4px;color:#fff;border:1px solid rgba(255,255,255,.2);padding:4px 14px;margin-bottom:10px;background:rgba(255,255,255,.07);border-radius:2px;}
+.hdot{width:5px;height:5px;border-radius:50%;}
+.h-os .hdot{background:var(--bluel);} .h-cot .hdot{background:var(--red);} .h-cfg .hdot{background:var(--g3);}
+.hero h2{font-family:"Oswald",Arial,sans-serif;font-size:clamp(22px,4vw,40px);font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;position:relative;}
+.hero p{font-size:13px;color:rgba(255,255,255,.6);max-width:400px;margin:0 auto;line-height:1.7;position:relative;}
+.hfol{display:inline-block;margin-top:10px;font-family:"Oswald",Arial,sans-serif;font-size:13px;letter-spacing:3px;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);padding:5px 18px;border-radius:2px;position:relative;}
+.ab{color:var(--bluel);} .ar{color:#E74C3C;} .ag{color:var(--g3);}
 
-/* RECORD BANNER */
-.rec-banner{display:none;background:linear-gradient(90deg,var(--blue-p),var(--white));border:1px solid var(--brd-b);border-radius:5px;padding:11px 16px;max-width:860px;margin:14px auto 0;align-items:center;gap:11px;}
-.rec-banner.show{display:flex;}
-.rec-banner.rb-red{background:linear-gradient(90deg,var(--red-p),var(--white));border-color:var(--brd-r);}
-.rbi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.rbi.blue{background:var(--blue);color:#fff;} .rbi.red{background:var(--red);color:#fff;}
-.rbi svg{width:15px;height:15px;}
-.rbt{font-family:'Oswald',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;color:var(--blue);}
-.rb-red .rbt{color:var(--red);}
-.rbm{font-size:11px;color:var(--g500);margin-top:2px;}
-.rbc{background:none;border:1px solid var(--brd);border-radius:2px;color:var(--g500);font-size:11px;padding:4px 9px;cursor:pointer;font-weight:600;transition:all .15s;white-space:nowrap;margin-left:auto;}
-.rbc:hover{border-color:var(--red);color:var(--red);}
-
-/* FORM */
-.form-section{max-width:860px;margin:0 auto;padding:0 20px 80px;}
-.form-card{background:var(--white);border:1px solid var(--brd);border-radius:6px;overflow:hidden;box-shadow:var(--shadow);position:relative;}
-.form-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;}
-.card-cot::before{background:linear-gradient(180deg,var(--red),var(--blue));}
+/* CARD */
+.card-wrap{max-width:860px;margin:0 auto;padding:0 16px 80px;}
+.card{background:var(--w);border:1px solid var(--br);border-radius:6px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.09);position:relative;}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;}
 .card-os::before{background:linear-gradient(180deg,var(--blue),var(--red));}
-.card-hdr{background:var(--g900);border-bottom:1px solid rgba(255,255,255,0.07);padding:12px 36px 12px 46px;display:flex;align-items:center;gap:10px;}
-.card-hdr svg{width:14px;height:14px;color:rgba(255,255,255,0.5);}
-.card-hdr h3{font-family:'Oswald',Arial,sans-serif;font-size:13px;font-weight:600;color:#fff;letter-spacing:3px;text-transform:uppercase;}
-.card-hdr span{margin-left:auto;font-size:10px;color:var(--g500);letter-spacing:1px;}
-.form-body{padding:22px 36px 22px 46px;}
+.card-cot::before{background:linear-gradient(180deg,var(--red),var(--blue));}
+.card-cfg::before{background:linear-gradient(180deg,var(--gray),var(--g7));}
+.card-head{background:var(--g9);padding:12px 32px 12px 46px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07);}
+.card-head svg{width:14px;height:14px;color:rgba(255,255,255,.5);}
+.card-head h3{font-family:"Oswald",Arial,sans-serif;font-size:13px;font-weight:600;color:#fff;letter-spacing:3px;text-transform:uppercase;}
+.card-head span{margin-left:auto;font-size:10px;color:var(--g5);letter-spacing:1px;}
+.card-body{padding:22px 32px 22px 46px;}
 
-/* SECTIONS */
-.sec{display:flex;align-items:center;gap:10px;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;margin:20px 0 10px;text-transform:uppercase;}
-.sec::after{content:'';flex:1;height:1px;background:var(--brd);}
-.sec:first-of-type{margin-top:0;}
-.sec.red{color:var(--red);} .sec.blue{color:var(--blue);}
+/* SECTION LABELS */
+.sl{display:flex;align-items:center;gap:10px;font-family:"Oswald",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;margin:20px 0 10px;text-transform:uppercase;}
+.sl:first-child{margin-top:0;}
+.sl::after{content:"";flex:1;height:1px;background:var(--br);}
+.sl.b{color:var(--blue);} .sl.r{color:var(--red);} .sl.g{color:var(--gray);}
 
-/* GRIDS */
-.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
-.fg.t{grid-template-columns:1fr 1fr 1fr;}
-.f{display:flex;flex-direction:column;gap:5px;}
-.f.full{grid-column:1/-1;}
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+.fld{display:flex;flex-direction:column;gap:5px;}
+.fld.full{grid-column:1/-1;}
 
 /* INPUTS */
-label{font-size:10px;letter-spacing:2px;color:var(--g500);font-weight:600;text-transform:uppercase;font-family:'Open Sans',Arial,sans-serif;}
-label span.req{color:var(--red);margin-left:2px;}
-input,select,textarea{background:var(--g50);border:1px solid var(--brd);border-radius:3px;color:var(--g900);font-family:'Open Sans',Arial,sans-serif;font-size:14px;font-weight:400;padding:10px 12px;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;width:100%;}
-input:focus,select:focus,textarea:focus{border-color:var(--blue-l);background:var(--white);box-shadow:0 0 0 3px rgba(52,152,219,0.10);}
-input::placeholder,textarea::placeholder{color:var(--g300);font-size:13px;font-weight:300;}
-select option{background:var(--white);color:var(--g900);}
-input[readonly]{color:var(--blue-m);cursor:default;border-color:rgba(36,113,163,0.2);background:var(--blue-p);font-size:13px;font-weight:600;}
-input[readonly].rr{color:var(--red);border-color:rgba(192,57,43,0.2);background:var(--red-p);}
+label{font-size:10px;letter-spacing:2px;color:var(--g5);font-weight:600;text-transform:uppercase;}
+label .req{color:var(--red);}
+input,select,textarea{width:100%;background:var(--g05);border:1px solid var(--br);border-radius:3px;color:var(--g9);font-family:"Open Sans",Arial,sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s,box-shadow .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--bluel);box-shadow:0 0 0 3px rgba(52,152,219,.1);}
+input::placeholder,textarea::placeholder{color:var(--g3);font-size:13px;}
+select option{background:var(--w);}
+input[readonly]{color:var(--bluem);background:var(--bluep);border-color:var(--brb);font-weight:600;font-size:13px;cursor:default;}
+input.rr[readonly]{color:var(--red);background:var(--redp);border-color:var(--brr);}
 textarea{resize:vertical;}
-.hint{font-size:10px;color:var(--g300);margin-top:2px;letter-spacing:.4px;}
-.ew{position:relative;}
-.ew input{padding-right:50px;}
-.ab2{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--blue-p);border:1px solid var(--brd-b);border-radius:2px;font-size:8px;color:var(--blue-m);letter-spacing:1px;padding:2px 5px;pointer-events:none;display:none;font-weight:600;}
+.hint{font-size:10px;color:var(--g3);margin-top:2px;}
 
 /* CHIPS */
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
-.chip{padding:5px 11px;border:1px solid var(--brd);border-radius:3px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--g500);background:var(--g50);font-weight:600;user-select:none;}
-.chip:hover{border-color:var(--blue-l);color:var(--blue);background:var(--blue-p);}
+.chip{padding:5px 11px;border:1px solid var(--br);border-radius:3px;font-size:11px;cursor:pointer;color:var(--g5);background:var(--g05);font-weight:600;user-select:none;transition:all .15s;}
+.chip:hover{border-color:var(--bluel);color:var(--blue);background:var(--bluep);}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff;}
 
-/* TABLE */
-.cot-table{width:100%;border-collapse:collapse;font-size:13px;}
-.cot-table th{background:var(--g900);color:#fff;font-family:'Oswald',Arial,sans-serif;font-size:10px;letter-spacing:2px;padding:8px 7px;text-align:left;font-weight:500;text-transform:uppercase;}
-.cot-table td{padding:4px;border-bottom:1px solid var(--brd);vertical-align:middle;}
-.cot-table tr:last-child td{border-bottom:none;}
-.cot-table input{padding:7px 8px;font-size:13px;background:var(--white);}
-.cot-table select{padding:6px 5px;font-size:12px;}
-.td-del{width:28px;text-align:center;}
-.del-row{background:none;border:1px solid var(--brd-r);color:var(--red);width:22px;height:22px;border-radius:3px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.del-row:hover{background:var(--red);color:#fff;border-color:var(--red);}
-.add-btns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
-.add-row{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--g50);border:1px dashed var(--brd);border-radius:3px;font-size:11px;color:var(--g500);cursor:pointer;transition:all .15s;font-weight:600;}
-.add-row:hover{border-color:var(--blue-l);color:var(--blue);background:var(--blue-p);}
-
-/* TOTALS */
-.totals{background:var(--g50);border:1px solid var(--brd);border-radius:4px;padding:10px 14px;margin-top:8px;}
-.tr2{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:13px;color:var(--g700);}
-.tr2 label{font-size:10px;color:var(--g500);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin:0;}
-.tr2.grand{border-top:2px solid var(--g900);margin-top:5px;padding-top:7px;font-family:'Oswald',Arial,sans-serif;font-size:16px;font-weight:700;color:var(--g900);letter-spacing:1px;}
+/* UPLOAD */
+.upz{border:2px dashed rgba(174,174,178,.5);border-radius:6px;padding:18px 12px;text-align:center;background:var(--g05);position:relative;cursor:pointer;transition:border-color .2s,background .2s;overflow:hidden;}
+.upz:hover{border-color:var(--bluel);background:var(--bluep);}
+.upz.ok{border-color:var(--green);background:#f0faf4;}
+.upz input[type=file]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:5;}
+.upz-ic{width:28px;height:28px;margin:0 auto 7px;color:var(--bluem);}
+.upz.ok .upz-ic{color:var(--green);}
+.upz-t{font-size:12px;font-weight:600;color:var(--g7);margin-bottom:2px;}
+.upz-s{font-size:10px;color:var(--g3);letter-spacing:1px;}
+.upz-lim{display:inline-block;margin-top:6px;font-size:9px;color:var(--g5);border:1px solid var(--br);background:var(--w);padding:2px 8px;border-radius:2px;letter-spacing:1px;font-weight:600;}
+.up-cnt{font-size:10px;color:var(--g3);margin-top:6px;letter-spacing:1px;}
+.up-cnt span{color:var(--green);font-weight:700;}
+.prev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:5px;margin-top:8px;}
+.prev-item{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--br);aspect-ratio:1;background:var(--g1);}
+.prev-item img,.prev-item video{width:100%;height:100%;object-fit:cover;display:block;}
+.prev-x{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid var(--brr);color:var(--red);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;}
+.prev-x:hover{background:var(--red);color:#fff;}
+.prev-lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(28,28,30,.72);font-size:9px;color:var(--g3);padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vid-tag{position:absolute;top:3px;left:3px;background:var(--red);border-radius:2px;font-size:7px;color:#fff;padding:2px 4px;letter-spacing:1px;font-weight:700;}
 
 /* FIRMA */
-.firma-wrap{border:1px solid var(--brd);border-radius:5px;overflow:hidden;}
-.firma-hdr{background:var(--g50);border-bottom:1px solid var(--brd);padding:7px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
-.firma-hdr span{font-size:10px;color:var(--g500);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.firma-box{border:1px solid var(--br);border-radius:5px;overflow:hidden;}
+.firma-top{background:var(--g05);border-bottom:1px solid var(--br);padding:7px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.firma-top span{font-size:10px;color:var(--g5);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
 .firma-btns{display:flex;gap:6px;}
-.firma-clear{background:none;border:1px solid var(--brd-r);color:var(--red);font-size:11px;padding:4px 9px;border-radius:2px;cursor:pointer;font-weight:600;transition:all .15s;}
-.firma-clear:hover{background:var(--red);color:#fff;}
-.firma-dl{background:var(--blue);border:none;color:#fff;font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-weight:600;transition:background .15s;display:flex;align-items:center;gap:5px;}
-.firma-dl:hover{background:var(--blue-m);}
-.firma-dl svg{width:11px;height:11px;}
-canvas#firmaCanvas{width:100%;height:148px;cursor:crosshair;display:block;touch-action:none;background:#fff;}
-.firma-note{font-size:10px;color:var(--g300);padding:5px 12px;border-top:1px solid var(--brd);background:var(--g50);}
+.f-dl{background:var(--blue);border:none;color:#fff;font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;transition:background .15s;}
+.f-dl:hover{background:var(--bluem);}
+.f-dl svg{width:11px;height:11px;}
+.f-cl{background:none;border:1px solid var(--brr);color:var(--red);font-size:11px;padding:4px 9px;border-radius:2px;cursor:pointer;font-weight:600;transition:all .15s;}
+.f-cl:hover{background:var(--red);color:#fff;}
+.firma-cv{display:block;width:100%;height:150px;cursor:crosshair;touch-action:none;background:#fff;}
+.firma-note{font-size:10px;color:var(--g3);padding:5px 12px;border-top:1px solid var(--br);background:var(--g05);}
 
-/* UPLOAD */
-.upload-zone{border:1.5px dashed rgba(174,174,178,0.45);border-radius:5px;padding:16px 12px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--g50);position:relative;}
-.upload-zone:hover{border-color:var(--blue-l);background:var(--blue-p);}
-.upload-zone.has-files{border-color:var(--red);background:var(--red-p);}
-.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none;background:none;}
-.up-icon{width:26px;height:26px;margin:0 auto 6px;color:var(--blue-m);}
-.has-files .up-icon{color:var(--red);}
-.up-title{font-size:12px;color:var(--g700);margin-bottom:2px;font-weight:600;}
-.up-sub{font-size:10px;color:var(--g300);letter-spacing:1px;}
-.up-limit{display:inline-block;margin-top:5px;font-size:9px;color:var(--g500);border:1px solid var(--brd);background:var(--white);padding:2px 7px;border-radius:2px;letter-spacing:1px;font-weight:600;}
-.up-counter{font-size:10px;color:var(--g300);margin-top:5px;letter-spacing:1px;}
-.up-counter span{color:var(--red);font-weight:700;}
-.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:5px;margin-top:7px;}
-.prev-item{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--brd);aspect-ratio:1;background:var(--g100);}
-.prev-item img,.prev-item video{width:100%;height:100%;object-fit:cover;display:block;}
-.rm-btn{position:absolute;top:3px;right:3px;width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,0.92);border:1px solid rgba(192,57,43,0.3);color:var(--red);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;}
-.rm-btn:hover{background:var(--red);color:#fff;}
-.med-label{position:absolute;bottom:0;left:0;right:0;background:rgba(28,28,30,0.7);font-size:9px;color:var(--g300);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.vid-badge{position:absolute;top:3px;left:3px;background:var(--red);border-radius:2px;font-size:7px;color:#fff;padding:2px 4px;letter-spacing:1px;font-weight:700;}
+/* COT TABLE */
+.ctbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px;}
+.ctbl th{background:var(--g9);color:#fff;font-family:"Oswald",Arial,sans-serif;font-size:10px;letter-spacing:2px;padding:8px 7px;text-align:left;font-weight:500;text-transform:uppercase;}
+.ctbl td{padding:4px;border-bottom:1px solid var(--br);vertical-align:middle;}
+.ctbl tr:last-child td{border-bottom:none;}
+.ctbl input{padding:7px 8px;font-size:13px;background:var(--w);}
+.ctbl select{padding:6px 5px;font-size:12px;}
+.del-r{background:none;border:1px solid var(--brr);color:var(--red);width:22px;height:22px;border-radius:3px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.del-r:hover{background:var(--red);color:#fff;}
+.add-btns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+.add-r{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--g05);border:1px dashed var(--br);border-radius:3px;font-size:11px;color:var(--g5);cursor:pointer;font-weight:600;transition:all .15s;}
+.add-r:hover{border-color:var(--bluel);color:var(--blue);background:var(--bluep);}
+.tots{background:var(--g05);border:1px solid var(--br);border-radius:4px;padding:10px 14px;margin-top:8px;}
+.tot-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:13px;color:var(--g7);}
+.tot-row label{font-size:10px;color:var(--g5);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin:0;}
+.tot-row.grand{border-top:2px solid var(--g9);margin-top:5px;padding-top:7px;font-family:"Oswald",Arial,sans-serif;font-size:16px;font-weight:700;color:var(--g9);}
 
 /* CALENDAR */
-.cal-wrap{background:var(--g50);border:1px solid var(--brd);border-radius:5px;padding:14px;}
+.cal{background:var(--g05);border:1px solid var(--br);border-radius:5px;padding:14px;}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.cal-nav button{background:var(--blue);border:none;color:#fff;width:28px;height:28px;border-radius:3px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
-.cal-nav button:hover{background:var(--red);}
-.cal-month{font-family:'Oswald',Arial,sans-serif;font-size:13px;font-weight:600;color:var(--g900);letter-spacing:2px;text-transform:uppercase;}
+.cal-btn{background:var(--blue);border:none;color:#fff;width:28px;height:28px;border-radius:3px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.cal-btn:hover{background:var(--red);}
+.cal-mo{font-family:"Oswald",Arial,sans-serif;font-size:13px;font-weight:600;color:var(--g9);letter-spacing:2px;text-transform:uppercase;}
 .cal-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
 .cal-wk span{text-align:center;font-size:9px;letter-spacing:1px;color:var(--red);padding:3px;font-weight:700;text-transform:uppercase;}
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-.cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:3px;cursor:pointer;transition:all .15s;border:1px solid transparent;color:var(--g700);background:var(--white);}
-.cal-d:hover:not(.dis):not(.occ){background:var(--blue);color:#fff;}
-.cal-d.sel{background:var(--red);color:#fff;font-weight:700;border-color:var(--red-d);}
-.cal-d.occ{background:var(--g100);color:var(--g300);cursor:not-allowed;text-decoration:line-through;}
-.cal-d.dis{color:var(--g300);cursor:not-allowed;background:transparent;border-color:transparent;}
-.cal-d.today{border-color:var(--blue);color:var(--blue);font-weight:700;}
-.cal-d.sat{color:var(--blue-m);}
-.cal-d.empty{cursor:default;background:transparent;border-color:transparent;}
-.cal-legend{display:flex;gap:12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--brd);flex-wrap:wrap;}
-.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--g500);}
-.leg-dot{width:8px;height:8px;border-radius:2px;}
-.time-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px;}
-.ts{padding:7px 4px;text-align:center;border:1px solid var(--brd);border-radius:3px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--g700);background:var(--white);font-weight:600;}
-.ts:hover:not(.tak){background:var(--blue);color:#fff;}
-.ts.sel{background:var(--red);color:#fff;border-color:var(--red-d);font-weight:700;}
-.ts.tak{background:var(--g100);color:var(--g300);cursor:not-allowed;text-decoration:line-through;}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:3px;cursor:pointer;border:1px solid transparent;color:var(--g7);background:var(--w);transition:all .15s;}
+.cd:hover:not(.dis):not(.occ){background:var(--blue);color:#fff;}
+.cd.sel{background:var(--red);color:#fff;font-weight:700;border-color:var(--redd);}
+.cd.occ{background:var(--g1);color:var(--g3);cursor:not-allowed;text-decoration:line-through;}
+.cd.dis{color:var(--g3);cursor:not-allowed;background:transparent;border-color:transparent;}
+.cd.today{border-color:var(--blue);color:var(--blue);font-weight:700;}
+.cd.sat{color:var(--bluem);}
+.cd.emp{cursor:default;background:transparent;border-color:transparent;}
+.cal-leg{display:flex;gap:12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--br);flex-wrap:wrap;}
+.leg-i{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--g5);}
+.leg-d{width:8px;height:8px;border-radius:2px;}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px;}
+.slot{padding:7px 4px;text-align:center;border:1px solid var(--br);border-radius:3px;font-size:11px;cursor:pointer;background:var(--w);color:var(--g7);font-weight:600;transition:all .15s;}
+.slot:hover:not(.tak){background:var(--blue);color:#fff;}
+.slot.sel{background:var(--red);color:#fff;border-color:var(--redd);font-weight:700;}
+.slot.tak{background:var(--g1);color:var(--g3);cursor:not-allowed;text-decoration:line-through;}
 
 /* FOOTER */
-.form-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 36px 14px 46px;border-top:1px solid var(--brd);background:var(--g100);flex-wrap:wrap;gap:10px;}
-.folio-txt{font-size:10px;color:var(--g500);letter-spacing:1px;}
-.folio-txt strong{color:var(--blue);font-weight:700;}
-.folio-txt strong.red{color:var(--red);}
-.folio-txt small{font-size:9px;color:var(--g300);display:block;margin-top:2px;}
-.btn-p{display:flex;align-items:center;gap:8px;border:none;border-radius:3px;color:#fff;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;padding:11px 20px;cursor:pointer;text-transform:uppercase;transition:background .2s,transform .1s;}
-.btn-p:active{transform:scale(.98);}
-.btn-red{background:var(--red);box-shadow:0 3px 10px rgba(192,57,43,0.25);}
-.btn-red:hover{background:var(--red-d);}
-.btn-blue{background:var(--blue);box-shadow:0 3px 10px rgba(26,58,96,0.25);}
-.btn-blue:hover{background:var(--blue-m);}
-.btn-p svg{width:12px;height:12px;}
+.card-foot{display:flex;align-items:center;justify-content:space-between;padding:14px 32px 14px 46px;border-top:1px solid var(--br);background:var(--g1);flex-wrap:wrap;gap:10px;}
+.ftxt{font-size:10px;color:var(--g5);letter-spacing:1px;}
+.ftxt strong{font-weight:700;}
+.ftxt strong.b{color:var(--blue);} .ftxt strong.r{color:var(--red);}
+.ftxt small{font-size:9px;color:var(--g3);display:block;margin-top:2px;}
+.btn{display:flex;align-items:center;gap:8px;border:none;border-radius:3px;color:#fff;font-family:"Oswald",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;padding:11px 20px;cursor:pointer;text-transform:uppercase;transition:background .2s;}
+.btn svg{width:12px;height:12px;}
+.btn-b{background:var(--blue);} .btn-b:hover{background:var(--bluem);}
+.btn-r{background:var(--red);} .btn-r:hover{background:var(--redd);}
+.btn-g{background:var(--gray);} .btn-g:hover{background:var(--g7);}
+
+/* CONFIG */
+.cfg-blk{padding:22px 32px;border-bottom:1px solid var(--br);}
+.cfg-blk:last-child{border-bottom:none;}
+.cfg-blk h4{font-family:"Oswald",Arial,sans-serif;font-size:13px;font-weight:600;color:var(--g9);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.cfg-blk p{font-size:12px;color:var(--g5);margin-bottom:14px;line-height:1.6;}
+.cfg-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+.cfg-inp{display:flex;flex-direction:column;gap:5px;}
+.cfg-inp label{font-size:10px;color:var(--g5);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.cfg-num{width:130px;font-family:"Oswald",Arial,sans-serif;font-size:24px;font-weight:700;color:var(--g9);text-align:center;border:2px solid var(--br);border-radius:4px;padding:10px;transition:border-color .2s;}
+.cfg-num:focus{border-color:var(--bluel);outline:none;}
+.cfg-prv{font-size:12px;color:var(--g5);margin-top:3px;}
+.cfg-prv span{color:var(--blue);font-weight:700;}
+.cfg-ok{font-size:11px;color:var(--green);font-weight:600;display:none;align-items:center;gap:4px;}
+.cfg-ok.vis{display:flex;}
+.info-box{background:var(--bluep);border:1px solid var(--brb);border-radius:4px;padding:12px 14px;margin-top:12px;font-size:12px;color:var(--blue);line-height:1.6;}
+.ctr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+.ctr-card{border-radius:4px;padding:14px;text-align:center;}
+.ctr-b{background:var(--bluep);border:1px solid var(--brb);}
+.ctr-r{background:var(--redp);border:1px solid var(--brr);}
+.ctr-lbl{font-family:"Oswald",Arial,sans-serif;font-size:10px;letter-spacing:2px;margin-bottom:4px;font-weight:600;}
+.ctr-b .ctr-lbl{color:var(--bluem);} .ctr-r .ctr-lbl{color:var(--red);}
+.ctr-val{font-family:"Oswald",Arial,sans-serif;font-size:30px;font-weight:700;}
+.ctr-b .ctr-val{color:var(--blue);} .ctr-r .ctr-val{color:var(--red);}
 
 /* FAB */
-.fab-wa{position:fixed;bottom:24px;right:24px;z-index:999;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.4);transition:transform .2s;}
-.fab-wa:hover{transform:scale(1.08);}
-.fab-wa svg{width:26px;height:26px;}
+.fab{position:fixed;bottom:22px;right:22px;z-index:999;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,.4);transition:transform .2s;}
+.fab:hover{transform:scale(1.08);}
+.fab svg{width:26px;height:26px;}
 
 /* TOAST */
-.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-90px);background:var(--g900);border:1px solid var(--red);color:#fff;padding:11px 22px;border-radius:4px;font-size:13px;z-index:9999;transition:transform .35s cubic-bezier(.22,1,.36,1);white-space:nowrap;box-shadow:0 6px 18px rgba(28,28,30,0.22);}
-.toast.show{transform:translateX(-50%) translateY(0);}
-.tic{color:#E74C3C;}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--g9);border:1px solid var(--red);color:#fff;padding:10px 20px;border-radius:4px;font-size:13px;z-index:9999;transition:transform .3s cubic-bezier(.22,1,.36,1);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.2);}
+.toast.on{transform:translateX(-50%) translateY(0);}
+.toast .tic{color:#E74C3C;}
 
-@media(max-width:680px){
-  header{padding:10px 12px;}
-  .search-wrap{min-width:150px;max-width:none;order:3;flex-basis:100%;}
-  .hero{padding:24px 14px 18px;}
-  .form-body{padding:14px 14px 14px 18px;}
-  .form-footer{padding:12px;flex-direction:column;align-items:stretch;}
-  .fg,.fg.t{grid-template-columns:1fr;}
-  .time-slots{grid-template-columns:repeat(3,1fr);}
-  .form-section{padding:0 10px 66px;}
-  .btn-p{justify-content:center;}
+@media(max-width:660px){
+  .hdr{padding:10px 12px;}
+  .srch{min-width:140px;max-width:none;order:3;flex-basis:100%;}
+  .hero{padding:24px 12px 18px;}
+  .card-body{padding:14px 14px 14px 18px;}
+  .card-foot{padding:12px;flex-direction:column;align-items:stretch;}
+  .g2,.g3{grid-template-columns:1fr;}
+  .slots{grid-template-columns:repeat(3,1fr);}
+  .card-wrap{padding:0 10px 68px;}
+  .btn{justify-content:center;}
+  .cfg-blk{padding:16px 18px;}
+  .ctr-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
 <body>
-<div class="top-stripe"></div>
+<div class="stripe"></div>
 
 <!-- HEADER -->
-<header>
-  <div class="logo-wrap">
-    <svg class="logo-emblem" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<header class="hdr">
+  <!-- LOGO -->
+  <div class="logo">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="100" height="100" fill="#fff"/>
       <line x1="8" y1="8" x2="22" y2="8" stroke="#C0392B" stroke-width="2"/>
       <line x1="8" y1="8" x2="8" y2="22" stroke="#C0392B" stroke-width="2"/>
@@ -291,591 +310,1032 @@ canvas#firmaCanvas{width:100%;height:148px;cursor:crosshair;display:block;touch-
       <rect x="17" y="67" width="10" height="10" rx="2" fill="#C0392B" transform="rotate(45 22 72)"/>
       <text x="50" y="54" text-anchor="middle" font-family="Arial Black,Arial" font-size="9" font-weight="900" fill="#2C2C2E">ATM</text>
     </svg>
-    <div class="logo-text"><h1>ATM</h1><p>Servicio Mecánico &amp; Refacciones</p></div>
+    <div><h1>ATM</h1><p>Servicio Mecánico &amp; Refacciones</p></div>
   </div>
 
-  <!-- BUSCADOR -->
-  <div class="search-wrap">
-    <div class="search-row">
-      <div class="si"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg></div>
-      <input id="searchInput" type="text" placeholder="Buscar nombre, folio o placas…" autocomplete="off"
-        oninput="doSearch(this.value)" onfocus="openDD()" onblur="setTimeout(closeDD,200)">
-      <button class="sc" id="searchClear" onclick="clearSearch()">×</button>
+  <!-- SEARCH -->
+  <div class="srch">
+    <div class="srch-box">
+      <div class="srch-ic"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg></div>
+      <input id="SI" type="text" placeholder="Nombre, folio o placas…" autocomplete="off">
+      <button class="srch-x" id="SX">&#x2715;</button>
     </div>
-    <div class="sd" id="searchDD">
-      <div class="sd-hdr">Registros guardados</div>
-      <div id="searchResults"></div>
-    </div>
+    <div class="dd" id="DD"><div class="dd-hdr">Registros guardados</div><div id="DR"></div></div>
   </div>
 
-  <!-- NAV -->
-  <div class="header-nav">
-    <button class="btn-nav btn-nav-cot active" onclick="showPage('cot')">
-      <div class="sn">1</div>
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab tab-os on" id="T_os" onclick="go('os')">
+      <div class="n">1</div>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Orden de Servicio
+    </button>
+    <span style="color:var(--g3);font-size:16px;">&#8250;</span>
+    <button class="tab tab-cot" id="T_cot" onclick="go('cot')">
+      <div class="n">2</div>
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
       Cotización
     </button>
-    <span class="step-arrow">›</span>
-    <button class="btn-nav btn-nav-os" onclick="showPage('os')">
-      <div class="sn">2</div>
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Orden
+    <button class="tab tab-cfg" id="T_cfg" onclick="go('cfg')" style="margin-left:4px">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      Config
     </button>
-    <span class="hv">v1.3.0</span>
+    <span class="ver">v1.5.0</span>
   </div>
 </header>
 
 <!-- PROGRESS -->
-<div class="progress-bar">
-  <div class="ps active" id="prog-cot"><div class="pn">1</div>Cotización</div>
-  <span class="pa">›</span>
-  <div class="ps" id="prog-os"><div class="pn">2</div>Orden de Servicio</div>
+<div class="prog" id="PROG">
+  <div class="ps a-os" id="P_os"><div class="pn">1</div>Orden de Servicio</div>
+  <span class="pa">&#8250;</span>
+  <div class="ps" id="P_cot"><div class="pn">2</div>Cotización</div>
 </div>
 
-<!-- ═══ PÁGINA 1 — COTIZACIÓN ═══ -->
-<div id="page-cot" class="page active">
-  <div class="rec-banner rb-red" id="cot-banner" style="padding-left:22px;padding-right:22px;">
-    <div class="rbi red"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
-    <div style="flex:1"><div class="rbt" id="cot-banner-title">COTIZACIÓN CARGADA</div><div class="rbm" id="cot-banner-meta">—</div></div>
-    <button class="rbc" onclick="newRecord()">Nueva cotización</button>
+<!-- ═══ OS ═══ -->
+<div id="PG_os" class="pg on">
+  <div class="banner" id="B_os">
+    <div class="ban-ic b"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
+    <div class="ban-txt"><div class="ban-title b" id="B_os_t">ORDEN CARGADA</div><div class="ban-meta" id="B_os_m"></div></div>
+    <button class="ban-btn" onclick="newRec()">Nueva orden</button>
   </div>
-
-  <section class="hero hero-cot">
-    <div class="hero-tag"><div class="htd"></div>PASO 1 · COTIZACIÓN</div>
-    <h2>Genera la <span class="ar">cotización</span></h2>
-    <p>Captura datos del cliente, vehículo y conceptos del servicio.</p>
-    <div class="fb" id="cot-folio-hero">COT-000001</div>
-  </section>
-
-  <section class="form-section">
-    <div class="form-card card-cot">
-      <div class="card-hdr">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-        <h3>Cotización de Servicio</h3>
-        <span id="cot-folio-hdr">COT-000001</span>
-      </div>
-      <form id="formCOT" onsubmit="submitCOT(event)">
-      <div class="form-body">
-        <div class="sec red">Datos del cliente</div>
-        <div class="fg">
-          <div class="f full"><label>NOMBRE COMPLETO <span class="req">*</span></label><input type="text" id="cot-nombre" placeholder="Nombre · Apellido Paterno · Apellido Materno" required autocomplete="name" oninput="updateFirmaLabel()"></div>
-          <div class="f"><label>TELÉFONO WHATSAPP <span class="req">*</span></label><input type="tel" id="cot-tel" placeholder="(466) 000-0000" maxlength="15" required autocomplete="tel"><div class="hint">La cotización se enviará a este número</div></div>
-          <div class="f"><label>FECHA DE COTIZACIÓN</label><input type="text" id="cot-fecha" readonly></div>
-          <div class="f"><label>FOLIO COTIZACIÓN</label><input type="text" id="cot-folio-field" readonly class="rr"></div>
-        </div>
-
-        <div class="sec red">Datos del vehículo</div>
-        <div class="fg t">
-          <div class="f"><label>PLACAS <span class="req">*</span></label><input type="text" id="cot-placas" placeholder="ABC-123-D" maxlength="10" required oninput="this.value=this.value.toUpperCase()"></div>
-          <div class="f"><label>MARCA</label><select id="cot-marca"><option value="">Seleccionar…</option><option>Chevrolet</option><option>Ford</option><option>Nissan</option><option>Toyota</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Kia</option><option>Dodge</option><option>Jeep</option><option>RAM</option><option>Mazda</option><option>Seat</option><option>Renault</option><option>Otra</option></select></div>
-          <div class="f"><label>MODELO / AÑO</label><input type="text" id="cot-modelo" placeholder="Ej. Aveo 2019"></div>
-          <div class="f"><label>COLOR</label><input type="text" id="cot-color" placeholder="Blanco, rojo…"></div>
-          <div class="f full"><label>SERVICIO GENERAL / DESCRIPCIÓN DEL TRABAJO <span class="req">*</span></label><textarea id="cot-servicio" style="min-height:88px" placeholder="Describe el servicio principal. Ej: Afinación mayor, cambio de balatas delanteras y traseras, revisión de suspensión, cambio de aceite y filtro…" required></textarea></div>
-          <div class="f full"><label>OBSERVACIONES ADICIONALES</label><textarea id="cot-obs" style="min-height:78px" placeholder="Condiciones especiales, acuerdos verbales, tiempo estimado, garantía, referencias de refacciones u otros detalles relevantes para el cliente…"></textarea></div>
-        </div>
-
-        <div class="sec red">Conceptos y precios</div>
-        <table class="cot-table"><thead><tr>
-          <th style="width:36%">CONCEPTO</th><th style="width:17%">CATEGORÍA</th>
-          <th style="width:11%">CANT.</th><th style="width:18%">PRECIO UNIT.</th>
-          <th style="width:12%">TOTAL</th><th class="td-del"></th>
-        </tr></thead><tbody id="cotBody"></tbody></table>
-        <div class="add-btns">
-          <div class="add-row" onclick="addRow('Refacción')">＋ Refacción</div>
-          <div class="add-row" onclick="addRow('Mano de obra')">＋ Mano de obra</div>
-          <div class="add-row" onclick="addRow('Material')">＋ Material</div>
-          <div class="add-row" onclick="addRow('Otro')">＋ Otro</div>
-        </div>
-        <div class="totals">
-          <div class="tr2"><label>SUBTOTAL</label><span id="tot-sub">$0.00</span></div>
-          <div class="tr2"><label>DESCUENTO</label><div style="display:flex;align-items:center;gap:6px"><input type="number" id="tot-desc" min="0" max="100" placeholder="0" style="width:50px;padding:5px 7px;font-size:12px" oninput="recalc()"> %</div></div>
-          <div class="tr2"><label>IVA (16%)</label><label style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12px;color:var(--g700);cursor:pointer;display:flex;align-items:center;gap:5px;margin:0"><input type="checkbox" id="applyIva" onchange="recalc()" style="width:auto;padding:0"> Aplicar IVA</label><span id="tot-iva">$0.00</span></div>
-          <div class="tr2 grand"><label>TOTAL COTIZADO</label><span id="tot-total">$0.00</span></div>
-        </div>
-
-        <div class="sec red" style="margin-top:18px">Firma digital del cliente</div>
-        <p style="font-size:12px;color:var(--g500);margin-bottom:9px;line-height:1.6">Al firmar, el cliente acepta la cotización y autoriza el inicio del servicio.</p>
-        <div class="firma-wrap">
-          <div class="firma-hdr">
-            <span>FIRMA · <span id="firma-nombre-lbl">—</span></span>
-            <div class="firma-btns">
-              <button type="button" class="firma-dl" onclick="downloadFirma()">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Descargar firma PNG
-              </button>
-              <button type="button" class="firma-clear" onclick="clearFirma()">Limpiar</button>
-            </div>
-          </div>
-          <canvas id="firmaCanvas"></canvas>
-          <div class="firma-note">Firma con el dedo o el mouse · Descarga el PNG y adjúntalo manualmente en WhatsApp junto con las fotografías del vehículo</div>
-        </div>
-      </div>
-      <div class="form-footer">
-        <div class="folio-txt"><strong class="red" id="cot-folio-footer">COT-000001</strong><small>Al enviar se notifica al cliente por WhatsApp · Registro guardado automáticamente</small></div>
-        <button type="submit" class="btn-p btn-red">ENVIAR COTIZACIÓN POR WHATSAPP <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
-      </div>
-      </form>
-    </div>
-  </section>
-</div>
-
-<!-- ═══ PÁGINA 2 — ORDEN ═══ -->
-<div id="page-os" class="page">
-  <div class="rec-banner" id="os-banner" style="padding-left:22px;padding-right:22px;">
-    <div class="rbi blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
-    <div style="flex:1"><div class="rbt" id="os-banner-title">ORDEN CARGADA</div><div class="rbm" id="os-banner-meta">—</div></div>
-    <button class="rbc" onclick="newRecord()">Nueva orden</button>
+  <div class="hero h-os">
+    <div class="htag"><div class="hdot"></div>PASO 1 · ORDEN DE SERVICIO</div>
+    <h2>Abre la <span class="ab">orden</span></h2>
+    <p>Registra datos del cliente y vehículo para iniciar el trabajo.</p>
+    <div class="hfol" id="HF_os">456</div>
   </div>
-
-  <section class="hero hero-os">
-    <div class="hero-tag"><div class="htd"></div>PASO 2 · ORDEN DE SERVICIO</div>
-    <h2>Abre la <span class="ab">orden</span> de servicio</h2>
-    <p>Completa detalles de entrada del vehículo para iniciar el trabajo.</p>
-    <div class="fb" id="os-folio-hero">OS-000001 · COT-000001</div>
-  </section>
-
-  <section class="form-section">
-    <div class="form-card card-os">
-      <div class="card-hdr">
+  <div class="card-wrap">
+    <div class="card card-os">
+      <div class="card-head">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
-        <h3>Orden de Servicio</h3>
-        <span id="os-folio-hdr">OS-000001</span>
+        <h3>Orden de Servicio</h3><span id="CH_os">456</span>
       </div>
-      <form id="formOS" onsubmit="submitOS(event)">
-      <div class="form-body">
-        <div class="sec blue">Datos del cliente (desde cotización)</div>
-        <div class="fg">
-          <div class="f full"><label>NOMBRE COMPLETO</label><input type="text" id="os-nombre" readonly></div>
-          <div class="f"><label>TELÉFONO</label><input type="text" id="os-tel" readonly></div>
-          <div class="f"><label>CORREO ELECTRÓNICO (opcional)</label><div class="ew"><input type="email" id="os-email" placeholder="tucorreo@email.com" autocomplete="email"><div class="ab2" id="os-email-badge">AUTO</div></div></div>
-          <div class="f full"><label>DIRECCIÓN / COLONIA</label><input type="text" id="os-dir" placeholder="Calle, número, colonia, ciudad" autocomplete="street-address"></div>
+      <form onsubmit="sendOS(event)">
+      <div class="card-body">
+        <div class="sl b">Datos del cliente</div>
+        <div class="g2">
+          <div class="fld full"><label>NOMBRE COMPLETO <span class="req">*</span></label><input id="os_nom" type="text" placeholder="Nombre · Apellido Paterno · Apellido Materno" required></div>
+          <div class="fld"><label>TELÉFONO WHATSAPP <span class="req">*</span></label><input id="os_tel" type="tel" placeholder="(466) 000-0000" maxlength="15" required><div class="hint">El reporte se enviará a este número</div></div>
+          <div class="fld"><label>CORREO (opcional)</label><input id="os_email" type="email" placeholder="correo@email.com" autocomplete="email"></div>
+          <div class="fld full"><label>DIRECCIÓN / COLONIA</label><input id="os_dir" type="text" placeholder="Calle, número, colonia, ciudad"></div>
         </div>
-
-        <div class="sec blue">Datos del vehículo (desde cotización)</div>
-        <div class="fg t">
-          <div class="f"><label>PLACAS</label><input type="text" id="os-placas" readonly></div>
-          <div class="f"><label>MARCA</label><input type="text" id="os-marca" readonly></div>
-          <div class="f"><label>MODELO / AÑO</label><input type="text" id="os-modelo" readonly></div>
-          <div class="f"><label>COLOR</label><input type="text" id="os-color" readonly></div>
-          <div class="f"><label>KILOMETRAJE INICIAL</label><input type="text" id="os-km" placeholder="65,000 km"></div>
-          <div class="f"><label>NIVEL DE GASOLINA</label><select id="os-gas"><option value="">Seleccionar…</option><option>Lleno (F)</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Reserva (E)</option></select></div>
+        <div class="sl b">Datos del vehículo</div>
+        <div class="g3">
+          <div class="fld"><label>PLACAS <span class="req">*</span></label><input id="os_pla" type="text" placeholder="ABC-123-D" maxlength="10" required oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="fld"><label>MARCA</label>
+            <select id="os_mar"><option value="">Seleccionar…</option><option>Chevrolet</option><option>Ford</option><option>Nissan</option><option>Toyota</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Kia</option><option>Dodge</option><option>Jeep</option><option>RAM</option><option>Mazda</option><option>Seat</option><option>Renault</option><option>Otra</option></select>
+          </div>
+          <div class="fld"><label>MODELO / AÑO</label><input id="os_mod" type="text" placeholder="Ej. Aveo 2019"></div>
+          <div class="fld"><label>COLOR</label><input id="os_col" type="text" placeholder="Blanco, rojo…"></div>
+          <div class="fld"><label>KILOMETRAJE</label><input id="os_km" type="text" placeholder="65,000 km"></div>
+          <div class="fld"><label>NIVEL DE GASOLINA</label>
+            <select id="os_gas"><option value="">Seleccionar…</option><option>Lleno (F)</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Reserva (E)</option></select>
+          </div>
         </div>
-
-        <div class="sec blue">Estado de entrada del vehículo</div>
-        <div class="fg">
-          <div class="f"><label>FECHA DE INGRESO</label><input type="text" id="os-fecha-ingreso" readonly></div>
-          <div class="f"><label>FOLIOS OS / COT</label><input type="text" id="os-folios" readonly></div>
-          <div class="f full"><label>ANOMALÍAS, GOLPES O DAÑOS PREVIOS</label><textarea id="os-anomalias" style="min-height:78px" placeholder="Ej: Rayón en puerta trasera derecha, espejo izquierdo roto, tablero con grieta…"></textarea></div>
-          <div class="f full"><label>OBJETOS DE VALOR / PERTENENCIAS</label><textarea id="os-objetos" style="min-height:54px" placeholder="Ej: Ninguno / Bocina bluetooth, cargador, documentos en guantera…"></textarea></div>
+        <div class="sl b">Descripción del trabajo</div>
+        <div class="g2">
+          <div class="fld full"><label>SERVICIO / DESCRIPCIÓN <span class="req">*</span></label><textarea id="os_srv" style="min-height:88px" placeholder="Describe el servicio solicitado. Ej: Afinación mayor, cambio de balatas, revisión de suspensión…" required></textarea></div>
+          <div class="fld full"><label>OBSERVACIONES ADICIONALES</label><textarea id="os_obs" style="min-height:70px" placeholder="Notas relevantes, condiciones especiales, acuerdos previos…"></textarea></div>
         </div>
-
-        <div class="sec blue">Servicio (desde cotización)</div>
-        <div class="fg">
-          <div class="f full"><label>SERVICIO AUTORIZADO</label><textarea id="os-servicio" readonly style="min-height:68px;background:var(--blue-p);color:var(--blue-m);font-weight:600;border-color:rgba(36,113,163,0.2)"></textarea></div>
-          <div class="f full"><label>TRABAJOS ADICIONALES / HALLAZGOS</label><textarea id="os-adicionales" style="min-height:68px" placeholder="Registra cualquier trabajo adicional detectado o autorizado por el cliente durante el servicio…"></textarea></div>
+        <div class="sl b">Tipo de servicio</div>
+        <div class="chips" id="OS_CHIPS">
+          <div class="chip" onclick="this.classList.toggle('on')">Afinación</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Cambio de aceite</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Frenos / Balatas</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Suspensión</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Sistema eléctrico</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Diagnóstico</div>
+          <div class="chip" onclick="this.classList.toggle('on')">A/C y climatización</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Transmisión</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Motor</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Refacciones</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Revisión general</div>
+          <div class="chip" onclick="this.classList.toggle('on')">Otro</div>
         </div>
-
-        <div class="sec blue">Evidencia fotográfica y video de entrada</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+        <div class="sl b" style="margin-top:20px">Estado de entrada</div>
+        <div class="g2">
+          <div class="fld"><label>FECHA DE INGRESO</label><input id="os_fec" type="text" readonly></div>
+          <div class="fld"><label>FOLIO ORDEN DE SERVICIO</label><input id="os_fol" type="text" readonly class="rr"></div>
+          <div class="fld full"><label>ANOMALÍAS, GOLPES O DAÑOS PREVIOS</label><textarea id="os_ano" style="min-height:78px" placeholder="Ej: Rayón en puerta trasera, espejo roto, golpe en defensa…"></textarea></div>
+          <div class="fld full"><label>OBJETOS DE VALOR EN EL VEHÍCULO</label><textarea id="os_obj" style="min-height:52px" placeholder="Ej: Ninguno / Bocina, cargador, documentos en guantera…"></textarea></div>
+        </div>
+        <div class="sl b">Evidencia fotográfica y video</div>
+        <div class="g2">
           <div>
             <label style="display:block;margin-bottom:6px">FOTOS DE ENTRADA (mín. 3) <span class="req">*</span></label>
-            <div class="upload-zone" id="os-photoZone">
-              <input type="file" id="os-photoInput" accept="image/*" multiple onchange="handlePhotos('os',event)">
-              <svg class="up-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
-              <div class="up-title">Toca para agregar fotos</div>
-              <div class="up-sub">JPG · PNG · HEIC</div>
-              <div class="up-limit">MÁX. 10 · 5 MB C/U</div>
+            <div class="upz" id="UZ_ph">
+              <input type="file" id="UP_ph" accept="image/*" multiple>
+              <svg class="upz-ic" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+              <div class="upz-t">Toca para agregar fotos</div>
+              <div class="upz-s">JPG · PNG · HEIC</div>
+              <div class="upz-lim">MÁX. 10 FOTOS · 5 MB C/U</div>
             </div>
-            <div class="up-counter">Fotos: <span id="os-photoCount">0</span> / 10</div>
-            <div class="preview-grid" id="os-photoPreview"></div>
+            <div class="up-cnt">Fotos: <span id="PC">0</span> / 10</div>
+            <div class="prev-grid" id="PP"></div>
           </div>
           <div>
             <label style="display:block;margin-bottom:6px">VIDEO INICIAL (opcional)</label>
-            <div class="upload-zone" id="os-videoZone">
-              <input type="file" id="os-videoInput" accept="video/*" onchange="handleVideo('os',event)">
-              <svg class="up-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
-              <div class="up-title">Toca para agregar video</div>
-              <div class="up-sub">MP4 · MOV · AVI</div>
-              <div class="up-limit">MÁX. 1 VIDEO · 50 MB</div>
+            <div class="upz" id="UZ_vi">
+              <input type="file" id="UP_vi" accept="video/*">
+              <svg class="upz-ic" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+              <div class="upz-t">Toca para agregar video</div>
+              <div class="upz-s">MP4 · MOV · AVI</div>
+              <div class="upz-lim">MÁX. 1 VIDEO · 50 MB</div>
             </div>
-            <div class="up-counter">Video: <span id="os-videoName">Sin video</span></div>
-            <div class="preview-grid" id="os-videoPreview"></div>
+            <div class="up-cnt">Video: <span id="VC">Sin video</span></div>
+            <div class="prev-grid" id="VP"></div>
           </div>
         </div>
-
-        <div class="sec blue">Fecha estimada de entrega del vehículo</div>
-        <p style="font-size:12px;color:var(--g500);margin-bottom:10px;line-height:1.6">Selecciona la fecha y hora estimada de entrega. Puede modificarse conforme avance el trabajo o el cliente autorice servicios adicionales.</p>
-        <div class="fg" style="margin-bottom:10px">
-          <div class="f"><label>FECHA DE INGRESO</label><input type="text" id="os-fecha-auto2" readonly></div>
-          <div class="f"><label>FECHA Y HORA ESTIMADA DE ENTREGA</label><input type="text" id="os-fecha-entrega" readonly placeholder="Elige en el calendario →"></div>
-        </div>
-        <div class="cal-wrap">
-          <div class="cal-nav">
-            <button type="button" onclick="changeMonth('os',-1)">&#8249;</button>
-            <div class="cal-month" id="os-calMonth"></div>
-            <button type="button" onclick="changeMonth('os',1)">&#8250;</button>
+        <div class="sl b">Firma de inicio de orden</div>
+        <p style="font-size:12px;color:var(--g5);margin-bottom:9px;line-height:1.6">El cliente autoriza la recepción del vehículo e inicio del diagnóstico. También puede confirmar respondiendo <strong>ACEPTO</strong> al WhatsApp.</p>
+        <div class="firma-box">
+          <div class="firma-top">
+            <span>FIRMA DE INICIO · <span id="FN_os">—</span></span>
+            <div class="firma-btns">
+              <button type="button" class="f-dl" id="FDL_os"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Descargar PNG</button>
+              <button type="button" class="f-cl" id="FCL_os">Limpiar</button>
+            </div>
           </div>
-          <div class="cal-wk"><span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span></div>
-          <div class="cal-days" id="os-calDays"></div>
-          <div id="os-timeSection" style="display:none;margin-top:10px;padding-top:9px;border-top:1px solid var(--brd)">
-            <div style="font-family:'Oswald',Arial,sans-serif;font-size:10px;letter-spacing:2px;color:var(--blue);margin-bottom:7px;font-weight:600">HORA ESTIMADA DE ENTREGA</div>
-            <div class="time-slots" id="os-timeSlots"></div>
-          </div>
-          <div class="cal-legend">
-            <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Seleccionado</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--white);border:1px solid var(--brd)"></div>Disponible</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--g100)"></div>Ocupado</div>
-          </div>
+          <canvas id="FC_os" class="firma-cv"></canvas>
+          <div class="firma-note">Firma con el dedo o mouse · Descarga el PNG y adjúntalo en WhatsApp · O el cliente responde ACEPTO al mensaje</div>
         </div>
       </div>
-      <div class="form-footer">
-        <div class="folio-txt"><strong id="os-folio-footer">OS-000001</strong><small>Resumen completo con cotización enviado por WhatsApp</small></div>
-        <button type="submit" class="btn-p btn-blue">REGISTRAR ORDEN Y ENVIAR POR WHATSAPP <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
+      <div class="card-foot">
+        <div class="ftxt"><strong class="b" id="FF_os">456</strong><small>Orden de Servicio · Reporte enviado al cliente por WhatsApp</small></div>
+        <button type="submit" class="btn btn-b">REGISTRAR Y ENVIAR POR WHATSAPP <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
       </div>
       </form>
     </div>
-  </section>
+  </div>
+</div>
+
+<!-- ═══ COT ═══ -->
+<div id="PG_cot" class="pg">
+  <div class="banner red" id="B_cot">
+    <div class="ban-ic r"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
+    <div class="ban-txt"><div class="ban-title r" id="B_cot_t">COTIZACIÓN CARGADA</div><div class="ban-meta" id="B_cot_m"></div></div>
+    <button class="ban-btn" onclick="newRec()">Nueva cotización</button>
+  </div>
+  <div class="hero h-cot">
+    <div class="htag"><div class="hdot"></div>PASO 2 · COTIZACIÓN</div>
+    <h2>Genera la <span class="ar">cotización</span></h2>
+    <p>Los datos de la orden se heredan automáticamente.</p>
+    <div class="hfol" id="HF_cot">COT-001 · OS: 456</div>
+  </div>
+  <div class="card-wrap">
+    <div class="card card-cot">
+      <div class="card-head">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <h3>Cotización de Servicio</h3><span id="CH_cot">COT-001</span>
+      </div>
+      <form onsubmit="sendCOT(event)">
+      <div class="card-body">
+        <div class="sl r">Datos del cliente (desde orden de servicio)</div>
+        <div class="g2">
+          <div class="fld full"><label>NOMBRE COMPLETO <span class="req">*</span></label><input id="cot_nom" type="text" placeholder="Nombre completo" required></div>
+          <div class="fld"><label>TELÉFONO WHATSAPP <span class="req">*</span></label><input id="cot_tel" type="tel" placeholder="(466) 000-0000" maxlength="15" required><div class="hint">La cotización se enviará a este número</div></div>
+          <div class="fld"><label>FECHA DE COTIZACIÓN</label><input id="cot_fec" type="text" readonly></div>
+          <div class="fld"><label>FOLIO COTIZACIÓN</label><input id="cot_fol" type="text" readonly class="rr"></div>
+          <div class="fld"><label>FOLIO ORDEN LIGADA</label><input id="cot_osf" type="text" readonly></div>
+        </div>
+        <div class="sl r">Datos del vehículo (desde orden de servicio)</div>
+        <div class="g3">
+          <div class="fld"><label>PLACAS <span class="req">*</span></label><input id="cot_pla" type="text" placeholder="ABC-123-D" maxlength="10" required oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="fld"><label>MARCA</label><select id="cot_mar"><option value="">Seleccionar…</option><option>Chevrolet</option><option>Ford</option><option>Nissan</option><option>Toyota</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Kia</option><option>Dodge</option><option>Jeep</option><option>RAM</option><option>Mazda</option><option>Seat</option><option>Renault</option><option>Otra</option></select></div>
+          <div class="fld"><label>MODELO / AÑO</label><input id="cot_mod" type="text" placeholder="Ej. Aveo 2019"></div>
+          <div class="fld"><label>COLOR</label><input id="cot_col" type="text" placeholder="Blanco, rojo…"></div>
+          <div class="fld full"><label>SERVICIO AUTORIZADO (desde orden)</label><textarea id="cot_srv" style="min-height:70px;background:var(--bluep);color:var(--bluem);font-weight:600;border-color:var(--brb)" readonly></textarea></div>
+        </div>
+        <div class="sl r">Trabajos y hallazgos</div>
+        <div class="g2">
+          <div class="fld full"><label>TRABAJOS ADICIONALES / HALLAZGOS</label><textarea id="cot_adi" style="min-height:80px" placeholder="Registra trabajos adicionales detectados o autorizados durante el servicio…"></textarea></div>
+          <div class="fld full"><label>OBSERVACIONES DE LA COTIZACIÓN</label><textarea id="cot_obs" style="min-height:72px" placeholder="Garantía, tiempo estimado, condiciones especiales, refacciones, acuerdos…"></textarea></div>
+        </div>
+        <div class="sl r">Conceptos y precios</div>
+        <table class="ctbl"><thead><tr>
+          <th style="width:36%">CONCEPTO</th><th style="width:17%">CATEGORÍA</th>
+          <th style="width:11%">CANT.</th><th style="width:18%">PRECIO UNIT.</th>
+          <th style="width:12%">TOTAL</th><th style="width:6%"></th>
+        </tr></thead><tbody id="CTBL"></tbody></table>
+        <div class="add-btns">
+          <div class="add-r" onclick="addR('Refacción')">＋ Refacción</div>
+          <div class="add-r" onclick="addR('Mano de obra')">＋ Mano de obra</div>
+          <div class="add-r" onclick="addR('Material')">＋ Material</div>
+          <div class="add-r" onclick="addR('Otro')">＋ Otro</div>
+        </div>
+        <div class="tots">
+          <div class="tot-row"><label>SUBTOTAL</label><span id="T_sub">$0.00</span></div>
+          <div class="tot-row"><label>DESCUENTO</label><div style="display:flex;align-items:center;gap:6px"><input id="T_dsc" type="number" min="0" max="100" placeholder="0" style="width:50px;padding:5px 7px;font-size:12px" oninput="recalc()"> %</div></div>
+          <div class="tot-row"><label>IVA 16%</label><label style="font-size:12px;color:var(--g7);text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer;display:flex;align-items:center;gap:5px;margin:0"><input id="T_iva" type="checkbox" onchange="recalc()" style="width:auto;padding:0"> Aplicar</label><span id="T_iva_v">$0.00</span></div>
+          <div class="tot-row grand"><label>TOTAL COTIZADO</label><span id="T_tot">$0.00</span></div>
+        </div>
+        <div class="sl r" style="margin-top:20px">Fecha estimada de entrega</div>
+        <p style="font-size:12px;color:var(--g5);margin-bottom:10px;line-height:1.6">Puede modificarse si el cliente autoriza trabajos adicionales.</p>
+        <div class="g2" style="margin-bottom:10px">
+          <div class="fld"><label>FECHA DE INGRESO</label><input id="cot_fei" type="text" readonly></div>
+          <div class="fld"><label>FECHA Y HORA ESTIMADA DE ENTREGA</label><input id="cot_fen" type="text" readonly placeholder="Elige en el calendario →"></div>
+        </div>
+        <div class="cal">
+          <div class="cal-nav">
+            <button type="button" class="cal-btn" onclick="prevMo()">&#8249;</button>
+            <div class="cal-mo" id="CAL_mo"></div>
+            <button type="button" class="cal-btn" onclick="nextMo()">&#8250;</button>
+          </div>
+          <div class="cal-wk"><span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span></div>
+          <div class="cal-days" id="CAL_days"></div>
+          <div id="CAL_slots" style="display:none;margin-top:10px;padding-top:9px;border-top:1px solid var(--br)">
+            <div style="font-family:Oswald,Arial,sans-serif;font-size:10px;letter-spacing:2px;color:var(--red);margin-bottom:7px;font-weight:600">HORA ESTIMADA DE ENTREGA</div>
+            <div class="slots" id="SLOTS"></div>
+          </div>
+          <div class="cal-leg">
+            <div class="leg-i"><div class="leg-d" style="background:var(--red)"></div>Seleccionado</div>
+            <div class="leg-i"><div class="leg-d" style="background:var(--w);border:1px solid var(--br)"></div>Disponible</div>
+            <div class="leg-i"><div class="leg-d" style="background:var(--g1)"></div>Ocupado</div>
+          </div>
+        </div>
+        <div class="sl r" style="margin-top:20px">Firma de aceptación del cliente</div>
+        <p style="font-size:12px;color:var(--g5);margin-bottom:9px;line-height:1.6">Al firmar acepta la cotización y autoriza el servicio. También puede confirmar respondiendo <strong>ACEPTO</strong> al WhatsApp.</p>
+        <div class="firma-box">
+          <div class="firma-top">
+            <span>FIRMA DE ACEPTACIÓN · <span id="FN_cot">—</span></span>
+            <div class="firma-btns">
+              <button type="button" class="f-dl" id="FDL_cot"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Descargar PNG</button>
+              <button type="button" class="f-cl" id="FCL_cot">Limpiar</button>
+            </div>
+          </div>
+          <canvas id="FC_cot" class="firma-cv"></canvas>
+          <div class="firma-note">Firma presencial o descarga PNG y adjúntalo en WhatsApp</div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <div class="ftxt"><strong class="r" id="FF_cot">COT-001</strong><small>Cotización · Se notifica al cliente por WhatsApp</small></div>
+        <button type="submit" class="btn btn-r">ENVIAR COTIZACIÓN POR WHATSAPP <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONFIG ═══ -->
+<div id="PG_cfg" class="pg">
+  <div class="hero h-cfg">
+    <div class="htag"><div class="hdot"></div>CONFIGURACIÓN</div>
+    <h2>Ajustes del <span class="ag">sistema</span></h2>
+    <p>Configura los números iniciales de folio para empatar con tu sistema.</p>
+  </div>
+  <div class="card-wrap">
+    <div class="card card-cfg">
+      <div class="card-head">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        <h3>Configuración de Folios</h3><span>v1.5.0</span>
+      </div>
+      <div class="cfg-blk">
+        <h4>Folio de Orden de Servicio</h4>
+        <p>Ingresa el número desde donde arrancará la numeración. Tu folio actual es <strong>455</strong>, configura <strong>456</strong> para continuar desde ahí.</p>
+        <div class="cfg-row">
+          <div class="cfg-inp">
+            <label>NÚMERO INICIAL OS</label>
+            <input class="cfg-num" id="C_os" type="number" min="1" placeholder="456" oninput="prvCfg()">
+            <div class="cfg-prv">Siguiente OS: <span id="PRV_os">—</span></div>
+          </div>
+          <div class="cfg-inp">
+            <label>NÚMERO INICIAL COT</label>
+            <input class="cfg-num" id="C_cot" type="number" min="1" placeholder="1" oninput="prvCfg()">
+            <div class="cfg-prv">Siguiente COT: <span id="PRV_cot">—</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-end">
+            <button class="btn btn-g" onclick="saveCfg()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              GUARDAR CONFIGURACIÓN
+            </button>
+            <div class="cfg-ok" id="CFG_OK"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Guardado correctamente</div>
+          </div>
+        </div>
+        <div class="info-box">💡 <strong>¿Cómo funciona?</strong> Al guardar, el primer folio que uses será este número. Cada vez que envíes una orden o cotización el contador sube automáticamente en 1. Los valores se guardan en este navegador.</div>
+      </div>
+      <div class="cfg-blk">
+        <h4>Contadores actuales</h4>
+        <p>Folios que se asignarán al próximo registro:</p>
+        <div class="ctr-grid">
+          <div class="ctr-card ctr-b"><div class="ctr-lbl">PRÓXIMA ORDEN DE SERVICIO</div><div class="ctr-val" id="CTR_os">456</div></div>
+          <div class="ctr-card ctr-r"><div class="ctr-lbl">PRÓXIMA COTIZACIÓN</div><div class="ctr-val" id="CTR_cot">COT-001</div></div>
+        </div>
+        <p style="margin-top:12px;font-size:11px;color:var(--g5);line-height:1.6">⚠️ Los contadores se guardan en este navegador. Si usas otro dispositivo, configura los folios desde ahí también.</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- FAB -->
-<a class="fab-wa" id="fabWA" href="#" target="_blank" rel="noopener">
+<a class="fab" id="FAB" href="#" target="_blank" rel="noopener">
   <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
 </a>
-<div class="toast" id="toast"><span class="tic">✓</span> <span id="toastMsg">—</span></div>
+<div class="toast" id="TOAST"><span class="tic">&#10003;</span> <span id="TMSG">—</span></div>
 
 <script>
-const PHONE='524666693503';
-const now=new Date();
-const fechaStr=now.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const OCCUPIED=[3,7,12,18,22,25];
-const ALL_SLOTS=['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-const STORE_KEY='atm_records_v1';
+'use strict';
 
-function mkF(p){return p+'-'+String(Math.floor(Math.random()*99999)+1).padStart(6,'0');}
-let CF=mkF('COT'), OF=mkF('OS');
+// ═══════ CONFIG & FOLIOS ═══════
+const PHONE    = '524666693503';
+const SK_REC   = 'atm_rec_v15';
+const SK_CFG   = 'atm_cfg_v15';
+const MONTHS   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const OCC_DAYS = [3,7,12,18,22,25];
+const SLOTS_ALL= ['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
 
-function setFolios(){
-  ['cot-folio-hero','cot-folio-hdr','cot-folio-footer'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=CF;});
-  const cf=document.getElementById('cot-folio-field');if(cf)cf.value=CF;
-  ['os-folio-hdr','os-folio-footer'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=OF;});
-  const oh=document.getElementById('os-folio-hero');if(oh)oh.textContent=OF+' · '+CF;
-  const of2=document.getElementById('os-folios');if(of2)of2.value=OF+' / '+CF;
-}
-setFolios();
+function loadCfg(){ try{ return JSON.parse(localStorage.getItem(SK_CFG)||'{}'); }catch(e){ return {}; } }
+function dumpCfg(c){ localStorage.setItem(SK_CFG,JSON.stringify(c)); }
 
-document.getElementById('cot-fecha').value=fechaStr;
-document.getElementById('os-fecha-ingreso').value=fechaStr;
-document.getElementById('os-fecha-auto2').value=fechaStr;
+var cfg = loadCfg();
+var osN  = cfg.osN  || 456;
+var cotN = cfg.cotN || 1;
 
-// STORAGE
-function getRecs(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'[]');}catch(e){return[];}}
-function saveRec(r){const recs=getRecs();const i=recs.findIndex(x=>x.cotFolio===r.cotFolio);if(i>=0)recs[i]=r;else recs.unshift(r);localStorage.setItem(STORE_KEY,JSON.stringify(recs.slice(0,100)));}
+function osF()  { return String(osN); }
+function cotF() { return 'COT-'+String(cotN).padStart(3,'0'); }
 
-function buildRec(){
-  return{
-    cotFolio:CF,osFolio:OF,
-    nombre:document.getElementById('cot-nombre').value.trim(),
-    tel:document.getElementById('cot-tel').value.trim(),
-    placas:document.getElementById('cot-placas').value.trim(),
-    marca:document.getElementById('cot-marca').options[document.getElementById('cot-marca').selectedIndex]?.text||'',
-    modelo:document.getElementById('cot-modelo').value.trim(),
-    color:document.getElementById('cot-color').value.trim(),
-    servicio:document.getElementById('cot-servicio').value.trim(),
-    obs:document.getElementById('cot-obs').value.trim(),
-    total:document.getElementById('tot-total').textContent,
-    sub:document.getElementById('tot-sub').textContent,
-    iva:document.getElementById('tot-iva').textContent,
-    fecha:fechaStr,rows:getRows(),
-    descPct:document.getElementById('tot-desc').value,
-    ivaOn:document.getElementById('applyIva').checked,
-    email:document.getElementById('os-email').value.trim(),
-    dir:document.getElementById('os-dir').value.trim(),
-    km:document.getElementById('os-km').value.trim(),
-    gas:document.getElementById('os-gas').value,
-    anomalias:document.getElementById('os-anomalias').value.trim(),
-    objetos:document.getElementById('os-objetos').value.trim(),
-    adicionales:document.getElementById('os-adicionales').value.trim(),
-    entrega:document.getElementById('os-fecha-entrega').value||'',
-    savedAt:new Date().toLocaleString('es-MX')
-  };
-}
-function getRows(){
-  const rows=[];
-  document.querySelectorAll('#cotBody tr').forEach(tr=>{
-    rows.push({desc:tr.querySelectorAll('input[type=text]')[0]?.value||'',cat:tr.querySelector('select')?.value||'Otro',qty:tr.querySelector('.qty')?.value||'1',price:tr.querySelector('.price')?.value||'0',line:tr.querySelector('.lt')?.textContent||'$0.00'});
+function setDisplays(){
+  // OS folio
+  ['HF_os','CH_os','FF_os'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.textContent=osF();
   });
-  return rows;
+  var osfi=document.getElementById('os_fol');
+  if(osfi) osfi.value=osF();
+  // COT folio
+  ['CH_cot','FF_cot'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.textContent=cotF();
+  });
+  var cf=document.getElementById('cot_fol');
+  if(cf) cf.value=cotF();
+  var hfc=document.getElementById('HF_cot');
+  if(hfc) hfc.textContent=cotF()+' · OS: '+osF();
+  // Counters
+  var co=document.getElementById('CTR_os');  if(co)  co.textContent=osF();
+  var cc=document.getElementById('CTR_cot'); if(cc)  cc.textContent=cotF();
 }
 
-// SEARCH
-function openDD(){document.getElementById('searchDD').classList.add('open');if(!document.getElementById('searchInput').value.trim())renderRecent();}
-function closeDD(){document.getElementById('searchDD').classList.remove('open');}
-function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('searchClear').classList.remove('on');renderRecent();}
-function doSearch(q){
-  document.getElementById('searchClear').classList.toggle('on',q.length>0);
-  document.getElementById('searchDD').classList.add('open');
-  if(!q.trim()){renderRecent();return;}
-  const q2=q.toLowerCase();
-  const res=getRecs().filter(r=>r.nombre.toLowerCase().includes(q2)||r.placas.toLowerCase().includes(q2)||(r.cotFolio||'').toLowerCase().includes(q2)||(r.osFolio||'').toLowerCase().includes(q2)||(r.modelo||'').toLowerCase().includes(q2));
-  const c=document.getElementById('searchResults');
-  if(!res.length){c.innerHTML='<div class="sd-empty">Sin resultados para "'+q+'"</div>';return;}
-  c.innerHTML='<div class="sd-sec">'+res.length+' RESULTADO(S)</div>'+res.map(sdItem).join('');
-}
-function renderRecent(){
-  const recs=getRecs().slice(0,8);
-  const c=document.getElementById('searchResults');
-  if(!recs.length){c.innerHTML='<div class="sd-empty">No hay registros guardados aún.<br>Se guardarán al enviar cotizaciones.</div>';return;}
-  c.innerHTML='<div class="sd-sec">RECIENTES</div>'+recs.map(sdItem).join('');
-}
-function sdItem(r){
-  return'<div class="sd-item" onclick="loadRec(\''+r.cotFolio+'\')">'
-    +'<div class="sd-badge bd-cot">COT</div>'
-    +'<div class="sd-info"><div class="sd-name">'+(r.nombre||'Sin nombre')+'</div>'
-    +'<div class="sd-meta">'+r.cotFolio+' · '+r.osFolio+' · '+r.placas+' · '+(r.marca||'')+' '+(r.modelo||'')+' · '+r.total+'</div></div>'
-    +'<div class="sd-date">'+(r.savedAt||'')+'</div></div>';
-}
-function loadRec(cotFolio){
-  const r=getRecs().find(x=>x.cotFolio===cotFolio);if(!r)return;
-  closeDD();clearSearch();
-  CF=r.cotFolio;OF=r.osFolio;setFolios();
-  document.getElementById('cot-nombre').value=r.nombre;
-  document.getElementById('cot-tel').value=r.tel;
-  document.getElementById('cot-placas').value=r.placas;
-  document.getElementById('cot-modelo').value=r.modelo;
-  document.getElementById('cot-color').value=r.color;
-  document.getElementById('cot-servicio').value=r.servicio;
-  document.getElementById('cot-obs').value=r.obs;
-  document.getElementById('cot-fecha').value=r.fecha;
-  document.getElementById('tot-desc').value=r.descPct||'0';
-  document.getElementById('applyIva').checked=r.ivaOn||false;
-  const ms=document.getElementById('cot-marca');
-  for(let i=0;i<ms.options.length;i++){if(ms.options[i].text===r.marca){ms.selectedIndex=i;break;}}
-  document.getElementById('cotBody').innerHTML='';rowId=0;
-  (r.rows||[]).forEach(row=>addRow(row.cat,row.desc,row.qty,row.price));
-  recalc();updateFirmaLabel();
-  document.getElementById('os-email').value=r.email||'';
-  document.getElementById('os-dir').value=r.dir||'';
-  document.getElementById('os-km').value=r.km||'';
-  document.getElementById('os-gas').value=r.gas||'';
-  document.getElementById('os-anomalias').value=r.anomalias||'';
-  document.getElementById('os-objetos').value=r.objetos||'';
-  document.getElementById('os-adicionales').value=r.adicionales||'';
-  document.getElementById('os-fecha-entrega').value=r.entrega||'';
-  syncCOTtoOS();
-  const meta=r.cotFolio+' · '+r.osFolio+' · '+r.placas+' · '+(r.marca||'')+' '+(r.modelo||'')+' · '+r.total+' · '+r.savedAt;
-  ['cot-banner','os-banner'].forEach(id=>document.getElementById(id).classList.add('show'));
-  document.getElementById('cot-banner-title').textContent='COTIZACIÓN CARGADA — '+r.nombre;
-  document.getElementById('cot-banner-meta').textContent=meta;
-  document.getElementById('os-banner-title').textContent='ORDEN CARGADA — '+r.nombre;
-  document.getElementById('os-banner-meta').textContent=meta;
-  showToast('Registro cargado: '+r.nombre+' · '+r.cotFolio);
-  showPage('cot');updateFAB();
-}
-function newRecord(){
-  ['cot-banner','os-banner'].forEach(id=>document.getElementById(id).classList.remove('show'));
-  CF=mkF('COT');OF=mkF('OS');setFolios();
-  showToast('Formulario listo para nuevo registro');
+function incOS() { osN++;  dumpCfg({osN:osN,cotN:cotN}); setDisplays(); }
+function incCOT(){ cotN++; dumpCfg({osN:osN,cotN:cotN}); setDisplays(); }
+
+function saveCfg(){
+  var ov=parseInt(document.getElementById('C_os').value)||0;
+  var cv=parseInt(document.getElementById('C_cot').value)||0;
+  if(ov>0) osN=ov;
+  if(cv>0) cotN=cv;
+  dumpCfg({osN:osN,cotN:cotN});
+  setDisplays();
+  var ok=document.getElementById('CFG_OK');
+  ok.classList.add('vis');
+  setTimeout(function(){ ok.classList.remove('vis'); },3000);
+  toast('Configuración guardada · OS:'+osN+' COT:'+cotN);
 }
 
-// TABS
-function showPage(p){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  document.querySelectorAll('.btn-nav').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.btn-nav-'+p).classList.add('active');
-  const pc=document.getElementById('prog-cot'),po=document.getElementById('prog-os');
-  pc.className='ps'+(p==='cot'?' active':p==='os'?' done':'');
-  po.className='ps'+(p==='os'?' active-os':'');
-  window.scrollTo({top:0,behavior:'smooth'});
-  if(p==='os')syncCOTtoOS();
-}
-function syncCOTtoOS(){
-  document.getElementById('os-nombre').value=document.getElementById('cot-nombre').value;
-  document.getElementById('os-tel').value=document.getElementById('cot-tel').value;
-  document.getElementById('os-placas').value=document.getElementById('cot-placas').value;
-  document.getElementById('os-marca').value=document.getElementById('cot-marca').options[document.getElementById('cot-marca').selectedIndex]?.text||'';
-  document.getElementById('os-modelo').value=document.getElementById('cot-modelo').value;
-  document.getElementById('os-color').value=document.getElementById('cot-color').value;
-  document.getElementById('os-servicio').value=document.getElementById('cot-servicio').value;
+function prvCfg(){
+  var ov=parseInt(document.getElementById('C_os').value)||osN;
+  var cv=parseInt(document.getElementById('C_cot').value)||cotN;
+  document.getElementById('PRV_os').textContent=String(ov);
+  document.getElementById('PRV_cot').textContent='COT-'+String(cv).padStart(3,'0');
 }
 
-// FAB
-function updateFAB(){
-  const n=document.getElementById('cot-nombre').value.trim(),p=document.getElementById('cot-placas').value.trim();
-  let m='Hola, buenos días. Me comunico sobre la Orden *'+OF+'* / Cotización *'+CF+'* — ATM Servicio Mecánico';
-  if(n)m+=' · Cliente: *'+n+'*';if(p)m+=' · Placas: *'+p+'*';
-  m+='. Requiero atención o resolver dudas. Gracias.';
-  document.getElementById('fabWA').href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(m);
-}
-updateFAB();
-['cot-nombre','cot-placas'].forEach(id=>document.getElementById(id).addEventListener('input',updateFAB));
+// ═══════ FECHA AUTO ═══════
+var NOW = new Date();
+var TODAY_STR = NOW.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-// CHIPS
-function toggleChip(el){el.classList.toggle('on');}
-
-// UPLOAD
-const media={os:{photos:[],video:null}};
-function handlePhotos(ns,e){Array.from(e.target.files).forEach(f=>{if(media[ns].photos.length<10&&f.type.startsWith('image/'))media[ns].photos.push(f);});renderPhotos(ns);e.target.value='';}
-function renderPhotos(ns){
-  const g=document.getElementById(ns+'-photoPreview');
-  document.getElementById(ns+'-photoCount').textContent=media[ns].photos.length;
-  g.innerHTML='';document.getElementById(ns+'-photoZone').classList.toggle('has-files',media[ns].photos.length>=3);
-  media[ns].photos.forEach((f,i)=>{const url=URL.createObjectURL(f);const el=document.createElement('div');el.className='prev-item';el.innerHTML='<img src="'+url+'"><div class="med-label">'+trunc(f.name,13)+'</div><div class="rm-btn" onclick="removePhoto(\''+ns+'\','+i+')">×</div>';g.appendChild(el);});
+function fillDates(){
+  var of=document.getElementById('os_fec');   if(of)  of.value=TODAY_STR;
+  var cf=document.getElementById('cot_fec');  if(cf)  cf.value=TODAY_STR;
+  var ci=document.getElementById('cot_fei');  if(ci)  ci.value=TODAY_STR;
 }
-function removePhoto(ns,i){media[ns].photos.splice(i,1);renderPhotos(ns);}
-function handleVideo(ns,e){const f=e.target.files[0];if(!f)return;if(f.size>50*1024*1024){alert('El video no debe superar 50 MB');e.target.value='';return;}media[ns].video=f;renderVideo(ns);e.target.value='';}
-function renderVideo(ns){
-  const g=document.getElementById(ns+'-videoPreview');
-  document.getElementById(ns+'-videoName').textContent=media[ns].video?trunc(media[ns].video.name,20):'Sin video';
-  g.innerHTML='';document.getElementById(ns+'-videoZone').classList.toggle('has-files',!!media[ns].video);
-  if(!media[ns].video)return;
-  const url=URL.createObjectURL(media[ns].video);const el=document.createElement('div');el.className='prev-item';el.style.aspectRatio='16/9';
-  el.innerHTML='<video src="'+url+'" muted playsinline preload="metadata"></video><div class="vid-badge">VIDEO</div><div class="med-label">'+trunc(media[ns].video.name,16)+'</div><div class="rm-btn" onclick="removeVideo(\''+ns+'\')">×</div>';g.appendChild(el);
-}
-function removeVideo(ns){media[ns].video=null;renderVideo(ns);}
-function trunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
 
-// CALENDAR
-const calS={os:{y:now.getFullYear(),m:now.getMonth(),d:null,s:null}};
-function changeMonth(ns,dir){calS[ns].m+=dir;if(calS[ns].m>11){calS[ns].m=0;calS[ns].y++;}if(calS[ns].m<0){calS[ns].m=11;calS[ns].y--;}renderCal(ns);document.getElementById(ns+'-timeSection').style.display='none';calS[ns].d=null;calS[ns].s=null;}
-function renderCal(ns){
-  const{y,m,d}=calS[ns];document.getElementById(ns+'-calMonth').textContent=MONTHS[m]+' '+y;
-  const g=document.getElementById(ns+'-calDays');g.innerHTML='';
-  const first=new Date(y,m,1).getDay(),total=new Date(y,m+1,0).getDate(),td=now.getDate();
-  const isCurr=y===now.getFullYear()&&m===now.getMonth();
-  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cal-d empty';g.appendChild(e);}
-  for(let x=1;x<=total;x++){
-    const el=document.createElement('div');el.textContent=x;el.className='cal-d';
-    const dd=new Date(y,m,x),isPast=isCurr&&x<td,isSun=dd.getDay()===0,isSat=dd.getDay()===6,isOcc=OCCUPIED.includes(x)&&isCurr;
-    if(isPast||isSun)el.classList.add('dis');else if(isOcc)el.classList.add('occ');else el.addEventListener('click',()=>pickDay(ns,x,el));
-    if(isCurr&&x===td&&!isPast)el.classList.add('today');if(isSat&&!isPast&&!isOcc)el.classList.add('sat');if(d===x&&isCurr)el.classList.add('sel');g.appendChild(el);
+// ═══════ TABS ═══════
+function go(p){
+  // Hide all pages
+  ['os','cot','cfg'].forEach(function(x){
+    document.getElementById('PG_'+x).classList.remove('on');
+    var t=document.getElementById('T_'+x);
+    if(t) t.classList.remove('on');
+  });
+  // Show selected
+  document.getElementById('PG_'+p).classList.add('on');
+  var tb=document.getElementById('T_'+p);
+  if(tb) tb.classList.add('on');
+  // Progress bar
+  var prog=document.getElementById('PROG');
+  prog.style.display=(p==='cfg')?'none':'flex';
+  if(p!=='cfg'){
+    document.getElementById('P_os').className='ps'+(p==='os'?' a-os':p==='cot'?' done':'');
+    document.getElementById('P_cot').className='ps'+(p==='cot'?' a-cot':'');
+  }
+  window.scrollTo(0,0);
+  if(p==='cot'){
+    syncToCoT();
+    // Reinit firma canvas after page is visible
+    setTimeout(function(){ initCanvas('cot'); },80);
   }
 }
-function pickDay(ns,d,el){document.querySelectorAll('#'+ns+'-calDays .cal-d.sel').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');calS[ns].d=d;calS[ns].s=null;const isSat=new Date(calS[ns].y,calS[ns].m,d).getDay()===6;document.getElementById(ns+'-timeSection').style.display='block';renderSlots(ns,isSat);const fp=document.getElementById(ns+'-fecha-entrega');if(fp)fp.value=d+' de '+MONTHS[calS[ns].m]+' '+calS[ns].y;}
-function renderSlots(ns,isSat){const c=document.getElementById(ns+'-timeSlots');c.innerHTML='';(isSat?ALL_SLOTS.slice(0,6):ALL_SLOTS).forEach(t=>{const el=document.createElement('div');el.className='ts';el.textContent=t;el.addEventListener('click',()=>pickSlot(ns,el,t));c.appendChild(el);});}
-function pickSlot(ns,el,t){document.querySelectorAll('#'+ns+'-timeSlots .ts.sel').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');calS[ns].s=t;const fp=document.getElementById(ns+'-fecha-entrega');if(fp){const cur=fp.value.split(' — ')[0];fp.value=cur+' — '+t+' hrs';}}
-renderCal('os');
 
-// TABLE
-let rowId=0;
-function addRow(cat,desc='',qty='1',price='0'){
-  rowId++;const id='r'+rowId;const tr=document.createElement('tr');tr.id=id;
+function syncToCoT(){
+  var n=document.getElementById('os_nom').value;
+  var t=document.getElementById('os_tel').value;
+  var p=document.getElementById('os_pla').value;
+  var mo=document.getElementById('os_mod').value;
+  var co=document.getElementById('os_col').value;
+  var sv=document.getElementById('os_srv').value;
+  var mi=document.getElementById('os_mar').selectedIndex;
+  document.getElementById('cot_nom').value=n;
+  document.getElementById('cot_tel').value=t;
+  document.getElementById('cot_pla').value=p;
+  document.getElementById('cot_mod').value=mo;
+  document.getElementById('cot_col').value=co;
+  document.getElementById('cot_srv').value=sv;
+  document.getElementById('cot_osf').value=osF();
+  document.getElementById('cot_mar').selectedIndex=mi;
+  document.getElementById('FN_cot').textContent=n||'—';
+}
+
+// Update OS firma label live
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('os_nom').addEventListener('input',function(){
+    document.getElementById('FN_os').textContent=this.value||'—';
+    updateFAB();
+  });
+  document.getElementById('os_pla').addEventListener('input', updateFAB);
+  document.getElementById('os_tel').addEventListener('input', updateFAB);
+  fillDates();
+  setDisplays();
+  initCanvas('os');
+  renderCal();
+  updateFAB();
+  renderRecent();
+});
+
+// ═══════ FAB ═══════
+function updateFAB(){
+  var n=(document.getElementById('os_nom')||{value:''}).value.trim();
+  var p=(document.getElementById('os_pla')||{value:''}).value.trim();
+  var m='Hola, buenos días. Me comunico sobre la Orden *'+osF()+'* / Cotización *'+cotF()+'* — ATM Servicio Mecánico';
+  if(n) m+=' · Cliente: *'+n+'*';
+  if(p) m+=' · Placas: *'+p+'*';
+  m+='. Requiero atención o resolver dudas. Gracias.';
+  document.getElementById('FAB').href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(m);
+}
+
+// ═══════ UPLOAD ═══════
+var photos=[], videoFile=null;
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('UP_ph').addEventListener('change', function(e){
+    Array.from(e.target.files).forEach(function(f){
+      if(photos.length<10 && f.type.startsWith('image/')) photos.push(f);
+    });
+    renderPhotos();
+    e.target.value='';
+  });
+  document.getElementById('UP_vi').addEventListener('change', function(e){
+    var f=e.target.files[0];
+    if(!f) return;
+    if(f.size>50*1024*1024){ alert('El video no debe superar 50 MB'); e.target.value=''; return; }
+    videoFile=f;
+    renderVideo();
+    e.target.value='';
+  });
+});
+
+function trunc(s,n){ return s.length>n?s.slice(0,n)+'…':s; }
+
+function renderPhotos(){
+  var cnt=document.getElementById('PC');
+  var grid=document.getElementById('PP');
+  var zone=document.getElementById('UZ_ph');
+  if(!cnt||!grid||!zone) return;
+  cnt.textContent=photos.length;
+  zone.classList.toggle('ok',photos.length>=3);
+  grid.innerHTML='';
+  photos.forEach(function(f,i){
+    var url=URL.createObjectURL(f);
+    var d=document.createElement('div');
+    d.className='prev-item';
+    d.innerHTML='<img src="'+url+'"><div class="prev-lbl">'+trunc(f.name,13)+'</div><div class="prev-x" onclick="rmPhoto('+i+')">&#x2715;</div>';
+    grid.appendChild(d);
+  });
+}
+function rmPhoto(i){ photos.splice(i,1); renderPhotos(); }
+
+function renderVideo(){
+  var cnt=document.getElementById('VC');
+  var grid=document.getElementById('VP');
+  var zone=document.getElementById('UZ_vi');
+  if(!cnt||!grid||!zone) return;
+  cnt.textContent=videoFile?trunc(videoFile.name,20):'Sin video';
+  zone.classList.toggle('ok',!!videoFile);
+  grid.innerHTML='';
+  if(!videoFile) return;
+  var url=URL.createObjectURL(videoFile);
+  var d=document.createElement('div');
+  d.className='prev-item';
+  d.style.aspectRatio='16/9';
+  d.innerHTML='<video src="'+url+'" muted playsinline preload="metadata"></video><div class="vid-tag">VIDEO</div><div class="prev-lbl">'+trunc(videoFile.name,16)+'</div><div class="prev-x" onclick="rmVideo()">&#x2715;</div>';
+  grid.appendChild(d);
+}
+function rmVideo(){ videoFile=null; renderVideo(); }
+
+// ═══════ FIRMA ═══════
+var fc={};
+function initCanvas(ns){
+  var cv=document.getElementById('FC_'+ns);
+  if(!cv) return;
+  var w=cv.parentElement?cv.parentElement.offsetWidth:500;
+  cv.width=w||500;
+  cv.height=150;
+  var ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#1C1C1E';
+  ctx.lineWidth=2;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  fc[ns]={cv:cv,ctx:ctx,drawing:false,has:false,lx:0,ly:0};
+
+  function pos(e){
+    var r=cv.getBoundingClientRect();
+    if(e.touches) return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};
+    return{x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+  // Remove old listeners by replacing canvas
+  var nc=cv.cloneNode(true);
+  cv.parentNode.replaceChild(nc,cv);
+  fc[ns].cv=nc;
+  fc[ns].ctx=nc.getContext('2d');
+  fc[ns].ctx.strokeStyle='#1C1C1E';
+  fc[ns].ctx.lineWidth=2;
+  fc[ns].ctx.lineCap='round';
+  fc[ns].ctx.lineJoin='round';
+
+  nc.addEventListener('mousedown',function(e){ fc[ns].drawing=true; var p=pos(e); fc[ns].lx=p.x; fc[ns].ly=p.y; });
+  nc.addEventListener('mousemove',function(e){
+    if(!fc[ns].drawing) return;
+    var p=pos(e);
+    fc[ns].ctx.beginPath(); fc[ns].ctx.moveTo(fc[ns].lx,fc[ns].ly);
+    fc[ns].ctx.lineTo(p.x,p.y); fc[ns].ctx.stroke();
+    fc[ns].lx=p.x; fc[ns].ly=p.y; fc[ns].has=true;
+  });
+  nc.addEventListener('mouseup',function(){ fc[ns].drawing=false; });
+  nc.addEventListener('mouseleave',function(){ fc[ns].drawing=false; });
+  nc.addEventListener('touchstart',function(e){ e.preventDefault(); fc[ns].drawing=true; var p=pos(e); fc[ns].lx=p.x; fc[ns].ly=p.y; },{passive:false});
+  nc.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    if(!fc[ns].drawing) return;
+    var p=pos(e);
+    fc[ns].ctx.beginPath(); fc[ns].ctx.moveTo(fc[ns].lx,fc[ns].ly);
+    fc[ns].ctx.lineTo(p.x,p.y); fc[ns].ctx.stroke();
+    fc[ns].lx=p.x; fc[ns].ly=p.y; fc[ns].has=true;
+  },{passive:false});
+  nc.addEventListener('touchend',function(){ fc[ns].drawing=false; });
+
+  document.getElementById('FCL_'+ns).onclick=function(){ initCanvas(ns); };
+  document.getElementById('FDL_'+ns).onclick=function(){ dlFirma(ns); };
+}
+
+function dlFirma(ns){
+  if(!fc[ns]||!fc[ns].has){ alert('Aún no hay firma para descargar.'); return; }
+  var nombre=ns==='os'?document.getElementById('os_nom').value:document.getElementById('cot_nom').value;
+  var folio =ns==='os'?osF():cotF();
+  var tipo  =ns==='os'?'Inicio de Orden':'Aceptación de Cotización';
+  var cv=fc[ns].cv;
+  var tmp=document.createElement('canvas');
+  tmp.width=cv.width; tmp.height=cv.height+52;
+  var tc=tmp.getContext('2d');
+  tc.fillStyle='#fff'; tc.fillRect(0,0,tmp.width,tmp.height);
+  tc.fillStyle='#1C1C1E'; tc.font='bold 12px Open Sans,Arial';
+  tc.fillText('ATM Servicio Mecánico · '+tipo+' · '+nombre,10,18);
+  tc.fillStyle='#636366'; tc.font='10px Open Sans,Arial';
+  tc.fillText('Folio: '+folio+' · '+new Date().toLocaleString('es-MX'),10,36);
+  tc.drawImage(cv,0,50);
+  var a=document.createElement('a');
+  a.download='firma_'+ns+'_'+folio+'.png';
+  a.href=tmp.toDataURL('image/png');
+  a.click();
+  toast('Firma descargada · Adjúntala en WhatsApp');
+}
+
+// ═══════ CALENDAR ═══════
+var calY=NOW.getFullYear(), calM=NOW.getMonth(), calD=null, calS=null;
+
+function prevMo(){ calM--; if(calM<0){calM=11;calY--;} calD=null; calS=null; renderCal(); document.getElementById('CAL_slots').style.display='none'; }
+function nextMo(){ calM++; if(calM>11){calM=0;calY++;} calD=null; calS=null; renderCal(); document.getElementById('CAL_slots').style.display='none'; }
+
+function renderCal(){
+  document.getElementById('CAL_mo').textContent=MONTHS[calM]+' '+calY;
+  var g=document.getElementById('CAL_days'); g.innerHTML='';
+  var first=new Date(calY,calM,1).getDay();
+  var total=new Date(calY,calM+1,0).getDate();
+  var td=NOW.getDate();
+  var isCurr=calY===NOW.getFullYear()&&calM===NOW.getMonth();
+  for(var i=0;i<first;i++){ var e=document.createElement('div'); e.className='cd emp'; g.appendChild(e); }
+  for(var d=1;d<=total;d++){
+    var el=document.createElement('div'); el.textContent=d; el.className='cd';
+    var dd=new Date(calY,calM,d);
+    var isPast=isCurr&&d<td, isSun=dd.getDay()===0, isSat=dd.getDay()===6;
+    var isOcc=OCC_DAYS.indexOf(d)>=0&&isCurr;
+    if(isPast||isSun){ el.classList.add('dis'); }
+    else if(isOcc){ el.classList.add('occ'); }
+    else { (function(dd2,el2){ el2.addEventListener('click',function(){ pickD(dd2,el2); }); })(d,el); }
+    if(isCurr&&d===td&&!isPast) el.classList.add('today');
+    if(isSat&&!isPast&&!isOcc) el.classList.add('sat');
+    if(calD===d&&isCurr) el.classList.add('sel');
+    g.appendChild(el);
+  }
+}
+
+function pickD(d,el){
+  document.querySelectorAll('#CAL_days .cd.sel').forEach(function(e){ e.classList.remove('sel'); });
+  el.classList.add('sel'); calD=d; calS=null;
+  var isSat=new Date(calY,calM,d).getDay()===6;
+  document.getElementById('CAL_slots').style.display='block';
+  renderSlots(isSat);
+  document.getElementById('cot_fen').value=d+' de '+MONTHS[calM]+' '+calY;
+}
+
+function renderSlots(isSat){
+  var c=document.getElementById('SLOTS'); c.innerHTML='';
+  var sl=isSat?SLOTS_ALL.slice(0,6):SLOTS_ALL;
+  sl.forEach(function(t){
+    var el=document.createElement('div'); el.className='slot'; el.textContent=t;
+    el.addEventListener('click',function(){ pickSlot(el,t); });
+    c.appendChild(el);
+  });
+}
+
+function pickSlot(el,t){
+  document.querySelectorAll('#SLOTS .slot.sel').forEach(function(e){ e.classList.remove('sel'); });
+  el.classList.add('sel'); calS=t;
+  var cur=document.getElementById('cot_fen').value.split(' — ')[0];
+  document.getElementById('cot_fen').value=cur+' — '+t+' hrs';
+}
+
+// ═══════ COT TABLE ═══════
+var rowId=0;
+function addR(cat,desc,qty,price){
+  desc=desc||''; qty=qty||'1'; price=price||'0';
+  rowId++;
+  var id='R'+rowId;
+  var tr=document.createElement('tr'); tr.id=id;
   tr.innerHTML='<td><input type="text" placeholder="Descripción" value="'+desc+'" oninput="recalc()"></td>'
     +'<td><select onchange="recalc()"><option>Refacción</option><option>Mano de obra</option><option>Material</option><option>Otro</option></select></td>'
-    +'<td><input type="number" value="'+qty+'" min="1" style="text-align:center" oninput="recalc()" class="qty"></td>'
-    +'<td><input type="number" value="'+price+'" min="0" step="0.01" placeholder="0.00" oninput="recalc()" class="price"></td>'
+    +'<td><input type="number" value="'+qty+'" min="1" class="qty" style="text-align:center" oninput="recalc()"></td>'
+    +'<td><input type="number" value="'+price+'" min="0" step="0.01" class="price" placeholder="0.00" oninput="recalc()"></td>'
     +'<td style="text-align:right;font-weight:600;padding-right:5px" class="lt">$0.00</td>'
-    +'<td class="td-del"><button type="button" class="del-row" onclick="removeRow(\''+id+'\')">×</button></td>';
-  tr.querySelector('select').value=cat;document.getElementById('cotBody').appendChild(tr);recalc();
+    +'<td><button type="button" class="del-r" onclick="rmRow(''+id+'')">&#x2715;</button></td>';
+  tr.querySelector('select').value=cat;
+  document.getElementById('CTBL').appendChild(tr);
+  recalc();
 }
-function removeRow(id){const r=document.getElementById(id);if(r){r.remove();recalc();}}
+function rmRow(id){ var r=document.getElementById(id); if(r){ r.remove(); recalc(); } }
 function recalc(){
-  let sub=0;
-  document.querySelectorAll('#cotBody tr').forEach(tr=>{
-    const qty=parseFloat(tr.querySelector('.qty')?.value||0)||0,price=parseFloat(tr.querySelector('.price')?.value||0)||0;
-    const line=qty*price;sub+=line;const lt=tr.querySelector('.lt');if(lt)lt.textContent='$'+fmt(line);
+  var sub=0;
+  document.querySelectorAll('#CTBL tr').forEach(function(tr){
+    var q=parseFloat((tr.querySelector('.qty')||{value:0}).value)||0;
+    var p=parseFloat((tr.querySelector('.price')||{value:0}).value)||0;
+    var line=q*p; sub+=line;
+    var lt=tr.querySelector('.lt'); if(lt) lt.textContent='$'+fmt(line);
   });
-  const dp=parseFloat(document.getElementById('tot-desc').value||0)||0;
-  const disc=sub*(dp/100),after=sub-disc;
-  const iva=document.getElementById('applyIva').checked?after*0.16:0;
-  const total=after+iva;
-  document.getElementById('tot-sub').textContent='$'+fmt(sub);
-  document.getElementById('tot-iva').textContent='$'+fmt(iva);
-  document.getElementById('tot-total').textContent='$'+fmt(total);
+  var dp=parseFloat(document.getElementById('T_dsc').value||0)||0;
+  var disc=sub*(dp/100), after=sub-disc;
+  var iva=document.getElementById('T_iva').checked?after*0.16:0;
+  var total=after+iva;
+  document.getElementById('T_sub').textContent='$'+fmt(sub);
+  document.getElementById('T_iva_v').textContent='$'+fmt(iva);
+  document.getElementById('T_tot').textContent='$'+fmt(total);
 }
-function fmt(n){return n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
-addRow('Mano de obra');addRow('Refacción');
+function fmt(n){ return n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+addR('Mano de obra'); addR('Refacción');
 
-// FIRMA
-const cv=document.getElementById('firmaCanvas'),ctx=cv.getContext('2d');
-let drawing=false,hasFirma=false,lx=0,ly=0;
-function initCanvas(){cv.width=cv.parentElement.offsetWidth||500;cv.height=148;ctx.clearRect(0,0,cv.width,cv.height);ctx.strokeStyle='#1C1C1E';ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';hasFirma=false;}
-function gp(e){const r=cv.getBoundingClientRect();if(e.touches)return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};return{x:e.clientX-r.left,y:e.clientY-r.top};}
-cv.addEventListener('mousedown',e=>{drawing=true;const p=gp(e);lx=p.x;ly=p.y;});
-cv.addEventListener('mousemove',e=>{if(!drawing)return;const p=gp(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;hasFirma=true;});
-cv.addEventListener('mouseup',()=>drawing=false);cv.addEventListener('mouseleave',()=>drawing=false);
-cv.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=gp(e);lx=p.x;ly=p.y;},{passive:false});
-cv.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=gp(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;hasFirma=true;},{passive:false});
-cv.addEventListener('touchend',()=>drawing=false);
-function clearFirma(){initCanvas();}
-function downloadFirma(){
-  if(!hasFirma){alert('Aún no hay firma para descargar.');return;}
-  const tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height+50;
-  const tc=tmp.getContext('2d');tc.fillStyle='#fff';tc.fillRect(0,0,tmp.width,tmp.height);
-  tc.fillStyle='#1C1C1E';tc.font='bold 12px Open Sans,Arial';tc.fillText('ATM Servicio Mecánico — Firma de: '+document.getElementById('cot-nombre').value,10,20);
-  tc.font='10px Open Sans,Arial';tc.fillStyle='#636366';tc.fillText(CF+' / '+OF+' · '+new Date().toLocaleString('es-MX'),10,38);
-  tc.drawImage(cv,0,48);
-  const link=document.createElement('a');link.download='firma_'+CF+'.png';link.href=tmp.toDataURL('image/png');link.click();
-  showToast('Firma descargada como PNG — adjúntala en WhatsApp');
+// ═══════ STORAGE ═══════
+var SK=SK_REC;
+function getRecs(){ try{ return JSON.parse(localStorage.getItem(SK)||'[]'); }catch(e){ return []; } }
+function saveRec(r){ var rs=getRecs(); var i=rs.findIndex(function(x){ return x.osF===r.osF; }); if(i>=0) rs[i]=r; else rs.unshift(r); localStorage.setItem(SK,JSON.stringify(rs.slice(0,200))); }
+
+function snapRec(){
+  return{
+    osF:osF(), cotF:cotF(),
+    nom:document.getElementById('os_nom').value,
+    tel:document.getElementById('os_tel').value,
+    pla:document.getElementById('os_pla').value,
+    mar:document.getElementById('os_mar').selectedIndex,
+    marT:document.getElementById('os_mar').options[document.getElementById('os_mar').selectedIndex]?document.getElementById('os_mar').options[document.getElementById('os_mar').selectedIndex].text:'',
+    mod:document.getElementById('os_mod').value,
+    col:document.getElementById('os_col').value,
+    km:document.getElementById('os_km').value,
+    gas:document.getElementById('os_gas').value,
+    srv:document.getElementById('os_srv').value,
+    obs:document.getElementById('os_obs').value,
+    ano:document.getElementById('os_ano').value,
+    obj:document.getElementById('os_obj').value,
+    cotAdi:document.getElementById('cot_adi').value,
+    cotObs:document.getElementById('cot_obs').value,
+    cotTot:document.getElementById('T_tot').textContent,
+    cotFen:document.getElementById('cot_fen').value,
+    rows:snapRows(),
+    dsc:document.getElementById('T_dsc').value,
+    ivaOn:document.getElementById('T_iva').checked,
+    at:new Date().toLocaleString('es-MX')
+  };
 }
-function updateFirmaLabel(){document.getElementById('firma-nombre-lbl').textContent=document.getElementById('cot-nombre').value.trim()||'—';}
-window.addEventListener('load',initCanvas);window.addEventListener('resize',initCanvas);
-
-// SUBMIT COT
-function submitCOT(e){
-  e.preventDefault();if(!hasFirma){alert('El cliente debe firmar antes de enviar.');return;}
-  const nombre=document.getElementById('cot-nombre').value.trim();
-  const tel=document.getElementById('cot-tel').value.trim().replace(/\D/g,'');
-  const placas=document.getElementById('cot-placas').value.trim();
-  const marca=document.getElementById('cot-marca').options[document.getElementById('cot-marca').selectedIndex]?.text||'';
-  const modelo=document.getElementById('cot-modelo').value.trim();
-  const color=document.getElementById('cot-color').value.trim();
-  const servicio=document.getElementById('cot-servicio').value.trim();
-  const obs=document.getElementById('cot-obs').value.trim();
-  const total=document.getElementById('tot-total').textContent;
-  const sub=document.getElementById('tot-sub').textContent;
-  const iva=document.getElementById('tot-iva').textContent;
-  let conceptos='';
-  document.querySelectorAll('#cotBody tr').forEach(tr=>{
-    const desc=tr.querySelectorAll('input[type=text]')[0]?.value||'';
-    const cat=tr.querySelector('select')?.value||'';
-    const qty=tr.querySelector('.qty')?.value||'1';
-    const price=parseFloat(tr.querySelector('.price')?.value||0);
-    const line=tr.querySelector('.lt')?.textContent||'';
-    if(desc)conceptos+='\n  • '+cat+': '+desc+' ('+qty+' × $'+fmt(price)+') = '+line;
+function snapRows(){
+  var rs=[];
+  document.querySelectorAll('#CTBL tr').forEach(function(tr){
+    rs.push({
+      desc:(tr.querySelectorAll('input[type=text]')[0]||{value:''}).value,
+      cat:(tr.querySelector('select')||{value:'Otro'}).value,
+      qty:(tr.querySelector('.qty')||{value:'1'}).value,
+      price:(tr.querySelector('.price')||{value:'0'}).value
+    });
   });
-  const msg='🔧 *COTIZACIÓN — ATM SERVICIO MECÁNICO* 🔧\n━━━━━━━━━━━━━━━━━━━━━━━\n📋 *'+CF+'*  ·  Ligada a '+OF+'\n📅 '+document.getElementById('cot-fecha').value+'\n━━━━━━━━━━━━━━━━━━━━━━━\n👤 *'+nombre+'*\n🚗 '+marca+' '+modelo+' · '+color+'  |  🔑 '+placas+'\n━━━━━━━━━━━━━━━━━━━━━━━\n🛠 *Servicio:*\n'+servicio+(obs?'\n\n📝 '+obs:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n💡 *Conceptos:*'+conceptos+'\n━━━━━━━━━━━━━━━━━━━━━━━\n📊 Subtotal: '+sub+'  |  IVA: '+iva+'\n✅ *TOTAL: '+total+'*\n━━━━━━━━━━━━━━━━━━━━━━━\n✍️ Cotización aceptada y firmada digitalmente.\n📎 _La firma se adjunta como imagen PNG en este chat._\n_Responde para confirmar autorización del servicio._\n\n_ATM Servicio Mecánico · Guanajuato, MX_';
-  const dest=tel.length>=10?'52'+tel:PHONE;
-  window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
-  saveRec(buildRec());
-  const btn=e.target.querySelector('.btn-p');btn.textContent='ENVIANDO…';btn.disabled=true;
-  setTimeout(()=>{showToast('Cotización enviada · Registro guardado');btn.textContent='COTIZACIÓN ENVIADA ✓';btn.style.background='var(--green)';setTimeout(()=>{showPage('os');showToast('Completa ahora la Orden de Servicio');},2200);},800);
+  return rs;
 }
 
-// SUBMIT OS
-function submitOS(e){
-  e.preventDefault();if(media.os.photos.length<3){alert('Agrega al menos 3 fotografías del vehículo.');return;}
-  const nombre=document.getElementById('os-nombre').value;
-  const tel=document.getElementById('cot-tel').value.trim().replace(/\D/g,'');
-  const email=document.getElementById('os-email').value.trim();
-  const dir=document.getElementById('os-dir').value.trim();
-  const placas=document.getElementById('os-placas').value;
-  const marca=document.getElementById('os-marca').value;
-  const modelo=document.getElementById('os-modelo').value;
-  const color=document.getElementById('os-color').value;
-  const km=document.getElementById('os-km').value.trim();
-  const gas=document.getElementById('os-gas').value;
-  const anomalias=document.getElementById('os-anomalias').value.trim();
-  const objetos=document.getElementById('os-objetos').value.trim();
-  const servicio=document.getElementById('os-servicio').value.trim();
-  const adicionales=document.getElementById('os-adicionales').value.trim();
-  const entrega=document.getElementById('os-fecha-entrega').value||'Por confirmar';
-  const fotos=media.os.photos.length;
-  const video=media.os.video?'Sí':'No';
-  const total=document.getElementById('tot-total').textContent;
-  const sub=document.getElementById('tot-sub').textContent;
-  const msg='🚗 *ORDEN DE SERVICIO — ATM SERVICIO MECÁNICO* 🚗\n━━━━━━━━━━━━━━━━━━━━━━━\n📋 *'+OF+'*  ·  Cotización: '+CF+'\n📅 Ingreso: '+fechaStr+'\n🕐 Entrega estimada: *'+entrega+'*\n━━━━━━━━━━━━━━━━━━━━━━━\n👤 *'+nombre+'*\n📞 '+document.getElementById('cot-tel').value+(email?'  |  📧 '+email:'')+(dir?'\n📍 '+dir:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n🚗 '+marca+' '+modelo+' · '+color+'\n🔑 Placas: *'+placas+'*'+(km?'\n📏 Km inicial: '+km:'')+(gas?'  |  ⛽ Gasolina: '+gas:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n🛠 *Servicio autorizado:*\n'+servicio+(adicionales?'\n\n🔍 *Trabajos adicionales:*\n'+adicionales:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n⚠️ *Estado de entrada:*\n'+(anomalias||'Sin anomalías reportadas')+(objetos?'\n🎒 Objetos: '+objetos:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n📸 Evidencia registrada: *'+fotos+' foto(s)*  |  Video: '+video+'\n_Las fotografías de entrada se adjuntan en este chat o quedan en el sistema ATM._\n━━━━━━━━━━━━━━━━━━━━━━━\n💰 Subtotal: '+sub+'   ✅ *TOTAL: '+total+'*\n━━━━━━━━━━━━━━━━━━━━━━━\n_Te notificaremos cualquier novedad para que tomes decisiones a tiempo._\n_Gracias por confiar en ATM · Guanajuato, MX_ 🔧';
-  const dest=tel.length>=10?'52'+tel:PHONE;
-  window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
-  saveRec(buildRec());
-  const btn=e.target.querySelector('.btn-p');btn.textContent='ENVIANDO…';btn.disabled=true;
-  setTimeout(()=>{showToast('¡Orden registrada y enviada al cliente!');btn.textContent='ORDEN REGISTRADA ✓';btn.style.background='var(--green)';},800);
+// ═══════ SEARCH ═══════
+var SI=null, SX=null, DD=null, DR=null;
+document.addEventListener('DOMContentLoaded',function(){
+  SI=document.getElementById('SI');
+  SX=document.getElementById('SX');
+  DD=document.getElementById('DD');
+  DR=document.getElementById('DR');
+  SI.addEventListener('input',function(){ doSearch(this.value); SX.classList.toggle('vis',this.value.length>0); });
+  SI.addEventListener('focus',function(){ DD.classList.add('open'); if(!this.value) renderRecent(); });
+  SI.addEventListener('blur',function(){ setTimeout(function(){ DD.classList.remove('open'); },200); });
+  SX.addEventListener('click',function(){ SI.value=''; SX.classList.remove('vis'); renderRecent(); });
+});
+
+function renderRecent(){
+  var rs=getRecs().slice(0,8);
+  if(!DR) return;
+  if(!rs.length){ DR.innerHTML='<div class="dd-empty">Sin registros guardados aún.</div>'; return; }
+  DR.innerHTML='<div class="dd-hdr">RECIENTES</div>'+rs.map(ddRow).join('');
+}
+function doSearch(q){
+  if(!q){ renderRecent(); return; }
+  var q2=q.toLowerCase();
+  var rs=getRecs().filter(function(r){
+    return (r.nom||'').toLowerCase().includes(q2)||(r.pla||'').toLowerCase().includes(q2)
+          ||(r.osF||'').toLowerCase().includes(q2)||(r.cotF||'').toLowerCase().includes(q2)
+          ||(r.mod||'').toLowerCase().includes(q2);
+  });
+  if(!DR) return;
+  if(!rs.length){ DR.innerHTML='<div class="dd-empty">Sin resultados para "'+q+'"</div>'; return; }
+  DR.innerHTML='<div class="dd-hdr">'+rs.length+' RESULTADO(S)</div>'+rs.map(ddRow).join('');
+}
+function ddRow(r){
+  return '<div class="dd-row" onclick="loadRec(''+r.osF+'')">'
+    +'<div class="dd-tag">OS '+r.osF+'</div>'
+    +'<div class="dd-info"><div class="dd-name">'+(r.nom||'—')+'</div>'
+    +'<div class="dd-sub">'+(r.cotF||'—')+' · '+(r.pla||'—')+' · '+(r.marT||'')+' '+(r.mod||'')+' · '+(r.cotTot||'')+'</div></div>'
+    +'<div class="dd-date">'+(r.at||'')+'</div></div>';
+}
+function loadRec(osf){
+  var rs=getRecs(); var r=rs.find(function(x){ return x.osF===osf; });
+  if(!r) return;
+  if(DD) DD.classList.remove('open');
+  // Load OS
+  document.getElementById('os_nom').value=r.nom||'';
+  document.getElementById('os_tel').value=r.tel||'';
+  document.getElementById('os_pla').value=r.pla||'';
+  document.getElementById('os_mar').selectedIndex=r.mar||0;
+  document.getElementById('os_mod').value=r.mod||'';
+  document.getElementById('os_col').value=r.col||'';
+  document.getElementById('os_km').value=r.km||'';
+  document.getElementById('os_gas').value=r.gas||'';
+  document.getElementById('os_srv').value=r.srv||'';
+  document.getElementById('os_obs').value=r.obs||'';
+  document.getElementById('os_ano').value=r.ano||'';
+  document.getElementById('os_obj').value=r.obj||'';
+  // Load COT
+  document.getElementById('cot_adi').value=r.cotAdi||'';
+  document.getElementById('cot_obs').value=r.cotObs||'';
+  document.getElementById('T_dsc').value=r.dsc||'0';
+  document.getElementById('T_iva').checked=r.ivaOn||false;
+  document.getElementById('cot_fen').value=r.cotFen||'';
+  document.getElementById('CTBL').innerHTML=''; rowId=0;
+  (r.rows||[]).forEach(function(row){ addR(row.cat,row.desc,row.qty,row.price); });
+  recalc();
+  syncToCoT();
+  // Banners
+  var meta='OS:'+r.osF+' · '+r.cotF+' · '+r.pla+' · '+(r.marT||'')+' '+(r.mod||'')+' · '+(r.cotTot||'')+' · '+r.at;
+  ['B_os','B_cot'].forEach(function(id){ document.getElementById(id).classList.add('on'); });
+  document.getElementById('B_os_t').textContent='ORDEN CARGADA — '+(r.nom||'');
+  document.getElementById('B_os_m').textContent=meta;
+  document.getElementById('B_cot_t').textContent='COTIZACIÓN CARGADA — '+(r.nom||'');
+  document.getElementById('B_cot_m').textContent=meta;
+  document.getElementById('FN_os').textContent=r.nom||'—';
+  document.getElementById('FN_cot').textContent=r.nom||'—';
+  updateFAB();
+  toast('Registro cargado: '+(r.nom||'')+ ' · OS '+r.osF);
+  go('os');
+}
+function newRec(){
+  ['B_os','B_cot'].forEach(function(id){ document.getElementById(id).classList.remove('on'); });
+  toast('Formulario listo para nuevo registro');
 }
 
-function showToast(msg){document.getElementById('toastMsg').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),5000);}
+// ═══════ SUBMIT OS ═══════
+function sendOS(e){
+  e.preventDefault();
+  if(photos.length<3){ alert('Agrega al menos 3 fotografías del vehículo.'); return; }
+  var nom=document.getElementById('os_nom').value.trim();
+  var tel=document.getElementById('os_tel').value.trim().replace(/[^0-9]/g,'');
+  var email=document.getElementById('os_email').value.trim();
+  var dir=document.getElementById('os_dir').value.trim();
+  var pla=document.getElementById('os_pla').value.trim();
+  var mar=document.getElementById('os_mar').options[document.getElementById('os_mar').selectedIndex].text;
+  var mod=document.getElementById('os_mod').value.trim();
+  var col=document.getElementById('os_col').value.trim();
+  var km=document.getElementById('os_km').value.trim();
+  var gas=document.getElementById('os_gas').value;
+  var srv=document.getElementById('os_srv').value.trim();
+  var obs=document.getElementById('os_obs').value.trim();
+  var ano=document.getElementById('os_ano').value.trim();
+  var obj=document.getElementById('os_obj').value.trim();
+  var fots=photos.length;
+  var vid=videoFile?'Sí':'No';
+  var chips=Array.from(document.querySelectorAll('#OS_CHIPS .chip.on')).map(function(c){ return c.textContent; }).join(', ');
+  var fol=osF();
 
-if('contacts' in navigator&&'ContactsManager' in window){navigator.contacts.select(['email'],{multiple:false}).then(c=>{if(c&&c[0]&&c[0].email&&c[0].email[0]){document.getElementById('os-email').value=c[0].email[0];document.getElementById('os-email-badge').style.display='block';}}).catch(()=>{});}
+  var msg='🔧 *ORDEN DE SERVICIO — ATM SERVICIO MECÁNICO* 🔧
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'📋 *Orden de Servicio: '+fol+'*
+'
+    +'📅 Fecha: '+TODAY_STR+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'👤 *Cliente:* '+nom+'
+'
+    +'📞 '+document.getElementById('os_tel').value
+    +(email?'  |  📧 '+email:'')
+    +(dir?'
+📍 '+dir:'')+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'🚗 *Vehículo:* '+mar+' '+mod+' · '+col+'
+'
+    +'🔑 *Placas:* '+pla
+    +(km?'
+📏 Km: '+km:'')
+    +(gas?'  |  ⛽ Gasolina: '+gas:'')+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'🛠 *Servicio solicitado:*
+'+srv
+    +(chips?'
+🏷 '+chips:'')
+    +(obs?'
+
+📝 '+obs:'')+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'⚠️ *Estado de entrada:*
+'+(ano||'Sin anomalías reportadas')
+    +(obj?'
+🎒 Objetos: '+obj:'')+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'📸 Evidencia: *'+fots+' foto(s)*  |  Video: '+vid+'
+'
+    +'_Las fotos quedan registradas en el sistema ATM._
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'✅ Para confirmar la recepción de su vehículo,
+'
+    +'*responda con la palabra: ACEPTO*
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'_Le notificaremos cualquier novedad durante el servicio._
+'
+    +'_Gracias por confiar en ATM · Guanajuato, MX_ 🔧';
+
+  var dest=tel.length>=10?'52'+tel:PHONE;
+  window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
+  saveRec(snapRec());
+  incOS();
+  var btn=e.target.querySelector('.btn');
+  btn.textContent='ENVIANDO…'; btn.disabled=true;
+  setTimeout(function(){
+    toast('Orden '+fol+' registrada y enviada');
+    btn.textContent='ORDEN REGISTRADA ✓'; btn.style.background='var(--green)';
+    setTimeout(function(){ go('cot'); toast('Completa ahora la cotización · Paso 2'); },2200);
+  },800);
+}
+
+// ═══════ SUBMIT COT ═══════
+function sendCOT(e){
+  e.preventDefault();
+  if(!fc.cot||!fc.cot.has){ alert('El cliente debe firmar la cotización antes de enviar.'); return; }
+  var nom=document.getElementById('cot_nom').value.trim();
+  var tel=document.getElementById('cot_tel').value.trim().replace(/[^0-9]/g,'');
+  var pla=document.getElementById('cot_pla').value.trim();
+  var mar=document.getElementById('cot_mar').options[document.getElementById('cot_mar').selectedIndex].text;
+  var mod=document.getElementById('cot_mod').value.trim();
+  var col=document.getElementById('cot_col').value.trim();
+  var srv=document.getElementById('cot_srv').value.trim();
+  var adi=document.getElementById('cot_adi').value.trim();
+  var obs=document.getElementById('cot_obs').value.trim();
+  var tot=document.getElementById('T_tot').textContent;
+  var sub=document.getElementById('T_sub').textContent;
+  var iva=document.getElementById('T_iva_v').textContent;
+  var fen=document.getElementById('cot_fen').value||'Por confirmar';
+  var fol=cotF();
+  var osfol=osF();
+  var conceptos='';
+  document.querySelectorAll('#CTBL tr').forEach(function(tr){
+    var desc=(tr.querySelectorAll('input[type=text]')[0]||{value:''}).value;
+    var cat=(tr.querySelector('select')||{value:''}).value;
+    var qty=(tr.querySelector('.qty')||{value:'1'}).value;
+    var price=parseFloat((tr.querySelector('.price')||{value:0}).value)||0;
+    var line=(tr.querySelector('.lt')||{textContent:''}).textContent;
+    if(desc) conceptos+='
+  • '+cat+': '+desc+' ('+qty+' × $'+fmt(price)+') = '+line;
+  });
+
+  var msg='💰 *COTIZACIÓN — ATM SERVICIO MECÁNICO* 💰
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'📋 *Cotización: '+fol+'*  ·  Orden: '+osfol+'
+'
+    +'📅 '+TODAY_STR+'
+'
+    +'🕐 *Entrega estimada: '+fen+'*
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'👤 *'+nom+'*
+'
+    +'🚗 '+mar+' '+mod+' · '+col+'  |  🔑 '+pla+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'🛠 *Servicio:*
+'+srv
+    +(adi?'
+
+🔍 *Adicionales:*
+'+adi:'')
+    +(obs?'
+
+📝 *Obs:*
+'+obs:'')+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'💡 *Conceptos:*'+conceptos+'
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'📊 Subtotal: '+sub+'  |  IVA: '+iva+'
+'
+    +'✅ *TOTAL: '+tot+'*
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'✍️ Cotización *firmada digitalmente*.
+'
+    +'📎 _La firma se adjunta como imagen PNG en este chat._
+'
+    +'*Para autorizar el servicio, responda: ACEPTO*
+'
+    +'━━━━━━━━━━━━━━━━━━━━━━━
+'
+    +'_Cualquier trabajo adicional será notificado antes de realizarse._
+'
+    +'_Gracias por confiar en ATM · Guanajuato, MX_ 🔧';
+
+  var dest=tel.length>=10?'52'+tel:PHONE;
+  window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
+  saveRec(snapRec());
+  incCOT();
+  var btn=e.target.querySelector('.btn');
+  btn.textContent='ENVIANDO…'; btn.disabled=true;
+  setTimeout(function(){
+    toast('Cotización enviada · Próximo folio: '+cotF());
+    btn.textContent='COTIZACIÓN ENVIADA ✓'; btn.style.background='var(--green)';
+  },800);
+}
+
+// ═══════ TOAST ═══════
+function toast(msg){
+  document.getElementById('TMSG').textContent=msg;
+  var t=document.getElementById('TOAST');
+  t.classList.add('on');
+  setTimeout(function(){ t.classList.remove('on'); },5000);
+}
 </script>
 </body>
 </html>
