@@ -3,554 +3,284 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATM Servicio Mecánico — Orden de Servicio · v1.0.6</title>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<title>ATM Servicio Mecánico · v1.3.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  /* Paleta Rojo · Gris · Azul */
-  --red:          #C0392B;
-  --red-dark:     #922B21;
-  --red-light:    #E74C3C;
-  --red-pale:     #FDEDEC;
+:root{
+  --red:#C0392B;--red-d:#8E1B12;--red-p:#FDEDEC;
+  --blue:#1A3A60;--blue-m:#2471A3;--blue-l:#3498DB;--blue-p:#EBF5FB;
+  --green:#1a6e45;
+  --g900:#1C1C1E;--g700:#3A3A3C;--g500:#636366;
+  --g300:#AEAEB2;--g100:#F2F2F7;--g50:#F9F9FB;--white:#fff;
+  --brd:rgba(174,174,178,0.28);--brd-r:rgba(192,57,43,0.3);--brd-b:rgba(36,113,163,0.3);
+  --shadow:0 4px 24px rgba(28,28,30,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--g100);color:var(--g900);font-family:'Open Sans',Arial,sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+.top-stripe{height:4px;background:linear-gradient(90deg,var(--red-d),var(--red) 40%,var(--blue-m) 70%,var(--blue));}
 
-  --blue:         #1A3A60;
-  --blue-mid:     #2471A3;
-  --blue-light:   #3498DB;
-  --blue-pale:    #EBF5FB;
+/* HEADER */
+header{position:relative;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:12px 28px;background:var(--white);border-bottom:1px solid var(--brd);box-shadow:0 2px 12px rgba(28,28,30,0.07);gap:10px;flex-wrap:wrap;}
+.logo-wrap{display:flex;align-items:center;gap:11px;flex-shrink:0;}
+.logo-emblem{width:44px;height:44px;}
+.logo-text h1{font-family:'Oswald',Arial,sans-serif;font-size:20px;font-weight:700;color:var(--g900);letter-spacing:4px;line-height:1;}
+.logo-text p{font-size:9px;color:var(--red);letter-spacing:3px;margin-top:3px;font-weight:600;text-transform:uppercase;}
 
-  --gray-900:     #1C1C1E;
-  --gray-800:     #2C2C2E;
-  --gray-700:     #3A3A3C;
-  --gray-500:     #636366;
-  --gray-300:     #AEAEB2;
-  --gray-100:     #F2F2F7;
-  --gray-50:      #F9F9FB;
-  --white:        #FFFFFF;
+/* SEARCH */
+.search-wrap{position:relative;flex:1;min-width:200px;max-width:320px;}
+.search-row{display:flex;align-items:center;background:var(--g50);border:1px solid var(--brd);border-radius:4px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+.search-row:focus-within{border-color:var(--blue-l);box-shadow:0 0 0 3px rgba(52,152,219,0.10);}
+.si{padding:0 9px;color:var(--g300);display:flex;align-items:center;}
+.si svg{width:14px;height:14px;}
+#searchInput{border:none;background:transparent;font-family:'Open Sans',Arial,sans-serif;font-size:13px;color:var(--g900);padding:9px 0;outline:none;width:100%;}
+#searchInput::placeholder{color:var(--g300);}
+.sc{padding:0 8px;color:var(--g300);cursor:pointer;font-size:16px;display:none;align-items:center;background:none;border:none;transition:color .15s;}
+.sc:hover{color:var(--red);}
+.sc.on{display:flex;}
+.sd{position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--white);border:1px solid var(--brd);border-radius:5px;box-shadow:0 8px 28px rgba(28,28,30,0.13);z-index:500;max-height:300px;overflow-y:auto;display:none;}
+.sd.open{display:block;}
+.sd-hdr{padding:7px 13px;font-family:'Oswald',Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;color:var(--g300);text-transform:uppercase;border-bottom:1px solid var(--brd);background:var(--g50);}
+.sd-sec{padding:5px 13px 3px;font-family:'Oswald',Arial,sans-serif;font-size:9px;font-weight:600;letter-spacing:2px;color:var(--g300);text-transform:uppercase;background:var(--g50);border-bottom:1px solid var(--brd);}
+.sd-item{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--brd);transition:background .15s;display:flex;align-items:center;gap:9px;}
+.sd-item:last-child{border-bottom:none;}
+.sd-item:hover{background:var(--blue-p);}
+.sd-badge{font-family:'Oswald',Arial,sans-serif;font-size:9px;font-weight:600;letter-spacing:1px;padding:2px 5px;border-radius:2px;flex-shrink:0;}
+.bd-cot{background:var(--red-p);color:var(--red);border:1px solid var(--brd-r);}
+.sd-info{flex:1;min-width:0;}
+.sd-name{font-size:13px;font-weight:600;color:var(--g900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sd-meta{font-size:11px;color:var(--g500);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sd-date{font-size:10px;color:var(--g300);flex-shrink:0;}
+.sd-empty{padding:16px 13px;text-align:center;font-size:13px;color:var(--g300);}
 
-  --border:       rgba(174,174,178,0.28);
-  --border-red:   rgba(192,57,43,0.30);
-  --border-blue:  rgba(36,113,163,0.30);
-}
+/* NAV */
+.header-nav{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.btn-nav{display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:3px;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:all .18s;}
+.sn{width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.22);}
+.btn-nav-cot{background:var(--red);color:#fff;} .btn-nav-cot:hover,.btn-nav-cot.active{background:var(--red-d);}
+.btn-nav-os{background:var(--blue);color:#fff;} .btn-nav-os:hover,.btn-nav-os.active{background:var(--blue-m);}
+.btn-nav svg{width:12px;height:12px;}
+.step-arrow{color:var(--g300);font-size:16px;}
+.hv{font-size:9px;color:var(--g300);letter-spacing:1px;}
 
-* { margin:0; padding:0; box-sizing:border-box; }
+/* PROGRESS */
+.progress-bar{display:flex;align-items:center;justify-content:center;gap:0;padding:7px 40px;background:var(--white);border-bottom:1px solid var(--brd);}
+.ps{display:flex;align-items:center;gap:7px;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:2px;color:var(--g300);transition:all .2s;}
+.ps.done{color:var(--green);} .ps.active{color:var(--red);} .ps.active-os{color:var(--blue);}
+.ps .pn{width:18px;height:18px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.ps.done .pn{background:var(--green);border-color:var(--green);color:#fff;}
+.pa{color:var(--g300);font-size:16px;margin:0 2px;}
 
-body {
-  background: var(--gray-100);
-  color: var(--gray-900);
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-weight: 300;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+/* PAGES */
+.page{display:none;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-/* Patrón de fondo sutil */
-body::before {
-  content:'';
-  position:fixed; inset:0;
-  background-image:
-    repeating-linear-gradient(0deg,  transparent, transparent 72px, rgba(192,57,43,0.03) 72px, rgba(192,57,43,0.03) 73px),
-    repeating-linear-gradient(90deg, transparent, transparent 72px, rgba(26,58,96,0.03)   72px, rgba(26,58,96,0.03)   73px);
-  pointer-events:none; z-index:0;
-}
+/* HERO */
+.hero{position:relative;z-index:1;text-align:center;padding:36px 48px 26px;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 30px,rgba(255,255,255,0.015) 30px,rgba(255,255,255,0.015) 31px);}
+.hero-cot{background:linear-gradient(135deg,var(--red-d) 0%,var(--g900) 55%,var(--blue) 100%);}
+.hero-os {background:linear-gradient(135deg,var(--blue) 0%,var(--g900) 55%,var(--red-d) 100%);}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;font-family:'Oswald',Arial,sans-serif;font-size:10px;font-weight:500;letter-spacing:4px;color:#fff;border:1px solid rgba(255,255,255,0.18);padding:4px 14px;margin-bottom:11px;background:rgba(255,255,255,0.07);border-radius:2px;}
+.htd{width:5px;height:5px;border-radius:50%;}
+.hero-cot .htd{background:var(--red);} .hero-os .htd{background:var(--blue-l);}
+.hero h2{font-family:'Oswald',Arial,sans-serif;font-size:clamp(22px,3.8vw,42px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:7px;letter-spacing:2px;text-transform:uppercase;}
+.ar{color:#E74C3C;} .ab{color:var(--blue-l);}
+.hero p{font-size:13px;color:rgba(255,255,255,0.6);max-width:400px;margin:0 auto;line-height:1.7;}
+.fb{display:inline-block;margin-top:10px;font-family:'Oswald',Arial,sans-serif;font-size:11px;letter-spacing:3px;color:#fff;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:4px 14px;border-radius:2px;}
 
-/* Franja roja superior de acento */
-.top-stripe {
-  height: 4px;
-  background: linear-gradient(90deg, var(--red-dark) 0%, var(--red) 40%, var(--blue-mid) 70%, var(--blue) 100%);
-  position: relative; z-index: 20;
-}
+/* RECORD BANNER */
+.rec-banner{display:none;background:linear-gradient(90deg,var(--blue-p),var(--white));border:1px solid var(--brd-b);border-radius:5px;padding:11px 16px;max-width:860px;margin:14px auto 0;align-items:center;gap:11px;}
+.rec-banner.show{display:flex;}
+.rec-banner.rb-red{background:linear-gradient(90deg,var(--red-p),var(--white));border-color:var(--brd-r);}
+.rbi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rbi.blue{background:var(--blue);color:#fff;} .rbi.red{background:var(--red);color:#fff;}
+.rbi svg{width:15px;height:15px;}
+.rbt{font-family:'Oswald',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;color:var(--blue);}
+.rb-red .rbt{color:var(--red);}
+.rbm{font-size:11px;color:var(--g500);margin-top:2px;}
+.rbc{background:none;border:1px solid var(--brd);border-radius:2px;color:var(--g500);font-size:11px;padding:4px 9px;cursor:pointer;font-weight:600;transition:all .15s;white-space:nowrap;margin-left:auto;}
+.rbc:hover{border-color:var(--red);color:var(--red);}
 
-/* ── HEADER ── */
-header {
-  position: relative; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 48px;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 12px rgba(28,28,30,0.07);
-}
-.logo-wrap { display:flex; align-items:center; gap:16px; }
-.logo-emblem { width:54px; height:54px; flex-shrink:0; }
-.logo-text h1 {
-  font-family: 'Oswald', 'Arial Black', Arial, sans-serif;
-  font-size: 26px; font-weight: 700;
-  color: var(--gray-900); letter-spacing: 4px; line-height: 1;
-}
-.logo-text p {
-  font-size: 9px; color: var(--red);
-  letter-spacing: 3px; margin-top: 4px; font-weight: 600;
-  font-family: 'Open Sans', Arial, sans-serif;
-  text-transform: uppercase;
-}
-.header-right { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
-.header-badge {
-  font-family: 'Oswald', Arial, sans-serif;
-  font-size: 11px; color: var(--white); letter-spacing: 2px;
-  background: var(--blue);
-  padding: 5px 14px; border-radius: 2px;
-}
-.header-version {
-  font-size: 9px; color: var(--gray-300); letter-spacing: 1px;
-  font-family: 'Open Sans', Arial, sans-serif;
-}
+/* FORM */
+.form-section{max-width:860px;margin:0 auto;padding:0 20px 80px;}
+.form-card{background:var(--white);border:1px solid var(--brd);border-radius:6px;overflow:hidden;box-shadow:var(--shadow);position:relative;}
+.form-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;}
+.card-cot::before{background:linear-gradient(180deg,var(--red),var(--blue));}
+.card-os::before{background:linear-gradient(180deg,var(--blue),var(--red));}
+.card-hdr{background:var(--g900);border-bottom:1px solid rgba(255,255,255,0.07);padding:12px 36px 12px 46px;display:flex;align-items:center;gap:10px;}
+.card-hdr svg{width:14px;height:14px;color:rgba(255,255,255,0.5);}
+.card-hdr h3{font-family:'Oswald',Arial,sans-serif;font-size:13px;font-weight:600;color:#fff;letter-spacing:3px;text-transform:uppercase;}
+.card-hdr span{margin-left:auto;font-size:10px;color:var(--g500);letter-spacing:1px;}
+.form-body{padding:22px 36px 22px 46px;}
 
-/* ── HERO ── */
-.hero {
-  position: relative; z-index: 1;
-  text-align: center;
-  padding: 48px 48px 36px;
-  background: linear-gradient(135deg, var(--blue) 0%, var(--gray-900) 55%, var(--red-dark) 100%);
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    transparent, transparent 30px,
-    rgba(255,255,255,0.015) 30px, rgba(255,255,255,0.015) 31px
-  );
-}
-.hero-tag {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'Oswald', Arial, sans-serif;
-  font-size: 11px; font-weight: 500; letter-spacing: 4px;
-  color: var(--red-light);
-  border: 1px solid rgba(231,76,60,0.4);
-  padding: 6px 22px; margin-bottom: 20px;
-  background: rgba(192,57,43,0.1);
-  border-radius: 2px;
-}
-.hero-tag::before { content:''; width:6px; height:6px; background:var(--red); border-radius:50%; }
-.hero h2 {
-  font-family: 'Oswald', 'Arial Black', Arial, sans-serif;
-  font-size: clamp(30px,5vw,54px); font-weight: 700;
-  color: var(--white); line-height: 1.1; margin-bottom: 12px;
-  letter-spacing: 2px; text-transform: uppercase;
-}
-.hero h2 span { color: var(--red-light); }
-.hero p {
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-size: 15px; color: var(--gray-300);
-  max-width: 440px; margin: 0 auto; line-height: 1.7;
-  font-weight: 300;
-}
-.divider {
-  display: flex; align-items: center; gap: 12px;
-  max-width: 280px; margin: 22px auto 0;
-}
-.divider::before, .divider::after {
-  content: ''; flex: 1; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(192,57,43,0.5), transparent);
-}
-.divider-diamond {
-  width: 7px; height: 7px;
-  background: var(--red); transform: rotate(45deg); flex-shrink: 0;
-}
+/* SECTIONS */
+.sec{display:flex;align-items:center;gap:10px;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;margin:20px 0 10px;text-transform:uppercase;}
+.sec::after{content:'';flex:1;height:1px;background:var(--brd);}
+.sec:first-of-type{margin-top:0;}
+.sec.red{color:var(--red);} .sec.blue{color:var(--blue);}
 
-/* ── FORM SECTION ── */
-.form-section {
-  position: relative; z-index: 1;
-  max-width: 860px; margin: 0 auto; padding: 0 24px 80px;
-}
-.form-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 6px; overflow: hidden;
-  box-shadow: 0 4px 28px rgba(28,28,30,0.10);
-}
+/* GRIDS */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.fg.t{grid-template-columns:1fr 1fr 1fr;}
+.f{display:flex;flex-direction:column;gap:5px;}
+.f.full{grid-column:1/-1;}
 
-/* Barra lateral roja */
-.form-card { position: relative; }
-.form-card::before {
-  content: '';
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--red) 0%, var(--blue) 100%);
-  z-index: 2;
-}
+/* INPUTS */
+label{font-size:10px;letter-spacing:2px;color:var(--g500);font-weight:600;text-transform:uppercase;font-family:'Open Sans',Arial,sans-serif;}
+label span.req{color:var(--red);margin-left:2px;}
+input,select,textarea{background:var(--g50);border:1px solid var(--brd);border-radius:3px;color:var(--g900);font-family:'Open Sans',Arial,sans-serif;font-size:14px;font-weight:400;padding:10px 12px;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue-l);background:var(--white);box-shadow:0 0 0 3px rgba(52,152,219,0.10);}
+input::placeholder,textarea::placeholder{color:var(--g300);font-size:13px;font-weight:300;}
+select option{background:var(--white);color:var(--g900);}
+input[readonly]{color:var(--blue-m);cursor:default;border-color:rgba(36,113,163,0.2);background:var(--blue-p);font-size:13px;font-weight:600;}
+input[readonly].rr{color:var(--red);border-color:rgba(192,57,43,0.2);background:var(--red-p);}
+textarea{resize:vertical;}
+.hint{font-size:10px;color:var(--g300);margin-top:2px;letter-spacing:.4px;}
+.ew{position:relative;}
+.ew input{padding-right:50px;}
+.ab2{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--blue-p);border:1px solid var(--brd-b);border-radius:2px;font-size:8px;color:var(--blue-m);letter-spacing:1px;padding:2px 5px;pointer-events:none;display:none;font-weight:600;}
 
-.form-card-header {
-  background: var(--gray-900);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding: 16px 36px 16px 46px;
-  display: flex; align-items: center; gap: 12px;
-}
-.form-card-header svg { width: 16px; height: 16px; color: var(--red-light); }
-.form-card-header h3 {
-  font-family: 'Oswald', Arial, sans-serif;
-  font-size: 14px; font-weight: 600;
-  color: var(--white); letter-spacing: 3px;
-  text-transform: uppercase;
-}
-.form-card-header span {
-  margin-left: auto; font-size: 10px; color: var(--gray-500);
-  letter-spacing: 1px; font-family: 'Open Sans', Arial, sans-serif;
-}
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.chip{padding:5px 11px;border:1px solid var(--brd);border-radius:3px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--g500);background:var(--g50);font-weight:600;user-select:none;}
+.chip:hover{border-color:var(--blue-l);color:var(--blue);background:var(--blue-p);}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff;}
 
-.form-body { padding: 32px 36px 32px 46px; }
+/* TABLE */
+.cot-table{width:100%;border-collapse:collapse;font-size:13px;}
+.cot-table th{background:var(--g900);color:#fff;font-family:'Oswald',Arial,sans-serif;font-size:10px;letter-spacing:2px;padding:8px 7px;text-align:left;font-weight:500;text-transform:uppercase;}
+.cot-table td{padding:4px;border-bottom:1px solid var(--brd);vertical-align:middle;}
+.cot-table tr:last-child td{border-bottom:none;}
+.cot-table input{padding:7px 8px;font-size:13px;background:var(--white);}
+.cot-table select{padding:6px 5px;font-size:12px;}
+.td-del{width:28px;text-align:center;}
+.del-row{background:none;border:1px solid var(--brd-r);color:var(--red);width:22px;height:22px;border-radius:3px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.del-row:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.add-btns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+.add-row{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--g50);border:1px dashed var(--brd);border-radius:3px;font-size:11px;color:var(--g500);cursor:pointer;transition:all .15s;font-weight:600;}
+.add-row:hover{border-color:var(--blue-l);color:var(--blue);background:var(--blue-p);}
 
-/* ── SECTION LABELS ── */
-.section-label {
-  display: flex; align-items: center; gap: 10px;
-  font-family: 'Oswald', Arial, sans-serif;
-  font-size: 12px; font-weight: 600; letter-spacing: 3px;
-  color: var(--blue);
-  margin-bottom: 16px; margin-top: 30px;
-  text-transform: uppercase;
-}
-.section-label::after {
-  content: ''; flex: 1; height: 1px; background: var(--border);
-}
-.section-label:first-of-type { margin-top: 0; }
+/* TOTALS */
+.totals{background:var(--g50);border:1px solid var(--brd);border-radius:4px;padding:10px 14px;margin-top:8px;}
+.tr2{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:13px;color:var(--g700);}
+.tr2 label{font-size:10px;color:var(--g500);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin:0;}
+.tr2.grand{border-top:2px solid var(--g900);margin-top:5px;padding-top:7px;font-family:'Oswald',Arial,sans-serif;font-size:16px;font-weight:700;color:var(--g900);letter-spacing:1px;}
 
-/* ── GRIDS ── */
-.field-grid        { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.field-grid.single { grid-template-columns:1fr; }
-.field-grid.triple { grid-template-columns:1fr 1fr 1fr; }
-.field { display:flex; flex-direction:column; gap:6px; }
-.field.full { grid-column:1/-1; }
+/* FIRMA */
+.firma-wrap{border:1px solid var(--brd);border-radius:5px;overflow:hidden;}
+.firma-hdr{background:var(--g50);border-bottom:1px solid var(--brd);padding:7px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.firma-hdr span{font-size:10px;color:var(--g500);font-weight:600;letter-spacing:2px;text-transform:uppercase;}
+.firma-btns{display:flex;gap:6px;}
+.firma-clear{background:none;border:1px solid var(--brd-r);color:var(--red);font-size:11px;padding:4px 9px;border-radius:2px;cursor:pointer;font-weight:600;transition:all .15s;}
+.firma-clear:hover{background:var(--red);color:#fff;}
+.firma-dl{background:var(--blue);border:none;color:#fff;font-size:11px;padding:4px 10px;border-radius:2px;cursor:pointer;font-weight:600;transition:background .15s;display:flex;align-items:center;gap:5px;}
+.firma-dl:hover{background:var(--blue-m);}
+.firma-dl svg{width:11px;height:11px;}
+canvas#firmaCanvas{width:100%;height:148px;cursor:crosshair;display:block;touch-action:none;background:#fff;}
+.firma-note{font-size:10px;color:var(--g300);padding:5px 12px;border-top:1px solid var(--brd);background:var(--g50);}
 
-/* ── LABELS ── */
-label {
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-size: 10px; letter-spacing: 2px;
-  color: var(--gray-500); font-weight: 600;
-  text-transform: uppercase;
-}
-label span.req { color: var(--red); margin-left: 2px; }
+/* UPLOAD */
+.upload-zone{border:1.5px dashed rgba(174,174,178,0.45);border-radius:5px;padding:16px 12px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--g50);position:relative;}
+.upload-zone:hover{border-color:var(--blue-l);background:var(--blue-p);}
+.upload-zone.has-files{border-color:var(--red);background:var(--red-p);}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none;background:none;}
+.up-icon{width:26px;height:26px;margin:0 auto 6px;color:var(--blue-m);}
+.has-files .up-icon{color:var(--red);}
+.up-title{font-size:12px;color:var(--g700);margin-bottom:2px;font-weight:600;}
+.up-sub{font-size:10px;color:var(--g300);letter-spacing:1px;}
+.up-limit{display:inline-block;margin-top:5px;font-size:9px;color:var(--g500);border:1px solid var(--brd);background:var(--white);padding:2px 7px;border-radius:2px;letter-spacing:1px;font-weight:600;}
+.up-counter{font-size:10px;color:var(--g300);margin-top:5px;letter-spacing:1px;}
+.up-counter span{color:var(--red);font-weight:700;}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:5px;margin-top:7px;}
+.prev-item{position:relative;border-radius:4px;overflow:hidden;border:1px solid var(--brd);aspect-ratio:1;background:var(--g100);}
+.prev-item img,.prev-item video{width:100%;height:100%;object-fit:cover;display:block;}
+.rm-btn{position:absolute;top:3px;right:3px;width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,0.92);border:1px solid rgba(192,57,43,0.3);color:var(--red);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;}
+.rm-btn:hover{background:var(--red);color:#fff;}
+.med-label{position:absolute;bottom:0;left:0;right:0;background:rgba(28,28,30,0.7);font-size:9px;color:var(--g300);padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vid-badge{position:absolute;top:3px;left:3px;background:var(--red);border-radius:2px;font-size:7px;color:#fff;padding:2px 4px;letter-spacing:1px;font-weight:700;}
 
-/* ── INPUTS ── */
-input, select, textarea {
-  background: var(--gray-50);
-  border: 1px solid var(--border);
-  border-radius: 3px; color: var(--gray-900);
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-size: 14px; font-weight: 400;
-  padding: 11px 14px; outline: none;
-  transition: border-color .2s, background .2s, box-shadow .2s;
-  width: 100%;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: var(--blue-light);
-  background: var(--white);
-  box-shadow: 0 0 0 3px rgba(52,152,219,0.12);
-}
-input::placeholder, textarea::placeholder {
-  color: var(--gray-300); font-size: 13px; font-weight: 300;
-}
-select option { background: var(--white); color: var(--gray-900); }
-input[readonly] {
-  color: var(--blue-mid); cursor: default;
-  border-color: rgba(36,113,163,0.2);
-  background: var(--blue-pale); font-size: 13px; font-weight: 600;
-}
-textarea { resize:vertical; min-height:80px; }
+/* CALENDAR */
+.cal-wrap{background:var(--g50);border:1px solid var(--brd);border-radius:5px;padding:14px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav button{background:var(--blue);border:none;color:#fff;width:28px;height:28px;border-radius:3px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.cal-nav button:hover{background:var(--red);}
+.cal-month{font-family:'Oswald',Arial,sans-serif;font-size:13px;font-weight:600;color:var(--g900);letter-spacing:2px;text-transform:uppercase;}
+.cal-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.cal-wk span{text-align:center;font-size:9px;letter-spacing:1px;color:var(--red);padding:3px;font-weight:700;text-transform:uppercase;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:3px;cursor:pointer;transition:all .15s;border:1px solid transparent;color:var(--g700);background:var(--white);}
+.cal-d:hover:not(.dis):not(.occ){background:var(--blue);color:#fff;}
+.cal-d.sel{background:var(--red);color:#fff;font-weight:700;border-color:var(--red-d);}
+.cal-d.occ{background:var(--g100);color:var(--g300);cursor:not-allowed;text-decoration:line-through;}
+.cal-d.dis{color:var(--g300);cursor:not-allowed;background:transparent;border-color:transparent;}
+.cal-d.today{border-color:var(--blue);color:var(--blue);font-weight:700;}
+.cal-d.sat{color:var(--blue-m);}
+.cal-d.empty{cursor:default;background:transparent;border-color:transparent;}
+.cal-legend{display:flex;gap:12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--brd);flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--g500);}
+.leg-dot{width:8px;height:8px;border-radius:2px;}
+.time-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px;}
+.ts{padding:7px 4px;text-align:center;border:1px solid var(--brd);border-radius:3px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--g700);background:var(--white);font-weight:600;}
+.ts:hover:not(.tak){background:var(--blue);color:#fff;}
+.ts.sel{background:var(--red);color:#fff;border-color:var(--red-d);font-weight:700;}
+.ts.tak{background:var(--g100);color:var(--g300);cursor:not-allowed;text-decoration:line-through;}
 
-.email-wrap { position:relative; }
-.email-wrap input { padding-right:54px; }
-.email-auto-badge {
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  background:var(--blue-pale); border:1px solid var(--border-blue);
-  border-radius:2px; font-size:8px; color:var(--blue-mid);
-  letter-spacing:1px; padding:2px 6px; pointer-events:none; display:none;
-  font-family:'Open Sans',Arial,sans-serif; font-weight:600;
-}
-.field-hint {
-  font-size:10px; color:var(--gray-300); margin-top:2px; letter-spacing:.5px;
-  font-family:'Open Sans',Arial,sans-serif;
-}
+/* FOOTER */
+.form-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 36px 14px 46px;border-top:1px solid var(--brd);background:var(--g100);flex-wrap:wrap;gap:10px;}
+.folio-txt{font-size:10px;color:var(--g500);letter-spacing:1px;}
+.folio-txt strong{color:var(--blue);font-weight:700;}
+.folio-txt strong.red{color:var(--red);}
+.folio-txt small{font-size:9px;color:var(--g300);display:block;margin-top:2px;}
+.btn-p{display:flex;align-items:center;gap:8px;border:none;border-radius:3px;color:#fff;font-family:'Oswald',Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;padding:11px 20px;cursor:pointer;text-transform:uppercase;transition:background .2s,transform .1s;}
+.btn-p:active{transform:scale(.98);}
+.btn-red{background:var(--red);box-shadow:0 3px 10px rgba(192,57,43,0.25);}
+.btn-red:hover{background:var(--red-d);}
+.btn-blue{background:var(--blue);box-shadow:0 3px 10px rgba(26,58,96,0.25);}
+.btn-blue:hover{background:var(--blue-m);}
+.btn-p svg{width:12px;height:12px;}
 
-/* ── CHIPS ── */
-.service-chips { display:flex; flex-wrap:wrap; gap:7px; }
-.chip {
-  padding: 7px 14px;
-  border: 1px solid var(--border);
-  border-radius: 3px; font-size: 11px; cursor: pointer;
-  transition: all .15s; color: var(--gray-500);
-  background: var(--gray-50);
-  font-family: 'Open Sans', Arial, sans-serif; font-weight: 600;
-  letter-spacing: .5px; user-select: none;
-}
-.chip:hover {
-  border-color: var(--blue-light); color: var(--blue);
-  background: var(--blue-pale);
-}
-.chip.chip-active {
-  background: var(--blue); border-color: var(--blue);
-  color: var(--white); font-weight: 600;
-}
+/* FAB */
+.fab-wa{position:fixed;bottom:24px;right:24px;z-index:999;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 4px 14px rgba(37,211,102,0.4);transition:transform .2s;}
+.fab-wa:hover{transform:scale(1.08);}
+.fab-wa svg{width:26px;height:26px;}
 
-/* ── UPLOAD ZONES ── */
-.upload-zone {
-  border: 1.5px dashed rgba(174,174,178,0.45);
-  border-radius: 5px; padding: 22px 16px;
-  text-align: center; cursor: pointer;
-  transition: border-color .2s, background .2s;
-  background: var(--gray-50); position: relative;
-}
-.upload-zone:hover {
-  border-color: var(--blue-light); background: var(--blue-pale);
-}
-.upload-zone.has-files {
-  border-color: var(--red); background: var(--red-pale);
-}
-.upload-zone input[type="file"] {
-  position:absolute; inset:0; opacity:0; cursor:pointer;
-  width:100%; height:100%; padding:0; border:none; background:none;
-}
-.upload-icon {
-  width:32px; height:32px; margin:0 auto 10px; color:var(--blue-mid);
-}
-.upload-zone.has-files .upload-icon { color: var(--red); }
-.upload-title {
-  font-size:13px; color:var(--gray-700); margin-bottom:4px;
-  font-family:'Open Sans',Arial,sans-serif; font-weight:600;
-}
-.upload-sub {
-  font-size:10px; color:var(--gray-300); letter-spacing:1px;
-  font-family:'Open Sans',Arial,sans-serif;
-}
-.upload-limit {
-  display:inline-block; margin-top:8px;
-  font-size:9px; color:var(--gray-500);
-  border:1px solid var(--border); background:var(--white);
-  padding:2px 10px; border-radius:2px; letter-spacing:1px;
-  font-family:'Open Sans',Arial,sans-serif; font-weight:600;
-}
-.upload-counter {
-  font-size:10px; color:var(--gray-300); margin-top:8px; letter-spacing:1px;
-  font-family:'Open Sans',Arial,sans-serif;
-}
-.upload-counter span { color:var(--red); font-weight:700; }
+/* TOAST */
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-90px);background:var(--g900);border:1px solid var(--red);color:#fff;padding:11px 22px;border-radius:4px;font-size:13px;z-index:9999;transition:transform .35s cubic-bezier(.22,1,.36,1);white-space:nowrap;box-shadow:0 6px 18px rgba(28,28,30,0.22);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.tic{color:#E74C3C;}
 
-/* Preview grid */
-.preview-grid {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
-  gap:8px; margin-top:10px;
-}
-.preview-item {
-  position:relative; border-radius:4px; overflow:hidden;
-  border:1px solid var(--border); aspect-ratio:1; background:var(--gray-100);
-}
-.preview-item img { width:100%; height:100%; object-fit:cover; display:block; }
-.preview-item video { width:100%; height:100%; object-fit:cover; display:block; }
-.remove-btn {
-  position:absolute; top:4px; right:4px;
-  width:20px; height:20px; border-radius:50%;
-  background:rgba(255,255,255,0.92); border:1px solid rgba(192,57,43,0.35);
-  color:var(--red); font-size:13px;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; line-height:1; transition:background .15s;
-}
-.remove-btn:hover { background:var(--red); color:#fff; }
-.media-label {
-  position:absolute; bottom:0; left:0; right:0;
-  background:rgba(28,28,30,0.75);
-  font-size:9px; color:var(--gray-300); padding:3px 5px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  font-family:'Open Sans',Arial,sans-serif;
-}
-.video-badge {
-  position:absolute; top:4px; left:4px;
-  background:var(--red); border-radius:2px;
-  font-size:8px; color:#fff; padding:2px 5px;
-  letter-spacing:1px; font-weight:700;
-  font-family:'Open Sans',Arial,sans-serif;
-}
-
-/* ── CALENDAR ── */
-.calendar-wrap {
-  background: var(--gray-50);
-  border: 1px solid var(--border);
-  border-radius: 5px; padding: 20px;
-}
-.cal-nav {
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;
-}
-.cal-nav button {
-  background: var(--blue); border: none;
-  color: #fff; width: 32px; height: 32px; border-radius: 3px;
-  cursor:pointer; font-size:18px;
-  display:flex; align-items:center; justify-content:center;
-  transition:background .15s;
-}
-.cal-nav button:hover { background: var(--red); }
-.cal-month {
-  font-family: 'Oswald', Arial, sans-serif;
-  font-size: 16px; font-weight: 600;
-  color: var(--gray-900); letter-spacing: 2px; text-transform: uppercase;
-}
-.cal-weekdays {
-  display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:6px;
-}
-.cal-weekdays span {
-  text-align:center; font-size:9px; letter-spacing:1px;
-  color: var(--red); padding:4px;
-  font-family:'Open Sans',Arial,sans-serif; font-weight:700;
-  text-transform:uppercase;
-}
-.cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-.cal-day {
-  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
-  font-size:13px; border-radius:3px; cursor:pointer;
-  transition:all .15s; border:1px solid transparent;
-  color:var(--gray-700); background:var(--white);
-  font-family:'Open Sans',Arial,sans-serif; font-weight:400;
-}
-.cal-day:hover:not(.disabled):not(.occupied) {
-  background:var(--blue); color:#fff; border-color:var(--blue);
-}
-.cal-day.selected {
-  background:var(--red); color:#fff; font-weight:700; border-color:var(--red-dark);
-  box-shadow:0 2px 8px rgba(192,57,43,0.35);
-}
-.cal-day.occupied {
-  background:rgba(174,174,178,0.12); color:var(--gray-300);
-  cursor:not-allowed; text-decoration:line-through;
-}
-.cal-day.disabled { color:var(--gray-300); cursor:not-allowed; background:transparent; border-color:transparent; }
-.cal-day.today {
-  border-color:var(--blue); color:var(--blue); font-weight:700;
-}
-.cal-day.saturday { color:var(--blue-mid); }
-.cal-day.empty { cursor:default; background:transparent; border-color:transparent; }
-
-.cal-legend {
-  display:flex; gap:18px; margin-top:14px; padding-top:14px;
-  border-top:1px solid var(--border); flex-wrap:wrap;
-}
-.cal-legend-item {
-  display:flex; align-items:center; gap:6px;
-  font-size:10px; color:var(--gray-500);
-  font-family:'Open Sans',Arial,sans-serif;
-}
-.cal-legend-dot { width:10px; height:10px; border-radius:2px; }
-
-/* Time slots */
-.time-slots {
-  display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-top:12px;
-}
-.time-slot {
-  padding:9px 4px; text-align:center;
-  border:1px solid var(--border); border-radius:3px;
-  font-size:12px; cursor:pointer; transition:all .15s;
-  color:var(--gray-700); background:var(--white);
-  font-family:'Open Sans',Arial,sans-serif; font-weight:600;
-}
-.time-slot:hover:not(.slot-taken) {
-  background:var(--blue); color:#fff; border-color:var(--blue);
-}
-.time-slot.slot-selected {
-  background:var(--red); color:#fff; border-color:var(--red-dark); font-weight:700;
-  box-shadow:0 2px 8px rgba(192,57,43,0.25);
-}
-.time-slot.slot-taken {
-  background:var(--gray-100); color:var(--gray-300);
-  cursor:not-allowed; text-decoration:line-through; border-color:var(--border);
-}
-
-/* ── FORM FOOTER ── */
-.form-footer {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:20px 36px 20px 46px;
-  border-top:1px solid var(--border);
-  background:var(--gray-100);
-  flex-wrap:wrap; gap:14px;
-}
-.folio-text {
-  font-size:10px; color:var(--gray-500); letter-spacing:1px;
-  font-family:'Open Sans',Arial,sans-serif;
-}
-.folio-text strong { color:var(--blue); font-weight:700; }
-.btn-submit {
-  display:flex; align-items:center; gap:10px;
-  background:var(--red); border:none; border-radius:3px;
-  color:#fff; font-family:'Oswald',Arial,sans-serif;
-  font-size:13px; font-weight:600; letter-spacing:3px;
-  padding:13px 34px; cursor:pointer; text-transform:uppercase;
-  transition:background .2s, transform .1s;
-  box-shadow:0 3px 14px rgba(192,57,43,0.35);
-}
-.btn-submit:hover { background:var(--red-dark); }
-.btn-submit:active { transform:scale(.98); }
-
-/* ── WhatsApp FAB ── */
-.fab-wa {
-  position:fixed; bottom:28px; right:28px; z-index:999;
-  width:56px; height:56px; background:#25D366; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  text-decoration:none;
-  box-shadow:0 4px 18px rgba(37,211,102,0.40);
-  transition:transform .2s, box-shadow .2s;
-}
-.fab-wa:hover { transform:scale(1.08); box-shadow:0 6px 26px rgba(37,211,102,0.55); }
-.fab-wa svg { width:28px; height:28px; }
-
-/* ── TOAST ── */
-.toast {
-  position:fixed; top:24px; left:50%;
-  transform:translateX(-50%) translateY(-90px);
-  background:var(--gray-900); border:1px solid var(--red);
-  color:#fff; padding:14px 28px; border-radius:4px;
-  font-size:13px; z-index:9999;
-  transition:transform .35s cubic-bezier(.22,1,.36,1);
-  white-space:nowrap;
-  box-shadow:0 6px 24px rgba(28,28,30,0.25);
-  font-family:'Open Sans',Arial,sans-serif;
-}
-.toast.show { transform:translateX(-50%) translateY(0); }
-.toast span { color:var(--red-light); }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-.animate { animation:fadeUp .45s ease both; }
-.a1 { animation-delay:.04s; }
-.a2 { animation-delay:.12s; }
-.a3 { animation-delay:.22s; }
-
-/* ── RESPONSIVE ── */
-@media (max-width:640px) {
-  header { padding:14px 18px; }
-  .hero { padding:36px 18px 28px; }
-  .form-body { padding:18px 18px 18px 22px; }
-  .form-footer { padding:18px; flex-direction:column; align-items:stretch; }
-  .field-grid, .field-grid.triple { grid-template-columns:1fr; }
-  .time-slots { grid-template-columns:repeat(3,1fr); }
-  .form-section { padding:0 12px 60px; }
-  .btn-submit { justify-content:center; }
-  .preview-grid { grid-template-columns:repeat(auto-fill,minmax(75px,1fr)); }
-  .upload-grid { grid-template-columns:1fr !important; }
+@media(max-width:680px){
+  header{padding:10px 12px;}
+  .search-wrap{min-width:150px;max-width:none;order:3;flex-basis:100%;}
+  .hero{padding:24px 14px 18px;}
+  .form-body{padding:14px 14px 14px 18px;}
+  .form-footer{padding:12px;flex-direction:column;align-items:stretch;}
+  .fg,.fg.t{grid-template-columns:1fr;}
+  .time-slots{grid-template-columns:repeat(3,1fr);}
+  .form-section{padding:0 10px 66px;}
+  .btn-p{justify-content:center;}
 }
 </style>
 </head>
 <body>
-
-<!-- Franja superior roja-azul -->
 <div class="top-stripe"></div>
 
 <!-- HEADER -->
-<header class="animate a1">
+<header>
   <div class="logo-wrap">
     <svg class="logo-emblem" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="100" fill="#FFFFFF"/>
-      <!-- esquinas rojo -->
-      <line x1="8"  y1="8"  x2="22" y2="8"  stroke="#C0392B" stroke-width="2"/>
-      <line x1="8"  y1="8"  x2="8"  y2="22" stroke="#C0392B" stroke-width="2"/>
-      <line x1="92" y1="8"  x2="78" y2="8"  stroke="#1A3A60" stroke-width="2"/>
-      <line x1="92" y1="8"  x2="92" y2="22" stroke="#1A3A60" stroke-width="2"/>
-      <line x1="8"  y1="92" x2="22" y2="92" stroke="#1A3A60" stroke-width="2"/>
-      <line x1="8"  y1="92" x2="8"  y2="78" stroke="#1A3A60" stroke-width="2"/>
+      <rect width="100" height="100" fill="#fff"/>
+      <line x1="8" y1="8" x2="22" y2="8" stroke="#C0392B" stroke-width="2"/>
+      <line x1="8" y1="8" x2="8" y2="22" stroke="#C0392B" stroke-width="2"/>
+      <line x1="92" y1="8" x2="78" y2="8" stroke="#1A3A60" stroke-width="2"/>
+      <line x1="92" y1="8" x2="92" y2="22" stroke="#1A3A60" stroke-width="2"/>
+      <line x1="8" y1="92" x2="22" y2="92" stroke="#1A3A60" stroke-width="2"/>
+      <line x1="8" y1="92" x2="8" y2="78" stroke="#1A3A60" stroke-width="2"/>
       <line x1="92" y1="92" x2="78" y2="92" stroke="#C0392B" stroke-width="2"/>
       <line x1="92" y1="92" x2="92" y2="78" stroke="#C0392B" stroke-width="2"/>
-      <!-- engrane gris oscuro -->
       <circle cx="50" cy="50" r="30" stroke="#2C2C2E" stroke-width="1.5" fill="none"/>
       <circle cx="50" cy="50" r="22" fill="#2C2C2E"/>
-      <circle cx="50" cy="50" r="12" fill="#FFFFFF"/>
-      <!-- dientes rojos -->
+      <circle cx="50" cy="50" r="12" fill="#fff"/>
       <rect x="45" y="14" width="10" height="10" rx="2" fill="#C0392B"/>
       <rect x="45" y="76" width="10" height="10" rx="2" fill="#C0392B"/>
       <rect x="76" y="45" width="10" height="10" rx="2" fill="#1A3A60"/>
@@ -559,440 +289,593 @@ textarea { resize:vertical; min-height:80px; }
       <rect x="63" y="67" width="10" height="10" rx="2" fill="#1A3A60" transform="rotate(-45 68 72)"/>
       <rect x="17" y="19" width="10" height="10" rx="2" fill="#1A3A60" transform="rotate(-45 22 24)"/>
       <rect x="17" y="67" width="10" height="10" rx="2" fill="#C0392B" transform="rotate(45 22 72)"/>
-      <!-- texto -->
       <text x="50" y="54" text-anchor="middle" font-family="Arial Black,Arial" font-size="9" font-weight="900" fill="#2C2C2E">ATM</text>
     </svg>
-    <div class="logo-text">
-      <h1>ATM</h1>
-      <p>Servicio Mecánico &amp; Refacciones</p>
+    <div class="logo-text"><h1>ATM</h1><p>Servicio Mecánico &amp; Refacciones</p></div>
+  </div>
+
+  <!-- BUSCADOR -->
+  <div class="search-wrap">
+    <div class="search-row">
+      <div class="si"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg></div>
+      <input id="searchInput" type="text" placeholder="Buscar nombre, folio o placas…" autocomplete="off"
+        oninput="doSearch(this.value)" onfocus="openDD()" onblur="setTimeout(closeDD,200)">
+      <button class="sc" id="searchClear" onclick="clearSearch()">×</button>
+    </div>
+    <div class="sd" id="searchDD">
+      <div class="sd-hdr">Registros guardados</div>
+      <div id="searchResults"></div>
     </div>
   </div>
-  <div class="header-right">
-    <div class="header-badge">GUANAJUATO, MX</div>
-    <div class="header-version">Web_ATM_Clientes_v1.0.6</div>
+
+  <!-- NAV -->
+  <div class="header-nav">
+    <button class="btn-nav btn-nav-cot active" onclick="showPage('cot')">
+      <div class="sn">1</div>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Cotización
+    </button>
+    <span class="step-arrow">›</span>
+    <button class="btn-nav btn-nav-os" onclick="showPage('os')">
+      <div class="sn">2</div>
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Orden
+    </button>
+    <span class="hv">v1.3.0</span>
   </div>
 </header>
 
-<!-- HERO -->
-<section class="hero animate a2">
-  <div class="hero-tag">ORDEN DE SERVICIO</div>
-  <h2>Registra tu<br><span>orden</span> de servicio</h2>
-  <p>Completa el formulario y un asesor confirmará tu cita a la brevedad.</p>
-  <div class="divider"><div class="divider-diamond"></div></div>
-</section>
-
-<!-- FORM -->
-<section class="form-section animate a3">
-  <div class="form-card">
-
-    <div class="form-card-header">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
-      </svg>
-      <h3>NUEVA ORDEN DE SERVICIO</h3>
-      <span id="folioHeader">OS-000001</span>
-    </div>
-
-    <form id="mainForm" onsubmit="submitForm(event)">
-    <div class="form-body">
-
-      <!-- DATOS DE CONTACTO -->
-      <div class="section-label">Datos de contacto</div>
-      <div class="field-grid">
-
-        <div class="field full">
-          <label>NOMBRE COMPLETO <span class="req">*</span></label>
-          <input type="text" id="nombreCompleto"
-            placeholder="Nombre · Apellido Paterno · Apellido Materno"
-            required autocomplete="name">
-        </div>
-
-        <div class="field">
-          <label>CORREO ELECTRÓNICO <span class="req">*</span></label>
-          <div class="email-wrap">
-            <input type="email" id="emailField"
-              placeholder="tucorreo@email.com" required autocomplete="email">
-            <div class="email-auto-badge" id="emailBadge">AUTO</div>
-          </div>
-          <div class="field-hint">Detectado automáticamente en dispositivos compatibles</div>
-        </div>
-
-        <div class="field">
-          <label>TELÉFONO DE CONTACTO <span class="req">*</span></label>
-          <input type="tel" id="telField"
-            placeholder="(466) 000-0000" maxlength="15" required autocomplete="tel">
-        </div>
-
-        <div class="field full">
-          <label>DIRECCIÓN / COLONIA</label>
-          <input type="text" id="direccion"
-            placeholder="Calle, número, colonia, ciudad" autocomplete="street-address">
-        </div>
-
-      </div>
-
-      <!-- DATOS DEL VEHÍCULO -->
-      <div class="section-label">Datos del vehículo</div>
-      <div class="field-grid triple">
-        <div class="field">
-          <label>PLACAS <span class="req">*</span></label>
-          <input type="text" id="placas" placeholder="ABC-123-D" maxlength="10" required
-            oninput="this.value=this.value.toUpperCase()">
-        </div>
-        <div class="field">
-          <label>MARCA</label>
-          <select id="marca">
-            <option value="">Seleccionar…</option>
-            <option>Chevrolet</option><option>Ford</option><option>Nissan</option>
-            <option>Toyota</option><option>Volkswagen</option><option>Honda</option>
-            <option>Hyundai</option><option>Kia</option><option>Dodge</option>
-            <option>Jeep</option><option>RAM</option><option>Mazda</option>
-            <option>Seat</option><option>Renault</option><option>Otra</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>MODELO / AÑO</label>
-          <input type="text" id="modelo" placeholder="Ej. Aveo 2019">
-        </div>
-        <div class="field">
-          <label>COLOR</label>
-          <input type="text" id="color" placeholder="Blanco, rojo…">
-        </div>
-        <div class="field">
-          <label>ÚLTIMOS 6 DÍGITOS N° SERIE</label>
-          <input type="text" id="nserie" placeholder="AB1234" maxlength="6"
-            oninput="this.value=this.value.toUpperCase()">
-          <div class="field-hint">Tablero o puerta del conductor</div>
-        </div>
-        <div class="field">
-          <label>KILOMETRAJE APROX.</label>
-          <input type="text" id="km" placeholder="65,000 km">
-        </div>
-      </div>
-
-      <!-- TIPO DE SERVICIO -->
-      <div class="section-label">Tipo de servicio</div>
-      <div class="field" style="margin-bottom:14px">
-        <label>SELECCIONA EL O LOS SERVICIOS <span class="req">*</span></label>
-        <div class="service-chips" style="margin-top:4px">
-          <div class="chip" onclick="toggleChip(this)">Afinación</div>
-          <div class="chip" onclick="toggleChip(this)">Cambio de aceite</div>
-          <div class="chip" onclick="toggleChip(this)">Frenos</div>
-          <div class="chip" onclick="toggleChip(this)">Suspensión</div>
-          <div class="chip" onclick="toggleChip(this)">Sistema eléctrico</div>
-          <div class="chip" onclick="toggleChip(this)">Diagnóstico</div>
-          <div class="chip" onclick="toggleChip(this)">A/C y climatización</div>
-          <div class="chip" onclick="toggleChip(this)">Transmisión</div>
-          <div class="chip" onclick="toggleChip(this)">Motor</div>
-          <div class="chip" onclick="toggleChip(this)">Refacciones</div>
-          <div class="chip" onclick="toggleChip(this)">Revisión general</div>
-          <div class="chip" onclick="toggleChip(this)">Otro</div>
-        </div>
-      </div>
-      <div class="field">
-        <label>DESCRIPCIÓN DEL PROBLEMA O SERVICIO</label>
-        <textarea id="descripcion"
-          placeholder="Describe brevemente el problema. Ej: Ruido en frenos al frenar, revisión general antes de viaje largo…"></textarea>
-      </div>
-
-      <!-- EVIDENCIA -->
-      <div class="section-label">Evidencia fotográfica y video</div>
-      <div class="upload-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-
-        <div>
-          <label style="display:block; margin-bottom:8px;">
-            FOTOGRAFÍAS DEL VEHÍCULO (mín. 3) <span class="req">*</span>
-          </label>
-          <div class="upload-zone" id="photoZone">
-            <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(event)">
-            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
-            </svg>
-            <div class="upload-title">Toca para agregar fotos</div>
-            <div class="upload-sub">JPG · PNG · HEIC</div>
-            <div class="upload-limit">MÁX. 10 FOTOS · 5 MB C/U</div>
-          </div>
-          <div class="upload-counter">Fotos agregadas: <span id="photoCount">0</span> / 10</div>
-          <div class="preview-grid" id="photoPreview"></div>
-        </div>
-
-        <div>
-          <label style="display:block; margin-bottom:8px;">VIDEO DEL PROBLEMA (opcional)</label>
-          <div class="upload-zone" id="videoZone">
-            <input type="file" id="videoInput" accept="video/*" onchange="handleVideo(event)">
-            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/>
-            </svg>
-            <div class="upload-title">Toca para agregar video</div>
-            <div class="upload-sub">MP4 · MOV · AVI</div>
-            <div class="upload-limit">MÁX. 1 VIDEO · 50 MB</div>
-          </div>
-          <div class="upload-counter">Video: <span id="videoName">Sin video</span></div>
-          <div class="preview-grid" id="videoPreview"></div>
-        </div>
-
-      </div>
-
-      <!-- AGENDA -->
-      <div class="section-label">Agenda tu orden de servicio</div>
-      <div class="field-grid" style="margin-bottom:14px">
-        <div class="field">
-          <label>FECHA DE LA ORDEN (AUTOMÁTICA)</label>
-          <input type="text" id="fechaSolicitud" readonly>
-        </div>
-        <div class="field">
-          <label>FECHA Y HORA PROGRAMADA</label>
-          <input type="text" id="fechaSeleccionada" readonly placeholder="Elige en el calendario →">
-        </div>
-      </div>
-
-      <div class="calendar-wrap">
-        <div class="cal-nav">
-          <button type="button" onclick="changeMonth(-1)">&#8249;</button>
-          <div class="cal-month" id="calMonth"></div>
-          <button type="button" onclick="changeMonth(1)">&#8250;</button>
-        </div>
-        <div class="cal-weekdays">
-          <span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span>
-          <span>JUE</span><span>VIE</span><span>SÁB</span>
-        </div>
-        <div class="cal-days" id="calDays"></div>
-
-        <div id="timeSection" style="display:none; margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
-          <div style="font-family:'Oswald',Arial,sans-serif; font-size:11px; letter-spacing:2px; color:var(--blue); margin-bottom:10px; font-weight:600;">SELECCIONA UN HORARIO</div>
-          <div class="time-slots" id="timeSlots"></div>
-        </div>
-
-        <div class="cal-legend">
-          <div class="cal-legend-item">
-            <div class="cal-legend-dot" style="background:var(--red)"></div> Seleccionado
-          </div>
-          <div class="cal-legend-item">
-            <div class="cal-legend-dot" style="background:var(--white); border:1px solid var(--border)"></div> Disponible
-          </div>
-          <div class="cal-legend-item">
-            <div class="cal-legend-dot" style="background:var(--gray-100)"></div> Ocupado
-          </div>
-          <div class="cal-legend-item">
-            <div class="cal-legend-dot" style="background:transparent; border:1px solid var(--border)"></div> No disponible
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="form-footer">
-      <div class="folio-text">
-        Orden de servicio: <strong id="folioFooter">OS-000001</strong><br>
-        <span style="font-size:9px; margin-top:2px; display:block; color:var(--gray-300)">
-          Información confidencial · uso exclusivo ATM
-        </span>
-      </div>
-      <button type="submit" class="btn-submit">
-        ENVIAR ORDEN DE SERVICIO
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
-        </svg>
-      </button>
-    </div>
-    </form>
-  </div>
-</section>
-
-<!-- WhatsApp FAB con mensaje predeterminado -->
-<a class="fab-wa" id="fabWa" href="#" target="_blank" rel="noopener" title="Contactar por WhatsApp">
-  <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-  </svg>
-</a>
-
-<div class="toast" id="toast">
-  <span>&#10003;</span> ¡Orden enviada! Un asesor te contactará para confirmar tu cita.
+<!-- PROGRESS -->
+<div class="progress-bar">
+  <div class="ps active" id="prog-cot"><div class="pn">1</div>Cotización</div>
+  <span class="pa">›</span>
+  <div class="ps" id="prog-os"><div class="pn">2</div>Orden de Servicio</div>
 </div>
 
+<!-- ═══ PÁGINA 1 — COTIZACIÓN ═══ -->
+<div id="page-cot" class="page active">
+  <div class="rec-banner rb-red" id="cot-banner" style="padding-left:22px;padding-right:22px;">
+    <div class="rbi red"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
+    <div style="flex:1"><div class="rbt" id="cot-banner-title">COTIZACIÓN CARGADA</div><div class="rbm" id="cot-banner-meta">—</div></div>
+    <button class="rbc" onclick="newRecord()">Nueva cotización</button>
+  </div>
+
+  <section class="hero hero-cot">
+    <div class="hero-tag"><div class="htd"></div>PASO 1 · COTIZACIÓN</div>
+    <h2>Genera la <span class="ar">cotización</span></h2>
+    <p>Captura datos del cliente, vehículo y conceptos del servicio.</p>
+    <div class="fb" id="cot-folio-hero">COT-000001</div>
+  </section>
+
+  <section class="form-section">
+    <div class="form-card card-cot">
+      <div class="card-hdr">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <h3>Cotización de Servicio</h3>
+        <span id="cot-folio-hdr">COT-000001</span>
+      </div>
+      <form id="formCOT" onsubmit="submitCOT(event)">
+      <div class="form-body">
+        <div class="sec red">Datos del cliente</div>
+        <div class="fg">
+          <div class="f full"><label>NOMBRE COMPLETO <span class="req">*</span></label><input type="text" id="cot-nombre" placeholder="Nombre · Apellido Paterno · Apellido Materno" required autocomplete="name" oninput="updateFirmaLabel()"></div>
+          <div class="f"><label>TELÉFONO WHATSAPP <span class="req">*</span></label><input type="tel" id="cot-tel" placeholder="(466) 000-0000" maxlength="15" required autocomplete="tel"><div class="hint">La cotización se enviará a este número</div></div>
+          <div class="f"><label>FECHA DE COTIZACIÓN</label><input type="text" id="cot-fecha" readonly></div>
+          <div class="f"><label>FOLIO COTIZACIÓN</label><input type="text" id="cot-folio-field" readonly class="rr"></div>
+        </div>
+
+        <div class="sec red">Datos del vehículo</div>
+        <div class="fg t">
+          <div class="f"><label>PLACAS <span class="req">*</span></label><input type="text" id="cot-placas" placeholder="ABC-123-D" maxlength="10" required oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="f"><label>MARCA</label><select id="cot-marca"><option value="">Seleccionar…</option><option>Chevrolet</option><option>Ford</option><option>Nissan</option><option>Toyota</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Kia</option><option>Dodge</option><option>Jeep</option><option>RAM</option><option>Mazda</option><option>Seat</option><option>Renault</option><option>Otra</option></select></div>
+          <div class="f"><label>MODELO / AÑO</label><input type="text" id="cot-modelo" placeholder="Ej. Aveo 2019"></div>
+          <div class="f"><label>COLOR</label><input type="text" id="cot-color" placeholder="Blanco, rojo…"></div>
+          <div class="f full"><label>SERVICIO GENERAL / DESCRIPCIÓN DEL TRABAJO <span class="req">*</span></label><textarea id="cot-servicio" style="min-height:88px" placeholder="Describe el servicio principal. Ej: Afinación mayor, cambio de balatas delanteras y traseras, revisión de suspensión, cambio de aceite y filtro…" required></textarea></div>
+          <div class="f full"><label>OBSERVACIONES ADICIONALES</label><textarea id="cot-obs" style="min-height:78px" placeholder="Condiciones especiales, acuerdos verbales, tiempo estimado, garantía, referencias de refacciones u otros detalles relevantes para el cliente…"></textarea></div>
+        </div>
+
+        <div class="sec red">Conceptos y precios</div>
+        <table class="cot-table"><thead><tr>
+          <th style="width:36%">CONCEPTO</th><th style="width:17%">CATEGORÍA</th>
+          <th style="width:11%">CANT.</th><th style="width:18%">PRECIO UNIT.</th>
+          <th style="width:12%">TOTAL</th><th class="td-del"></th>
+        </tr></thead><tbody id="cotBody"></tbody></table>
+        <div class="add-btns">
+          <div class="add-row" onclick="addRow('Refacción')">＋ Refacción</div>
+          <div class="add-row" onclick="addRow('Mano de obra')">＋ Mano de obra</div>
+          <div class="add-row" onclick="addRow('Material')">＋ Material</div>
+          <div class="add-row" onclick="addRow('Otro')">＋ Otro</div>
+        </div>
+        <div class="totals">
+          <div class="tr2"><label>SUBTOTAL</label><span id="tot-sub">$0.00</span></div>
+          <div class="tr2"><label>DESCUENTO</label><div style="display:flex;align-items:center;gap:6px"><input type="number" id="tot-desc" min="0" max="100" placeholder="0" style="width:50px;padding:5px 7px;font-size:12px" oninput="recalc()"> %</div></div>
+          <div class="tr2"><label>IVA (16%)</label><label style="text-transform:none;letter-spacing:0;font-weight:400;font-size:12px;color:var(--g700);cursor:pointer;display:flex;align-items:center;gap:5px;margin:0"><input type="checkbox" id="applyIva" onchange="recalc()" style="width:auto;padding:0"> Aplicar IVA</label><span id="tot-iva">$0.00</span></div>
+          <div class="tr2 grand"><label>TOTAL COTIZADO</label><span id="tot-total">$0.00</span></div>
+        </div>
+
+        <div class="sec red" style="margin-top:18px">Firma digital del cliente</div>
+        <p style="font-size:12px;color:var(--g500);margin-bottom:9px;line-height:1.6">Al firmar, el cliente acepta la cotización y autoriza el inicio del servicio.</p>
+        <div class="firma-wrap">
+          <div class="firma-hdr">
+            <span>FIRMA · <span id="firma-nombre-lbl">—</span></span>
+            <div class="firma-btns">
+              <button type="button" class="firma-dl" onclick="downloadFirma()">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Descargar firma PNG
+              </button>
+              <button type="button" class="firma-clear" onclick="clearFirma()">Limpiar</button>
+            </div>
+          </div>
+          <canvas id="firmaCanvas"></canvas>
+          <div class="firma-note">Firma con el dedo o el mouse · Descarga el PNG y adjúntalo manualmente en WhatsApp junto con las fotografías del vehículo</div>
+        </div>
+      </div>
+      <div class="form-footer">
+        <div class="folio-txt"><strong class="red" id="cot-folio-footer">COT-000001</strong><small>Al enviar se notifica al cliente por WhatsApp · Registro guardado automáticamente</small></div>
+        <button type="submit" class="btn-p btn-red">ENVIAR COTIZACIÓN POR WHATSAPP <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
+      </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- ═══ PÁGINA 2 — ORDEN ═══ -->
+<div id="page-os" class="page">
+  <div class="rec-banner" id="os-banner" style="padding-left:22px;padding-right:22px;">
+    <div class="rbi blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
+    <div style="flex:1"><div class="rbt" id="os-banner-title">ORDEN CARGADA</div><div class="rbm" id="os-banner-meta">—</div></div>
+    <button class="rbc" onclick="newRecord()">Nueva orden</button>
+  </div>
+
+  <section class="hero hero-os">
+    <div class="hero-tag"><div class="htd"></div>PASO 2 · ORDEN DE SERVICIO</div>
+    <h2>Abre la <span class="ab">orden</span> de servicio</h2>
+    <p>Completa detalles de entrada del vehículo para iniciar el trabajo.</p>
+    <div class="fb" id="os-folio-hero">OS-000001 · COT-000001</div>
+  </section>
+
+  <section class="form-section">
+    <div class="form-card card-os">
+      <div class="card-hdr">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+        <h3>Orden de Servicio</h3>
+        <span id="os-folio-hdr">OS-000001</span>
+      </div>
+      <form id="formOS" onsubmit="submitOS(event)">
+      <div class="form-body">
+        <div class="sec blue">Datos del cliente (desde cotización)</div>
+        <div class="fg">
+          <div class="f full"><label>NOMBRE COMPLETO</label><input type="text" id="os-nombre" readonly></div>
+          <div class="f"><label>TELÉFONO</label><input type="text" id="os-tel" readonly></div>
+          <div class="f"><label>CORREO ELECTRÓNICO (opcional)</label><div class="ew"><input type="email" id="os-email" placeholder="tucorreo@email.com" autocomplete="email"><div class="ab2" id="os-email-badge">AUTO</div></div></div>
+          <div class="f full"><label>DIRECCIÓN / COLONIA</label><input type="text" id="os-dir" placeholder="Calle, número, colonia, ciudad" autocomplete="street-address"></div>
+        </div>
+
+        <div class="sec blue">Datos del vehículo (desde cotización)</div>
+        <div class="fg t">
+          <div class="f"><label>PLACAS</label><input type="text" id="os-placas" readonly></div>
+          <div class="f"><label>MARCA</label><input type="text" id="os-marca" readonly></div>
+          <div class="f"><label>MODELO / AÑO</label><input type="text" id="os-modelo" readonly></div>
+          <div class="f"><label>COLOR</label><input type="text" id="os-color" readonly></div>
+          <div class="f"><label>KILOMETRAJE INICIAL</label><input type="text" id="os-km" placeholder="65,000 km"></div>
+          <div class="f"><label>NIVEL DE GASOLINA</label><select id="os-gas"><option value="">Seleccionar…</option><option>Lleno (F)</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Reserva (E)</option></select></div>
+        </div>
+
+        <div class="sec blue">Estado de entrada del vehículo</div>
+        <div class="fg">
+          <div class="f"><label>FECHA DE INGRESO</label><input type="text" id="os-fecha-ingreso" readonly></div>
+          <div class="f"><label>FOLIOS OS / COT</label><input type="text" id="os-folios" readonly></div>
+          <div class="f full"><label>ANOMALÍAS, GOLPES O DAÑOS PREVIOS</label><textarea id="os-anomalias" style="min-height:78px" placeholder="Ej: Rayón en puerta trasera derecha, espejo izquierdo roto, tablero con grieta…"></textarea></div>
+          <div class="f full"><label>OBJETOS DE VALOR / PERTENENCIAS</label><textarea id="os-objetos" style="min-height:54px" placeholder="Ej: Ninguno / Bocina bluetooth, cargador, documentos en guantera…"></textarea></div>
+        </div>
+
+        <div class="sec blue">Servicio (desde cotización)</div>
+        <div class="fg">
+          <div class="f full"><label>SERVICIO AUTORIZADO</label><textarea id="os-servicio" readonly style="min-height:68px;background:var(--blue-p);color:var(--blue-m);font-weight:600;border-color:rgba(36,113,163,0.2)"></textarea></div>
+          <div class="f full"><label>TRABAJOS ADICIONALES / HALLAZGOS</label><textarea id="os-adicionales" style="min-height:68px" placeholder="Registra cualquier trabajo adicional detectado o autorizado por el cliente durante el servicio…"></textarea></div>
+        </div>
+
+        <div class="sec blue">Evidencia fotográfica y video de entrada</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
+          <div>
+            <label style="display:block;margin-bottom:6px">FOTOS DE ENTRADA (mín. 3) <span class="req">*</span></label>
+            <div class="upload-zone" id="os-photoZone">
+              <input type="file" id="os-photoInput" accept="image/*" multiple onchange="handlePhotos('os',event)">
+              <svg class="up-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+              <div class="up-title">Toca para agregar fotos</div>
+              <div class="up-sub">JPG · PNG · HEIC</div>
+              <div class="up-limit">MÁX. 10 · 5 MB C/U</div>
+            </div>
+            <div class="up-counter">Fotos: <span id="os-photoCount">0</span> / 10</div>
+            <div class="preview-grid" id="os-photoPreview"></div>
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:6px">VIDEO INICIAL (opcional)</label>
+            <div class="upload-zone" id="os-videoZone">
+              <input type="file" id="os-videoInput" accept="video/*" onchange="handleVideo('os',event)">
+              <svg class="up-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+              <div class="up-title">Toca para agregar video</div>
+              <div class="up-sub">MP4 · MOV · AVI</div>
+              <div class="up-limit">MÁX. 1 VIDEO · 50 MB</div>
+            </div>
+            <div class="up-counter">Video: <span id="os-videoName">Sin video</span></div>
+            <div class="preview-grid" id="os-videoPreview"></div>
+          </div>
+        </div>
+
+        <div class="sec blue">Fecha estimada de entrega del vehículo</div>
+        <p style="font-size:12px;color:var(--g500);margin-bottom:10px;line-height:1.6">Selecciona la fecha y hora estimada de entrega. Puede modificarse conforme avance el trabajo o el cliente autorice servicios adicionales.</p>
+        <div class="fg" style="margin-bottom:10px">
+          <div class="f"><label>FECHA DE INGRESO</label><input type="text" id="os-fecha-auto2" readonly></div>
+          <div class="f"><label>FECHA Y HORA ESTIMADA DE ENTREGA</label><input type="text" id="os-fecha-entrega" readonly placeholder="Elige en el calendario →"></div>
+        </div>
+        <div class="cal-wrap">
+          <div class="cal-nav">
+            <button type="button" onclick="changeMonth('os',-1)">&#8249;</button>
+            <div class="cal-month" id="os-calMonth"></div>
+            <button type="button" onclick="changeMonth('os',1)">&#8250;</button>
+          </div>
+          <div class="cal-wk"><span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span></div>
+          <div class="cal-days" id="os-calDays"></div>
+          <div id="os-timeSection" style="display:none;margin-top:10px;padding-top:9px;border-top:1px solid var(--brd)">
+            <div style="font-family:'Oswald',Arial,sans-serif;font-size:10px;letter-spacing:2px;color:var(--blue);margin-bottom:7px;font-weight:600">HORA ESTIMADA DE ENTREGA</div>
+            <div class="time-slots" id="os-timeSlots"></div>
+          </div>
+          <div class="cal-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Seleccionado</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--white);border:1px solid var(--brd)"></div>Disponible</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--g100)"></div>Ocupado</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-footer">
+        <div class="folio-txt"><strong id="os-folio-footer">OS-000001</strong><small>Resumen completo con cotización enviado por WhatsApp</small></div>
+        <button type="submit" class="btn-p btn-blue">REGISTRAR ORDEN Y ENVIAR POR WHATSAPP <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
+      </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- FAB -->
+<a class="fab-wa" id="fabWA" href="#" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+<div class="toast" id="toast"><span class="tic">✓</span> <span id="toastMsg">—</span></div>
+
 <script>
-  const PHONE = '524666693503';
+const PHONE='524666693503';
+const now=new Date();
+const fechaStr=now.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const OCCUPIED=[3,7,12,18,22,25];
+const ALL_SLOTS=['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const STORE_KEY='atm_records_v1';
 
-  // FOLIO — formato OS-XXXXXX
-  const folioNum = String(Math.floor(Math.random()*99999)+1).padStart(6,'0');
-  const folio = 'OS-' + folioNum;
-  document.getElementById('folioHeader').textContent = folio;
-  document.getElementById('folioFooter').textContent = folio;
+function mkF(p){return p+'-'+String(Math.floor(Math.random()*99999)+1).padStart(6,'0');}
+let CF=mkF('COT'), OF=mkF('OS');
 
-  // FECHA
-  const now = new Date();
-  document.getElementById('fechaSolicitud').value =
-    now.toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+function setFolios(){
+  ['cot-folio-hero','cot-folio-hdr','cot-folio-footer'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=CF;});
+  const cf=document.getElementById('cot-folio-field');if(cf)cf.value=CF;
+  ['os-folio-hdr','os-folio-footer'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=OF;});
+  const oh=document.getElementById('os-folio-hero');if(oh)oh.textContent=OF+' · '+CF;
+  const of2=document.getElementById('os-folios');if(of2)of2.value=OF+' / '+CF;
+}
+setFolios();
 
-  // WhatsApp FAB — mensaje predeterminado con folio dinámico
-  function updateWaLink(){
-    const nombre = document.getElementById('nombreCompleto').value.trim();
-    const placas = document.getElementById('placas').value.trim();
-    let msg = `Hola, buenos días. Me comunico en relación a mi Orden de Servicio *${folio}*`;
-    if(nombre) msg += ` a nombre de *${nombre}*`;
-    if(placas) msg += ` (placas: *${placas}*)`;
-    msg += `. Requiero atención o resolver dudas relacionadas a esta orden. Quedo en espera, gracias.`;
-    document.getElementById('fabWa').href =
-      `https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
+document.getElementById('cot-fecha').value=fechaStr;
+document.getElementById('os-fecha-ingreso').value=fechaStr;
+document.getElementById('os-fecha-auto2').value=fechaStr;
+
+// STORAGE
+function getRecs(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'[]');}catch(e){return[];}}
+function saveRec(r){const recs=getRecs();const i=recs.findIndex(x=>x.cotFolio===r.cotFolio);if(i>=0)recs[i]=r;else recs.unshift(r);localStorage.setItem(STORE_KEY,JSON.stringify(recs.slice(0,100)));}
+
+function buildRec(){
+  return{
+    cotFolio:CF,osFolio:OF,
+    nombre:document.getElementById('cot-nombre').value.trim(),
+    tel:document.getElementById('cot-tel').value.trim(),
+    placas:document.getElementById('cot-placas').value.trim(),
+    marca:document.getElementById('cot-marca').options[document.getElementById('cot-marca').selectedIndex]?.text||'',
+    modelo:document.getElementById('cot-modelo').value.trim(),
+    color:document.getElementById('cot-color').value.trim(),
+    servicio:document.getElementById('cot-servicio').value.trim(),
+    obs:document.getElementById('cot-obs').value.trim(),
+    total:document.getElementById('tot-total').textContent,
+    sub:document.getElementById('tot-sub').textContent,
+    iva:document.getElementById('tot-iva').textContent,
+    fecha:fechaStr,rows:getRows(),
+    descPct:document.getElementById('tot-desc').value,
+    ivaOn:document.getElementById('applyIva').checked,
+    email:document.getElementById('os-email').value.trim(),
+    dir:document.getElementById('os-dir').value.trim(),
+    km:document.getElementById('os-km').value.trim(),
+    gas:document.getElementById('os-gas').value,
+    anomalias:document.getElementById('os-anomalias').value.trim(),
+    objetos:document.getElementById('os-objetos').value.trim(),
+    adicionales:document.getElementById('os-adicionales').value.trim(),
+    entrega:document.getElementById('os-fecha-entrega').value||'',
+    savedAt:new Date().toLocaleString('es-MX')
+  };
+}
+function getRows(){
+  const rows=[];
+  document.querySelectorAll('#cotBody tr').forEach(tr=>{
+    rows.push({desc:tr.querySelectorAll('input[type=text]')[0]?.value||'',cat:tr.querySelector('select')?.value||'Otro',qty:tr.querySelector('.qty')?.value||'1',price:tr.querySelector('.price')?.value||'0',line:tr.querySelector('.lt')?.textContent||'$0.00'});
+  });
+  return rows;
+}
+
+// SEARCH
+function openDD(){document.getElementById('searchDD').classList.add('open');if(!document.getElementById('searchInput').value.trim())renderRecent();}
+function closeDD(){document.getElementById('searchDD').classList.remove('open');}
+function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('searchClear').classList.remove('on');renderRecent();}
+function doSearch(q){
+  document.getElementById('searchClear').classList.toggle('on',q.length>0);
+  document.getElementById('searchDD').classList.add('open');
+  if(!q.trim()){renderRecent();return;}
+  const q2=q.toLowerCase();
+  const res=getRecs().filter(r=>r.nombre.toLowerCase().includes(q2)||r.placas.toLowerCase().includes(q2)||(r.cotFolio||'').toLowerCase().includes(q2)||(r.osFolio||'').toLowerCase().includes(q2)||(r.modelo||'').toLowerCase().includes(q2));
+  const c=document.getElementById('searchResults');
+  if(!res.length){c.innerHTML='<div class="sd-empty">Sin resultados para "'+q+'"</div>';return;}
+  c.innerHTML='<div class="sd-sec">'+res.length+' RESULTADO(S)</div>'+res.map(sdItem).join('');
+}
+function renderRecent(){
+  const recs=getRecs().slice(0,8);
+  const c=document.getElementById('searchResults');
+  if(!recs.length){c.innerHTML='<div class="sd-empty">No hay registros guardados aún.<br>Se guardarán al enviar cotizaciones.</div>';return;}
+  c.innerHTML='<div class="sd-sec">RECIENTES</div>'+recs.map(sdItem).join('');
+}
+function sdItem(r){
+  return'<div class="sd-item" onclick="loadRec(\''+r.cotFolio+'\')">'
+    +'<div class="sd-badge bd-cot">COT</div>'
+    +'<div class="sd-info"><div class="sd-name">'+(r.nombre||'Sin nombre')+'</div>'
+    +'<div class="sd-meta">'+r.cotFolio+' · '+r.osFolio+' · '+r.placas+' · '+(r.marca||'')+' '+(r.modelo||'')+' · '+r.total+'</div></div>'
+    +'<div class="sd-date">'+(r.savedAt||'')+'</div></div>';
+}
+function loadRec(cotFolio){
+  const r=getRecs().find(x=>x.cotFolio===cotFolio);if(!r)return;
+  closeDD();clearSearch();
+  CF=r.cotFolio;OF=r.osFolio;setFolios();
+  document.getElementById('cot-nombre').value=r.nombre;
+  document.getElementById('cot-tel').value=r.tel;
+  document.getElementById('cot-placas').value=r.placas;
+  document.getElementById('cot-modelo').value=r.modelo;
+  document.getElementById('cot-color').value=r.color;
+  document.getElementById('cot-servicio').value=r.servicio;
+  document.getElementById('cot-obs').value=r.obs;
+  document.getElementById('cot-fecha').value=r.fecha;
+  document.getElementById('tot-desc').value=r.descPct||'0';
+  document.getElementById('applyIva').checked=r.ivaOn||false;
+  const ms=document.getElementById('cot-marca');
+  for(let i=0;i<ms.options.length;i++){if(ms.options[i].text===r.marca){ms.selectedIndex=i;break;}}
+  document.getElementById('cotBody').innerHTML='';rowId=0;
+  (r.rows||[]).forEach(row=>addRow(row.cat,row.desc,row.qty,row.price));
+  recalc();updateFirmaLabel();
+  document.getElementById('os-email').value=r.email||'';
+  document.getElementById('os-dir').value=r.dir||'';
+  document.getElementById('os-km').value=r.km||'';
+  document.getElementById('os-gas').value=r.gas||'';
+  document.getElementById('os-anomalias').value=r.anomalias||'';
+  document.getElementById('os-objetos').value=r.objetos||'';
+  document.getElementById('os-adicionales').value=r.adicionales||'';
+  document.getElementById('os-fecha-entrega').value=r.entrega||'';
+  syncCOTtoOS();
+  const meta=r.cotFolio+' · '+r.osFolio+' · '+r.placas+' · '+(r.marca||'')+' '+(r.modelo||'')+' · '+r.total+' · '+r.savedAt;
+  ['cot-banner','os-banner'].forEach(id=>document.getElementById(id).classList.add('show'));
+  document.getElementById('cot-banner-title').textContent='COTIZACIÓN CARGADA — '+r.nombre;
+  document.getElementById('cot-banner-meta').textContent=meta;
+  document.getElementById('os-banner-title').textContent='ORDEN CARGADA — '+r.nombre;
+  document.getElementById('os-banner-meta').textContent=meta;
+  showToast('Registro cargado: '+r.nombre+' · '+r.cotFolio);
+  showPage('cot');updateFAB();
+}
+function newRecord(){
+  ['cot-banner','os-banner'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  CF=mkF('COT');OF=mkF('OS');setFolios();
+  showToast('Formulario listo para nuevo registro');
+}
+
+// TABS
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.btn-nav').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.btn-nav-'+p).classList.add('active');
+  const pc=document.getElementById('prog-cot'),po=document.getElementById('prog-os');
+  pc.className='ps'+(p==='cot'?' active':p==='os'?' done':'');
+  po.className='ps'+(p==='os'?' active-os':'');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(p==='os')syncCOTtoOS();
+}
+function syncCOTtoOS(){
+  document.getElementById('os-nombre').value=document.getElementById('cot-nombre').value;
+  document.getElementById('os-tel').value=document.getElementById('cot-tel').value;
+  document.getElementById('os-placas').value=document.getElementById('cot-placas').value;
+  document.getElementById('os-marca').value=document.getElementById('cot-marca').options[document.getElementById('cot-marca').selectedIndex]?.text||'';
+  document.getElementById('os-modelo').value=document.getElementById('cot-modelo').value;
+  document.getElementById('os-color').value=document.getElementById('cot-color').value;
+  document.getElementById('os-servicio').value=document.getElementById('cot-servicio').value;
+}
+
+// FAB
+function updateFAB(){
+  const n=document.getElementById('cot-nombre').value.trim(),p=document.getElementById('cot-placas').value.trim();
+  let m='Hola, buenos días. Me comunico sobre la Orden *'+OF+'* / Cotización *'+CF+'* — ATM Servicio Mecánico';
+  if(n)m+=' · Cliente: *'+n+'*';if(p)m+=' · Placas: *'+p+'*';
+  m+='. Requiero atención o resolver dudas. Gracias.';
+  document.getElementById('fabWA').href='https://wa.me/'+PHONE+'?text='+encodeURIComponent(m);
+}
+updateFAB();
+['cot-nombre','cot-placas'].forEach(id=>document.getElementById(id).addEventListener('input',updateFAB));
+
+// CHIPS
+function toggleChip(el){el.classList.toggle('on');}
+
+// UPLOAD
+const media={os:{photos:[],video:null}};
+function handlePhotos(ns,e){Array.from(e.target.files).forEach(f=>{if(media[ns].photos.length<10&&f.type.startsWith('image/'))media[ns].photos.push(f);});renderPhotos(ns);e.target.value='';}
+function renderPhotos(ns){
+  const g=document.getElementById(ns+'-photoPreview');
+  document.getElementById(ns+'-photoCount').textContent=media[ns].photos.length;
+  g.innerHTML='';document.getElementById(ns+'-photoZone').classList.toggle('has-files',media[ns].photos.length>=3);
+  media[ns].photos.forEach((f,i)=>{const url=URL.createObjectURL(f);const el=document.createElement('div');el.className='prev-item';el.innerHTML='<img src="'+url+'"><div class="med-label">'+trunc(f.name,13)+'</div><div class="rm-btn" onclick="removePhoto(\''+ns+'\','+i+')">×</div>';g.appendChild(el);});
+}
+function removePhoto(ns,i){media[ns].photos.splice(i,1);renderPhotos(ns);}
+function handleVideo(ns,e){const f=e.target.files[0];if(!f)return;if(f.size>50*1024*1024){alert('El video no debe superar 50 MB');e.target.value='';return;}media[ns].video=f;renderVideo(ns);e.target.value='';}
+function renderVideo(ns){
+  const g=document.getElementById(ns+'-videoPreview');
+  document.getElementById(ns+'-videoName').textContent=media[ns].video?trunc(media[ns].video.name,20):'Sin video';
+  g.innerHTML='';document.getElementById(ns+'-videoZone').classList.toggle('has-files',!!media[ns].video);
+  if(!media[ns].video)return;
+  const url=URL.createObjectURL(media[ns].video);const el=document.createElement('div');el.className='prev-item';el.style.aspectRatio='16/9';
+  el.innerHTML='<video src="'+url+'" muted playsinline preload="metadata"></video><div class="vid-badge">VIDEO</div><div class="med-label">'+trunc(media[ns].video.name,16)+'</div><div class="rm-btn" onclick="removeVideo(\''+ns+'\')">×</div>';g.appendChild(el);
+}
+function removeVideo(ns){media[ns].video=null;renderVideo(ns);}
+function trunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
+
+// CALENDAR
+const calS={os:{y:now.getFullYear(),m:now.getMonth(),d:null,s:null}};
+function changeMonth(ns,dir){calS[ns].m+=dir;if(calS[ns].m>11){calS[ns].m=0;calS[ns].y++;}if(calS[ns].m<0){calS[ns].m=11;calS[ns].y--;}renderCal(ns);document.getElementById(ns+'-timeSection').style.display='none';calS[ns].d=null;calS[ns].s=null;}
+function renderCal(ns){
+  const{y,m,d}=calS[ns];document.getElementById(ns+'-calMonth').textContent=MONTHS[m]+' '+y;
+  const g=document.getElementById(ns+'-calDays');g.innerHTML='';
+  const first=new Date(y,m,1).getDay(),total=new Date(y,m+1,0).getDate(),td=now.getDate();
+  const isCurr=y===now.getFullYear()&&m===now.getMonth();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cal-d empty';g.appendChild(e);}
+  for(let x=1;x<=total;x++){
+    const el=document.createElement('div');el.textContent=x;el.className='cal-d';
+    const dd=new Date(y,m,x),isPast=isCurr&&x<td,isSun=dd.getDay()===0,isSat=dd.getDay()===6,isOcc=OCCUPIED.includes(x)&&isCurr;
+    if(isPast||isSun)el.classList.add('dis');else if(isOcc)el.classList.add('occ');else el.addEventListener('click',()=>pickDay(ns,x,el));
+    if(isCurr&&x===td&&!isPast)el.classList.add('today');if(isSat&&!isPast&&!isOcc)el.classList.add('sat');if(d===x&&isCurr)el.classList.add('sel');g.appendChild(el);
   }
-  updateWaLink();
-  ['nombreCompleto','placas'].forEach(id =>
-    document.getElementById(id).addEventListener('input', updateWaLink)
-  );
+}
+function pickDay(ns,d,el){document.querySelectorAll('#'+ns+'-calDays .cal-d.sel').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');calS[ns].d=d;calS[ns].s=null;const isSat=new Date(calS[ns].y,calS[ns].m,d).getDay()===6;document.getElementById(ns+'-timeSection').style.display='block';renderSlots(ns,isSat);const fp=document.getElementById(ns+'-fecha-entrega');if(fp)fp.value=d+' de '+MONTHS[calS[ns].m]+' '+calS[ns].y;}
+function renderSlots(ns,isSat){const c=document.getElementById(ns+'-timeSlots');c.innerHTML='';(isSat?ALL_SLOTS.slice(0,6):ALL_SLOTS).forEach(t=>{const el=document.createElement('div');el.className='ts';el.textContent=t;el.addEventListener('click',()=>pickSlot(ns,el,t));c.appendChild(el);});}
+function pickSlot(ns,el,t){document.querySelectorAll('#'+ns+'-timeSlots .ts.sel').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');calS[ns].s=t;const fp=document.getElementById(ns+'-fecha-entrega');if(fp){const cur=fp.value.split(' — ')[0];fp.value=cur+' — '+t+' hrs';}}
+renderCal('os');
 
-  // EMAIL AUTO
-  const emailInput = document.getElementById('emailField');
-  const emailBadge = document.getElementById('emailBadge');
-  if('contacts' in navigator && 'ContactsManager' in window){
-    navigator.contacts.select(['email'],{multiple:false}).then(c=>{
-      if(c&&c[0]&&c[0].email&&c[0].email[0]){
-        emailInput.value=c[0].email[0]; emailBadge.style.display='block';
-      }
-    }).catch(()=>{});
-  }
+// TABLE
+let rowId=0;
+function addRow(cat,desc='',qty='1',price='0'){
+  rowId++;const id='r'+rowId;const tr=document.createElement('tr');tr.id=id;
+  tr.innerHTML='<td><input type="text" placeholder="Descripción" value="'+desc+'" oninput="recalc()"></td>'
+    +'<td><select onchange="recalc()"><option>Refacción</option><option>Mano de obra</option><option>Material</option><option>Otro</option></select></td>'
+    +'<td><input type="number" value="'+qty+'" min="1" style="text-align:center" oninput="recalc()" class="qty"></td>'
+    +'<td><input type="number" value="'+price+'" min="0" step="0.01" placeholder="0.00" oninput="recalc()" class="price"></td>'
+    +'<td style="text-align:right;font-weight:600;padding-right:5px" class="lt">$0.00</td>'
+    +'<td class="td-del"><button type="button" class="del-row" onclick="removeRow(\''+id+'\')">×</button></td>';
+  tr.querySelector('select').value=cat;document.getElementById('cotBody').appendChild(tr);recalc();
+}
+function removeRow(id){const r=document.getElementById(id);if(r){r.remove();recalc();}}
+function recalc(){
+  let sub=0;
+  document.querySelectorAll('#cotBody tr').forEach(tr=>{
+    const qty=parseFloat(tr.querySelector('.qty')?.value||0)||0,price=parseFloat(tr.querySelector('.price')?.value||0)||0;
+    const line=qty*price;sub+=line;const lt=tr.querySelector('.lt');if(lt)lt.textContent='$'+fmt(line);
+  });
+  const dp=parseFloat(document.getElementById('tot-desc').value||0)||0;
+  const disc=sub*(dp/100),after=sub-disc;
+  const iva=document.getElementById('applyIva').checked?after*0.16:0;
+  const total=after+iva;
+  document.getElementById('tot-sub').textContent='$'+fmt(sub);
+  document.getElementById('tot-iva').textContent='$'+fmt(iva);
+  document.getElementById('tot-total').textContent='$'+fmt(total);
+}
+function fmt(n){return n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+addRow('Mano de obra');addRow('Refacción');
 
-  // CHIPS
-  function toggleChip(el){ el.classList.toggle('chip-active'); }
+// FIRMA
+const cv=document.getElementById('firmaCanvas'),ctx=cv.getContext('2d');
+let drawing=false,hasFirma=false,lx=0,ly=0;
+function initCanvas(){cv.width=cv.parentElement.offsetWidth||500;cv.height=148;ctx.clearRect(0,0,cv.width,cv.height);ctx.strokeStyle='#1C1C1E';ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';hasFirma=false;}
+function gp(e){const r=cv.getBoundingClientRect();if(e.touches)return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};return{x:e.clientX-r.left,y:e.clientY-r.top};}
+cv.addEventListener('mousedown',e=>{drawing=true;const p=gp(e);lx=p.x;ly=p.y;});
+cv.addEventListener('mousemove',e=>{if(!drawing)return;const p=gp(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;hasFirma=true;});
+cv.addEventListener('mouseup',()=>drawing=false);cv.addEventListener('mouseleave',()=>drawing=false);
+cv.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=gp(e);lx=p.x;ly=p.y;},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=gp(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;hasFirma=true;},{passive:false});
+cv.addEventListener('touchend',()=>drawing=false);
+function clearFirma(){initCanvas();}
+function downloadFirma(){
+  if(!hasFirma){alert('Aún no hay firma para descargar.');return;}
+  const tmp=document.createElement('canvas');tmp.width=cv.width;tmp.height=cv.height+50;
+  const tc=tmp.getContext('2d');tc.fillStyle='#fff';tc.fillRect(0,0,tmp.width,tmp.height);
+  tc.fillStyle='#1C1C1E';tc.font='bold 12px Open Sans,Arial';tc.fillText('ATM Servicio Mecánico — Firma de: '+document.getElementById('cot-nombre').value,10,20);
+  tc.font='10px Open Sans,Arial';tc.fillStyle='#636366';tc.fillText(CF+' / '+OF+' · '+new Date().toLocaleString('es-MX'),10,38);
+  tc.drawImage(cv,0,48);
+  const link=document.createElement('a');link.download='firma_'+CF+'.png';link.href=tmp.toDataURL('image/png');link.click();
+  showToast('Firma descargada como PNG — adjúntala en WhatsApp');
+}
+function updateFirmaLabel(){document.getElementById('firma-nombre-lbl').textContent=document.getElementById('cot-nombre').value.trim()||'—';}
+window.addEventListener('load',initCanvas);window.addEventListener('resize',initCanvas);
 
-  // PHOTOS
-  const photos=[];
-  function handlePhotos(e){
-    Array.from(e.target.files).forEach(f=>{
-      if(photos.length>=10||!f.type.startsWith('image/')) return;
-      photos.push(f);
-    });
-    renderPhotos(); e.target.value='';
-  }
-  function renderPhotos(){
-    const grid=document.getElementById('photoPreview');
-    document.getElementById('photoCount').textContent=photos.length;
-    grid.innerHTML='';
-    document.getElementById('photoZone').classList.toggle('has-files', photos.length>=3);
-    photos.forEach((f,i)=>{
-      const url=URL.createObjectURL(f);
-      const el=document.createElement('div'); el.className='preview-item';
-      el.innerHTML=`<img src="${url}"><div class="media-label">${trunc(f.name,14)}</div>
-        <div class="remove-btn" onclick="removePhoto(${i})">×</div>`;
-      grid.appendChild(el);
-    });
-  }
-  function removePhoto(i){ photos.splice(i,1); renderPhotos(); }
+// SUBMIT COT
+function submitCOT(e){
+  e.preventDefault();if(!hasFirma){alert('El cliente debe firmar antes de enviar.');return;}
+  const nombre=document.getElementById('cot-nombre').value.trim();
+  const tel=document.getElementById('cot-tel').value.trim().replace(/\D/g,'');
+  const placas=document.getElementById('cot-placas').value.trim();
+  const marca=document.getElementById('cot-marca').options[document.getElementById('cot-marca').selectedIndex]?.text||'';
+  const modelo=document.getElementById('cot-modelo').value.trim();
+  const color=document.getElementById('cot-color').value.trim();
+  const servicio=document.getElementById('cot-servicio').value.trim();
+  const obs=document.getElementById('cot-obs').value.trim();
+  const total=document.getElementById('tot-total').textContent;
+  const sub=document.getElementById('tot-sub').textContent;
+  const iva=document.getElementById('tot-iva').textContent;
+  let conceptos='';
+  document.querySelectorAll('#cotBody tr').forEach(tr=>{
+    const desc=tr.querySelectorAll('input[type=text]')[0]?.value||'';
+    const cat=tr.querySelector('select')?.value||'';
+    const qty=tr.querySelector('.qty')?.value||'1';
+    const price=parseFloat(tr.querySelector('.price')?.value||0);
+    const line=tr.querySelector('.lt')?.textContent||'';
+    if(desc)conceptos+='\n  • '+cat+': '+desc+' ('+qty+' × $'+fmt(price)+') = '+line;
+  });
+  const msg='🔧 *COTIZACIÓN — ATM SERVICIO MECÁNICO* 🔧\n━━━━━━━━━━━━━━━━━━━━━━━\n📋 *'+CF+'*  ·  Ligada a '+OF+'\n📅 '+document.getElementById('cot-fecha').value+'\n━━━━━━━━━━━━━━━━━━━━━━━\n👤 *'+nombre+'*\n🚗 '+marca+' '+modelo+' · '+color+'  |  🔑 '+placas+'\n━━━━━━━━━━━━━━━━━━━━━━━\n🛠 *Servicio:*\n'+servicio+(obs?'\n\n📝 '+obs:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n💡 *Conceptos:*'+conceptos+'\n━━━━━━━━━━━━━━━━━━━━━━━\n📊 Subtotal: '+sub+'  |  IVA: '+iva+'\n✅ *TOTAL: '+total+'*\n━━━━━━━━━━━━━━━━━━━━━━━\n✍️ Cotización aceptada y firmada digitalmente.\n📎 _La firma se adjunta como imagen PNG en este chat._\n_Responde para confirmar autorización del servicio._\n\n_ATM Servicio Mecánico · Guanajuato, MX_';
+  const dest=tel.length>=10?'52'+tel:PHONE;
+  window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
+  saveRec(buildRec());
+  const btn=e.target.querySelector('.btn-p');btn.textContent='ENVIANDO…';btn.disabled=true;
+  setTimeout(()=>{showToast('Cotización enviada · Registro guardado');btn.textContent='COTIZACIÓN ENVIADA ✓';btn.style.background='var(--green)';setTimeout(()=>{showPage('os');showToast('Completa ahora la Orden de Servicio');},2200);},800);
+}
 
-  // VIDEO
-  let videoFile=null;
-  function handleVideo(e){
-    const f=e.target.files[0]; if(!f) return;
-    if(f.size>50*1024*1024){ alert('El video no debe superar 50 MB'); e.target.value=''; return; }
-    videoFile=f; renderVideo(); e.target.value='';
-  }
-  function renderVideo(){
-    const grid=document.getElementById('videoPreview');
-    document.getElementById('videoName').textContent=videoFile?trunc(videoFile.name,22):'Sin video';
-    grid.innerHTML='';
-    document.getElementById('videoZone').classList.toggle('has-files',!!videoFile);
-    if(!videoFile) return;
-    const url=URL.createObjectURL(videoFile);
-    const el=document.createElement('div'); el.className='preview-item'; el.style.aspectRatio='16/9';
-    el.innerHTML=`<video src="${url}" muted playsinline preload="metadata"></video>
-      <div class="video-badge">VIDEO</div>
-      <div class="media-label">${trunc(videoFile.name,18)}</div>
-      <div class="remove-btn" onclick="removeVideo()">×</div>`;
-    grid.appendChild(el);
-  }
-  function removeVideo(){ videoFile=null; renderVideo(); }
-  function trunc(s,n){ return s.length>n?s.slice(0,n)+'…':s; }
+// SUBMIT OS
+function submitOS(e){
+  e.preventDefault();if(media.os.photos.length<3){alert('Agrega al menos 3 fotografías del vehículo.');return;}
+  const nombre=document.getElementById('os-nombre').value;
+  const tel=document.getElementById('cot-tel').value.trim().replace(/\D/g,'');
+  const email=document.getElementById('os-email').value.trim();
+  const dir=document.getElementById('os-dir').value.trim();
+  const placas=document.getElementById('os-placas').value;
+  const marca=document.getElementById('os-marca').value;
+  const modelo=document.getElementById('os-modelo').value;
+  const color=document.getElementById('os-color').value;
+  const km=document.getElementById('os-km').value.trim();
+  const gas=document.getElementById('os-gas').value;
+  const anomalias=document.getElementById('os-anomalias').value.trim();
+  const objetos=document.getElementById('os-objetos').value.trim();
+  const servicio=document.getElementById('os-servicio').value.trim();
+  const adicionales=document.getElementById('os-adicionales').value.trim();
+  const entrega=document.getElementById('os-fecha-entrega').value||'Por confirmar';
+  const fotos=media.os.photos.length;
+  const video=media.os.video?'Sí':'No';
+  const total=document.getElementById('tot-total').textContent;
+  const sub=document.getElementById('tot-sub').textContent;
+  const msg='🚗 *ORDEN DE SERVICIO — ATM SERVICIO MECÁNICO* 🚗\n━━━━━━━━━━━━━━━━━━━━━━━\n📋 *'+OF+'*  ·  Cotización: '+CF+'\n📅 Ingreso: '+fechaStr+'\n🕐 Entrega estimada: *'+entrega+'*\n━━━━━━━━━━━━━━━━━━━━━━━\n👤 *'+nombre+'*\n📞 '+document.getElementById('cot-tel').value+(email?'  |  📧 '+email:'')+(dir?'\n📍 '+dir:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n🚗 '+marca+' '+modelo+' · '+color+'\n🔑 Placas: *'+placas+'*'+(km?'\n📏 Km inicial: '+km:'')+(gas?'  |  ⛽ Gasolina: '+gas:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n🛠 *Servicio autorizado:*\n'+servicio+(adicionales?'\n\n🔍 *Trabajos adicionales:*\n'+adicionales:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n⚠️ *Estado de entrada:*\n'+(anomalias||'Sin anomalías reportadas')+(objetos?'\n🎒 Objetos: '+objetos:'')+'\n━━━━━━━━━━━━━━━━━━━━━━━\n📸 Evidencia registrada: *'+fotos+' foto(s)*  |  Video: '+video+'\n_Las fotografías de entrada se adjuntan en este chat o quedan en el sistema ATM._\n━━━━━━━━━━━━━━━━━━━━━━━\n💰 Subtotal: '+sub+'   ✅ *TOTAL: '+total+'*\n━━━━━━━━━━━━━━━━━━━━━━━\n_Te notificaremos cualquier novedad para que tomes decisiones a tiempo._\n_Gracias por confiar en ATM · Guanajuato, MX_ 🔧';
+  const dest=tel.length>=10?'52'+tel:PHONE;
+  window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
+  saveRec(buildRec());
+  const btn=e.target.querySelector('.btn-p');btn.textContent='ENVIANDO…';btn.disabled=true;
+  setTimeout(()=>{showToast('¡Orden registrada y enviada al cliente!');btn.textContent='ORDEN REGISTRADA ✓';btn.style.background='var(--green)';},800);
+}
 
-  // CALENDAR
-  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const occupiedDays=[3,7,12,18,22,25];
-  const allSlots=['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-  let viewYear=now.getFullYear(), viewMonth=now.getMonth();
-  let selectedDay=null, selectedSlot=null;
+function showToast(msg){document.getElementById('toastMsg').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),5000);}
 
-  function changeMonth(dir){
-    viewMonth+=dir;
-    if(viewMonth>11){viewMonth=0;viewYear++;}
-    if(viewMonth<0){viewMonth=11;viewYear--;}
-    renderCalendar();
-    document.getElementById('timeSection').style.display='none';
-    selectedDay=null; selectedSlot=null;
-  }
-
-  function renderCalendar(){
-    document.getElementById('calMonth').textContent=MONTHS[viewMonth]+' '+viewYear;
-    const days=document.getElementById('calDays'); days.innerHTML='';
-    const firstDay=new Date(viewYear,viewMonth,1).getDay();
-    const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
-    const todayD=now.getDate();
-    const isCurr=viewYear===now.getFullYear()&&viewMonth===now.getMonth();
-
-    for(let i=0;i<firstDay;i++){
-      const e=document.createElement('div'); e.className='cal-day empty'; days.appendChild(e);
-    }
-    for(let d=1;d<=daysInMonth;d++){
-      const el=document.createElement('div'); el.textContent=d; el.className='cal-day';
-      const dDate=new Date(viewYear,viewMonth,d);
-      const isPast=isCurr&&d<todayD;
-      const isSun=dDate.getDay()===0;
-      const isSat=dDate.getDay()===6;
-      const isOcc=occupiedDays.includes(d)&&isCurr;
-      const isToday=isCurr&&d===todayD;
-
-      if(isPast||isSun){ el.classList.add('disabled'); }
-      else if(isOcc){ el.classList.add('occupied'); }
-      else { el.addEventListener('click',()=>selectDay(d,el)); }
-
-      if(isToday&&!isPast) el.classList.add('today');
-      if(isSat&&!isPast&&!isOcc) el.classList.add('saturday');
-      if(selectedDay===d&&isCurr) el.classList.add('selected');
-      days.appendChild(el);
-    }
-  }
-
-  function selectDay(d,el){
-    document.querySelectorAll('.cal-day.selected').forEach(e=>e.classList.remove('selected'));
-    el.classList.add('selected'); selectedDay=d; selectedSlot=null;
-    const isSat=new Date(viewYear,viewMonth,d).getDay()===6;
-    document.getElementById('timeSection').style.display='block';
-    renderSlots(isSat);
-    document.getElementById('fechaSeleccionada').value=d+' de '+MONTHS[viewMonth]+' '+viewYear;
-  }
-
-  function renderSlots(isSat){
-    const container=document.getElementById('timeSlots'); container.innerHTML='';
-    const slots=isSat?allSlots.slice(0,6):allSlots;
-    slots.forEach(t=>{
-      const el=document.createElement('div'); el.className='time-slot'; el.textContent=t;
-      el.addEventListener('click',()=>selectSlot(el,t));
-      container.appendChild(el);
-    });
-  }
-
-  function selectSlot(el,t){
-    document.querySelectorAll('.time-slot.slot-selected').forEach(e=>e.classList.remove('slot-selected'));
-    el.classList.add('slot-selected'); selectedSlot=t;
-    const cur=document.getElementById('fechaSeleccionada').value.split(' — ')[0];
-    document.getElementById('fechaSeleccionada').value=cur+' — '+t+' hrs';
-    updateWaLink();
-  }
-
-  // SUBMIT
-  function submitForm(e){
-    e.preventDefault();
-    if(photos.length<3){ alert('Por favor agrega al menos 3 fotografías del vehículo.'); return; }
-    const btn=document.querySelector('.btn-submit');
-    btn.textContent='ENVIANDO…'; btn.disabled=true;
-    setTimeout(()=>{
-      const toast=document.getElementById('toast');
-      toast.classList.add('show');
-      setTimeout(()=>toast.classList.remove('show'),5000);
-      btn.textContent='ORDEN ENVIADA ✓';
-      btn.style.background='#1a6e45';
-    },1200);
-  }
-
-  renderCalendar();
+if('contacts' in navigator&&'ContactsManager' in window){navigator.contacts.select(['email'],{multiple:false}).then(c=>{if(c&&c[0]&&c[0].email&&c[0].email[0]){document.getElementById('os-email').value=c[0].email[0];document.getElementById('os-email-badge').style.display='block';}}).catch(()=>{});}
 </script>
 </body>
 </html>
