@@ -977,18 +977,23 @@ function pickSlot(el,t){
 var rowId=0;
 function addR(cat,desc,qty,price){
   desc=desc||''; qty=qty||'1'; price=price||'0';
-  rowId++;
-  var id='R'+rowId;
-  var tr=document.createElement('tr'); tr.id=id;
-  tr.innerHTML='<td><input type="text" placeholder="Descripción" value="'+desc+'" oninput="recalc()"></td>'
-    +'<td><select onchange="recalc()"><option>Refacción</option><option>Mano de obra</option><option>Material</option><option>Otro</option></select></td>'
-    +'<td><input type="number" value="'+qty+'" min="1" class="qty" style="text-align:center" oninput="recalc()"></td>'
-    +'<td><input type="number" value="'+price+'" min="0" step="0.01" class="price" placeholder="0.00" oninput="recalc()"></td>'
-    +'<td style="text-align:right;font-weight:600;padding-right:5px" class="lt">$0.00</td>'
-    +'<td><button type="button" class="del-r" onclick="rmRow(''+id+'')">&#x2715;</button></td>';
-  tr.querySelector('select').value=cat;
-  document.getElementById('CTBL').appendChild(tr);
-  recalc();
+  var tr=document.createElement('tr');
+  var ist='width:100%;padding:7px 8px;font-size:13px;background:#fff;border:1px solid rgba(174,174,178,.3);border-radius:3px;color:#1C1C1E;outline:none;box-sizing:border-box;';
+  var td1=document.createElement('td'); var inp=document.createElement('input');
+  inp.type='text'; inp.placeholder='Descripci\u00f3n'; inp.value=desc; inp.style.cssText=ist; inp.addEventListener('input',recalc); td1.appendChild(inp);
+  var td2=document.createElement('td'); var sel=document.createElement('select');
+  sel.style.cssText='width:100%;padding:6px 5px;font-size:12px;background:#fff;border:1px solid rgba(174,174,178,.3);border-radius:3px;outline:none;';
+  ['Refacci\u00f3n','Mano de obra','Material','Otro'].forEach(function(o){ var op=document.createElement('option'); op.value=o; op.textContent=o; sel.appendChild(op); });
+  sel.value=cat; sel.addEventListener('change',recalc); td2.appendChild(sel);
+  var td3=document.createElement('td'); var qin=document.createElement('input');
+  qin.type='number'; qin.value=qty; qin.min='1'; qin.className='qty'; qin.style.cssText=ist+'text-align:center;'; qin.addEventListener('input',recalc); td3.appendChild(qin);
+  var td4=document.createElement('td'); var pin=document.createElement('input');
+  pin.type='number'; pin.value=price; pin.min='0'; pin.step='0.01'; pin.placeholder='0.00'; pin.className='price'; pin.style.cssText=ist; pin.addEventListener('input',recalc); td4.appendChild(pin);
+  var td5=document.createElement('td'); td5.className='lt'; td5.style.cssText='text-align:right;font-weight:600;padding-right:5px;'; td5.textContent='$0.00';
+  var td6=document.createElement('td'); var btn=document.createElement('button');
+  btn.type='button'; btn.className='del-r'; btn.textContent='\u00d7'; btn.addEventListener('click',function(){ tr.remove(); recalc(); }); td6.appendChild(btn);
+  tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6);
+  document.getElementById('CTBL').appendChild(tr); recalc();
 }
 function rmRow(id){ var r=document.getElementById(id); if(r){ r.remove(); recalc(); } }
 function recalc(){
@@ -1084,13 +1089,13 @@ function doSearch(q){
   if(!DR) return;
   if(!rs.length){ DR.innerHTML='<div class="dd-empty">Sin resultados para "'+q+'"</div>'; return; }
   DR.innerHTML='<div class="dd-hdr">'+rs.length+' RESULTADO(S)</div>'+rs.map(ddRow).join('');
-}
-function ddRow(r){
-  return '<div class="dd-row" onclick="loadRec(''+r.osF+'')">'
-    +'<div class="dd-tag">OS '+r.osF+'</div>'
-    +'<div class="dd-info"><div class="dd-name">'+(r.nom||'—')+'</div>'
-    +'<div class="dd-sub">'+(r.cotF||'—')+' · '+(r.pla||'—')+' · '+(r.marT||'')+' '+(r.mod||'')+' · '+(r.cotTot||'')+'</div></div>'
-    +'<div class="dd-date">'+(r.at||'')+'</div></div>';
+}function ddRow(r){
+  var d=document.createElement('div'); d.className='dd-row';
+  d.innerHTML='<div class="dd-tag">OS '+(r.osF||'')+'</div>'
+    +'<div class="dd-info"><div class="dd-name">'+(r.nom||'\u2014')+'</div>'
+    +'<div class="dd-sub">'+(r.cotF||'')+' \u00b7 '+(r.pla||'')+' \u00b7 '+(r.marT||'')+' '+(r.mod||'')+' \u00b7 '+(r.cotTot||'')+'</div></div>'
+    +'<div class="dd-date">'+(r.at||'')+'</div>';
+  d.addEventListener('click',function(){ loadRec(r.osF); }); return d;
 }
 function loadRec(osf){
   var rs=getRecs(); var r=rs.find(function(x){ return x.osF===osf; });
@@ -1140,7 +1145,7 @@ function newRec(){
 // ═══════ SUBMIT OS ═══════
 function sendOS(e){
   e.preventDefault();
-  if(photos.length<3){ alert('Agrega al menos 3 fotografías del vehículo.'); return; }
+  if(photos.length<3){ alert('Agrega al menos 3 fotos del veh\u00edculo.'); return; }
   var nom=document.getElementById('os_nom').value.trim();
   var tel=document.getElementById('os_tel').value.trim().replace(/[^0-9]/g,'');
   var email=document.getElementById('os_email').value.trim();
@@ -1155,89 +1160,36 @@ function sendOS(e){
   var obs=document.getElementById('os_obs').value.trim();
   var ano=document.getElementById('os_ano').value.trim();
   var obj=document.getElementById('os_obj').value.trim();
-  var fots=photos.length;
-  var vid=videoFile?'Sí':'No';
-  var chips=Array.from(document.querySelectorAll('#OS_CHIPS .chip.on')).map(function(c){ return c.textContent; }).join(', ');
-  var fol=osF();
-
-  var msg='🔧 *ORDEN DE SERVICIO — ATM SERVICIO MECÁNICO* 🔧
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'📋 *Orden de Servicio: '+fol+'*
-'
-    +'📅 Fecha: '+TODAY_STR+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'👤 *Cliente:* '+nom+'
-'
-    +'📞 '+document.getElementById('os_tel').value
-    +(email?'  |  📧 '+email:'')
-    +(dir?'
-📍 '+dir:'')+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'🚗 *Vehículo:* '+mar+' '+mod+' · '+col+'
-'
-    +'🔑 *Placas:* '+pla
-    +(km?'
-📏 Km: '+km:'')
-    +(gas?'  |  ⛽ Gasolina: '+gas:'')+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'🛠 *Servicio solicitado:*
-'+srv
-    +(chips?'
-🏷 '+chips:'')
-    +(obs?'
-
-📝 '+obs:'')+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'⚠️ *Estado de entrada:*
-'+(ano||'Sin anomalías reportadas')
-    +(obj?'
-🎒 Objetos: '+obj:'')+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'📸 Evidencia: *'+fots+' foto(s)*  |  Video: '+vid+'
-'
-    +'_Las fotos quedan registradas en el sistema ATM._
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'✅ Para confirmar la recepción de su vehículo,
-'
-    +'*responda con la palabra: ACEPTO*
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'_Le notificaremos cualquier novedad durante el servicio._
-'
-    +'_Gracias por confiar en ATM · Guanajuato, MX_ 🔧';
-
+  var fots=photos.length, vid=videoFile?'S\u00ed':'No', fol=osF();
+  var chips=Array.from(document.querySelectorAll('#OS_CHIPS .chip.on')).map(function(c){return c.textContent;}).join(', ');
+  var nl='\n', sep='\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+  var msg='\uD83D\uDD27 *ORDEN DE SERVICIO \u2014 ATM* \uD83D\uDD27'+nl
+    +sep+nl+'\uD83D\uDCCB *Orden: '+fol+'* | \uD83D\uDCC5 '+TODAY_STR+nl
+    +sep+nl+'\uD83D\uDC64 *'+nom+'* | \uD83D\uDCDE '+document.getElementById('os_tel').value
+    +(email?'  \uD83D\uDCE7 '+email:'')+(dir?nl+'\uD83D\uDCCD '+dir:'')+nl
+    +sep+nl+'\uD83D\uDE97 '+mar+' '+mod+' '+col+' | \uD83D\uDD11 '+pla
+    +(km?'  \uD83D\uDCCF '+km:'')+(gas?'  \u26FD '+gas:'')+nl
+    +sep+nl+'\uD83D\uDEE0 *Servicio:*'+nl+srv
+    +(chips?nl+'\uD83C\uDFF7 '+chips:'')+(obs?nl+'\uD83D\uDCDD '+obs:'')+nl
+    +sep+nl+'\u26A0\uFE0F '+(ano||'Sin anom\u00edral\u00edas')+(obj?nl+'\uD83C\uDF92 '+obj:'')+nl
+    +'\uD83D\uDCF8 '+fots+' foto(s) | Video: '+vid+nl
+    +sep+nl+'\u2705 Responda *ACEPTO* para confirmar'+nl
+    +'_ATM \u00b7 Guanajuato, MX_ \uD83D\uDD27';
   var dest=tel.length>=10?'52'+tel:PHONE;
   window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
-  saveRec(snapRec());
-  incOS();
-  var btn=e.target.querySelector('.btn');
-  btn.textContent='ENVIANDO…'; btn.disabled=true;
+  saveRec(snapRec()); incOS();
+  var btn=e.target.querySelector('.btn'); btn.textContent='ENVIANDO\u2026'; btn.disabled=true;
   setTimeout(function(){
     toast('Orden '+fol+' registrada y enviada');
-    btn.textContent='ORDEN REGISTRADA ✓'; btn.style.background='var(--green)';
-    setTimeout(function(){ go('cot'); toast('Completa ahora la cotización · Paso 2'); },2200);
+    btn.textContent='ORDEN REGISTRADA \u2713'; btn.style.background='var(--green)';
+    setTimeout(function(){ go('cot'); toast('Completa ahora la cotizaci\u00f3n'); },2200);
   },800);
 }
 
 // ═══════ SUBMIT COT ═══════
 function sendCOT(e){
   e.preventDefault();
-  if(!fc.cot||!fc.cot.has){ alert('El cliente debe firmar la cotización antes de enviar.'); return; }
+  if(!fc.cot||!fc.cot.has){ alert('El cliente debe firmar antes de enviar.'); return; }
   var nom=document.getElementById('cot_nom').value.trim();
   var tel=document.getElementById('cot_tel').value.trim().replace(/[^0-9]/g,'');
   var pla=document.getElementById('cot_pla').value.trim();
@@ -1251,8 +1203,7 @@ function sendCOT(e){
   var sub=document.getElementById('T_sub').textContent;
   var iva=document.getElementById('T_iva_v').textContent;
   var fen=document.getElementById('cot_fen').value||'Por confirmar';
-  var fol=cotF();
-  var osfol=osF();
+  var fol=cotF(), osfol=osF();
   var conceptos='';
   document.querySelectorAll('#CTBL tr').forEach(function(tr){
     var desc=(tr.querySelectorAll('input[type=text]')[0]||{value:''}).value;
@@ -1260,72 +1211,28 @@ function sendCOT(e){
     var qty=(tr.querySelector('.qty')||{value:'1'}).value;
     var price=parseFloat((tr.querySelector('.price')||{value:0}).value)||0;
     var line=(tr.querySelector('.lt')||{textContent:''}).textContent;
-    if(desc) conceptos+='
-  • '+cat+': '+desc+' ('+qty+' × $'+fmt(price)+') = '+line;
+    if(desc) conceptos+='\n  \u2022 '+cat+': '+desc+' ('+qty+' \u00d7 $'+fmt(price)+') = '+line;
   });
-
-  var msg='💰 *COTIZACIÓN — ATM SERVICIO MECÁNICO* 💰
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'📋 *Cotización: '+fol+'*  ·  Orden: '+osfol+'
-'
-    +'📅 '+TODAY_STR+'
-'
-    +'🕐 *Entrega estimada: '+fen+'*
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'👤 *'+nom+'*
-'
-    +'🚗 '+mar+' '+mod+' · '+col+'  |  🔑 '+pla+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'🛠 *Servicio:*
-'+srv
-    +(adi?'
-
-🔍 *Adicionales:*
-'+adi:'')
-    +(obs?'
-
-📝 *Obs:*
-'+obs:'')+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'💡 *Conceptos:*'+conceptos+'
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'📊 Subtotal: '+sub+'  |  IVA: '+iva+'
-'
-    +'✅ *TOTAL: '+tot+'*
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'✍️ Cotización *firmada digitalmente*.
-'
-    +'📎 _La firma se adjunta como imagen PNG en este chat._
-'
-    +'*Para autorizar el servicio, responda: ACEPTO*
-'
-    +'━━━━━━━━━━━━━━━━━━━━━━━
-'
-    +'_Cualquier trabajo adicional será notificado antes de realizarse._
-'
-    +'_Gracias por confiar en ATM · Guanajuato, MX_ 🔧';
-
+  var nl='\n', sep='\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501';
+  var msg='\uD83D\uDCB0 *COTIZACI\u00d3N \u2014 ATM* \uD83D\uDCB0'+nl
+    +sep+nl+'\uD83D\uDCCB Cot: '+fol+' | Orden: '+osfol+nl
+    +'\uD83D\uDCC5 '+TODAY_STR+' | \uD83D\uDD50 Entrega: *'+fen+'*'+nl
+    +sep+nl+'\uD83D\uDC64 *'+nom+'* | \uD83D\uDE97 '+mar+' '+mod+' '+col+' | \uD83D\uDD11 '+pla+nl
+    +sep+nl+'\uD83D\uDEE0 *Servicio:*'+nl+srv
+    +(adi?nl+'\uD83D\uDD0D '+adi:'')+(obs?nl+'\uD83D\uDCDD '+obs:'')+nl
+    +sep+nl+'\uD83D\uDCA1 *Conceptos:*'+conceptos+nl
+    +sep+nl+'\uD83D\uDCCA Sub: '+sub+' | IVA: '+iva+nl
+    +'\u2705 *TOTAL: '+tot+'*'+nl
+    +sep+nl+'\u270D\uFE0F Cotizaci\u00f3n firmada digitalmente.'+nl
+    +'*Responda ACEPTO para autorizar el servicio*'+nl
+    +'_ATM \u00b7 Guanajuato, MX_ \uD83D\uDD27';
   var dest=tel.length>=10?'52'+tel:PHONE;
   window.open('https://wa.me/'+dest+'?text='+encodeURIComponent(msg),'_blank');
-  saveRec(snapRec());
-  incCOT();
-  var btn=e.target.querySelector('.btn');
-  btn.textContent='ENVIANDO…'; btn.disabled=true;
+  saveRec(snapRec()); incCOT();
+  var btn=e.target.querySelector('.btn'); btn.textContent='ENVIANDO\u2026'; btn.disabled=true;
   setTimeout(function(){
-    toast('Cotización enviada · Próximo folio: '+cotF());
-    btn.textContent='COTIZACIÓN ENVIADA ✓'; btn.style.background='var(--green)';
+    toast('Cotizaci\u00f3n enviada. Pr\u00f3ximo: '+cotF());
+    btn.textContent='COT. ENVIADA \u2713'; btn.style.background='var(--green)';
   },800);
 }
 
