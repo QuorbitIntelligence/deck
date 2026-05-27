@@ -1,1 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Propuesta Digital · Café Javiers</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap');
 
+  :root {
+    --espresso: #2C1A0E;
+    --cafe:     #5C3317;
+    --caramelo: #A0522D;
+    --latte:    #C8956C;
+    --crema:    #F5E6D3;
+    --blanco:   #FDF9F5;
+    --texto:    #2C1A0E;
+    --gris:     #7A6A5A;
+    --wa:       #25D366;
+    --wa-dark:  #128C7E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--blanco);
+    color: var(--texto);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* ── WHATSAPP FLOTANTE ── */
+  .wa-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .wa-bubble {
+    background: #fff;
+    border-radius: 16px 16px 4px 16px;
+    padding: 12px 16px;
+    font-size: .82rem;
+    color: var(--espresso);
+    box-shadow: 0 4px 20px rgba(0,0,0,.18);
+    max-width: 220px;
+    line-height: 1.45;
+    display: none;
+    animation: fadeUp .3s ease;
+  }
+  .wa-bubble.show { display: block; }
+  .wa-bubble strong { color: var(--wa-dark); display: block; margin-bottom: 3px; font-size: .85rem; }
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(10px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .wa-btn {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(37,211,102,.5);
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform .2s, box-shadow .2s;
+    border: 3px solid #fff;
+  }
+  .wa-btn:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(37,211,102,.65); }
+  .wa-btn svg { width: 30px; height: 30px; fill: #fff; }
+  .wa-pulse {
+    position: absolute;
+    top: 0; right: 0;
+    width: 16px; height: 16px;
+    background: #FF4444;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.3); opacity: .7; }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--espresso) 0%, var(--cafe) 60%, var(--caramelo) 100%);
+    color: #fff;
+    text-align: center;
+    padding: 60px 20px 52px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Ccircle cx='30' cy='30' r='4' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero > * { position: relative; }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 50px;
+    padding: 6px 18px;
+    font-size: .72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 6vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: var(--latte); }
+  .hero p {
+    font-size: clamp(.9rem, 3vw, 1.05rem);
+    opacity: .85;
+    max-width: 520px;
+    margin: 0 auto 26px;
+    font-weight: 300;
+  }
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: .8rem;
+    opacity: .75;
+  }
+  .hero-meta span::before { content: '✦ '; color: var(--latte); }
+
+  /* ── SECCIONES ── */
+  section { padding: 56px 16px; }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  .section-label {
+    text-align: center;
+    font-size: .72rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--caramelo);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 4vw, 2.1rem);
+    text-align: center;
+    color: var(--espresso);
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--gris);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    font-size: .93rem;
+  }
+
+  /* ── PLANES ── */
+  .planes { background: var(--crema); }
+  .planes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 640px) {
+    .planes-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .plan {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 22px;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(44,26,14,.09);
+    border-top: 4px solid transparent;
+    transition: transform .25s, box-shadow .25s;
+  }
+  @media (min-width:640px) {
+    .plan:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(44,26,14,.14); }
+    .plan-2 { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(44,26,14,.14); }
+    .plan-2:hover { transform: translateY(-10px); }
+  }
+  .plan-1 { border-color: var(--latte); }
+  .plan-2 { border-color: var(--caramelo); }
+  .plan-3 { border-color: var(--espresso); }
+
+  .plan-badge {
+    display: inline-block;
+    font-size: .68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 50px;
+    margin-bottom: 14px;
+  }
+  .plan-1 .plan-badge { background: #F5E6D3; color: var(--caramelo); }
+  .plan-2 .plan-badge { background: #FDE8D0; color: var(--cafe); }
+  .plan-3 .plan-badge { background: var(--espresso); color: #fff; }
+
+  .recommended-ribbon {
+    position: absolute;
+    top: -1px; right: 18px;
+    background: var(--caramelo);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 12px 6px;
+    border-radius: 0 0 8px 8px;
+  }
+  .plan-price { margin: 4px 0 6px; }
+  .plan-price .amount {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    font-weight: 700;
+    color: var(--espresso);
+    line-height: 1;
+  }
+  .plan-price .currency {
+    font-size: 1rem;
+    vertical-align: top;
+    margin-top: 6px;
+    display: inline-block;
+    color: var(--caramelo);
+    font-weight: 700;
+  }
+  .plan-price .iva {
+    font-size: .73rem;
+    color: var(--gris);
+    display: block;
+    margin-top: 2px;
+  }
+  .plan-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--cafe);
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--crema);
+  }
+  .plan ul { list-style: none; }
+  .plan ul li {
+    padding: 6px 0;
+    font-size: .87rem;
+    color: var(--texto);
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+  .plan ul li::before {
+    content: '✓';
+    color: var(--caramelo);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .plan-timing {
+    margin-top: 18px;
+    padding: 11px 14px;
+    background: var(--crema);
+    border-radius: 8px;
+    font-size: .8rem;
+    color: var(--gris);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Renta mensual Plan 3 */
+  .renta-mensual {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, var(--espresso), var(--cafe));
+    border-radius: 10px;
+    color: #fff;
+  }
+  .renta-mensual .renta-label {
+    font-size: .68rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--latte);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .renta-mensual .renta-precio {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .renta-mensual .renta-desc {
+    font-size: .75rem;
+    color: rgba(255,255,255,.75);
+    line-height: 1.4;
+  }
+  .renta-mensual ul {
+    margin-top: 8px;
+    list-style: none;
+  }
+  .renta-mensual ul li {
+    font-size: .78rem;
+    color: rgba(255,255,255,.85);
+    padding: 3px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .renta-mensual ul li::before {
+    content: '→';
+    color: var(--latte);
+    flex-shrink: 0;
+  }
+
+  /* ── ESQUEMA DE PAGO ── */
+  .pago-section { background: var(--blanco); }
+  .pago-box {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(44,26,14,.09);
+    overflow: hidden;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .pago-header {
+    background: linear-gradient(135deg, var(--espresso), var(--cafe));
+    padding: 22px 24px;
+    color: #fff;
+    text-align: center;
+  }
+  .pago-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+  }
+  .pago-header p { font-size: .83rem; opacity: .8; }
+  .pago-body { padding: 24px; }
+  .pago-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 480px) {
+    .pago-steps { grid-template-columns: 1fr; }
+  }
+  .pago-step {
+    text-align: center;
+    padding: 20px 16px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+  }
+  .pago-step-1 { background: #FFF8F0; border-color: var(--latte); }
+  .pago-step-2 { background: #F0FFF5; border-color: #5CB87A; }
+  .pago-percent {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .pago-step-1 .pago-percent { color: var(--caramelo); }
+  .pago-step-2 .pago-percent { color: #2E7D47; }
+  .pago-step h4 { font-size: .92rem; font-weight: 700; color: var(--espresso); margin-bottom: 4px; }
+  .pago-step p { font-size: .8rem; color: var(--gris); }
+  .pago-nota {
+    background: var(--crema);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: .8rem;
+    color: var(--gris);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .pago-nota strong { color: var(--caramelo); }
+
+  /* ── TABLA COMPARATIVA ── */
+  .comparativa { background: var(--crema); }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: .83rem; min-width: 480px; }
+  thead tr { background: var(--espresso); color: #fff; }
+  thead th { padding: 13px 12px; text-align: left; font-weight: 600; font-size: .8rem; }
+  thead th:not(:first-child) { text-align: center; }
+  tbody tr:nth-child(even) { background: rgba(245,230,211,.5); }
+  tbody td { padding: 10px 12px; color: var(--texto); border-bottom: 1px solid #EDE0D4; }
+  tbody td:not(:first-child) { text-align: center; }
+  .check { color: var(--caramelo); font-weight: 700; font-size: 1rem; }
+  .dash { color: #ccc; }
+
+  /* ── PROCESO ── */
+  .proceso { background: var(--blanco); }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 20px;
+    text-align: center;
+  }
+  .step-num {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--caramelo), var(--latte));
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+  }
+  .step h4 { font-weight: 700; color: var(--espresso); margin-bottom: 5px; font-size: .9rem; }
+  .step p { font-size: .82rem; color: var(--gris); }
+
+  /* ── VALOR ── */
+  .valor { background: var(--crema); }
+  .valor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  .valor-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(44,26,14,.06);
+  }
+  .valor-icon { font-size: 1.8rem; margin-bottom: 8px; }
+  .valor-item h4 { font-weight: 700; color: var(--cafe); margin-bottom: 5px; font-size: .88rem; }
+  .valor-item p { font-size: .79rem; color: var(--gris); }
+
+  /* ── CTA ── */
+  .cta-section {
+    background: linear-gradient(135deg, var(--espresso) 0%, var(--cafe) 100%);
+    color: #fff;
+    text-align: center;
+    padding: 60px 20px 80px;
+  }
+  .cta-section h2 { color: #fff; }
+  .cta-section .subtitle { color: rgba(255,255,255,.72); }
+  .cta-buttons {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: .93rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform .2s, box-shadow .2s;
+    border: 2px solid transparent;
+    min-height: 48px;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+  .btn-wa { background: var(--wa); color: #fff; }
+  .btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+  .btn-call { background: var(--latte); color: var(--espresso); }
+
+  /* ── NOTA IVA ── */
+  .nota-iva {
+    background: var(--blanco);
+    text-align: center;
+    padding: 22px 20px;
+    font-size: .8rem;
+    color: var(--gris);
+    border-top: 1px solid #EDE0D4;
+  }
+  .nota-iva strong { color: var(--caramelo); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--espresso);
+    color: rgba(255,255,255,.5);
+    text-align: center;
+    padding: 24px 20px;
+    font-size: .78rem;
+  }
+  footer strong { color: var(--latte); }
+
+  /* ── MOBILE FINE-TUNING ── */
+  @media (max-width: 480px) {
+    section { padding: 44px 14px; }
+    .hero { padding: 50px 16px 44px; }
+    .plan { padding: 22px 18px; }
+    table { font-size: .75rem; }
+    thead th, tbody td { padding: 9px 8px; }
+    .wa-fab { bottom: 16px; right: 14px; }
+    .wa-btn { width: 54px; height: 54px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── WHATSAPP FLOTANTE ── -->
+<div class="wa-fab" id="waFab">
+  <div class="wa-bubble" id="waBubble">
+    <strong>💬 ¡Hola! Estamos aquí</strong>
+    Escríbenos ahora y te asesoramos sobre la propuesta digital para Café Javiers.
+  </div>
+  <a id="waLink"
+     href="https://wa.me/5215576576669?text=Hola%2C%20vi%20la%20propuesta%20digital%20para%20Caf%C3%A9%20Javiers%20y%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n%20sobre%20los%20planes%20disponibles.%20%C2%BFPodr%C3%ADamos%20agendar%20una%20llamada%3F"
+     target="_blank"
+     class="wa-btn"
+     aria-label="Contactar por WhatsApp">
+    <div class="wa-pulse"></div>
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+    </svg>
+  </a>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="badge">Propuesta Comercial · 2026</div>
+  <h1>Presencia Digital para<br><span>Café Javiers</span></h1>
+  <p>Una solución web profesional diseñada para atraer más clientes y modernizar su negocio.</p>
+  <div class="hero-meta">
+    <span>Diseño a su medida</span>
+    <span>3 planes disponibles</span>
+    <span>Soporte incluido</span>
+  </div>
+</section>
+
+<!-- ── PLANES ── -->
+<section class="planes">
+  <div class="container">
+    <p class="section-label">Inversión</p>
+    <h2>Elige el plan ideal para tu café</h2>
+    <p class="subtitle">Todos los precios son más IVA. Selecciona el nivel de digitalización que mejor se adapte a tu ritmo de negocio.</p>
+
+    <div class="planes-grid">
+
+      <!-- Plan 1 -->
+      <div class="plan plan-1">
+        <span class="plan-badge">Esencial</span>
+        <div class="plan-price">
+          <span class="currency">$</span><span class="amount">12,000</span>
+          <span class="iva">+ IVA · Pesos MXN</span>
+        </div>
+        <div class="plan-name">Presencia Web Profesional</div>
+        <ul>
+          <li>Página completa (español o inglés)</li>
+          <li>Formulario de contacto / registro</li>
+          <li>Catálogo de servicios del café</li>
+          <li>Bloque de testimonios de clientes</li>
+          <li>Sección de promociones vigentes</li>
+          <li>Diseño responsive (móvil + escritorio)</li>
+          <li>Optimización básica para Google (SEO)</li>
+          <li>Manual de marca e identidad visual</li>
+          <li>Guía de uso de colores, tipografía y logo</li>
+        </ul>
+        <div class="plan-timing">
+          <span>🗓 2 meses de desarrollo</span>
+          <span>🛠 6 meses de mantenimiento sin costo</span>
+        </div>
+      </div>
+
+      <!-- Plan 2 -->
+      <div class="plan plan-2">
+        <div class="recommended-ribbon">⭐ Recomendado</div>
+        <span class="plan-badge">Interactivo</span>
+        <div class="plan-price">
+          <span class="currency">$</span><span class="amount">19,800</span>
+          <span class="iva">+ IVA · Pesos MXN</span>
+        </div>
+        <div class="plan-name">Menú Digital + Comandas</div>
+        <ul>
+          <li>Todo lo del Plan Esencial</li>
+          <li>Menú interactivo de servicios y productos</li>
+          <li>Sistema de comandas digitales para clientes</li>
+          <li>Gestión visual de pedidos en tiempo real</li>
+          <li>Integración con carta digital actualizable</li>
+          <li>Diseño premium orientado a experiencia del cliente</li>
+          <li>Manual de marca e identidad visual completo</li>
+          <li>Manual de uso de plataforma y menú digital</li>
+        </ul>
+        <div class="plan-timing">
+          <span>🗓 4 meses de desarrollo</span>
+          <span>🛠 6 meses de mantenimiento sin costo</span>
+        </div>
+      </div>
+
+      <!-- Plan 3 -->
+      <div class="plan plan-3">
+        <span class="plan-badge">Completo</span>
+        <div class="plan-price">
+          <span class="currency">$</span><span class="amount">29,800</span>
+          <span class="iva">+ IVA · Pesos MXN</span>
+        </div>
+        <div class="plan-name">Suite Digital Integral</div>
+        <ul>
+          <li>Todo lo del Plan Esencial e Interactivo</li>
+          <li>Base de datos de comandas y pedidos</li>
+          <li>Panel de reportes y estadísticas</li>
+          <li>Indicadores clave de desempeño (KPIs)</li>
+          <li>Historial de ventas y tendencias</li>
+          <li>Exportación de datos para análisis</li>
+          <li>Soporte prioritario durante mantenimiento</li>
+          <li>Manual de marca, identidad y brandbook completo</li>
+          <li>Manual técnico y de operaciones del sistema</li>
+        </ul>
+        <div class="plan-timing">
+          <span>🗓 6 meses de desarrollo</span>
+          <span>🛠 6 meses de mantenimiento sin costo</span>
+        </div>
+        <div class="renta-mensual">
+          <div class="renta-label">🔄 Después del mantenimiento</div>
+          <div class="renta-precio">Plan de Renta Mensual</div>
+          <div class="renta-desc">Continuidad operativa y actualización constante de tu plataforma.</div>
+          <ul>
+            <li>Actualizaciones continuas de información y contenido</li>
+            <li>Renovación y mantenimiento de imagen digital</li>
+            <li>Entrega periódica de reportes y datos</li>
+            <li>Soporte técnico mensual dedicado</li>
+            <li>Costo a convenir según alcance requerido</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── ESQUEMA DE PAGO ── -->
+<section class="pago-section">
+  <div class="container">
+    <p class="section-label">Forma de Pago</p>
+    <h2>Esquema de Pago por Proyecto</h2>
+    <p class="subtitle">Estructura clara y justa para todos los planes. Aplica para cualquier paquete elegido.</p>
+    <div class="pago-box">
+      <div class="pago-header">
+        <h3>💳 Política de Pagos</h3>
+        <p>Dos momentos clave para mayor seguridad de ambas partes</p>
+      </div>
+      <div class="pago-body">
+        <div class="pago-steps">
+          <div class="pago-step pago-step-1">
+            <div class="pago-percent">60%</div>
+            <h4>Al inicio del proyecto</h4>
+            <p>Anticipo para arrancar el desarrollo. Se firma contrato de servicios.</p>
+          </div>
+          <div class="pago-step pago-step-2">
+            <div class="pago-percent">40%</div>
+            <h4>Al término del proyecto</h4>
+            <p>Pago final previo al inicio del periodo de mantenimiento gratuito.</p>
+          </div>
+        </div>
+        <div class="pago-nota">
+          <strong>Nota importante:</strong> El periodo de mantenimiento de 6 meses inicia únicamente después de liquidado el 100% del proyecto. Los precios son más IVA (16%). Se emite factura por cada pago.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TABLA COMPARATIVA ── -->
+<section class="comparativa">
+  <div class="container">
+    <p class="section-label">Comparativa</p>
+    <h2>¿Qué incluye cada plan?</h2>
+    <p class="subtitle">Vista rápida para una decisión informada. Desliza horizontalmente en móvil.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Característica</th>
+            <th>Esencial<br>$12,000</th>
+            <th>Interactivo<br>$19,800</th>
+            <th>Integral<br>$29,800</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Página web completa</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Formulario de contacto</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Catálogo de servicios</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Testimonios y promociones</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Manual de marca e identidad</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Menú interactivo digital</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Comandas digitales</td><td><span class="dash">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Base de datos de pedidos</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Reportes e indicadores (KPIs)</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Plan renta mensual post-mant.</td><td><span class="dash">—</span></td><td><span class="dash">—</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Meses de desarrollo</td><td>2 meses</td><td>4 meses</td><td>6 meses</td></tr>
+          <tr><td>Mantenimiento sin costo</td><td>6 meses</td><td>6 meses</td><td>6 meses</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROCESO ── -->
+<section class="proceso">
+  <div class="container">
+    <p class="section-label">Cómo trabajamos</p>
+    <h2>Proceso de Entrega</h2>
+    <p class="subtitle">Simple, transparente y sin sorpresas.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Reunión inicial</h4>
+        <p>Entendemos tu visión, clientes y objetivos del café.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Diseño y prototipo</h4>
+        <p>Presentamos el diseño para tu aprobación antes de desarrollar.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Desarrollo</h4>
+        <p>Construimos tu sitio con revisiones periódicas.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Lanzamiento</h4>
+        <p>Publicamos tu sitio y te capacitamos para usarlo.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <h4>Mantenimiento</h4>
+        <p>6 meses de soporte incluido para cambios menores.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── VALOR ── -->
+<section class="valor">
+  <div class="container">
+    <p class="section-label">¿Por qué elegirnos?</p>
+    <h2>Lo que obtienes más allá del código</h2>
+    <p class="subtitle">Entregamos resultados, no solo páginas web.</p>
+    <div class="valor-grid">
+      <div class="valor-item">
+        <div class="valor-icon">📱</div>
+        <h4>100% Responsivo</h4>
+        <p>Perfecto en celular, tablet y computadora.</p>
+      </div>
+      <div class="valor-item">
+        <div class="valor-icon">🔍</div>
+        <h4>Visible en Google</h4>
+        <p>SEO básico para que tus clientes te encuentren.</p>
+      </div>
+      <div class="valor-item">
+        <div class="valor-icon">⚡</div>
+        <h4>Carga rápida</h4>
+        <p>Sin esperas que alejen a tus clientes.</p>
+      </div>
+      <div class="valor-item">
+        <div class="valor-icon">🔒</div>
+        <h4>Seguro (HTTPS)</h4>
+        <p>Certificado SSL incluido.</p>
+      </div>
+      <div class="valor-item">
+        <div class="valor-icon">🎨</div>
+        <h4>Identidad de marca</h4>
+        <p>Diseño alineado al estilo de Café Javiers.</p>
+      </div>
+      <div class="valor-item">
+        <div class="valor-icon">🤝</div>
+        <h4>Soporte real</h4>
+        <p>Atención personalizada en todo momento.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="container">
+    <p class="section-label" style="color:var(--latte)">Siguiente paso</p>
+    <h2>¿Listo para llevar Café Javiers al mundo digital?</h2>
+    <p class="subtitle">Agenda una llamada de 20 minutos sin compromiso y resolvemos todas tus dudas.</p>
+    <div class="cta-buttons">
+      <a href="https://wa.me/5215576576669?text=Hola%2C%20vi%20la%20propuesta%20digital%20para%20Caf%C3%A9%20Javiers%20y%20quisiera%20agendar%20una%20llamada%20para%20conocer%20m%C3%A1s%20detalles.%20%C2%BFCu%C3%A1ndo%20tienen%20disponibilidad%3F"
+         target="_blank" class="btn btn-wa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Agendar por WhatsApp
+      </a>
+      <a href="tel:5576576669" class="btn btn-call">📞 Llamar ahora</a>
+      <a href="https://wa.me/5215576576669?text=Hola%2C%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n%20sobre%20la%20propuesta%20digital%20para%20Caf%C3%A9%20Javiers."
+         target="_blank" class="btn btn-outline">Enviar mensaje</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── NOTA IVA ── -->
+<div class="nota-iva">
+  <strong>Nota:</strong> Todos los precios son <strong>más IVA (16%)</strong>. Pago 60% al inicio · 40% al término. Se firma contrato antes de iniciar. Cambios mayores al alcance acordado podrían generar costos adicionales.
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p>Propuesta elaborada para <strong>Café Javiers</strong> · Confidencial · 2026 &nbsp;|&nbsp; 📱 55 7657 6669</p>
+</footer>
+
+<script>
+  // Mostrar burbuja de WhatsApp después de 2.5s
+  setTimeout(function() {
+    document.getElementById('waBubble').classList.add('show');
+  }, 2500);
+
+  // Toggle burbuja al hacer clic en el botón
+  document.querySelector('.wa-btn').addEventListener('click', function(e) {
+    var bubble = document.getElementById('waBubble');
+    if (bubble.classList.contains('show')) {
+      // dejar que el link abra normalmente
+    }
+  });
+</script>
+</body>
+</html>
