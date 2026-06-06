@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ffffff">
 <meta name="mobile-web-app-capable" content="yes">
-<title>ATM Servicio Mecánico · web_atm_v1.1.1</title>
+<title>ATM Servicio Mecánico · web_atm_v1.2.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff4d40%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b71d1d%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%22s%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220.28%22/%3E%3Cstop%20offset%3D%220.5%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%3CclipPath%20id%3D%22r%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22120%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23r%29%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23s%29%22/%3E%3C/g%3E%3Ctext%20x%3D%22256%22%20y%3D%22268%22%20font-family%3D%22-apple-system%2CSegoe%20UI%2CRoboto%2CArial%2Csans-serif%22%20font-size%3D%22190%22%20font-weight%3D%22900%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20letter-spacing%3D%22-10%22%3EATM%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff4d40%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b71d1d%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%22s%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220.28%22/%3E%3Cstop%20offset%3D%220.5%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%3CclipPath%20id%3D%22r%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22120%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23r%29%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23s%29%22/%3E%3C/g%3E%3Ctext%20x%3D%22256%22%20y%3D%22268%22%20font-family%3D%22-apple-system%2CSegoe%20UI%2CRoboto%2CArial%2Csans-serif%22%20font-size%3D%22190%22%20font-weight%3D%22900%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20letter-spacing%3D%22-10%22%3EATM%3C/text%3E%3C/svg%3E">
 <style>
@@ -135,7 +135,7 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
 
-.section{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.section{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:var(--r);padding:16px;padding-left:15px;margin-bottom:16px}
 .section-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
 .section-h .si{width:30px;height:30px;border-radius:9px;background:var(--red-soft);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
 .section-h h3{font-size:15px;font-weight:700;letter-spacing:-.2px}
@@ -203,7 +203,7 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 .filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
 .filter-row .f{padding:7px 13px;border-radius:18px;background:var(--card);border:1px solid var(--line);font-size:12.5px;color:var(--txt2);white-space:nowrap;flex:none}
 .filter-row .f.on{background:var(--card2);border-color:var(--red);color:var(--txt);font-weight:600}
-.order-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:12px;transition:.12s}
+.order-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:var(--r);padding:15px;padding-left:14px;margin-bottom:12px;transition:.12s}
 .order-card:active{background:var(--card2)}
 .oc-top{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px}
 .oc-folio{font-size:12px;color:var(--txt3);font-weight:600}
@@ -589,7 +589,7 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 "use strict";
 (function(){
 /* ══════════════ VERSION ══════════════ */
-var APP_VERSION='web_atm_v1.1.1';
+var APP_VERSION='web_atm_v1.2.0';
 try{
   document.title='ATM Servicio Mecánico · '+APP_VERSION;
   var __vt=document.getElementById('VER_TAG');
@@ -902,16 +902,30 @@ $('OS_SUBMIT').addEventListener('click',function(){
   upsertOrder(c);
   if(c.osFolio>=CFG.osFolio){CFG.osFolio=c.osFolio+1;saveCfg(CFG);}
 
-  var btn=$('OS_SUBMIT');btn.disabled=true;btn.textContent='Abriendo WhatsApp…';
-  window.open(waLink(c.cliente.tel,osMessage(c)),'_blank');
+  var btn=$('OS_SUBMIT');
+  openWhatsApp(waLink(c.cliente.tel,osMessage(c)));
+  toast('✅ Orden '+c.osFolio+' registrada con éxito. Enviando por WhatsApp…');
+  btn.disabled=true;btn.textContent='✓ Orden registrada';
   setTimeout(function(){
     btn.disabled=false;btn.textContent='📲 Registrar y enviar al cliente';
-    toast('Orden '+c.osFolio+' registrada');
     renderCOT(c);show('cot');
-  },700);
+    toast('Continúa con la cotización · Paso 2');
+  },1100);
 });
 
 /* ══════════════ WhatsApp messages ══════════════ */
+function openWhatsApp(url){
+  // Robust open for mobile / PWA standalone where window.open('_blank') is blocked.
+  try{
+    var a=document.createElement('a');
+    a.href=url;a.target='_blank';a.rel='noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }catch(e){
+    try{window.location.href=url;}catch(e2){}
+  }
+}
 function waLink(tel,msg){
   var t=(tel||'').replace(/\D/g,'');
   var dest=t.length>=10?'52'+t.slice(-10):CFG.phone;
@@ -1071,12 +1085,14 @@ $('COT_SUBMIT').addEventListener('click',function(){
   }else{c.firmaCOT.confirmed=false;c.status='enviada';}
   if(c.cotFolio>=CFG.cotFolio){CFG.cotFolio=c.cotFolio+1;saveCfg(CFG);}
   upsertOrder(c);
-  var btn=$('COT_SUBMIT');btn.disabled=true;btn.textContent='Abriendo WhatsApp…';
-  window.open(waLink(c.cliente.tel,cotMessage(c)),'_blank');
+  var btn=$('COT_SUBMIT');
+  openWhatsApp(waLink(c.cliente.tel,cotMessage(c)));
+  toast('✅ '+cotLabel(c.cotFolio)+' enviada por WhatsApp con éxito');
+  btn.disabled=true;btn.textContent='✓ Cotización enviada';
   setTimeout(function(){
     btn.disabled=false;btn.textContent='💰 Enviar cotización por WhatsApp';
-    toast(cotLabel(c.cotFolio)+' enviada');show('dash');
-  },700);
+    show('dash');
+  },1100);
 });
 
 /* ══════════════ OS VIEW (read existing) ══════════════ */
@@ -1140,25 +1156,39 @@ $('DASH_LIST').addEventListener('click',function(e){
     return;
   }
 });
+var statusTargetId=null;
 function openStatusModal(o){
+  statusTargetId=o.id;
   var sheet=$('MODAL_SHEET');
   var html='<div class="modal-grab"></div><div class="modal-h">Cambiar estatus · OS '+o.osFolio+'</div>';
   Object.keys(STATUS).forEach(function(k){
-    html+='<button class="btn-s" data-setst="'+k+'" style="margin-bottom:8px;justify-content:flex-start;text-align:left;'+(o.status===k?'border-color:var(--red);color:var(--txt)':'')+'"><span class="badge '+STATUS[k].c+'" style="margin-right:8px">'+STATUS[k].l+'</span></button>';
+    var sel=o.status===k;
+    html+='<button class="btn-s st-opt" data-setst="'+k+'" style="margin-bottom:8px;justify-content:flex-start;text-align:left;'+(sel?'border-color:var(--red);border-left:4px solid var(--red);background:var(--red-soft)':'')+'"><span class="badge '+STATUS[k].c+'" style="margin-right:8px">'+STATUS[k].l+'</span>'+(sel?'<span style="color:var(--red);font-weight:700;margin-left:auto">✓ actual</span>':'')+'</button>';
   });
-  html+='<button class="btn-s" id="ST_CANCEL" style="margin-top:6px">Cancelar</button>';
+  html+='<button class="btn-s" data-stcancel="1" style="margin-top:6px">Cancelar</button>';
   sheet.innerHTML=html;openModal();
-  sheet.addEventListener('click',function h(e){
-    var b=e.target.closest('[data-setst]');
-    if(b){o.status=b.getAttribute('data-setst');upsertOrder(o);closeModal();renderDash();toast('Estatus actualizado');sheet.removeEventListener('click',h);}
-  });
-  $('ST_CANCEL').addEventListener('click',closeModal);
 }
 
 /* ══════════════ MODAL ══════════════ */
 function openModal(){$('MODAL').classList.add('show');}
-function closeModal(){$('MODAL').classList.remove('show');}
+function closeModal(){$('MODAL').classList.remove('show');statusTargetId=null;}
 $('MODAL').addEventListener('click',function(e){if(e.target===$('MODAL'))closeModal();});
+/* single permanent delegated handler for status selection */
+$('MODAL_SHEET').addEventListener('click',function(e){
+  var cancel=e.target.closest('[data-stcancel]');
+  if(cancel){closeModal();return;}
+  var b=e.target.closest('[data-setst]');
+  if(b&&statusTargetId){
+    var o=findOrder(statusTargetId);
+    if(o){
+      o.status=b.getAttribute('data-setst');
+      upsertOrder(o);
+      closeModal();
+      renderDash();
+      toast('Estatus actualizado: '+(STATUS[o.status]?STATUS[o.status].l:o.status));
+    }
+  }
+});
 
 /* ══════════════ STATS ══════════════ */
 function renderStats(){
