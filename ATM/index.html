@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ffffff">
 <meta name="mobile-web-app-capable" content="yes">
-<title>ATM Servicio Mecánico · web_atm_v1.2.7</title>
+<title>ATM Servicio Mecánico · web_atm_v1.2.8</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff4d40%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b71d1d%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%22s%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220.28%22/%3E%3Cstop%20offset%3D%220.5%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%3CclipPath%20id%3D%22r%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22120%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23r%29%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23s%29%22/%3E%3C/g%3E%3Ctext%20x%3D%22256%22%20y%3D%22268%22%20font-family%3D%22-apple-system%2CSegoe%20UI%2CRoboto%2CArial%2Csans-serif%22%20font-size%3D%22190%22%20font-weight%3D%22900%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20letter-spacing%3D%22-10%22%3EATM%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff4d40%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b71d1d%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%22s%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220.28%22/%3E%3Cstop%20offset%3D%220.5%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%3CclipPath%20id%3D%22r%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22120%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23r%29%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23g%29%22/%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20fill%3D%22url%28%23s%29%22/%3E%3C/g%3E%3Ctext%20x%3D%22256%22%20y%3D%22268%22%20font-family%3D%22-apple-system%2CSegoe%20UI%2CRoboto%2CArial%2Csans-serif%22%20font-size%3D%22190%22%20font-weight%3D%22900%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20letter-spacing%3D%22-10%22%3EATM%3C/text%3E%3C/svg%3E">
 <style>
@@ -244,9 +244,9 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 .bar-row .bn{font-size:12.5px;font-weight:700;width:30px;text-align:right;flex:none}
 
 /* ── Toast ── */
-.toast{position:fixed;left:50%;bottom:calc(var(--saB) + 24px);transform:translateX(-50%) translateY(120px);
-  background:#1a1d23;color:#fff;padding:13px 20px;border-radius:30px;font-size:13.5px;font-weight:600;
-  box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:100;border:1px solid var(--line2);max-width:88%;transition:.3s;opacity:0}
+.toast{position:fixed;left:50%;top:calc(var(--saT) + 16px);transform:translateX(-50%) translateY(-160px);
+  background:#1a1d23;color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;font-weight:600;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:9998;border:1px solid var(--line2);max-width:92%;text-align:center;transition:.3s;opacity:0}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
 /* ── Modal ── */
@@ -609,7 +609,7 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 "use strict";
 (function(){
 /* ══════════════ VERSION ══════════════ */
-var APP_VERSION='web_atm_v1.2.7';
+var APP_VERSION='web_atm_v1.2.8';
 try{
   document.title='ATM Servicio Mecánico · '+APP_VERSION;
   var __vt=document.getElementById('VER_TAG');
@@ -617,6 +617,20 @@ try{
   var __vb=document.getElementById('VER_BADGE');
   if(__vb)__vb.textContent=APP_VERSION.replace('web_atm_','');
 }catch(e){}
+/* ══════════════ ERROR CAPTURE (visible on device) ══════════════ */
+window.addEventListener('error',function(ev){
+  try{
+    var box=document.getElementById('ERR_BOX');
+    if(!box){
+      box=document.createElement('div');box.id='ERR_BOX';
+      box.style.cssText='position:fixed;left:8px;right:8px;bottom:40px;z-index:9999;background:#b71d1d;color:#fff;font-size:12px;padding:12px 14px;border-radius:10px;font-family:-apple-system,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4);max-height:40vh;overflow:auto';
+      box.addEventListener('click',function(){box.style.display='none';});
+      document.body.appendChild(box);
+    }
+    box.style.display='block';
+    box.innerHTML='<b>⚠️ Error (toca para cerrar):</b><br>'+(ev.message||ev.error||'desconocido')+'<br><small>'+(ev.filename||'')+' L'+(ev.lineno||'?')+'</small>';
+  }catch(e){}
+});
 var DB_KEY='atm_db_v2';
 var CFG_KEY='atm_cfg_v2';
 var DEFAULT_CFG={osFolio:456,cotFolio:1,phone:'4666693503',pin:'1234'};
@@ -630,7 +644,16 @@ function loadDB(){
   try{var d=JSON.parse(localStorage.getItem(DB_KEY));return Array.isArray(d)?d:[];}
   catch(e){return [];}
 }
-function saveDB(d){localStorage.setItem(DB_KEY,JSON.stringify(d));}
+function saveDB(d){
+  try{
+    localStorage.setItem(DB_KEY,JSON.stringify(d));
+    return true;
+  }catch(e){
+    // QuotaExceededError: storage full (usually photos too large)
+    toast('⚠️ Almacenamiento lleno. Reduce fotos o respalda y borra datos viejos.',6000);
+    return false;
+  }
+}
 
 var CFG=loadCfg();
 var DB=loadDB();          // array of orders
@@ -751,7 +774,7 @@ function findOrder(id){for(var i=0;i<DB.length;i++)if(DB[i].id===id)return DB[i]
 function upsertOrder(o){
   var ex=findOrder(o.id);
   if(ex){var idx=DB.indexOf(ex);DB[idx]=o;}else{DB.unshift(o);}
-  saveDB(DB);
+  return saveDB(DB);
 }
 function orderTotal(o){
   var sub=0;
@@ -807,13 +830,35 @@ function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&
 /* photos */
 var osFotos=[],osVideo=null;
 $('OS_FOTO_ADD').addEventListener('click',function(){$('os-foto-input').click();});
+function compressImage(file,cb){
+  var reader=new FileReader();
+  reader.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var max=1000;
+        var w=img.width,h=img.height;
+        if(w>h&&w>max){h=Math.round(h*max/w);w=max;}
+        else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
+        var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        var ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        cb(cv.toDataURL('image/jpeg',0.6));
+      }catch(e){ cb(reader.result); } // fallback: original
+    };
+    img.onerror=function(){ cb(reader.result); };
+    img.src=reader.result;
+  };
+  reader.onerror=function(){ cb(null); };
+  reader.readAsDataURL(file);
+}
 $('os-foto-input').addEventListener('change',function(e){
   var files=Array.prototype.slice.call(e.target.files||[]);
   var pend=files.length;if(!pend)return;
   files.forEach(function(f){
-    var r=new FileReader();
-    r.onload=function(){osFotos.push(r.result);if(--pend===0)renderOSFotos();};
-    r.readAsDataURL(f);
+    compressImage(f,function(dataUrl){
+      if(dataUrl)osFotos.push(dataUrl);
+      if(--pend===0)renderOSFotos();
+    });
   });
   e.target.value='';
 });
@@ -834,6 +879,11 @@ function renderOSFotos(){
 $('OS_VIDEO_ADD').addEventListener('click',function(){$('os-video-input').click();});
 $('os-video-input').addEventListener('change',function(e){
   var f=e.target.files&&e.target.files[0];if(!f)return;
+  // Videos are huge in base64 and overflow localStorage; cap at ~2MB
+  if(f.size>2*1024*1024){
+    toast('El video es muy grande para guardarlo (máx 2MB). Se omitió.',5000);
+    e.target.value='';return;
+  }
   var r=new FileReader();r.onload=function(){osVideo=r.result;renderOSVideo();};r.readAsDataURL(f);e.target.value='';
 });
 $('OS_VIDEO').addEventListener('click',function(e){
@@ -926,18 +976,27 @@ $('OS_SUBMIT').addEventListener('click',function(){
   c.anomalias=$('os-anomalias').value.trim();c.objetos=$('os-objetos').value.trim();
   c.fotos=osFotos.slice();c.video=osVideo;
 
-  if(!c.cliente.nombre||!c.cliente.tel||!c.veh.marca||!c.veh.modelo||!c.veh.placas||!c.servicio){toast('Completa los campos obligatorios (*)');return;}
-  if(osFotos.length<3){toast('Agrega al menos 3 fotos');return;}
+  if(!c.cliente.nombre||!c.cliente.tel||!c.veh.marca||!c.veh.modelo||!c.veh.placas||!c.servicio){
+    var falta=[];
+    if(!c.cliente.nombre)falta.push('nombre');
+    if(!c.cliente.tel)falta.push('teléfono');
+    if(!c.veh.marca)falta.push('marca');
+    if(!c.veh.modelo)falta.push('modelo');
+    if(!c.veh.placas)falta.push('placas');
+    if(!c.servicio)falta.push('servicio');
+    toast('Falta: '+falta.join(', '),4500);return;
+  }
+  if(osFotos.length<3){toast('Agrega al menos 3 fotos (tienes '+osFotos.length+')',4500);return;}
   if(c.firmaOS.mode==='canvas'){
     var fd=firmaData('os');
-    if(!fd){toast('El cliente debe firmar la recepción');return;}
+    if(!fd){toast('Falta la firma del cliente (o usa "Confirmar por WhatsApp")',4500);return;}
     c.firmaOS.data=fd;c.firmaOS.confirmed=true;
   }else{c.firmaOS.confirmed=false;}
 
   // seed primer concepto from servicio
   if(!c.conceptos.length){c.conceptos=[{desc:c.servicio||'Servicio solicitado',importe:0}];}
   c.status='nuevo';
-  upsertOrder(c);
+  if(!upsertOrder(c)){ return; } // save failed (quota) - toast already shown
   if(c.osFolio>=CFG.osFolio){CFG.osFolio=c.osFolio+1;saveCfg(CFG);}
 
   var folio=c.osFolio;
