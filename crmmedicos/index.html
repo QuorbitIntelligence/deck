@@ -379,7 +379,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.4.2';
+const APP_VERSION = 'v1.5.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -404,6 +404,13 @@ async function loadSession(){
       if(extra.listas_materiales) DB.listas_materiales = extra.listas_materiales;
       if(extra.convenios) DB.convenios = extra.convenios;
       if(extra.casos) DB.casos = extra.casos;
+      if(extra.medicos_overrides){
+        Object.entries(extra.medicos_overrides).forEach(([id,ov])=>{
+          const md = DB.medicos.find(m=>String(m.id)===id);
+          if(md) Object.assign(md, ov);
+        });
+      }
+      if(extra.medicos_custom) DB.medicos = DB.medicos.concat(extra.medicos_custom);
       if(extra.conceptos_overrides){
         Object.entries(extra.conceptos_overrides).forEach(([id,ov])=>{
           const co = DB.conceptos.find(c=>String(c.id)===id);
@@ -439,6 +446,14 @@ function persistExtra(){
         listas_materiales: DB.listas_materiales,
         convenios: DB.convenios,
         casos: DB.casos,
+        medicos_custom: DB.medicos.filter(m=>m.__new),
+        medicos_overrides: Object.fromEntries(
+          DB.medicos.filter(m=>!m.__new && m.__edited).map(m=>[String(m.id),{
+            nombre:m.nombre, correo:m.correo, telefono:m.telefono, especialidad:m.especialidad, especialidad_id:m.especialidad_id,
+            estatus_relacion:m.estatus_relacion, estatus_credencializacion:m.estatus_credencializacion, cedulas_raw:m.cedulas_raw,
+            activo:m.activo!==false, __edited:true
+          }])
+        ),
         conceptos_custom: DB.conceptos.filter(c=>c.__new),
         conceptos_overrides: Object.fromEntries(
           DB.conceptos.filter(c=>!c.__new && (c.activo===false || c.grupo_eleccion)).map(c=>[String(c.id),{activo:c.activo!==false, grupo_eleccion:c.grupo_eleccion||null, descripcion:c.descripcion, categoria:c.categoria, costo_sin_iva:c.costo_sin_iva}])
@@ -859,7 +874,7 @@ function fmtMesLabel(key){ const [y,m]=key.split('-'); const meses=['ene','feb',
 /* ============================================================
    MÉDICOS
 ============================================================ */
-let medState = { page:1, perPage:9, search:'', estatus:'todos', esp:'todas' };
+let medState = { page:1, perPage:9, search:'', estatus:'todos', esp:'todas', verInactivos:false };
 function renderMedicos(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
@@ -870,6 +885,8 @@ function renderMedicos(){
         ${['todos','TRABAJANDO','NUEVO REGISTRO','EN NEGOCIACIÓN','CON CONVENIO','MÉDICO INACTIVO'].map(s=>
           `<button class="chip ${medState.estatus===s?'active':''}" data-s="${s}">${s==='todos'?'Todos':s}</button>`).join('')}
       </div>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); font-weight:600;"><input type="checkbox" id="medico-ver-inactivos" ${medState.verInactivos?'checked':''}> Ver dados de baja</label>
+      <button class="btn btn-primary" style="margin-left:auto;" onclick="openMedicoModal()">${icon('plus')} Nuevo médico</button>
     </div>
     <div class="table-wrap">
       <table><thead><tr><th>Médico</th><th>Estatus</th><th>Contacto</th><th>Cotizaciones</th><th>Credencial</th></tr></thead>
@@ -879,10 +896,12 @@ function renderMedicos(){
   document.getElementById('medico-search').oninput = e=>{ medState.search=e.target.value; medState.page=1; drawMedTable(); };
   document.getElementById('medico-esp-filter').onchange = e=>{ medState.esp=e.target.value; medState.page=1; drawMedTable(); };
   document.getElementById('medico-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ medState.estatus=b.dataset.s; medState.page=1; drawMedTable(); });
+  document.getElementById('medico-ver-inactivos').onchange = e=>{ medState.verInactivos=e.target.checked; medState.page=1; drawMedTable(); };
   drawMedTable();
 }
 function drawMedTable(){
   let list = DB.medicos.filter(m=>{
+    if(!medState.verInactivos && m.activo===false) return false;
     if(medState.search && !fuzzyMatch(m.nombre, medState.search)) return false;
     if(medState.estatus!=='todos' && m.estatus_relacion!==medState.estatus) return false;
     if(medState.esp!=='todas' && m.especialidad!==medState.esp) return false;
@@ -894,7 +913,7 @@ function drawMedTable(){
     const nCot = DB.cotizaciones.filter(c=>String(c.id_medico)===String(m.id)).length;
     return `<tr class="clickable" data-id="${m.id}">
       <td><div class="name-cell"><div class="avatar">${initials(m.nombre)}</div>
-        <div><div style="font-weight:600;">${m.nombre}</div><div class="sub">${m.especialidad}</div></div></div></td>
+        <div><div style="font-weight:600;">${m.nombre}${m.activo===false?' <span class="pill pill-red pill-small">De baja</span>':''}</div><div class="sub">${m.especialidad}</div></div></div></td>
       <td>${pillMed(m.estatus_relacion)}</td>
       <td style="font-size:12.5px; color:var(--text-muted);">${m.telefono?('📞 '+m.telefono):'Sin teléfono'}</td>
       <td>${nCot}</td>
@@ -932,9 +951,16 @@ function openMedicoDrawer(id){
     <div class="detail-row"><span class="k">Especialidad</span><span class="v">${m.especialidad}</span></div>
     <div class="detail-row"><span class="k">Estatus credencial</span><span class="v">${m.estatus_credencializacion}</span></div>
     <div class="detail-row"><span class="k">Cédulas 🔒</span><span class="v sensitive-mask">${maskCedula(m.cedulas_raw)}</span></div>
+    ${m.activo===false ? `<div class="detail-row"><span class="k">Estatus</span><span class="v"><span class="pill pill-red">Dado de baja</span></span></div>` : ''}
     <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="openCotizacionWizard('${m.id}')">${icon('plus')} Nueva cotización</button>
       <button class="btn btn-sm" onclick="openCasoModal(null,'${m.id}')">${icon('followup')} Nuevo caso CRM</button>
+    </div>
+    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-sm" onclick="closeDrawer();openMedicoModal('${m.id}')">${icon('config')} Editar médico</button>
+      ${m.activo===false
+        ? `<button class="btn btn-sm" onclick="reactivarMedico('${m.id}')">${icon('check')} Reactivar</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="eliminarMedico('${m.id}')">${icon('trash')} Dar de baja</button>`}
     </div>`;
   const paneCot = cotz.length ? cotz.map(c=>`
     <div class="line-item" style="cursor:pointer;" onclick="closeDrawer();openCotizacionDrawer('${c.id}')">
@@ -951,6 +977,64 @@ function openMedicoDrawer(id){
   setTab('info');
 }
 function emptyMini(text){ return `<div style="text-align:center; color:var(--text-faint); font-size:12.5px; padding:26px 0;">${text}</div>`; }
+function openMedicoModal(id){
+  const m = id ? medicoById(id) : null;
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${m?'Editar médico':'Nuevo médico'}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full"><label>Nombre completo</label><input class="input uc-input" id="md-nombre" style="width:100%;" value="${m?m.nombre:''}" placeholder="DR. NOMBRE APELLIDO APELLIDO"></div>
+        <div class="form-field full"><label>Especialidad</label>
+          <input class="input uc-input" id="md-especialidad" style="width:100%;" list="md-esp-list" value="${m?m.especialidad:''}" placeholder="EJ. CIRUGÍA GENERAL">
+          <datalist id="md-esp-list">${[...new Set(DB.especialidades.map(e=>e.nombre))].sort().map(n=>`<option value="${n}">`).join('')}</datalist>
+        </div>
+        <div class="form-field"><label>Correo electrónico</label><input class="input" type="email" id="md-correo" style="width:100%;" value="${m&&m.correo?m.correo:''}" placeholder="correo@ejemplo.com"></div>
+        <div class="form-field"><label>Teléfono</label><input class="input" id="md-telefono" style="width:100%;" value="${m?m.telefono||'':''}" placeholder="55 0000 0000"></div>
+        <div class="form-field"><label>Estatus de relación</label><select class="select" id="md-estatus-rel" style="width:100%;">
+          ${Object.keys(ESTADOS_MED).map(s=>`<option ${m&&m.estatus_relacion===s?'selected':(!m&&s==='NUEVO REGISTRO'?'selected':'')}>${s}</option>`).join('')}</select></div>
+        <div class="form-field"><label>Estatus de credencialización</label><select class="select" id="md-estatus-cred" style="width:100%;">
+          ${['SIN CREDENCIALIZAR','EN PROCESO','CREDENCIALIZADO'].map(s=>`<option ${m&&m.estatus_credencializacion===s?'selected':(!m&&s==='SIN CREDENCIALIZAR'?'selected':'')}>${s}</option>`).join('')}</select></div>
+        <div class="form-field full"><label>Cédula(s) profesional(es) 🔒</label><input class="input" id="md-cedulas" style="width:100%;" value="${m?m.cedulas_raw||'':''}" placeholder="Número(s) de cédula"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="md-save">Guardar médico</button></div>`);
+  document.getElementById('md-save').onclick = ()=>{
+    const nombre = document.getElementById('md-nombre').value.trim();
+    const especialidad = document.getElementById('md-especialidad').value.trim();
+    if(!nombre || !especialidad){ toast('Captura al menos el nombre y la especialidad'); return; }
+    const payload = {
+      nombre, especialidad,
+      correo: document.getElementById('md-correo').value.trim() || null,
+      telefono: document.getElementById('md-telefono').value.trim() || null,
+      estatus_relacion: document.getElementById('md-estatus-rel').value,
+      estatus_credencializacion: document.getElementById('md-estatus-cred').value,
+      cedulas_raw: document.getElementById('md-cedulas').value.trim() || null,
+      activo: true
+    };
+    if(m){
+      Object.assign(m, payload); m.__edited = true;
+      logAudit('Médico', m.id, 'Edición', nombre);
+    } else {
+      const nuevo = Object.assign({ id: uid('MED').toUpperCase(), revisado:false, __new:true }, payload);
+      DB.medicos.push(nuevo);
+      logAudit('Médico', nuevo.id, 'Alta', nombre+' — '+especialidad);
+    }
+    persistExtra(); closeModal(); toast('Médico guardado'); renderMedicos();
+  };
+}
+function eliminarMedico(id){
+  const m = medicoById(id); if(!m) return;
+  if(!confirm('¿Dar de baja a '+m.nombre+'? Su historial de cotizaciones y casos se conserva, pero dejará de aparecer en las listas activas.')) return;
+  m.activo = false; if(!m.__new) m.__edited = true;
+  logAudit('Médico', id, 'Baja', m.nombre);
+  persistExtra(); toast('Médico dado de baja'); closeDrawer(); renderMedicos();
+}
+function reactivarMedico(id){
+  const m = medicoById(id); if(!m) return;
+  m.activo = true; if(!m.__new) m.__edited = true;
+  logAudit('Médico', id, 'Reactivación', m.nombre);
+  persistExtra(); toast('Médico reactivado'); openMedicoDrawer(id); renderMedicos();
+}
 function medicoChipHtml(m){
   if(!m) return '';
   return `<div class="selected-chip"><div class="avatar">${initials(m.nombre)}</div>
