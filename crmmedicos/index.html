@@ -77,8 +77,10 @@ a{color:inherit;}
 .brand h1{font-family:var(--font-display); font-size:16.5px; font-weight:700;}
 .brand span{display:block; font-size:10px; color:var(--text-faint); letter-spacing:.08em; font-weight:600;}
 .nav-group-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); font-weight:700; margin:16px 10px 6px;}
-.nav-item{display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; color:var(--text-muted); font-size:13.5px; font-weight:500; text-decoration:none; border:none; background:none; width:100%; text-align:left; transition:.12s;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:7px 12px 7px 7px; border-radius:9px; color:var(--text-muted); font-size:13.5px; font-weight:500; text-decoration:none; border:none; background:none; width:100%; text-align:left; transition:.12s;}
+.nav-icon-chip{width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
 .nav-item svg{width:17px; height:17px; flex-shrink:0;}
+.nav-item .nav-icon-chip svg{width:14px; height:14px;}
 .nav-item:hover{background:var(--surface-2); color:var(--text);}
 .nav-item.active{background:var(--primary-light); color:var(--primary-dark); font-weight:600;}
 [data-theme="dark"] .nav-item.active{color:var(--primary);}
@@ -115,7 +117,15 @@ a{color:inherit;}
 .chart-wrap{position:relative; height:230px;}
 
 .dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
-.dot-green{background:var(--green);} .dot-amber{background:var(--amber);} .dot-red{background:var(--red);} .dot-blue{background:var(--blue);}
+.dot-green{background:var(--green);} .dot-amber{background:var(--amber);} .dot-red{background:var(--red);} .dot-blue{background:var(--blue);} .dot-violet{background:var(--violet);}
+.followup-bubble{position:fixed; bottom:22px; left:22px; z-index:410; background:var(--surface); border:1.5px solid var(--amber); border-radius:14px; padding:13px 34px 13px 16px; box-shadow:var(--shadow-lg); max-width:300px; animation:fbIn .25s ease;}
+.fb-body{display:flex; gap:10px; align-items:flex-start; cursor:pointer;}
+.fb-body svg{width:18px; height:18px; color:var(--amber); flex-shrink:0; margin-top:1px;}
+.fb-title{font-size:12.5px; font-weight:700; color:var(--text);}
+.fb-sub{font-size:10.5px; color:var(--text-muted); margin-top:2px; line-height:1.4;}
+.fb-dismiss{position:absolute; top:8px; right:8px; width:18px; height:18px; border:none; background:none; color:var(--text-faint); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+.fb-dismiss svg{width:12px; height:12px;}
+@keyframes fbIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
 .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px 4px 8px; border-radius:999px; font-size:11.5px; font-weight:600; white-space:nowrap;}
 .pill-green{background:var(--green-bg); color:var(--green);}
 .pill-amber{background:var(--amber-bg); color:var(--amber);}
@@ -356,7 +366,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.1.1';
+const APP_VERSION = 'v1.2.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -489,20 +499,26 @@ function maskCedula(text){
 
 /* ============ ROUTER ============ */
 const ROUTES = [
-  {id:'dashboard', label:'Dashboard', icon:'dashboard', group:'General'},
-  {id:'medicos', label:'Médicos', icon:'doctor', group:'General'},
-  {id:'catalogo', label:'Catálogo', icon:'catalog', group:'General'},
-  {id:'procedimientos', label:'Procedimientos', icon:'bolt', group:'Cotizador'},
-  {id:'paquetes', label:'Paquetes', icon:'building', group:'Cotizador'},
-  {id:'listas_materiales', label:'Listas de materiales', icon:'catalog', group:'Cotizador'},
-  {id:'bloques', label:'Bloques rápidos', icon:'quote', group:'Cotizador'},
-  {id:'cotizaciones', label:'Cotizaciones', icon:'quote', group:'Cotizador'},
-  {id:'casos', label:'Seguimiento (CRM)', icon:'followup', group:'Relación'},
-  {id:'convenios', label:'Convenios', icon:'deals', group:'Relación'},
-  {id:'condiciones', label:'Condiciones', icon:'history', group:'Relación'},
-  {id:'config', label:'Configuración', icon:'config', group:'Sistema'},
+  {id:'dashboard', label:'Dashboard', icon:'dashboard', group:'General', tone:'primary'},
+  {id:'medicos', label:'Médicos', icon:'doctor', group:'General', tone:'violet'},
+  {id:'catalogo', label:'Catálogo', icon:'catalog', group:'General', tone:'blue'},
+  {id:'procedimientos', label:'Procedimientos', icon:'bolt', group:'Cotizador', tone:'accent'},
+  {id:'paquetes', label:'Paquetes', icon:'building', group:'Cotizador', tone:'green'},
+  {id:'listas_materiales', label:'Listas de materiales', icon:'catalog', group:'Cotizador', tone:'violet'},
+  {id:'bloques', label:'Bloques rápidos', icon:'quote', group:'Cotizador', tone:'amber'},
+  {id:'cotizaciones', label:'Cotizaciones', icon:'quote', group:'Cotizador', tone:'primary'},
+  {id:'casos', label:'Seguimiento (CRM)', icon:'followup', group:'Relación', tone:'accent'},
+  {id:'convenios', label:'Convenios', icon:'deals', group:'Relación', tone:'green'},
+  {id:'condiciones', label:'Condiciones', icon:'history', group:'Relación', tone:'blue'},
+  {id:'config', label:'Configuración', icon:'config', group:'Sistema', tone:'muted'},
 ];
 let CURRENT_ROUTE = 'dashboard';
+function navToneVars(tone){
+  if(tone==='muted') return {bg:'var(--surface-3)', fg:'var(--text-faint)'};
+  const map = {primary:'--primary', accent:'--accent', violet:'--violet', green:'--green', blue:'--blue', amber:'--amber', red:'--red'};
+  const lightMap = {primary:'--primary-light', accent:'--accent-light', violet:'--violet-light', green:'--green-bg', blue:'--blue-bg', amber:'--amber-bg', red:'--red-bg'};
+  return { bg:`var(${lightMap[tone]||'--surface-2'})`, fg:`var(${map[tone]||'--text-muted'})` };
+}
 
 function renderNav(){
   const groups = {};
@@ -511,7 +527,9 @@ function renderNav(){
   Object.keys(groups).forEach(g=>{
     html += `<div class="nav-group-label">${g}</div>`;
     groups[g].forEach(r=>{
-      html += `<button class="nav-item ${CURRENT_ROUTE===r.id?'active':''}" data-route="${r.id}">${icon(r.icon)}${r.label}</button>`;
+      const t = navToneVars(r.tone);
+      html += `<button class="nav-item ${CURRENT_ROUTE===r.id?'active':''}" data-route="${r.id}">
+        <span class="nav-icon-chip" style="background:${t.bg}; color:${t.fg};">${icon(r.icon)}</span>${r.label}</button>`;
     });
   });
   document.getElementById('nav').innerHTML = html;
@@ -540,6 +558,7 @@ function navigate(route){
   renderers[route]();
   document.getElementById('content').scrollTo?.(0,0);
   window.scrollTo(0,0);
+  renderFollowUpBubble();
 }
 window.addEventListener('hashchange', ()=>{ const r = location.hash.slice(1)||'dashboard'; if(ROUTES.find(x=>x.id===r)) navigate(r); });
 
@@ -666,7 +685,8 @@ function renderDashboard(){
   const procActivos = DB.procedimientos.filter(p=>p.activo!==false).length;
   const listasActivas = DB.listas_materiales.filter(l=>l.activo!==false).length;
   const conveniosActivos = DB.convenios.filter(cv=>computeConvenioEstatus(cv)==='Activo').length;
-  const casosAbiertos = DB.casos.filter(cs=>!['Ganado','Perdido','Inactivo'].includes(cs.estatus)).length;
+  const casosAbiertos = DB.casos.filter(cs=>!['Realizado','Cancelado','Perdido'].includes(cs.estatus)).length;
+  const cirugiasProgramadas = DB.casos.filter(cs=>cs.fecha_programacion).length;
 
   const porEstatus = {}; cots.forEach(c=>{ porEstatus[c.estatus] = (porEstatus[c.estatus]||0)+1; });
   const porMedEstatus = {}; DB.medicos.forEach(m=>{ porMedEstatus[m.estatus_relacion] = (porMedEstatus[m.estatus_relacion]||0)+1; });
@@ -684,7 +704,7 @@ function renderDashboard(){
   const proximosCasos = DB.casos.filter(c=>c.proxima_accion_fecha).map(c=>({...c,d:new Date(c.proxima_accion_fecha)})).sort((a,b)=>a.d-b.d).slice(0,5);
 
   document.getElementById('content').innerHTML = `
-    <div class="grid" style="grid-template-columns:repeat(5,1fr); gap:10px;">
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:10px;">
       ${miniKpi('Cotizaciones', cots.length, 'quote', 'primary')}
       ${miniKpi('Monto cotizado', fmtMoney(totalMonto), 'bolt', 'accent')}
       ${miniKpi('Tasa aprobación', tasaAprob+'%', 'check', 'green')}
@@ -695,6 +715,7 @@ function renderDashboard(){
       ${miniKpi('Listas de materiales', listasActivas, 'catalog', 'violet')}
       ${miniKpi('Convenios vigentes', conveniosActivos+'/'+DB.convenios.length, 'deals', 'green')}
       ${miniKpi('Casos CRM abiertos', casosAbiertos+'/'+DB.casos.length, 'followup', 'blue')}
+      ${miniKpi('Cirugías programadas', cirugiasProgramadas, 'bolt', 'violet')}
     </div>
 
     ${!cots.length ? `<div class="card" style="margin-top:14px; text-align:center; padding:20px 20px;">
@@ -1387,7 +1408,12 @@ function setCotEstatus(id, estatus){
   if(!c) return;
   const prev = c.estatus; c.estatus = estatus;
   logAudit('Cotización', id, 'Cambio de estatus', `${prev} → ${estatus}`);
-  persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCotizacionDrawer(id);
+  const cs = DB.casos.find(x=>x.id_cotizacion===id);
+  if(cs && cs.estatus==='Nuevo' && ['Aprobada','Enviada','En negociación'].includes(estatus)){
+    cs.estatus = 'En seguimiento';
+    logAudit('Caso', cs.id, 'Cambio de estatus', 'Nuevo → En seguimiento (por estatus de cotización)');
+  }
+  persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCotizacionDrawer(id); renderFollowUpBubble();
 }
 
 /* ---- Wizard nueva cotización / edición / regeneración (4 pasos) ---- */
@@ -1641,7 +1667,20 @@ function saveWizardCotizacion(){
   };
   DB.cotizaciones.unshift(nueva);
   logAudit('Cotización', folio, wizardState.mode==='regenerate'?'Regeneración':'Creación', 'Para '+(m?m.nombre:'')+' · '+conceptosArr.length+' conceptos · '+condicionesArr.length+' condiciones');
+
+  const casoNuevo = {
+    id: uid('cs'), id_medico: wizardState.medico, id_cotizacion: folio,
+    titulo: 'Cotización '+folio+' — '+wizardState.procedimiento,
+    estatus: 'Nuevo', prioridad: 'Media', fecha_apertura: now.toISOString(),
+    proxima_accion_fecha: null, proxima_accion_nota: '', fecha_programacion: null, convenio_id: null,
+    interacciones: [{id:uid('it'), fecha:now.toISOString(), tipo:'Sistema', nota:'Cotización '+folio+' generada automáticamente por '+fmtMoney(costo)+'.'}],
+    __new: true
+  };
+  DB.casos.unshift(casoNuevo);
+  logAudit('Caso', casoNuevo.id, 'Creación automática', 'Vinculado a cotización '+folio);
+
   persistExtra(); closeModal(); toast('Cotización '+folio+' guardada'); navigate('cotizaciones'); setTimeout(()=>openCotizacionDrawer(folio),250);
+  renderFollowUpBubble();
 }
 
 /* ---- Reporte PDF profesional (sin costos por concepto) ---- */
@@ -1806,46 +1845,91 @@ function generateCotizacionPDF(id){
 }
 
 /* ============================================================
-   SEGUIMIENTO CRM (Casos por médico)
+   SEGUIMIENTO CRM (Casos por médico) — cada cotización genera un caso,
+   agrupados en árbol por médico con barra de progreso
 ============================================================ */
 const ESTADOS_CASO = {
-  'Nuevo':{color:'blue'}, 'En contacto':{color:'amber'}, 'Interesado':{color:'amber'},
-  'Negociación':{color:'amber'}, 'Cotización enviada':{color:'blue'}, 'Ganado':{color:'green'},
-  'Perdido':{color:'red'}, 'Inactivo':{color:'muted'}
+  'Nuevo':{color:'blue'}, 'En seguimiento':{color:'amber'}, 'Programación agendada':{color:'violet'},
+  'Confirmado':{color:'green'}, 'Realizado':{color:'green'}, 'Cancelado':{color:'red'}, 'Perdido':{color:'red'}
 };
-let casoState = { estatus:'todos', search:'' };
+const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100 };
+const TIPOS_INTERACCION = ['Llamada','Visita','WhatsApp','Correo','Reunión','Cita en hospital','Recorrido','Programación de cirugía','Sistema'];
+function casoProgressBar(estatus){
+  const pct = CASO_PROGRESS[estatus] || 10;
+  const closed = estatus==='Cancelado' || estatus==='Perdido';
+  const color = closed ? 'var(--red)' : (estatus==='Realizado'||estatus==='Confirmado' ? 'var(--green)' : (estatus==='Programación agendada' ? 'var(--violet)' : 'var(--amber)'));
+  return `<div style="background:var(--surface-3); border-radius:999px; height:6px; width:100%; overflow:hidden;">
+    <div style="width:${pct}%; height:100%; background:${color}; border-radius:999px;"></div></div>`;
+}
+let casoState = { estatus:'todos', search:'', expanded:{} };
 function renderCasos(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
-      <div class="searchbox" style="width:240px;">${icon('search')}<input id="caso-search" placeholder="Buscar médico o caso…"></div>
+      <div class="searchbox" style="width:260px;">${icon('search')}<input id="caso-search" placeholder="Buscar médico o caso…"></div>
       <div class="chip-filter" id="caso-chips"><button class="chip active" data-s="todos">Todos</button>
         ${Object.keys(ESTADOS_CASO).map(s=>`<button class="chip" data-s="${s}">${s}</button>`).join('')}</div>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openCasoModal()">${icon('plus')} Nuevo caso</button>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>Médico</th><th>Caso</th><th>Prioridad</th><th>Próxima acción</th><th>Estatus</th></tr></thead>
-    <tbody id="caso-tbody"></tbody></table></div>`;
-  document.getElementById('caso-search').oninput = e=>{ casoState.search=e.target.value; drawCasoTable(); };
-  document.getElementById('caso-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ casoState.estatus=b.dataset.s; drawCasoTable(); document.getElementById('caso-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===b)); });
-  drawCasoTable();
+    <div id="caso-tree"></div>`;
+  document.getElementById('caso-search').oninput = e=>{ casoState.search=e.target.value; drawCasoTree(); };
+  document.getElementById('caso-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ casoState.estatus=b.dataset.s; drawCasoTree(); document.getElementById('caso-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===b)); });
+  drawCasoTree();
 }
-function drawCasoTable(){
+function drawCasoTree(){
   const hoy = new Date();
   let list = DB.casos.filter(cs=>{
     const m = medicoById(cs.id_medico);
     if(casoState.search && !(m&&fuzzyMatch(m.nombre,casoState.search)) && !fuzzyMatch(cs.titulo||'',casoState.search)) return false;
     if(casoState.estatus!=='todos' && cs.estatus!==casoState.estatus) return false;
     return true;
-  }).sort((a,b)=>new Date(b.fecha_apertura)-new Date(a.fecha_apertura));
-  document.getElementById('caso-tbody').innerHTML = list.length ? list.map(cs=>{
-    const m = medicoById(cs.id_medico);
-    let accion = '<span class="pill pill-muted">Sin definir</span>';
-    if(cs.proxima_accion_fecha){ const d=new Date(cs.proxima_accion_fecha); accion = `<span class="pill pill-${d<hoy?'red':'amber'}">${fmtDate(cs.proxima_accion_fecha)}</span>`; }
-    return `<tr class="clickable" data-id="${cs.id}">
-      <td><div class="name-cell"><div class="avatar">${m?initials(m.nombre):'—'}</div><div style="font-weight:600; font-size:12.5px;">${m?m.nombre:'—'}</div></div></td>
-      <td>${cs.titulo}</td><td><span class="pill ${cs.prioridad==='Alta'?'pill-red':cs.prioridad==='Media'?'pill-amber':'pill-muted'}">${cs.prioridad}</span></td>
-      <td>${accion}</td><td>${estatusPillGeneric(cs.estatus, ESTADOS_CASO)}</td></tr>`;
-  }).join('') : `<tr><td colspan="5"><div class="empty-state">${icon('followup')}<div>Aún no hay casos registrados en el CRM. Crea el primero al iniciar una relación con un médico.</div></div></td></tr>`;
-  document.querySelectorAll('#caso-tbody tr.clickable').forEach(tr=> tr.onclick=()=>openCasoDrawer(tr.dataset.id));
+  });
+  const groups = {};
+  list.forEach(cs=>{ (groups[cs.id_medico]=groups[cs.id_medico]||[]).push(cs); });
+  const medicoIds = Object.keys(groups).sort((a,b)=>{
+    const lastA = Math.max(...groups[a].map(c=>new Date(c.fecha_apertura).getTime()));
+    const lastB = Math.max(...groups[b].map(c=>new Date(c.fecha_apertura).getTime()));
+    return lastB - lastA;
+  });
+  const wrap = document.getElementById('caso-tree');
+  if(!medicoIds.length){ wrap.innerHTML = `<div class="table-wrap"><div class="empty-state">${icon('followup')}<div>Sin casos que coincidan. Cada cotización nueva genera aquí un caso automáticamente.</div></div></div>`; return; }
+  wrap.innerHTML = medicoIds.map(mid=>{
+    const m = medicoById(mid);
+    const casos = groups[mid].sort((a,b)=>new Date(b.fecha_apertura)-new Date(a.fecha_apertura));
+    const abiertos = casos.filter(c=>!['Realizado','Cancelado','Perdido'].includes(c.estatus)).length;
+    const forceOpen = !!casoState.search || casoState.estatus!=='todos';
+    const open = forceOpen || !!casoState.expanded[mid];
+    return `<div class="card" style="margin-bottom:10px; padding:0; overflow:hidden;">
+      <div class="medico-tree-head" data-mid="${mid}" style="display:flex; align-items:center; gap:12px; padding:14px 18px; cursor:pointer;">
+        <svg class="tree-chevron ${open?'open':''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px; color:var(--text-faint); transition:.15s; flex-shrink:0;">${ICON.chevron}</svg>
+        <div class="avatar">${m?initials(m.nombre):'—'}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; font-size:13.5px;">${m?m.nombre:'—'}</div>
+          <div style="font-size:11px; color:var(--text-faint);">${m?m.especialidad:''}</div>
+        </div>
+        <span class="pill pill-blue pill-small">${casos.length} caso${casos.length>1?'s':''}</span>
+        ${abiertos ? `<span class="pill pill-amber pill-small">${abiertos} activo${abiertos>1?'s':''}</span>` : `<span class="pill pill-green pill-small">Al día</span>`}
+      </div>
+      <div class="medico-tree-body" style="display:${open?'block':'none'}; border-top:1px solid var(--border);">
+        ${casos.map(cs=>{
+          let accion = '';
+          if(cs.proxima_accion_fecha){ const d=new Date(cs.proxima_accion_fecha); accion = `<span class="pill pill-${d<hoy?'red':'amber'} pill-small">${icon('followup')} ${fmtDate(cs.proxima_accion_fecha)}</span>`; }
+          const prog = cs.fecha_programacion ? `<span class="pill pill-violet pill-small">${icon('bolt')} Cirugía ${fmtDate(cs.fecha_programacion)}</span>` : '';
+          return `<div class="clickable" data-cid="${cs.id}" style="padding:12px 18px 12px 46px; border-bottom:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
+              <div style="font-size:12.5px; font-weight:600;">${cs.titulo}${cs.id_cotizacion?` <span class="mono" style="font-weight:500; color:var(--text-faint);">· ${cs.id_cotizacion}</span>`:''}</div>
+              ${estatusPillGeneric(cs.estatus, ESTADOS_CASO)}
+            </div>
+            ${casoProgressBar(cs.estatus)}
+            <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.medico-tree-head').forEach(h=> h.onclick = ()=>{
+    const mid = h.dataset.mid; casoState.expanded[mid] = !casoState.expanded[mid]; drawCasoTree();
+  });
+  wrap.querySelectorAll('[data-cid]').forEach(row=> row.onclick = ()=> openCasoDrawer(row.dataset.cid));
 }
 function openCasoModal(id, medicoPreset){
   const cs = id ? DB.casos.find(x=>x.id===id) : null;
@@ -1855,11 +1939,14 @@ function openCasoModal(id, medicoPreset){
       <div class="form-grid">
         <div class="form-field full"><label>Médico</label><select class="select" id="cs-medico" style="width:100%;">
           <option value="">Selecciona…</option>${DB.medicos.map(m=>`<option value="${m.id}" ${(cs?cs.id_medico:medicoPreset)==m.id?'selected':''}>${m.nombre}</option>`).join('')}</select></div>
-        <div class="form-field full"><label>Título del caso</label><input class="input uc-input" id="cs-titulo" style="width:100%;" value="${cs?cs.titulo:''}" placeholder="EJ. NEGOCIACIÓN DE CONVENIO / SEGUIMIENTO POST-COTIZACIÓN"></div>
+        <div class="form-field full"><label>Título del caso</label><input class="input uc-input" id="cs-titulo" style="width:100%;" value="${cs?cs.titulo:''}" placeholder="EJ. SEGUIMIENTO POST-COTIZACIÓN"></div>
         <div class="form-field"><label>Estatus</label><select class="select" id="cs-estatus" style="width:100%;">${Object.keys(ESTADOS_CASO).map(s=>`<option ${cs&&cs.estatus===s?'selected':''}>${s}</option>`).join('')}</select></div>
         <div class="form-field"><label>Prioridad</label><select class="select" id="cs-prioridad" style="width:100%;">${['Alta','Media','Baja'].map(p=>`<option ${cs&&cs.prioridad===p?'selected':''}>${p}</option>`).join('')}</select></div>
-        <div class="form-field full"><label>Próxima acción (fecha)</label><input class="input" type="date" id="cs-fecha" style="width:100%;" value="${cs&&cs.proxima_accion_fecha?cs.proxima_accion_fecha.slice(0,10):''}"></div>
-        <div class="form-field full"><label>Nota de la próxima acción</label><input class="input uc-input" id="cs-nota" style="width:100%;" value="${cs?cs.proxima_accion_nota||'':''}" placeholder="EJ. LLAMAR PARA CONFIRMAR CONVENIO"></div>
+        <div class="form-field"><label>Próxima acción (fecha)</label><input class="input" type="date" id="cs-fecha" style="width:100%;" value="${cs&&cs.proxima_accion_fecha?cs.proxima_accion_fecha.slice(0,10):''}"></div>
+        <div class="form-field"><label>Fecha de programación (cirugía)</label><input class="input" type="date" id="cs-fecha-prog" style="width:100%;" value="${cs&&cs.fecha_programacion?cs.fecha_programacion.slice(0,10):''}"></div>
+        <div class="form-field full"><label>Nota de la próxima acción</label><input class="input uc-input" id="cs-nota" style="width:100%;" value="${cs?cs.proxima_accion_nota||'':''}" placeholder="EJ. LLAMAR PARA CONFIRMAR"></div>
+        <div class="form-field full"><label>Convenio asignado (opcional)</label><select class="select" id="cs-convenio" style="width:100%;"><option value="">Sin convenio</option>
+          ${DB.convenios.map(cv=>`<option value="${cv.id}" ${cs&&cs.convenio_id===cv.id?'selected':''}>${cv.nombre}</option>`).join('')}</select></div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="cs-save">Guardar caso</button></div>`);
@@ -1868,26 +1955,40 @@ function openCasoModal(id, medicoPreset){
     const titulo = document.getElementById('cs-titulo').value.trim();
     if(!idm || !titulo){ toast('Selecciona médico y captura un título'); return; }
     const payload = { id_medico: idm, titulo, estatus: document.getElementById('cs-estatus').value, prioridad: document.getElementById('cs-prioridad').value,
-      proxima_accion_fecha: document.getElementById('cs-fecha').value || null, proxima_accion_nota: document.getElementById('cs-nota').value };
+      proxima_accion_fecha: document.getElementById('cs-fecha').value || null, proxima_accion_nota: document.getElementById('cs-nota').value,
+      fecha_programacion: document.getElementById('cs-fecha-prog').value || null, convenio_id: document.getElementById('cs-convenio').value || null };
     if(cs){ Object.assign(cs, payload); logAudit('Caso', cs.id, 'Edición', titulo); }
-    else { const nuevo = Object.assign({id:uid('cs'), fecha_apertura:new Date().toISOString(), interacciones:[], __new:true}, payload); DB.casos.unshift(nuevo); logAudit('Caso', nuevo.id, 'Creación', titulo); }
+    else { const nuevo = Object.assign({id:uid('cs'), id_cotizacion:null, fecha_apertura:new Date().toISOString(), interacciones:[], __new:true}, payload); DB.casos.unshift(nuevo); logAudit('Caso', nuevo.id, 'Creación', titulo); }
     persistExtra(); closeModal(); toast('Caso guardado');
     if(CURRENT_ROUTE==='casos') renderCasos();
+    renderFollowUpBubble();
   };
 }
 function openCasoDrawer(id){
   const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
   const m = medicoById(cs.id_medico);
+  const cv = cs.convenio_id ? DB.convenios.find(x=>x.id===cs.convenio_id) : null;
   openDrawer(`
     <div class="drawer-head"><div><div style="font-weight:700; font-size:15.5px;">${cs.titulo}</div>
       <div style="font-size:12px; color:var(--text-faint); margin-top:2px;">${m?m.nombre:'—'} · Abierto ${fmtDate(cs.fecha_apertura)}</div>
       <div style="margin-top:8px;">${estatusPillGeneric(cs.estatus, ESTADOS_CASO)}</div></div>
       <button class="drawer-close" onclick="closeDrawer()">${icon('x')}</button></div>
     <div class="drawer-body">
-      <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <div style="margin-bottom:14px;">${casoProgressBar(cs.estatus)}</div>
+      <div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;">
+        ${Object.keys(ESTADOS_CASO).map(s=>`<button class="btn btn-sm ${cs.estatus===s?'btn-primary':''}" onclick="setCasoEstatus('${cs.id}','${s}')">${s}</button>`).join('')}
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
         <button class="btn btn-sm" onclick="closeDrawer();openCasoModal('${cs.id}')">${icon('config')} Editar caso</button>
         <button class="btn btn-sm btn-primary" onclick="openInteraccionModal('${cs.id}')">${icon('plus')} Nueva interacción</button>
+        ${cs.id_cotizacion ? `<button class="btn btn-sm" onclick="closeDrawer();openCotizacionDrawer('${cs.id_cotizacion}')">${icon('quote')} Ver cotización</button>` : ''}
       </div>
+      ${cs.fecha_programacion ? `<div class="card" style="margin-bottom:12px; background:var(--violet-light); border-color:transparent;">
+        <div style="font-size:11px; font-weight:700; color:var(--violet); text-transform:uppercase;">Cirugía programada</div>
+        <div style="font-size:13px; font-weight:600; margin-top:4px;">${fmtDate(cs.fecha_programacion)}</div></div>` : ''}
+      ${cv ? `<div class="card" style="margin-bottom:12px; background:var(--green-bg); border-color:transparent;">
+        <div style="font-size:11px; font-weight:700; color:var(--green); text-transform:uppercase;">Convenio asignado</div>
+        <div style="font-size:13px; font-weight:600; margin-top:4px;">${cv.nombre}</div></div>` : ''}
       ${cs.proxima_accion_fecha ? `<div class="card" style="margin-bottom:16px; background:var(--amber-bg); border-color:transparent;">
         <div style="font-size:11px; font-weight:700; color:var(--amber); text-transform:uppercase;">Próxima acción</div>
         <div style="font-size:13px; font-weight:600; margin-top:4px;">${cs.proxima_accion_nota||'Sin nota'}</div>
@@ -1898,12 +1999,18 @@ function openCasoDrawer(id){
         : emptyMini('Sin interacciones registradas todavía.')}
     </div>`);
 }
+function setCasoEstatus(id, estatus){
+  const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
+  const prev = cs.estatus; cs.estatus = estatus;
+  logAudit('Caso', id, 'Cambio de estatus', `${prev} → ${estatus}`);
+  persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
+}
 function openInteraccionModal(casoId){
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Nueva interacción</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-field"><label>Tipo</label><select class="select" id="it-tipo" style="width:100%;"><option>Llamada</option><option>Visita</option><option>WhatsApp</option><option>Correo</option><option>Reunión</option></select></div>
+        <div class="form-field"><label>Tipo</label><select class="select" id="it-tipo" style="width:100%;">${TIPOS_INTERACCION.filter(t=>t!=='Sistema').map(t=>`<option>${t}</option>`).join('')}</select></div>
         <div class="form-field full"><label>Nota</label><textarea class="input uc-input" id="it-nota" style="width:100%; min-height:80px;" placeholder="DETALLE DE LA INTERACCIÓN…"></textarea></div>
       </div>
     </div>
@@ -1968,19 +2075,20 @@ function openConvenioModal(id){
         <div class="form-field full"><label>Notas</label><input class="input uc-input" id="cv-notas" style="width:100%;" value="${cv?cv.notas||'':''}"></div>
       </div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Médicos asignados</div>
-      <select class="select" id="cv-medicos" multiple style="width:100%; height:100px; margin-bottom:14px;">
-        ${DB.medicos.map(m=>`<option value="${m.id}" ${medSel[m.id]?'selected':''}>${m.nombre}</option>`).join('')}</select>
+      <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="cv-med-search" placeholder="Buscar médico por cualquier palabra…"></div>
+      <div id="cv-med-list" style="max-height:170px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px; margin-bottom:14px;"></div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Condiciones aplicables</div>
       <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="cv-cl-search" placeholder="Buscar condición…"></div>
       <div id="cv-cl-list" style="max-height:170px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px;"></div>
       <div class="form-field full" style="margin-top:14px;"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cv-activo" ${!cv||cv.estatus!=='Inactivo'?'checked':''}> Convenio activo</label></div>
     </div>
     <div class="modal-foot">${cv?`<button class="btn btn-danger" id="cv-del">${icon('trash')} Eliminar</button>`:''}<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="cv-save">Guardar convenio</button></div>`);
+  wireMedicoMultiPicker(document.getElementById('cv-med-search'), document.getElementById('cv-med-list'), medSel);
   wireClausulaPicker(document.getElementById('cv-cl-search'), document.getElementById('cv-cl-list'), selCl);
   document.getElementById('cv-save').onclick = ()=>{
     const nombre = document.getElementById('cv-nombre').value.trim();
     if(!nombre){ toast('Captura el nombre del convenio'); return; }
-    const medicos = [...document.getElementById('cv-medicos').selectedOptions].map(o=>o.value);
+    const medicos = Object.entries(medSel).filter(([,v])=>v).map(([id])=>id);
     const payload = { nombre, tipo: document.getElementById('cv-tipo').value, valor: parseFloat(document.getElementById('cv-valor').value)||0,
       vigencia_inicio: document.getElementById('cv-ini').value || null, vigencia_fin: document.getElementById('cv-fin').value || null,
       notas: document.getElementById('cv-notas').value, medicos, condiciones: Object.entries(selCl).filter(([,v])=>v).map(([id])=>id),
@@ -1991,6 +2099,22 @@ function openConvenioModal(id){
   };
   const delBtn = document.getElementById('cv-del');
   if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Eliminar este convenio?')){ DB.convenios = DB.convenios.filter(x=>x.id!==cv.id); logAudit('Convenio', cv.id, 'Eliminación', cv.nombre); persistExtra(); closeModal(); renderConvenios(); } };
+}
+
+/* Checklist de médicos con buscador por palabras, reutilizable (ej. convenios) */
+function wireMedicoMultiPicker(searchEl, listEl, selMap){
+  const draw = (filter)=>{
+    const items = filter ? DB.medicos.filter(m=>fuzzyMatch(m.nombre, filter)) : DB.medicos.filter(m=>selMap[m.id]);
+    listEl.innerHTML = items.length ? items.map(m=>`
+      <label class="clausula-row" style="cursor:pointer;">
+        <input type="checkbox" data-mid="${m.id}" ${selMap[m.id]?'checked':''}>
+        <span>${m.nombre} <span style="color:var(--text-faint); font-size:11px;">— ${m.especialidad}</span></span>
+      </label>`).join('') : `<div class="picker-empty">${filter?'Sin coincidencias para "'+filter+'"':'Aún no has asignado médicos — busca arriba para agregar.'}</div>`;
+    listEl.querySelectorAll('input[type=checkbox]').forEach(cb=> cb.onchange = ()=>{ selMap[cb.dataset.mid] = cb.checked; if(!cb.checked) draw(searchEl.value); });
+  };
+  draw('');
+  searchEl.oninput = ()=> draw(searchEl.value);
+  return draw;
 }
 
 /* ============================================================
@@ -2125,6 +2249,41 @@ function drawHistTable(){
 
 
 /* ============ INIT ============ */
+/* ============ ALERTA FLOTANTE DE SEGUIMIENTO (24 HRS) ============ */
+function getPendingFollowUps(){
+  if(!SESSION.authed) return [];
+  const now = new Date();
+  let dismissed = [];
+  try{ dismissed = JSON.parse(localStorage.getItem('crm_dismissed_alerts')||'[]'); }catch(e){}
+  return DB.casos.filter(cs=>{
+    if(dismissed.includes(cs.id)) return false;
+    if(!cs.id_cotizacion) return false;
+    if(cs.estatus !== 'Nuevo') return false;
+    const hrs = (now - new Date(cs.fecha_apertura)) / 36e5;
+    return hrs >= 24;
+  });
+}
+function renderFollowUpBubble(){
+  let wrap = document.getElementById('followup-bubble');
+  const pending = getPendingFollowUps();
+  if(!pending.length){ if(wrap) wrap.remove(); return; }
+  if(!wrap){ wrap = document.createElement('div'); wrap.id='followup-bubble'; wrap.className='followup-bubble'; document.body.appendChild(wrap); }
+  wrap.innerHTML = `<button class="fb-dismiss" id="fb-dismiss">${icon('x')}</button>
+    <div class="fb-body" id="fb-body">${icon('followup')}
+      <div><div class="fb-title">${pending.length} cotización${pending.length>1?'es':''} sin seguimiento</div>
+      <div class="fb-sub">Pasaron 24 hrs desde su creación sin actividad. Toca para revisar en el CRM.</div></div>
+    </div>`;
+  document.getElementById('fb-body').onclick = ()=> navigate('casos');
+  document.getElementById('fb-dismiss').onclick = (e)=>{
+    e.stopPropagation();
+    let dismissed = [];
+    try{ dismissed = JSON.parse(localStorage.getItem('crm_dismissed_alerts')||'[]'); }catch(err){}
+    pending.forEach(p=>dismissed.push(p.id));
+    try{ localStorage.setItem('crm_dismissed_alerts', JSON.stringify(dismissed)); }catch(err){}
+    wrap.remove();
+  };
+}
+
 async function boot(){
   await loadSession();
   applyTheme();
@@ -2134,6 +2293,7 @@ async function boot(){
   document.getElementById('logout-btn').onclick = ()=>{ SESSION.authed=false; saveSession(); location.reload(); };
   animateVitalLine();
   if(SESSION.authed){ showApp(); }
+  setInterval(()=>{ if(SESSION.authed) renderFollowUpBubble(); }, 5*60*1000);
   document.getElementById('login-btn').onclick = doLogin;
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 }
