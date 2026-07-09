@@ -356,7 +356,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.1.0';
+const APP_VERSION = 'v1.1.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1663,6 +1663,13 @@ function getConceptosRows(c){
   if(Array.isArray(c.conceptos) && c.conceptos.length) return c.conceptos;
   return DB.detalle.filter(d=>String(d.id_cotizacion)===String(c.id)).map(d=>{ const co = conceptoById(d.id_concepto); return { descripcion: co?co.descripcion:d.id_concepto, cantidad:d.cantidad, total:d.total }; });
 }
+function slugify(text){
+  return (text||'').toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-zA-Z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'')
+    .toUpperCase();
+}
 function generateCotizacionPDF(id){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
   if(!c || !window.jspdf){ toast('No se pudo generar el PDF'); return; }
@@ -1792,7 +1799,8 @@ function generateCotizacionPDF(id){
     doc.text('Página '+i+' de '+pageCount, pageW-48, 760, {align:'right'});
   }
 
-  doc.save('Cotizacion-'+c.id+'.pdf');
+  const fileName = [c.id, slugify(m.nombre), slugify(c.procedimiento)].filter(Boolean).join('_') + '.pdf';
+  doc.save(fileName);
   logAudit('Cotización', c.id, 'PDF generado', 'Reporte descargado');
   persistExtra(); toast('PDF generado');
 }
