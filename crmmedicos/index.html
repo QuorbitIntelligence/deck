@@ -253,6 +253,7 @@ tbody tr.clickable:hover{background:var(--surface-2); cursor:pointer;}
 .mark-toggle.active{background:var(--primary); border-color:var(--primary);}
 .mark-toggle:hover{border-color:var(--primary);}
 .pill-violet{background:var(--violet-light); color:var(--violet);}
+.pill-guinda{background:var(--guinda-light); color:var(--guinda);}
 .brand-logo{border-radius:8px; object-fit:contain; background:#fff; flex-shrink:0;}
 .vitalline{width:100%; height:100%;}
 .vitalline path{fill:none; stroke:var(--primary); stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
@@ -381,7 +382,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.6.0';
+const APP_VERSION = 'v1.7.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -737,9 +738,45 @@ function renderDashboard(){
   const meses = Object.keys(porMes).sort();
   const hoy = new Date();
   const monitorCasos = DB.casos.filter(cs=>cs.proxima_accion_fecha && !['Realizado','Cancelado','Perdido'].includes(cs.estatus))
-    .map(c=>({...c,d:new Date(c.proxima_accion_fecha)})).sort((a,b)=>a.d-b.d).slice(0,10);
+    .map(c=>({...c,d:new Date(c.proxima_accion_fecha)})).sort((a,b)=>a.d-b.d);
+
+  function monitorRowHtml(cs){
+    const m = medicoById(cs.id_medico);
+    const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
+    const procedimiento = cot ? cot.procedimiento : cs.titulo;
+    const overdue = cs.d < hoy;
+    const cv = cs.convenio_id ? DB.convenios.find(x=>x.id===cs.convenio_id) : null;
+    return `<div class="monitor-row" style="font-size:11px;">
+      <div class="avatar" style="flex-shrink:0; width:30px; height:30px; font-size:10.5px;">${m?initials(m.nombre):'—'}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:700; font-size:11px;">${m?m.nombre:'—'}</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:1px;">${procedimiento}${cs.id_cotizacion?` <span class="mono" style="color:var(--text-faint); font-size:11px;">· ${cs.id_cotizacion}</span>`:''}</div>
+        <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center;">
+          <span class="pill pill-${overdue?'red':'amber'} pill-small" style="font-size:11px;">${cs.proxima_accion_nota?cs.proxima_accion_nota+' · ':''}${fmtDate(cs.proxima_accion_fecha)}</span>
+          ${cv ? `<span class="pill pill-green pill-small" style="font-size:11px;">${cv.nombre}</span>` : `<button class="btn btn-sm btn-guinda" style="padding:3px 10px; font-size:11px;" onclick="openConvenioModal(null,'${cs.id_medico}')">Negociar convenio</button>`}
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+        <button class="btn btn-sm" style="font-size:11px;" onclick="openCasoDrawer('${cs.id}')">Ver caso</button>
+        <button class="btn btn-sm btn-primary" style="font-size:11px;" onclick="atenderAccionMonitor('${cs.id}')">${icon('check')} Atender</button>
+      </div>
+    </div>`;
+  }
+  const colA = monitorCasos.filter((_,i)=>i%2===0);
+  const colB = monitorCasos.filter((_,i)=>i%2===1);
 
   document.getElementById('content').innerHTML = `
+    <div class="section-title" style="margin:0 0 12px; display:flex; align-items:center; gap:8px;">
+      <span class="monitor-live-dot"></span> Monitor de próximas acciones (CRM) <span class="pill pill-blue pill-small" style="font-size:11px;">${monitorCasos.length}</span>
+    </div>
+    <div class="card" style="padding:0; margin-bottom:22px;">
+      ${monitorCasos.length ? `<div style="display:grid; grid-template-columns:1fr 1fr;">
+          <div style="border-right:1px solid var(--border);">${colA.map(monitorRowHtml).join('') || emptyMini('Sin registros.')}</div>
+          <div>${colB.map(monitorRowHtml).join('') || emptyMini('Sin registros.')}</div>
+        </div>`
+        : `<div class="empty-state">${icon('followup')}<div>Sin acciones pendientes por atender.</div></div>`}
+    </div>
+
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:10px;">
       ${miniKpi('Cotizaciones', cots.length, 'quote', 'primary')}
       ${miniKpi('Monto cotizado', fmtMoney(totalMonto), 'bolt', 'accent')}
@@ -772,34 +809,6 @@ function renderDashboard(){
     <div class="grid two-col">
       <div class="card"><div style="font-weight:700; font-size:13px; margin-bottom:10px;">Cotizaciones por mes</div><div class="chart-wrap" style="height:190px;"><canvas id="chart-mes"></canvas></div></div>
       <div class="card"><div style="font-weight:700; font-size:13px; margin-bottom:10px;">Monto cotizado por especialidad</div><div class="chart-wrap" style="height:190px;"><canvas id="chart-esp"></canvas></div></div>
-    </div>
-
-    <div class="section-title" style="margin:20px 0 12px; display:flex; align-items:center; gap:8px;">
-      <span class="monitor-live-dot"></span> Monitor de próximas acciones (CRM)
-    </div>
-    <div class="card" style="padding:0;">
-      ${monitorCasos.length ? monitorCasos.map(cs=>{
-        const m = medicoById(cs.id_medico);
-        const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
-        const procedimiento = cot ? cot.procedimiento : cs.titulo;
-        const overdue = cs.d < hoy;
-        const cv = cs.convenio_id ? DB.convenios.find(x=>x.id===cs.convenio_id) : null;
-        return `<div class="monitor-row">
-          <div class="avatar" style="flex-shrink:0;">${m?initials(m.nombre):'—'}</div>
-          <div style="flex:1; min-width:0;">
-            <div style="font-weight:700; font-size:12.5px;">${m?m.nombre:'—'}</div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:1px;">${procedimiento}${cs.id_cotizacion?` <span class="mono" style="color:var(--text-faint);">· ${cs.id_cotizacion}</span>`:''}</div>
-            <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center;">
-              <span class="pill pill-${overdue?'red':'amber'} pill-small">${cs.proxima_accion_nota?cs.proxima_accion_nota+' · ':''}${fmtDate(cs.proxima_accion_fecha)}</span>
-              ${cv ? `<span class="pill pill-green pill-small">${cv.nombre}</span>` : `<button class="btn btn-sm btn-guinda" style="padding:3px 10px; font-size:10.5px;" onclick="openConvenioModal(null,'${cs.id_medico}')">Negociar convenio</button>`}
-            </div>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
-            <button class="btn btn-sm" onclick="openCasoDrawer('${cs.id}')">Ver caso</button>
-            <button class="btn btn-sm btn-primary" onclick="atenderAccionMonitor('${cs.id}')">${icon('check')} Atender</button>
-          </div>
-        </div>`;
-      }).join('') : `<div class="empty-state">${icon('followup')}<div>Sin acciones pendientes por atender.</div></div>`}
     </div>
   `;
 
@@ -2074,14 +2083,14 @@ function setAsgEstatus(id, estatus){
 let asgWizard = {};
 function openAseguradoraWizard(){
   asgWizard = { mode:'new', originalId:null, aseguradora:'', procedimiento:'', medico:'', hospitalConceptos:{}, hospitalCostoManual:null,
-    proveedorNombre:'', proveedorRFC:'', proveedorItems:[], proveedorCostoManual:null, clausulas:{}, step:1, _defaultsApplied:false };
+    proveedorNombre:'', proveedorItems:[], proveedorCostoManual:null, clausulas:{}, step:1, _defaultsApplied:false };
   drawAsgWizard();
 }
 function editAseguradoraWizard(id){
   const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); if(!a) return;
   asgWizard = { mode:'edit', originalId:a.id, aseguradora:a.aseguradora, procedimiento:a.procedimiento, medico:a.id_medico,
     hospitalConceptos: Object.fromEntries((a.hospital_conceptos||[]).map(l=>[l.id,l.cantidad])), hospitalCostoManual: a.hospital_total,
-    proveedorNombre: a.proveedor_nombre||'', proveedorRFC: a.proveedor_rfc||'', proveedorItems: (a.proveedor_conceptos||[]).map(l=>({...l})), proveedorCostoManual: a.proveedor_total,
+    proveedorNombre: a.proveedor_nombre||'', proveedorItems: (a.proveedor_conceptos||[]).map(l=>({...l})), proveedorCostoManual: a.proveedor_total,
     clausulas: Object.fromEntries((a.condiciones||[]).map(c=>[c.id,true])), step:1, _defaultsApplied:true };
   drawAsgWizard();
 }
@@ -2102,15 +2111,21 @@ function drawAsgPane(){
   const pane = document.getElementById('asg-pane');
   const foot = document.getElementById('asg-foot');
   if(asgWizard.step===1){
+    const selMed = asgWizard.medico ? medicoById(asgWizard.medico) : null;
     pane.innerHTML = `
       <div class="form-grid" style="margin-bottom:16px;">
         <div class="form-field"><label>Aseguradora</label><input class="input uc-input" id="asg-aseguradora" style="width:100%;" value="${asgWizard.aseguradora}" placeholder="EJ. ASEGURADORA SOFÍA SALUD"></div>
-        <div class="form-field"><label>Médico</label><select class="select" id="asg-medico" style="width:100%;"><option value="">Selecciona…</option>
-          ${DB.medicos.map(m=>`<option value="${m.id}" ${asgWizard.medico==m.id?'selected':''}>${m.nombre}</option>`).join('')}</select></div>
+        <div class="form-field picker-wrap"><label>Médico</label>
+          <div class="searchbox" style="width:100%;">${icon('search')}<input id="asg-medico-search" placeholder="ESCRIBE CUALQUIER PARTE DEL NOMBRE…" autocomplete="off"></div>
+          <div id="asg-medico-results" class="picker-results" style="display:none;"></div>
+          <div id="asg-medico-chip">${selMed?medicoChipHtml(selMed):''}</div>
+        </div>
         <div class="form-field full"><label>Procedimiento</label><input class="input uc-input" id="asg-proc" style="width:100%;" value="${asgWizard.procedimiento}" placeholder="EJ. REPARACIÓN DE ROTURA DE LIGAMENTO…"></div>
       </div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Conceptos del hospital</div>
       <div class="picker-wrap" style="margin-bottom:10px;"><div class="searchbox" style="width:100%;">${icon('search')}<input class="uc-input" id="asg-c-search" placeholder="BUSCAR CONCEPTO DEL CATÁLOGO…" autocomplete="off"></div><div id="asg-c-results" class="picker-results" style="display:none;"></div></div>
+      <button class="btn btn-sm" id="asg-bloque-btn" type="button" style="margin-bottom:12px;">${icon('plus')} Agregar bloque de conceptos</button>
+      <div id="asg-bloque-panel" style="display:none; margin-bottom:14px;"></div>
       <div id="asg-c-list" style="margin-bottom:14px;"></div>
       <div style="background:var(--surface-2); border-radius:12px; padding:14px 16px;">
         <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Costo aproximado del hospital (IVA incluido)</label>
@@ -2120,15 +2135,43 @@ function drawAsgPane(){
         </div>
       </div>`;
     foot.innerHTML = `<button class="btn btn-guinda" id="asg-next">Siguiente</button>`;
+    const medSearch = document.getElementById('asg-medico-search'), medResults = document.getElementById('asg-medico-results');
+    medSearch.oninput = ()=>{
+      const q = medSearch.value; if(!q.trim()){ medResults.style.display='none'; return; }
+      const res = DB.medicos.filter(m=>fuzzyMatch(m.nombre, q)).slice(0,8);
+      medResults.innerHTML = res.length ? res.map(m=>`<div class="result-row" data-pick="${m.id}"><div class="avatar" style="width:26px;height:26px;font-size:10px;">${initials(m.nombre)}</div>
+        <div class="result-main"><div class="result-title">${m.nombre}</div><div class="result-sub">${m.especialidad}</div></div></div>`).join('') : `<div class="picker-empty">Sin coincidencias para "${q}"</div>`;
+      medResults.style.display='block';
+      medResults.querySelectorAll('[data-pick]').forEach(row=> row.onclick=()=>{
+        asgWizard.medico = row.dataset.pick; medResults.style.display='none'; medSearch.value='';
+        document.getElementById('asg-medico-chip').innerHTML = medicoChipHtml(medicoById(asgWizard.medico));
+        document.getElementById('asg-medico-chip').querySelector('button').onclick = ()=>{ asgWizard.medico=''; document.getElementById('asg-medico-chip').innerHTML=''; };
+      });
+    };
+    if(selMed){ const chipBtn = document.querySelector('#asg-medico-chip button'); if(chipBtn) chipBtn.onclick = ()=>{ asgWizard.medico=''; document.getElementById('asg-medico-chip').innerHTML=''; }; }
+    document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')){ medResults.style.display='none'; } });
+
     const listEl = document.getElementById('asg-c-list');
     renderConceptSelection(listEl, asgWizard.hospitalConceptos, updateAsgHospitalTotal);
     wireConceptPicker(document.getElementById('asg-c-search'), document.getElementById('asg-c-results'), (cid)=>{ asgWizard.hospitalConceptos[cid]=(asgWizard.hospitalConceptos[cid]||0)+1; renderConceptSelection(listEl, asgWizard.hospitalConceptos, updateAsgHospitalTotal); updateAsgHospitalTotal(); });
+    document.getElementById('asg-bloque-btn').onclick = ()=>{
+      const panel = document.getElementById('asg-bloque-panel');
+      panel.style.display = panel.style.display==='none' ? 'block':'none';
+      panel.innerHTML = DB.bloques.length ? DB.bloques.map(bq=>`
+        <div class="result-row" data-bq="${bq.id}"><div class="result-main"><div class="result-title">${bq.nombre}</div><div class="result-sub">${(bq.conceptos||[]).length} conceptos</div></div><button class="add-circle" type="button">+</button></div>`).join('')
+        : `<div class="picker-empty">No hay bloques creados aún — ve al módulo "Bloques rápidos".</div>`;
+      panel.querySelectorAll('[data-bq]').forEach(row=> row.onclick=()=>{
+        const bq = DB.bloques.find(b=>b.id===row.dataset.bq);
+        (bq.conceptos||[]).forEach(l=>{ asgWizard.hospitalConceptos[l.id] = (asgWizard.hospitalConceptos[l.id]||0)+l.cantidad; });
+        renderConceptSelection(listEl, asgWizard.hospitalConceptos, updateAsgHospitalTotal); updateAsgHospitalTotal();
+        toast('Bloque "'+bq.nombre+'" agregado');
+      });
+    };
     const costoInput = document.getElementById('asg-hospital-costo');
     costoInput.value = asgWizard.hospitalCostoManual!=null ? asgWizard.hospitalCostoManual : Math.round(sumConceptMap(asgWizard.hospitalConceptos));
     costoInput.oninput = ()=>{ asgWizard.hospitalCostoManual = parseFloat(costoInput.value)||0; };
     document.getElementById('asg-next').onclick = ()=>{
       asgWizard.aseguradora = document.getElementById('asg-aseguradora').value.trim();
-      asgWizard.medico = document.getElementById('asg-medico').value;
       asgWizard.procedimiento = document.getElementById('asg-proc').value.trim();
       asgWizard.hospitalCostoManual = parseFloat(document.getElementById('asg-hospital-costo').value)||0;
       if(!asgWizard.aseguradora || !asgWizard.medico || !asgWizard.procedimiento){ toast('Completa aseguradora, médico y procedimiento'); return; }
@@ -2136,10 +2179,7 @@ function drawAsgPane(){
     };
   } else if(asgWizard.step===2){
     pane.innerHTML = `
-      <div class="form-grid" style="margin-bottom:16px;">
-        <div class="form-field"><label>Nombre del proveedor</label><input class="input uc-input" id="asg-prov-nombre" style="width:100%;" value="${asgWizard.proveedorNombre}" placeholder="EJ. BELKYS MIREYA BECERRA"></div>
-        <div class="form-field"><label>RFC (opcional)</label><input class="input uc-input" id="asg-prov-rfc" style="width:100%;" value="${asgWizard.proveedorRFC}" placeholder="RFC DEL PROVEEDOR"></div>
-      </div>
+      <div class="form-field full" style="margin-bottom:16px;"><label>Nombre del proveedor</label><input class="input uc-input" id="asg-prov-nombre" style="width:100%;" value="${asgWizard.proveedorNombre}" placeholder="EJ. BELKYS MIREYA BECERRA"></div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Insumos y servicios del proveedor (captura manual)</div>
       <div class="form-grid" style="grid-template-columns:2fr 1fr 1fr auto; align-items:end; gap:8px; margin-bottom:10px;">
         <div class="form-field"><label style="font-size:11px;">Descripción</label><input class="input uc-input" id="asg-item-desc" style="width:100%;" placeholder="EJ. ANCLAS PUSHLOCK 2.9"></div>
@@ -2182,7 +2222,6 @@ function drawAsgPane(){
     document.getElementById('asg-back').onclick = ()=>{ asgWizard.step=1; drawAsgPane(); };
     document.getElementById('asg-next').onclick = ()=>{
       asgWizard.proveedorNombre = document.getElementById('asg-prov-nombre').value.trim();
-      asgWizard.proveedorRFC = document.getElementById('asg-prov-rfc').value.trim();
       asgWizard.proveedorCostoManual = parseFloat(document.getElementById('asg-prov-costo').value)||0;
       asgWizard.step=3; drawAsgPane();
     };
@@ -2254,7 +2293,7 @@ function saveAsgWizard(){
     Object.assign(a, {
       aseguradora: asgWizard.aseguradora, procedimiento: asgWizard.procedimiento, id_medico: asgWizard.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'',
       hospital_conceptos: hospitalConceptosArr, hospital_total: hospitalTotal,
-      proveedor_nombre: asgWizard.proveedorNombre, proveedor_rfc: asgWizard.proveedorRFC, proveedor_conceptos: asgWizard.proveedorItems, proveedor_total: provTotal,
+      proveedor_nombre: asgWizard.proveedorNombre, proveedor_conceptos: asgWizard.proveedorItems, proveedor_total: provTotal,
       total_general: hospitalTotal+provTotal, condiciones: condicionesArr
     });
     logAudit('Cotización Aseguradora', a.id, 'Edición', a.aseguradora+' · '+a.procedimiento);
@@ -2266,7 +2305,7 @@ function saveAsgWizard(){
     id: folio, aseguradora: asgWizard.aseguradora, procedimiento: asgWizard.procedimiento, id_medico: asgWizard.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'',
     fecha_creacion: now.toISOString(), fecha_vigencia: addDays(now,30).toISOString(),
     hospital_conceptos: hospitalConceptosArr, hospital_total: hospitalTotal,
-    proveedor_nombre: asgWizard.proveedorNombre, proveedor_rfc: asgWizard.proveedorRFC, proveedor_conceptos: asgWizard.proveedorItems, proveedor_total: provTotal,
+    proveedor_nombre: asgWizard.proveedorNombre, proveedor_conceptos: asgWizard.proveedorItems, proveedor_total: provTotal,
     total_general: hospitalTotal+provTotal, condiciones: condicionesArr, estatus:'Borrador', __new:true
   };
   DB.cotizaciones_aseguradora.unshift(nueva);
@@ -2282,131 +2321,137 @@ function generateAseguradoraPDF(id){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'pt', format:'letter'});
   const pageW = doc.internal.pageSize.getWidth();
-  const NAVY=[27,62,115], BLUE=[38,96,171], LIGHTBLUE=[225,235,251];
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 28.35; // 1 cm
+  const NAVY=[27,62,115], BLUE=[38,96,171], PALEBLUE=[238,243,251], PALEGUINDA=[249,235,240], GUINDA=[142,27,60], GRAY=[70,78,86];
+  const FS = 11; // tamaño de letra único para todo el documento
 
-  try{ doc.addImage(window.LOGO_URI, 'JPEG', 48, 30, 42, 42); }catch(e){}
-  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(60,68,76);
-  doc.text('Fecha: '+fmtDate(a.fecha_creacion), pageW-48, 40, {align:'right'});
+  function footer(){
+    const n = doc.internal.getNumberOfPages();
+    for(let i=1;i<=n;i++){
+      doc.setPage(i);
+      doc.setFontSize(9); doc.setTextColor(140,148,155); doc.setFont('helvetica','normal');
+      doc.text(HOSP_INFO.direccion+' | Tel. '+HOSP_INFO.telefono, M, pageH-M+8);
+      doc.text('Página '+i+' de '+n, pageW-M, pageH-M+8, {align:'right'});
+    }
+  }
 
-  let y = 100;
-  doc.setDrawColor(...NAVY); doc.setLineWidth(1.2); doc.rect(48, y, pageW-96, 46);
-  doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(...NAVY);
-  doc.text('COTIZACIÓN DE PROCEDIMIENTO — '+a.aseguradora.toUpperCase(), pageW/2, y+18, {align:'center'});
-  doc.setFontSize(9.5);
-  const procLines = doc.splitTextToSize(a.procedimiento.toUpperCase(), pageW-120);
-  doc.text(procLines, pageW/2, y+32, {align:'center'});
-  y += 46 + (procLines.length>1 ? 12 : 0) + 10;
+  try{ doc.addImage(window.LOGO_URI, 'JPEG', M, M-6, 38, 38); }catch(e){}
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(60,68,76);
+  doc.text('Fecha: '+fmtDate(a.fecha_creacion), pageW-M, M+8, {align:'right'});
 
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(20,30,40);
-  doc.text('MÉDICO:', 48, y);
-  doc.setFont('helvetica','normal');
-  doc.text((m.nombre||'—').toUpperCase(), 100, y);
+  let y = M+52;
+  doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(M, y, pageW-M, y);
   y += 16;
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+  doc.text('COTIZACIÓN DE PROCEDIMIENTO — '+a.aseguradora.toUpperCase(), pageW/2, y, {align:'center'});
+  y += 15;
+  doc.setFontSize(FS);
+  const procLines = doc.splitTextToSize(a.procedimiento.toUpperCase(), pageW-2*M-20);
+  doc.text(procLines, pageW/2, y, {align:'center'});
+  y += procLines.length*13 + 8;
+  doc.setDrawColor(...NAVY); doc.line(M, y, pageW-M, y);
+  y += 18;
 
-  doc.setFillColor(255,247,222); doc.setDrawColor(230,200,120);
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(20,30,40);
+  doc.text('MÉDICO:', M, y);
+  doc.setFont('helvetica','normal');
+  doc.text((m.nombre||'—').toUpperCase(), M+56, y);
+  y += 18;
+
+  doc.setFillColor(252,248,238); doc.setDrawColor(225,205,150);
   const disc = 'El presente presupuesto es un desglose estimado para '+a.aseguradora+'. El costo indicado es aproximado y puede variar dependiendo de la situación médica del paciente, tiempos quirúrgicos y necesidades extraordinarias de la cirugía. Los conceptos y montos aquí expresados tienen carácter informativo y están sujetos a las condiciones generales descritas al final de este documento.';
-  const discLines = doc.splitTextToSize(disc, pageW-108);
-  const discH = discLines.length*10 + 14;
-  doc.rect(48, y, pageW-96, discH, 'FD');
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,70,20);
-  doc.text(discLines, 54, y+13);
-  y += discH + 14;
+  const discLines = doc.splitTextToSize(disc, pageW-2*M-14);
+  const discH = discLines.length*13 + 12;
+  doc.rect(M, y, pageW-2*M, discH, 'FD');
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(100,80,30);
+  doc.text(discLines, M+7, y+15);
+  y += discH + 16;
 
-  // Tabla de conceptos del hospital agrupados por categoría
+  // ---- Bloque HOSPITAL ----
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+  doc.text('HOSPITAL', M, y);
+  y += 6;
   const groups = {};
   (a.hospital_conceptos||[]).forEach(l=>{ const g=(l.categoria||'OTROS').toUpperCase(); (groups[g]=groups[g]||[]).push(l); });
   const body = [];
   Object.keys(groups).forEach(g=>{
-    body.push([{content:g, colSpan:2, styles:{fillColor:LIGHTBLUE, textColor:NAVY, fontStyle:'bold', fontSize:8.5}}]);
+    body.push([{content:g, colSpan:2, styles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS}}]);
     groups[g].forEach(l=> body.push([l.descripcion, String(l.cantidad)]));
   });
   if(!body.length) body.push(['Sin conceptos capturados','—']);
-  doc.autoTable({ startY:y, head:[['Concepto','Cant.']], body,
-    theme:'plain', headStyles:{fillColor:NAVY, textColor:255, fontStyle:'bold', fontSize:8.5},
-    bodyStyles:{fontSize:8, textColor:[30,40,50]}, margin:{left:48,right:48}, columnStyles:{1:{halign:'center', cellWidth:50}} });
-  y = doc.lastAutoTable.finalY;
+  doc.autoTable({ startY:y+6, head:[['Concepto','Cant.']], body,
+    theme:'plain', headStyles:{fillColor:[255,255,255], textColor:NAVY, fontStyle:'bold', fontSize:FS, lineWidth:{bottom:1}, lineColor:NAVY},
+    bodyStyles:{fontSize:FS, textColor:[30,40,50]}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:55}} });
+  y = doc.lastAutoTable.finalY + 8;
 
-  doc.setFillColor(...LIGHTBLUE); doc.rect(48, y, pageW-96, 26, 'F');
-  doc.setDrawColor(...NAVY); doc.rect(48, y, pageW-96, 26);
-  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...NAVY);
-  doc.text('COSTO APROXIMADO DEL HOSPITAL (IVA INCLUIDO)', 56, y+17);
-  doc.setFontSize(12);
-  doc.text(fmtMoney(a.hospital_total), pageW-56, y+17, {align:'right'});
-  y += 40;
+  doc.setFillColor(...PALEBLUE); doc.setDrawColor(...NAVY);
+  doc.rect(M, y, pageW-2*M, 28, 'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+  doc.text('COSTO APROXIMADO DEL HOSPITAL (IVA INCLUIDO)', M+8, y+18);
+  doc.text(fmtMoney(a.hospital_total), pageW-M-8, y+18, {align:'right'});
+  y += 42;
 
-  if(y > 640){ doc.addPage(); y = 60; }
-  doc.setFillColor(...NAVY); doc.rect(48, y, pageW-96, 20, 'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
-  doc.text('INSUMOS DE PROVEEDOR — '+(a.proveedor_nombre||'SIN ESPECIFICAR').toUpperCase(), 56, y+14);
-  y += 22;
-  if(a.proveedor_rfc){ doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(90,100,110); doc.text('RFC: '+a.proveedor_rfc, 48, y+8); y += 14; }
+  if(y > pageH-M-140){ doc.addPage(); y = M+20; }
+
+  // ---- Bloque PROVEEDOR ----
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
+  doc.text('INSUMOS DE PROVEEDOR — '+(a.proveedor_nombre||'SIN ESPECIFICAR').toUpperCase(), M, y);
+  y += 8;
 
   const provBody = (a.proveedor_conceptos||[]).length ? a.proveedor_conceptos.map(l=>[l.descripcion, String(l.cantidad)]) : [['Sin insumos capturados','—']];
-  doc.autoTable({ startY:y, head:[['Descripción','Cant.']], body:provBody,
-    theme:'plain', headStyles:{fillColor:BLUE, textColor:255, fontStyle:'bold', fontSize:8.5},
-    bodyStyles:{fontSize:8, textColor:[30,40,50]}, margin:{left:48,right:48}, columnStyles:{1:{halign:'center', cellWidth:50}} });
-  y = doc.lastAutoTable.finalY + 4;
+  doc.autoTable({ startY:y+6, head:[['Descripción','Cant.']], body:provBody,
+    theme:'plain', headStyles:{fillColor:[255,255,255], textColor:GUINDA, fontStyle:'bold', fontSize:FS, lineWidth:{bottom:1}, lineColor:GUINDA},
+    bodyStyles:{fontSize:FS, textColor:[30,40,50]}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:55}} });
+  y = doc.lastAutoTable.finalY + 8;
 
-  doc.setFillColor(...LIGHTBLUE); doc.rect(48, y, pageW-96, 30, 'F');
-  doc.setDrawColor(...NAVY); doc.rect(48, y, pageW-96, 30);
-  doc.setFont('helvetica','bold'); doc.setFontSize(8.3); doc.setTextColor(...NAVY);
-  doc.text('COSTO APROXIMADO DEL PROVEEDOR (IVA INCLUIDO)', 56, y+13);
-  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.text('Puede variar en función del material utilizado.', 56, y+23);
-  doc.setFont('helvetica','bold'); doc.setFontSize(12);
-  doc.text(fmtMoney(a.proveedor_total), pageW-56, y+19, {align:'right'});
-  y += 44;
+  doc.setFillColor(...PALEGUINDA); doc.setDrawColor(...GUINDA);
+  doc.rect(M, y, pageW-2*M, 34, 'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
+  doc.text('COSTO APROXIMADO DEL PROVEEDOR (IVA INCLUIDO)', M+8, y+15);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('Puede variar en función del material utilizado.', M+8, y+27);
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS);
+  doc.text(fmtMoney(a.proveedor_total), pageW-M-8, y+20, {align:'right'});
+  y += 48;
 
-  if(y > 700){ doc.addPage(); y = 60; }
-  doc.setFillColor(...NAVY); doc.rect(48, y, pageW-96, 32, 'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(255,255,255);
-  const totalLines = doc.splitTextToSize('COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (Hospital + Proveedor, IVA incluido)', 300);
-  doc.text(totalLines, 56, y+13);
-  doc.setFontSize(15);
-  doc.text(fmtMoney(a.total_general), pageW-56, y+22, {align:'right'});
+  if(y > pageH-M-60){ doc.addPage(); y = M+20; }
+  doc.setFillColor(40,40,45); doc.setDrawColor(20,20,24);
+  doc.rect(M, y, pageW-2*M, 30, 'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(255,255,255);
+  doc.text('COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (HOSPITAL + PROVEEDOR, IVA INCLUIDO)', M+8, y+19, {maxWidth: pageW-2*M-160});
+  doc.setFontSize(13);
+  doc.text(fmtMoney(a.total_general), pageW-M-8, y+20, {align:'right'});
 
-  const pageCount1 = doc.internal.getNumberOfPages();
-  for(let i=1;i<=pageCount1;i++){
-    doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(140,148,155); doc.setFont('helvetica','normal');
-    doc.text(HOSP_INFO.direccion+' | Tel. '+HOSP_INFO.telefono, 48, 770);
-    doc.text('Página '+i+' de '+(pageCount1+1), pageW-48, 770, {align:'right'});
-  }
+  footer();
 
   // Página final: condiciones generales en 2 columnas
   doc.addPage();
-  const MX2 = 40;
-  doc.setFillColor(...NAVY); doc.rect(0, 0, pageW, 40, 'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
-  doc.text('CONDICIONES GENERALES DEL PRESUPUESTO', pageW/2, 25, {align:'center'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+  doc.text('CONDICIONES GENERALES DEL PRESUPUESTO', pageW/2, M+10, {align:'center'});
+  doc.setDrawColor(...NAVY); doc.line(M, M+18, pageW-M, M+18);
 
   const cond = a.condiciones || [];
-  const colW = (pageW - MX2*2 - 14)/2;
-  let cx = [MX2, MX2+colW+14], cy = [64, 64];
+  const gap = 14;
+  const colW = (pageW - M*2 - gap)/2;
+  let cx = [M, M+colW+gap], cy = [M+34, M+34];
+  doc.setFontSize(FS);
   cond.forEach((cl,i)=>{
     const col = i%2;
     const titleLines = doc.splitTextToSize(cl.titulo || ('Condición '+(i+1)), colW-16);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.6);
     const textLines = doc.splitTextToSize(cl.texto, colW-16);
-    const boxH = 14 + titleLines.length*11 + textLines.length*9.5 + 10;
-    if(cy[col]+boxH > 760){ doc.addPage(); cy=[54,54];
-      doc.setFillColor(...NAVY); doc.rect(0,0,pageW,0,'F');
-    }
-    doc.setDrawColor(...BLUE); doc.setFillColor(250,251,255);
+    const boxH = 12 + titleLines.length*13 + textLines.length*13 + 8;
+    if(cy[col]+boxH > pageH-M){ doc.addPage(); cy=[M+16,M+16]; }
+    doc.setDrawColor(...BLUE); doc.setFillColor(252,253,255);
     doc.roundedRect(cx[col], cy[col], colW, boxH, 4, 4, 'FD');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.3); doc.setTextColor(...BLUE);
-    doc.text(titleLines, cx[col]+8, cy[col]+13);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.6); doc.setTextColor(70,78,86);
-    doc.text(textLines, cx[col]+8, cy[col]+13+titleLines.length*11);
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...BLUE);
+    doc.text(titleLines, cx[col]+8, cy[col]+15);
+    doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(...GRAY);
+    doc.text(textLines, cx[col]+8, cy[col]+15+titleLines.length*13);
     cy[col] += boxH + 10;
   });
 
-  const finalPageCount = doc.internal.getNumberOfPages();
-  for(let i=pageCount1+1;i<=finalPageCount;i++){
-    doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(140,148,155); doc.setFont('helvetica','normal');
-    doc.text(HOSP_INFO.direccion+' | Tel. '+HOSP_INFO.telefono, 40, 782);
-    doc.text('Página '+i+' de '+finalPageCount, pageW-40, 782, {align:'right'});
-  }
+  footer();
 
   const fileName = [a.id, slugify(a.aseguradora), slugify(a.procedimiento)].filter(Boolean).join('_') + '.pdf';
   doc.save(fileName);
@@ -2759,40 +2804,59 @@ function wireMedicoMultiPicker(searchEl, listEl, selMap){
 /* ============================================================
    CONDICIONES PREDEFINIDAS (catálogo, usado por cotizaciones y convenios)
 ============================================================ */
-let condState = { search:'' };
+let condState = { search:'', contexto:'todas' };
 function renderCondiciones(){
   document.getElementById('content').innerHTML = `
     <div class="card" style="margin-bottom:18px;">
       <div style="font-weight:700; font-size:14px; margin-bottom:6px;">Agregar condición al catálogo</div>
-      <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Las condiciones marcadas como "predeterminada" se agregan automáticamente a toda cotización nueva. Este mismo catálogo se usa para armar convenios, procedimientos y paquetes.</div>
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Las condiciones marcadas como "predeterminada" se agregan automáticamente a toda cotización nueva del contexto elegido. Este mismo catálogo se usa para cotizaciones a médicos, convenios, procedimientos, paquetes y cotizaciones para aseguradoras.</div>
       <div class="form-grid">
         <div class="form-field"><label>Título (opcional)</label><input class="input uc-input" id="cond-titulo" style="width:100%;" placeholder="EJ. ANTICIPO"></div>
+        <div class="form-field"><label>Se usa en</label><select class="select" id="cond-contexto" style="width:100%;">
+          <option value="medico">Cotizaciones a médicos</option>
+          <option value="aseguradora">Cotizaciones para aseguradoras</option>
+          <option value="ambos">Ambas</option>
+        </select></div>
         <div class="form-field full"><label>Texto de la condición</label><input class="input uc-input" id="cond-new" style="width:100%;" placeholder="ESCRIBE EL TEXTO DE LA CONDICIÓN…"></div>
       </div>
       <button class="btn btn-primary" id="cond-add" style="margin-top:10px;">${icon('plus')} Agregar</button>
     </div>
     <div class="toolbar">
-      <div class="searchbox" style="width:280px;">${icon('search')}<input id="cond-search" placeholder="Buscar condición…"></div>
+      <div class="searchbox" style="width:260px;">${icon('search')}<input id="cond-search" placeholder="Buscar condición…"></div>
+      <div class="chip-filter" id="cond-chips">
+        <button class="chip ${condState.contexto==='todas'?'active':''}" data-c="todas">Todas</button>
+        <button class="chip ${condState.contexto==='medico'?'active':''}" data-c="medico">Médicos</button>
+        <button class="chip ${condState.contexto==='aseguradora'?'active':''}" data-c="aseguradora">Aseguradoras</button>
+      </div>
       <span style="font-size:12px; color:var(--text-faint); margin-left:auto;">${DB.clausulas.filter(c=>c.activa!==false).length} activas · ${DB.clausulas.filter(c=>c.default).length} predeterminadas</span>
     </div>
     <div class="table-wrap"><div id="cond-list"></div></div>`;
   document.getElementById('cond-search').oninput = e=>{ condState.search=e.target.value; drawCondList(); };
+  document.getElementById('cond-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ condState.contexto=b.dataset.c; drawCondList(); document.getElementById('cond-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===b)); });
   document.getElementById('cond-add').onclick = ()=>{
     const titulo = document.getElementById('cond-titulo').value.trim();
+    const contexto = document.getElementById('cond-contexto').value;
     const input = document.getElementById('cond-new'); const txt = input.value.trim();
     if(!txt){ toast('Escribe el texto de la condición'); return; }
-    const nueva = { id: uid('cl'), titulo, texto: txt, default:false, activa:true, origen:'Agregada en CRM', __new:true };
+    const nueva = { id: uid('cl'), titulo, texto: txt, default:false, activa:true, contexto, origen:'Agregada en CRM', __new:true };
     DB.clausulas.push(nueva); logAudit('Condición', nueva.id, 'Creación', (titulo?titulo+': ':'')+txt.slice(0,50));
     persistExtra(); document.getElementById('cond-titulo').value=''; input.value=''; toast('Condición agregada'); renderCondiciones();
   };
   drawCondList();
 }
+function contextoPill(contexto){
+  if(contexto==='aseguradora') return `<span class="pill pill-guinda pill-small" data-ctx="aseguradora" style="cursor:pointer;">Aseguradoras</span>`;
+  if(contexto==='ambos') return `<span class="pill pill-violet pill-small" data-ctx="ambos" style="cursor:pointer;">Ambas</span>`;
+  return `<span class="pill pill-blue pill-small" data-ctx="medico" style="cursor:pointer;">Médicos</span>`;
+}
 function drawCondList(){
-  const list = DB.clausulas.filter(c=>c.activa!==false && (fuzzyMatch(c.texto, condState.search) || fuzzyMatch(c.titulo||'', condState.search)));
-  document.getElementById('cond-list').innerHTML = list.length ? `<table><thead><tr><th>Condición</th><th style="text-align:center;">Predeterminada</th><th>Origen</th><th></th></tr></thead><tbody>
+  let list = DB.clausulas.filter(c=>c.activa!==false && (fuzzyMatch(c.texto, condState.search) || fuzzyMatch(c.titulo||'', condState.search)));
+  if(condState.contexto!=='todas') list = list.filter(c=> (c.contexto||'medico')===condState.contexto || c.contexto==='ambos');
+  document.getElementById('cond-list').innerHTML = list.length ? `<table><thead><tr><th>Condición</th><th style="text-align:center;">Predeterminada</th><th>Se usa en</th><th>Origen</th><th></th></tr></thead><tbody>
     ${list.map(cl=>`<tr>
-      <td style="font-size:12.5px; max-width:460px;">${cl.titulo?`<b>${cl.titulo}:</b> `:''}${cl.texto}</td>
+      <td style="font-size:12.5px; max-width:420px;">${cl.titulo?`<b>${cl.titulo}:</b> `:''}${cl.texto}</td>
       <td style="text-align:center;"><button type="button" class="mark-toggle ${cl.default?'active':''}" data-def="${cl.id}">${cl.default?icon('check'):''}</button></td>
+      <td>${contextoPill(cl.contexto||'medico')}</td>
       <td><span class="pill ${cl.__new?'pill-blue':'pill-muted'}">${cl.origen || (cl.__new?'Agregada en CRM':'Catálogo original')}</span></td>
       <td><button class="btn btn-sm btn-danger" data-del="${cl.id}">${icon('trash')}</button></td>
     </tr>`).join('')}</tbody></table>`
@@ -2800,6 +2864,16 @@ function drawCondList(){
   document.querySelectorAll('#cond-list [data-def]').forEach(btn=> btn.onclick = ()=>{
     const cl = DB.clausulas.find(c=>String(c.id)===String(btn.dataset.def));
     if(cl){ cl.default = !cl.default; logAudit('Condición', cl.id, cl.default?'Marcada predeterminada':'Desmarcada predeterminada', (cl.titulo||cl.texto).slice(0,50)); persistExtra(); drawCondList(); }
+  });
+  document.querySelectorAll('#cond-list [data-ctx]').forEach(p=> p.onclick = ()=>{
+    const row = p.closest('tr'); const btn = row.querySelector('[data-def]');
+    const cl = DB.clausulas.find(c=>String(c.id)===String(btn.dataset.def));
+    if(!cl) return;
+    const order = ['medico','aseguradora','ambos'];
+    const cur = order.indexOf(cl.contexto||'medico');
+    cl.contexto = order[(cur+1)%order.length];
+    logAudit('Condición', cl.id, 'Contexto actualizado', cl.contexto);
+    persistExtra(); drawCondList();
   });
   document.querySelectorAll('#cond-list [data-del]').forEach(b=> b.onclick = ()=>{
     const cl = DB.clausulas.find(c=>String(c.id)===String(b.dataset.del));
