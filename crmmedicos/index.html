@@ -164,6 +164,10 @@ tbody tr.clickable:hover{background:var(--surface-2); cursor:pointer;}
 .btn-accent{background:var(--accent); border-color:var(--accent); color:#fff;}
 .btn-guinda{background:var(--guinda); border-color:var(--guinda); color:#fff;}
 .btn-guinda:hover{background:var(--guinda-dark);}
+.btn-whatsapp{width:30px; height:30px; border-radius:50%; background:#25D366; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 2px 6px rgba(37,211,102,.4); transition:.12s;}
+.btn-whatsapp:hover{transform:scale(1.08);}
+.btn-whatsapp svg{width:17px; height:17px;}
+.btn-whatsapp.disabled{background:var(--surface-3); box-shadow:none; cursor:not-allowed;}
 .btn-danger{color:var(--red); border-color:var(--red-bg);}
 .btn-danger:hover{background:var(--red-bg);}
 .btn-sm{padding:6px 11px; font-size:12px;}
@@ -322,6 +326,10 @@ window.CRM_ICON_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAY
 /* ============ ICONS ============ */
 if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
 const ICON = {
+  whatsapp:'<path d="M17.6 6.32A8.86 8.86 0 0 0 3.15 16.9L2 22l5.25-1.1A8.86 8.86 0 0 0 12.1 22h.01a8.86 8.86 0 0 0 8.85-8.86 8.8 8.8 0 0 0-3.36-6.82z" fill="currentColor" stroke="none"/><path d="M9.1 8.2c.2-.45.4-.46.6-.47h.5c.16 0 .38-.06.6.46s.75 1.83.82 1.96c.06.13.1.29.02.47-.08.17-.13.28-.26.43-.13.15-.27.34-.39.46-.13.13-.26.27-.11.53.15.27.68 1.12 1.47 1.81 1.01.9 1.86 1.18 2.13 1.31.27.13.42.11.58-.07.16-.18.68-.79.86-1.06.18-.27.36-.22.6-.13.25.09 1.58.75 1.85.88.27.13.45.2.51.31.07.11.07.65-.16 1.28-.23.63-1.34 1.24-1.85 1.27-.5.03-1 .23-3.36-.7-2.85-1.13-4.65-4.05-4.79-4.24-.14-.18-1.14-1.52-1.14-2.9s.72-2.05.98-2.33z" fill="#fff" stroke="none"/>',
+  sortUp:'<path d="M6 15l6-6 6 6"/>',
+  sortDown:'<path d="M6 9l6 6 6-6"/>',
+  sortBoth:'<path d="M8 9l4-4 4 4M8 15l4 4 4-4"/>',
   dashboard:'<path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>',
   doctor:'<path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 1 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M9 12v1a3 3 0 0 0 6 0v-1"/>',
   catalog:'<path d="M4 4h16v4H4z"/><path d="M4 12h16v8H4z"/><path d="M9 16h6"/>',
@@ -382,7 +390,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.8.0';
+const APP_VERSION = 'v1.9.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -414,7 +422,7 @@ async function loadSession(){
           if(md) Object.assign(md, ov);
         });
       }
-      if(extra.medicos_custom) DB.medicos = DB.medicos.concat(extra.medicos_custom);
+      if(extra.medicos_custom) DB.medicos = extra.medicos_custom.concat(DB.medicos);
       if(extra.conceptos_overrides){
         Object.entries(extra.conceptos_overrides).forEach(([id,ov])=>{
           const co = DB.conceptos.find(c=>String(c.id)===id);
@@ -756,7 +764,8 @@ function renderDashboard(){
           ${cv ? `<span class="pill pill-green pill-small" style="font-size:11px;">${cv.nombre}</span>` : `<button class="btn btn-sm btn-guinda" style="padding:3px 10px; font-size:11px;" onclick="openConvenioModal(null,'${cs.id_medico}')">Negociar convenio</button>`}
         </div>
       </div>
-      <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+      <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0; align-items:center;">
+        ${whatsappButtonHtml(cs.id, 28)}
         <button class="btn btn-sm" style="font-size:11px;" onclick="openCasoDrawer('${cs.id}')">Ver caso</button>
         <button class="btn btn-sm btn-primary" style="font-size:11px;" onclick="atenderAccionMonitor('${cs.id}')">${icon('check')} Atender</button>
       </div>
@@ -890,7 +899,7 @@ function fmtMesLabel(key){ const [y,m]=key.split('-'); const meses=['ene','feb',
 /* ============================================================
    MÉDICOS
 ============================================================ */
-let medState = { page:1, perPage:9, search:'', estatus:'todos', esp:'todas', verInactivos:false };
+let medState = { page:1, perPage:9, search:'', estatus:'todos', esp:'todas', verInactivos:false, sortField:null, sortDir:'asc' };
 function renderMedicos(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
@@ -905,7 +914,10 @@ function renderMedicos(){
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openMedicoModal()">${icon('plus')} Nuevo médico</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Médico</th><th>Estatus</th><th>Contacto</th><th>Cotizaciones</th><th>Credencial</th></tr></thead>
+      <table><thead><tr>
+        <th class="sortable-th" data-sort="nombre" style="cursor:pointer; user-select:none;">Médico <span id="sort-ic-nombre"></span></th>
+        <th class="sortable-th" data-sort="estatus" style="cursor:pointer; user-select:none;">Estatus <span id="sort-ic-estatus"></span></th>
+        <th>Contacto</th><th>Cotizaciones</th><th>Credencial</th></tr></thead>
       <tbody id="medicos-tbody"></tbody></table>
       <div class="pagination" id="medicos-pg"></div>
     </div>`;
@@ -913,6 +925,13 @@ function renderMedicos(){
   document.getElementById('medico-esp-filter').onchange = e=>{ medState.esp=e.target.value; medState.page=1; drawMedTable(); };
   document.getElementById('medico-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ medState.estatus=b.dataset.s; medState.page=1; drawMedTable(); });
   document.getElementById('medico-ver-inactivos').onchange = e=>{ medState.verInactivos=e.target.checked; medState.page=1; drawMedTable(); };
+  document.querySelectorAll('.sortable-th').forEach(th=> th.onclick = ()=>{
+    const f = th.dataset.sort;
+    if(medState.sortField!==f){ medState.sortField=f; medState.sortDir='asc'; }
+    else if(medState.sortDir==='asc'){ medState.sortDir='desc'; }
+    else { medState.sortField=null; medState.sortDir='asc'; }
+    medState.page=1; drawMedTable();
+  });
   drawMedTable();
 }
 function drawMedTable(){
@@ -923,7 +942,22 @@ function drawMedTable(){
     if(medState.esp!=='todas' && m.especialidad!==medState.esp) return false;
     return true;
   });
+  if(medState.sortField==='nombre'){
+    list = [...list].sort((a,b)=> a.nombre.localeCompare(b.nombre,'es'));
+    if(medState.sortDir==='desc') list.reverse();
+  } else if(medState.sortField==='estatus'){
+    list = [...list].sort((a,b)=> (a.estatus_relacion||'').localeCompare(b.estatus_relacion||'','es'));
+    if(medState.sortDir==='desc') list.reverse();
+  }
+  // sin orden explícito: se conserva el orden natural (el médico más reciente queda arriba)
   document.getElementById('medico-chips').querySelectorAll('.chip').forEach(b=>b.classList.toggle('active', b.dataset.s===medState.estatus));
+  ['nombre','estatus'].forEach(f=>{
+    const el = document.getElementById('sort-ic-'+f);
+    if(!el) return;
+    if(medState.sortField!==f){ el.innerHTML = icon('sortBoth'); el.style.opacity='0.35'; }
+    else { el.innerHTML = icon(medState.sortDir==='asc'?'sortUp':'sortDown'); el.style.opacity='1'; }
+    el.querySelectorAll('svg').forEach(s=>{ s.style.width='11px'; s.style.height='11px'; s.style.verticalAlign='middle'; });
+  });
   const page = paginate(list, medState.page, medState.perPage);
   document.getElementById('medicos-tbody').innerHTML = page.length ? page.map(m=>{
     const nCot = DB.cotizaciones.filter(c=>String(c.id_medico)===String(m.id)).length;
@@ -1031,8 +1065,8 @@ function openMedicoModal(id){
       Object.assign(m, payload); m.__edited = true;
       logAudit('Médico', m.id, 'Edición', nombre);
     } else {
-      const nuevo = Object.assign({ id: uid('MED').toUpperCase(), revisado:false, __new:true }, payload);
-      DB.medicos.push(nuevo);
+      const nuevo = Object.assign({ id: uid('MED').toUpperCase(), revisado:false, fecha_alta:new Date().toISOString(), __new:true }, payload);
+      DB.medicos.unshift(nuevo);
       logAudit('Médico', nuevo.id, 'Alta', nombre+' — '+especialidad);
     }
     persistExtra(); closeModal(); toast('Médico guardado'); renderMedicos();
@@ -2595,14 +2629,17 @@ function drawCasoTree(){
           if(cs.proxima_accion_fecha){ const d=new Date(cs.proxima_accion_fecha); accion = `<span class="pill pill-${d<hoy?'red':'amber'} pill-small">${icon('followup')} ${fmtDate(cs.proxima_accion_fecha)}</span>`; }
           const prog = cs.fecha_programacion ? `<span class="pill pill-violet pill-small">${icon('bolt')} Cirugía ${fmtDate(cs.fecha_programacion)}</span>` : '';
           const nextIt = nextPendingInteraction(cs);
-          return `<div class="clickable" data-cid="${cs.id}" style="padding:12px 18px 12px 46px; border-bottom:1px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
-              <div style="font-size:12.5px; font-weight:600;">${cs.titulo}${cs.id_cotizacion?` <span class="mono" style="font-weight:500; color:var(--text-faint);">· ${cs.id_cotizacion}</span>`:''}</div>
-              ${estatusPillGeneric(cs.estatus, ESTADOS_CASO)}
+          return `<div class="clickable" data-cid="${cs.id}" style="padding:12px 18px 12px 46px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:10px;">
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
+                <div style="font-size:12.5px; font-weight:600;">${cs.titulo}${cs.id_cotizacion?` <span class="mono" style="font-weight:500; color:var(--text-faint);">· ${cs.id_cotizacion}</span>`:''}</div>
+                ${estatusPillGeneric(cs.estatus, ESTADOS_CASO)}
+              </div>
+              ${casoProgressBar(cs.estatus)}
+              <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}</div>
+              ${nextIt ? `<div style="margin-top:4px; max-width:260px;"><span class="pill pill-blue pill-small" style="margin-bottom:2px;">${nextIt.tipo}</span>${interactionProgressBar(nextIt, true)}</div>` : ''}
             </div>
-            ${casoProgressBar(cs.estatus)}
-            <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}</div>
-            ${nextIt ? `<div style="margin-top:4px; max-width:260px;"><span class="pill pill-blue pill-small" style="margin-bottom:2px;">${nextIt.tipo}</span>${interactionProgressBar(nextIt, true)}</div>` : ''}
+            ${whatsappButtonHtml(cs.id, 28)}
           </div>`;
         }).join('')}
       </div>
@@ -2660,10 +2697,11 @@ function openCasoDrawer(id){
       <div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;">
         ${Object.keys(ESTADOS_CASO).map(s=>`<button class="btn btn-sm ${cs.estatus===s?'btn-primary':''}" onclick="setCasoEstatus('${cs.id}','${s}')">${s}</button>`).join('')}
       </div>
-      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
         <button class="btn btn-sm" onclick="closeDrawer();openCasoModal('${cs.id}')">${icon('config')} Editar caso</button>
         <button class="btn btn-sm btn-primary" onclick="openInteraccionModal('${cs.id}')">${icon('plus')} Nueva interacción</button>
         ${cs.id_cotizacion ? `<button class="btn btn-sm" onclick="closeDrawer();openCotizacionDrawer('${cs.id_cotizacion}')">${icon('quote')} Ver cotización</button>` : ''}
+        ${whatsappButtonHtml(cs.id)}
       </div>
       ${cs.fecha_programacion ? `<div class="card" style="margin-bottom:12px; background:var(--violet-light); border-color:transparent;">
         <div style="font-size:11px; font-weight:700; color:var(--violet); text-transform:uppercase;">Cirugía programada</div>
@@ -2696,6 +2734,38 @@ function completarInteraccion(casoId, itId){
   if(cs.proxima_accion_fecha && it.fecha_programada && cs.proxima_accion_fecha===it.fecha_programada){ cs.proxima_accion_fecha=null; cs.proxima_accion_nota=''; }
   logAudit('Caso', casoId, 'Interacción completada', it.tipo);
   persistExtra(); toast('Interacción marcada como completada'); openCasoDrawer(casoId); renderFollowUpBubble();
+}
+/* ---- Seguimiento vía WhatsApp con mensaje predeterminado ---- */
+function whatsappSeguimientoLink(cs){
+  const m = medicoById(cs.id_medico);
+  if(!m || !m.telefono) return null;
+  let digits = String(m.telefono).replace(/\D/g,'');
+  if(!digits) return null;
+  if(digits.length===10) digits = '52'+digits;
+  const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
+  const procedimiento = cot ? cot.procedimiento : cs.titulo;
+  const nombreCorto = (m.nombre||'').replace(/^DRA?\.?\s+/i,'');
+  let msg = `Hola Dr(a). ${nombreCorto}, buen día 👋. Le escribimos de Hospital Noor para darle seguimiento a su presupuesto de *${procedimiento}*`;
+  if(cs.id_cotizacion) msg += ` (folio ${cs.id_cotizacion})`;
+  msg += '.';
+  if(cs.proxima_accion_nota) msg += `\n\nNota: ${cs.proxima_accion_nota}`;
+  msg += '\n\n¿Le gustaría confirmar la programación o tiene alguna duda al respecto? Quedamos atentos.';
+  return 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+}
+function whatsappButtonHtml(casoId, size){
+  return `<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); sendWhatsAppSeguimiento('${casoId}')" title="Enviar seguimiento por WhatsApp" style="${size?('width:'+size+'px;height:'+size+'px;'):''}">${icon('whatsapp')}</button>`;
+}
+function sendWhatsAppSeguimiento(casoId){
+  const cs = DB.casos.find(x=>x.id===casoId); if(!cs) return;
+  const link = whatsappSeguimientoLink(cs);
+  if(!link){ toast('Este médico no tiene teléfono registrado'); return; }
+  window.open(link, '_blank');
+  cs.interacciones = cs.interacciones||[];
+  cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'WhatsApp', nota:'Mensaje de seguimiento enviado por WhatsApp'});
+  logAudit('Caso', casoId, 'WhatsApp enviado', 'Mensaje de seguimiento');
+  persistExtra(); toast('Abriendo WhatsApp…');
+  if(CURRENT_ROUTE==='casos') drawCasoTree();
+  if(CURRENT_ROUTE==='dashboard') renderDashboard();
 }
 function atenderAccionMonitor(id){
   const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
