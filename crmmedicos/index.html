@@ -390,7 +390,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.9.0';
+const APP_VERSION = 'v1.10.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -996,6 +996,10 @@ function openMedicoDrawer(id){
       <div id="med-tab-content"></div>
     </div>`);
   const paneInfo = `
+    <div style="font-weight:700; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Estatus rápido</div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;">
+      ${Object.keys(ESTADOS_MED).map(s=>`<button class="btn btn-sm ${m.estatus_relacion===s?'btn-primary':''}" onclick="setMedicoEstatus('${m.id}','${s}')">${s}</button>`).join('')}
+    </div>
     <div class="detail-row"><span class="k">Correo</span><span class="v">${m.correo || 'Sin credencializar'}</span></div>
     <div class="detail-row"><span class="k">Teléfono</span><span class="v">${m.telefono || '—'}</span></div>
     <div class="detail-row"><span class="k">Especialidad</span><span class="v">${m.especialidad}</span></div>
@@ -1071,6 +1075,13 @@ function openMedicoModal(id){
     }
     persistExtra(); closeModal(); toast('Médico guardado'); renderMedicos();
   };
+}
+function setMedicoEstatus(id, estatus){
+  const m = medicoById(id); if(!m) return;
+  const prev = m.estatus_relacion; m.estatus_relacion = estatus; if(!m.__new) m.__edited = true;
+  logAudit('Médico', id, 'Cambio de estatus', `${prev} → ${estatus}`);
+  persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openMedicoDrawer(id);
+  if(CURRENT_ROUTE==='medicos') drawMedTable();
 }
 function eliminarMedico(id){
   const m = medicoById(id); if(!m) return;
@@ -2718,10 +2729,11 @@ function openCasoDrawer(id){
         const p = interactionProgress(it);
         return `<div class="line-item" style="align-items:flex-start; flex-direction:column;">
           <div style="display:flex; justify-content:space-between; width:100%; align-items:flex-start; gap:8px;">
-            <div class="desc"><span class="pill pill-blue pill-small">${it.tipo}</span> ${it.nota||''}<div class="cat">Registrada ${fmtDateTime(it.fecha)}</div></div>
+            <div class="desc"><span class="pill pill-blue pill-small">${it.tipo}</span>${it.fecha_programada?` <span class="pill pill-violet pill-small">${fmtDate(it.fecha_programada)}${it.hora_programada?' · '+it.hora_programada:''}</span>`:''} ${it.nota||''}<div class="cat">Registrada ${fmtDateTime(it.fecha)}</div></div>
             ${(p && !p.completed) ? `<button class="btn btn-sm" style="flex-shrink:0;" onclick="completarInteraccion('${cs.id}','${it.id}')">${icon('check')} Completar</button>` : ''}
           </div>
           ${p ? `<div style="width:100%;">${interactionProgressBar(it, false)}</div>` : ''}
+          ${(it.adjuntos||[]).length ? `<div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">${it.adjuntos.map(adj=>adjuntoChipHtml(adj)).join('')}</div>` : ''}
         </div>`;
       }).join('')
         : emptyMini('Sin interacciones registradas todavía.')}
@@ -2781,27 +2793,65 @@ function setCasoEstatus(id, estatus){
   logAudit('Caso', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
 }
+function formatBytes(n){ if(!n) return '0 KB'; if(n<1024*1024) return Math.round(n/1024)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; }
+function adjuntoChipHtml(adj){
+  const isImg = adj.tipo && adj.tipo.startsWith('image/');
+  const isAudio = adj.tipo && adj.tipo.startsWith('audio/');
+  const emoji = isImg ? '🖼️' : (isAudio ? '🎙️' : '📄');
+  if(isImg){
+    return `<a href="${adj.dataUrl}" download="${adj.nombre}" target="_blank" style="display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none;">
+      <img src="${adj.dataUrl}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+      <span style="font-size:9.5px; color:var(--text-faint); max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${adj.nombre}</span>
+    </a>`;
+  }
+  return `<a href="${adj.dataUrl}" download="${adj.nombre}" target="_blank" class="pill pill-muted pill-small" style="text-decoration:none; gap:4px;">${emoji} ${adj.nombre} <span style="color:var(--text-faint);">(${formatBytes(adj.tamano)})</span></a>`;
+}
+const MAX_ADJUNTO_MB = 4;
 function openInteraccionModal(casoId){
+  let pendingFiles = [];
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Nueva interacción</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
-      <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">Registra algo que ya ocurrió, o programa una acción futura (llamada, WhatsApp, cita, etc.) capturando su fecha.</div>
+      <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">Registra algo que ya ocurrió, o programa una acción futura (llamada, WhatsApp, cita, etc.) capturando fecha y hora.</div>
       <div class="form-grid">
         <div class="form-field"><label>Tipo</label><select class="select" id="it-tipo" style="width:100%;">${TIPOS_INTERACCION.filter(t=>t!=='Sistema').map(t=>`<option>${t}</option>`).join('')}</select></div>
         <div class="form-field"><label>Fecha programada (opcional)</label><input class="input" type="date" id="it-fecha-prog" style="width:100%;"></div>
+        <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="it-hora-prog" style="width:100%;"></div>
         <div class="form-field full"><label>Nota / solicitud del médico</label><textarea class="input uc-input" id="it-nota" style="width:100%; min-height:80px;" placeholder="DETALLE DE LA INTERACCIÓN O SOLICITUD DEL MÉDICO…"></textarea></div>
       </div>
+      <div style="font-weight:700; font-size:12.5px; margin:14px 0 6px;">Adjuntos (imagen, documento o grabación)</div>
+      <div style="font-size:11px; color:var(--text-faint); margin-bottom:8px;">Ej. la foto de una lista de materiales que te envió el médico, un PDF o una nota de voz ya grabada. Máximo ${MAX_ADJUNTO_MB} MB por archivo.</div>
+      <input type="file" id="it-file" accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx" multiple style="display:none;">
+      <button class="btn btn-sm" type="button" id="it-file-btn">${icon('upload')} Adjuntar archivo</button>
+      <div id="it-file-list" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;"></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="it-save">Guardar</button></div>`);
+  const drawPending = ()=>{
+    document.getElementById('it-file-list').innerHTML = pendingFiles.map((f,i)=>`
+      <span class="pill pill-blue pill-small" style="gap:4px;">${f.nombre} <span style="color:var(--text-faint);">(${formatBytes(f.tamano)})</span>
+        <button type="button" data-rmf="${i}" style="border:none; background:none; color:inherit; cursor:pointer; padding:0 0 0 4px;">✕</button></span>`).join('');
+    document.querySelectorAll('[data-rmf]').forEach(b=> b.onclick = ()=>{ pendingFiles.splice(parseInt(b.dataset.rmf),1); drawPending(); });
+  };
+  document.getElementById('it-file-btn').onclick = ()=> document.getElementById('it-file').click();
+  document.getElementById('it-file').onchange = async (e)=>{
+    const files = [...e.target.files];
+    for(const file of files){
+      if(file.size > MAX_ADJUNTO_MB*1024*1024){ toast('"'+file.name+'" pesa más de '+MAX_ADJUNTO_MB+' MB, no se adjuntó'); continue; }
+      const dataUrl = await new Promise(res=>{ const r = new FileReader(); r.onload = ()=>res(r.result); r.readAsDataURL(file); });
+      pendingFiles.push({ nombre:file.name, tipo:file.type, tamano:file.size, dataUrl });
+    }
+    e.target.value=''; drawPending();
+  };
   document.getElementById('it-save').onclick = ()=>{
     const cs = DB.casos.find(x=>x.id===casoId);
     const fechaProg = document.getElementById('it-fecha-prog').value || null;
+    const horaProg = document.getElementById('it-hora-prog').value || null;
     const it = { id:uid('it'), fecha:new Date().toISOString(), tipo:document.getElementById('it-tipo').value, nota:document.getElementById('it-nota').value,
-      fecha_programada: fechaProg, estatus: fechaProg ? 'Pendiente' : null };
+      fecha_programada: fechaProg, hora_programada: horaProg, estatus: fechaProg ? 'Pendiente' : null, adjuntos: pendingFiles };
     cs.interacciones = cs.interacciones||[]; cs.interacciones.push(it);
-    if(fechaProg){ cs.proxima_accion_fecha = fechaProg; cs.proxima_accion_nota = it.tipo+(it.nota?': '+it.nota:''); }
+    if(fechaProg){ cs.proxima_accion_fecha = fechaProg; cs.proxima_accion_nota = it.tipo+(horaProg?' '+horaProg:'')+(it.nota?': '+it.nota:''); }
     const md = medicoById(cs.id_medico);
-    logAudit('Caso', casoId, 'Interacción registrada', it.tipo+' · '+(md?md.nombre:'')+(fechaProg?' · programada '+fmtDate(fechaProg):''));
+    logAudit('Caso', casoId, 'Interacción registrada', it.tipo+' · '+(md?md.nombre:'')+(fechaProg?' · programada '+fmtDate(fechaProg)+(horaProg?' '+horaProg:''):'')+(pendingFiles.length?' · '+pendingFiles.length+' adjunto(s)':''));
     persistExtra(); closeModal(); toast(fechaProg?'Interacción programada':'Interacción registrada'); openCasoDrawer(casoId); renderFollowUpBubble();
   };
 }
