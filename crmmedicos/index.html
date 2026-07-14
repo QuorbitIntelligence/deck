@@ -439,7 +439,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.13.1';
+const APP_VERSION = 'v1.13.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2783,7 +2783,7 @@ function getMonday(d){ const date = new Date(d); date.setHours(0,0,0,0); const d
 function ymd(d){ const dt = new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 const DIAS_SEMANA = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
 const MESES_NOMBRE = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-const HOUR_START = 7, HOUR_END = 21; // 7:00 a 21:00
+const HOUR_START = 7, HOUR_END = 24; // 7:00 a 23:59
 let calState = { view:'semana', weekStart: getMonday(new Date()), monthCursor: new Date(), dayCursor: new Date() };
 function fechaProgress(caso){
   const start = new Date(caso.fecha_apertura).getTime();
@@ -2842,29 +2842,32 @@ function actividadesDeDia(dStr){
   const acts = [];
   casosDeDia(dStr).forEach(cs=>{
     const p = fechaProgress(cs);
+    const m = medicoById(cs.id_medico);
+    const folioTxt = cs.id_cotizacion ? (cs.id_cotizacion+' — ') : '';
     acts.push({ tipo:'vencimiento', hora: cs.hora_vencimiento||null, color:p.color, pct:p.pct, pctClamped:p.pctClamped,
-      titulo:(medicoById(cs.id_medico)||{}).nombre||'—', sub: cs.titulo, refTipo:'caso', refId:cs.id });
+      titulo: folioTxt+(m?m.nombre:'—'), sub: cs.titulo, refTipo:'caso', refId:cs.id });
   });
   DB.cotizaciones.filter(c=>c.fecha_creacion && c.fecha_creacion.slice(0,10)===dStr).forEach(c=>{
     const hora = new Date(c.fecha_creacion).toTimeString().slice(0,5);
     const m = medicoById(c.id_medico);
-    acts.push({ tipo:'cotizacion', hora, titulo:'Cotización '+c.id, sub:(m?m.nombre:'')+(c.procedimiento?(' · '+c.procedimiento):''), refTipo:'cotizacion', refId:c.id });
+    acts.push({ tipo:'cotizacion', hora, titulo: c.id+' — '+(m?m.nombre:'—'), sub: c.procedimiento||'', refTipo:'cotizacion', refId:c.id });
   });
   DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && a.fecha_creacion.slice(0,10)===dStr).forEach(a=>{
     const hora = new Date(a.fecha_creacion).toTimeString().slice(0,5);
-    acts.push({ tipo:'cotizacion', hora, titulo:'Aseguradora '+a.id, sub:a.aseguradora+(a.procedimiento?(' · '+a.procedimiento):''), refTipo:'aseguradora', refId:a.id });
+    const m = medicoById(a.id_medico);
+    acts.push({ tipo:'cotizacion', hora, titulo: a.id+' — '+(m?m.nombre:a.aseguradora), sub: a.aseguradora+(a.procedimiento?(' · '+a.procedimiento):''), refTipo:'aseguradora', refId:a.id });
   });
   DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,10)===dStr).forEach(cs=>{
     const hora = new Date(cs.fecha_apertura).toTimeString().slice(0,5);
     const m = medicoById(cs.id_medico);
-    acts.push({ tipo:'caso_nuevo', hora, titulo:'Nuevo caso', sub:(m?m.nombre:'')+' · '+cs.titulo, refTipo:'caso', refId:cs.id });
+    acts.push({ tipo:'caso_nuevo', hora, titulo: 'Nuevo caso — '+(m?m.nombre:'—'), sub: cs.titulo, refTipo:'caso', refId:cs.id });
   });
   DB.casos.forEach(cs=>{
     (cs.interacciones||[]).forEach(it=>{
       if(it.fecha && it.fecha.slice(0,10)===dStr && it.tipo!=='Sistema'){
         const hora = new Date(it.fecha).toTimeString().slice(0,5);
         const m = medicoById(cs.id_medico);
-        acts.push({ tipo:'interaccion', hora, titulo:it.tipo, sub:(m?m.nombre:'')+' · '+cs.titulo, refTipo:'caso', refId:cs.id });
+        acts.push({ tipo:'interaccion', hora, titulo: it.tipo+' — '+(m?m.nombre:'—'), sub: cs.titulo, refTipo:'caso', refId:cs.id });
       }
     });
   });
@@ -2877,8 +2880,9 @@ function actChipHtml(act){
   else if(act.tipo==='caso_nuevo') bg = 'var(--violet)';
   else bg = 'var(--primary)';
   const marca = act.tipo==='cotizacion' ? '$ ' : (act.tipo==='caso_nuevo' ? '★ ' : (act.tipo==='interaccion' ? '↳ ' : ''));
-  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="position:static; margin-bottom:3px; background:${bg};" title="${(act.sub||'').replace(/"/g,'&quot;')}">
-    ${act.hora?('<b>'+act.hora+'</b> '):''}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}
+  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="position:static; margin-bottom:3px; background:${bg}; line-height:1.3; padding:4px 5px;" title="${(act.sub||'').replace(/"/g,'&quot;')}">
+    <div>${act.hora?('<b>'+act.hora+'</b> '):''}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}</div>
+    ${act.sub ? `<div style="opacity:.85; font-size:8.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${act.sub}</div>` : ''}
   </div>`;
 }
 function wireActivityClicks(container){
@@ -2895,6 +2899,10 @@ function drawCalSemana(container){
   document.getElementById('cal-range-label').textContent = fmtDate(days[0])+' — '+fmtDate(days[6]);
   const hoy = new Date();
   const hours = []; for(let h=HOUR_START; h<HOUR_END; h++) hours.push(h);
+  function clampedHour(act){
+    const h = act.hora ? parseInt(act.hora.split(':')[0]) : HOUR_START;
+    return Math.max(HOUR_START, Math.min(HOUR_END-1, h));
+  }
 
   let grid = `<div class="hour-grid">`;
   grid += `<div class="hour-label" style="border-top:none;"></div>`;
@@ -2902,17 +2910,11 @@ function drawCalSemana(container){
     const dStr = ymd(d); const isToday = ymd(hoy)===dStr;
     grid += `<div class="hour-day-head ${isToday?'is-today':''}" style="border-top:none;">${DIAS_SEMANA[i]} ${d.getDate()}</div>`;
   });
-  grid += `<div class="hour-label" style="font-size:8px; line-height:1.2;">Todo<br>el día</div>`;
-  days.forEach(d=>{
-    const dStr = ymd(d);
-    const allDay = actividadesDeDia(dStr).filter(a=> !a.hora || parseInt(a.hora.split(':')[0])<HOUR_START || parseInt(a.hora.split(':')[0])>=HOUR_END);
-    grid += `<div class="hour-allday-row">${allDay.map(actChipHtml).join('')}</div>`;
-  });
   hours.forEach(h=>{
     grid += `<div class="hour-label">${h}:00</div>`;
     days.forEach(d=>{
       const dStr = ymd(d);
-      const timed = actividadesDeDia(dStr).filter(a=> a.hora && parseInt(a.hora.split(':')[0])===h);
+      const timed = actividadesDeDia(dStr).filter(a=> clampedHour(a)===h);
       grid += `<div class="hour-slot" data-day="${dStr}" data-hour="${h}">${timed.map(actChipHtml).join('')}</div>`;
     });
   });
