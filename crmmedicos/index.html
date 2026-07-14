@@ -439,7 +439,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.13.0';
+const APP_VERSION = 'v1.13.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2838,9 +2838,56 @@ function drawCalBody(){
   else if(calState.view==='mes') drawCalMes(container);
   else drawCalSemana(container);
 }
-function miniCasoChip(cs){
-  const p = fechaProgress(cs); const m = medicoById(cs.id_medico);
-  return `<div class="hour-case-card" data-cid="${cs.id}" style="position:static; margin-bottom:3px; background:var(--${p.color});">${cs.hora_vencimiento?('<b>'+cs.hora_vencimiento+'</b> '):''}${m?m.nombre:'—'}</div>`;
+function actividadesDeDia(dStr){
+  const acts = [];
+  casosDeDia(dStr).forEach(cs=>{
+    const p = fechaProgress(cs);
+    acts.push({ tipo:'vencimiento', hora: cs.hora_vencimiento||null, color:p.color, pct:p.pct, pctClamped:p.pctClamped,
+      titulo:(medicoById(cs.id_medico)||{}).nombre||'—', sub: cs.titulo, refTipo:'caso', refId:cs.id });
+  });
+  DB.cotizaciones.filter(c=>c.fecha_creacion && c.fecha_creacion.slice(0,10)===dStr).forEach(c=>{
+    const hora = new Date(c.fecha_creacion).toTimeString().slice(0,5);
+    const m = medicoById(c.id_medico);
+    acts.push({ tipo:'cotizacion', hora, titulo:'Cotización '+c.id, sub:(m?m.nombre:'')+(c.procedimiento?(' · '+c.procedimiento):''), refTipo:'cotizacion', refId:c.id });
+  });
+  DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && a.fecha_creacion.slice(0,10)===dStr).forEach(a=>{
+    const hora = new Date(a.fecha_creacion).toTimeString().slice(0,5);
+    acts.push({ tipo:'cotizacion', hora, titulo:'Aseguradora '+a.id, sub:a.aseguradora+(a.procedimiento?(' · '+a.procedimiento):''), refTipo:'aseguradora', refId:a.id });
+  });
+  DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,10)===dStr).forEach(cs=>{
+    const hora = new Date(cs.fecha_apertura).toTimeString().slice(0,5);
+    const m = medicoById(cs.id_medico);
+    acts.push({ tipo:'caso_nuevo', hora, titulo:'Nuevo caso', sub:(m?m.nombre:'')+' · '+cs.titulo, refTipo:'caso', refId:cs.id });
+  });
+  DB.casos.forEach(cs=>{
+    (cs.interacciones||[]).forEach(it=>{
+      if(it.fecha && it.fecha.slice(0,10)===dStr && it.tipo!=='Sistema'){
+        const hora = new Date(it.fecha).toTimeString().slice(0,5);
+        const m = medicoById(cs.id_medico);
+        acts.push({ tipo:'interaccion', hora, titulo:it.tipo, sub:(m?m.nombre:'')+' · '+cs.titulo, refTipo:'caso', refId:cs.id });
+      }
+    });
+  });
+  return acts;
+}
+function actChipHtml(act){
+  let bg;
+  if(act.tipo==='vencimiento') bg = 'var(--'+act.color+')';
+  else if(act.tipo==='cotizacion') bg = 'var(--blue)';
+  else if(act.tipo==='caso_nuevo') bg = 'var(--violet)';
+  else bg = 'var(--primary)';
+  const marca = act.tipo==='cotizacion' ? '$ ' : (act.tipo==='caso_nuevo' ? '★ ' : (act.tipo==='interaccion' ? '↳ ' : ''));
+  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="position:static; margin-bottom:3px; background:${bg};" title="${(act.sub||'').replace(/"/g,'&quot;')}">
+    ${act.hora?('<b>'+act.hora+'</b> '):''}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}
+  </div>`;
+}
+function wireActivityClicks(container){
+  container.querySelectorAll('[data-reftipo]').forEach(el=> el.onclick = ()=>{
+    const t = el.dataset.reftipo, id = el.dataset.refid;
+    if(t==='caso') openCasoDrawer(id);
+    else if(t==='cotizacion') openCotizacionDrawer(id);
+    else if(t==='aseguradora') openAsgDrawer(id);
+  });
 }
 function drawCalSemana(container){
   const monday = calState.weekStart;
@@ -2858,48 +2905,53 @@ function drawCalSemana(container){
   grid += `<div class="hour-label" style="font-size:8px; line-height:1.2;">Todo<br>el día</div>`;
   days.forEach(d=>{
     const dStr = ymd(d);
-    const allDay = casosDeDia(dStr).filter(cs=>!cs.hora_vencimiento);
-    grid += `<div class="hour-allday-row">${allDay.map(miniCasoChip).join('')}</div>`;
+    const allDay = actividadesDeDia(dStr).filter(a=> !a.hora || parseInt(a.hora.split(':')[0])<HOUR_START || parseInt(a.hora.split(':')[0])>=HOUR_END);
+    grid += `<div class="hour-allday-row">${allDay.map(actChipHtml).join('')}</div>`;
   });
   hours.forEach(h=>{
     grid += `<div class="hour-label">${h}:00</div>`;
     days.forEach(d=>{
       const dStr = ymd(d);
-      const timed = casosDeDia(dStr).filter(cs=> cs.hora_vencimiento && parseInt(cs.hora_vencimiento.split(':')[0])===h);
-      grid += `<div class="hour-slot" data-day="${dStr}" data-hour="${h}">${timed.map(miniCasoChip).join('')}</div>`;
+      const timed = actividadesDeDia(dStr).filter(a=> a.hora && parseInt(a.hora.split(':')[0])===h);
+      grid += `<div class="hour-slot" data-day="${dStr}" data-hour="${h}">${timed.map(actChipHtml).join('')}</div>`;
     });
   });
   grid += `</div>`;
 
-  grid += `<div class="cal-grid" style="margin-top:12px;">${days.map(d=>{
+  grid += `<div style="display:flex; gap:12px; margin:10px 0 4px; font-size:10.5px; color:var(--text-muted); flex-wrap:wrap;">
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--blue);display:inline-block;"></span>Cotización capturada</span>
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--violet);display:inline-block;"></span>Caso nuevo</span>
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--primary);display:inline-block;"></span>Interacción registrada</span>
+  </div>`;
+
+  grid += `<div class="cal-grid" style="margin-top:6px;">${days.map(d=>{
     const dStr = ymd(d);
     return `<div><button class="cal-add-btn" data-day="${dStr}" type="button">${icon('plus')} Nuevo caso</button><div class="cal-quick-form" id="cal-form-${dStr}" style="display:none;"></div></div>`;
   }).join('')}</div>`;
 
   container.innerHTML = grid;
-  container.querySelectorAll('[data-cid]').forEach(card=> card.onclick = ()=> openCasoDrawer(card.dataset.cid));
+  wireActivityClicks(container);
   container.querySelectorAll('.cal-add-btn').forEach(btn=> btn.onclick = ()=> toggleCalQuickForm(btn.dataset.day));
 }
 function drawCalHoy(container){
   const d = calState.dayCursor;
   const dStr = ymd(d);
   document.getElementById('cal-range-label').textContent = fmtDate(d);
-  const casosDia = casosDeDia(dStr).sort((a,b)=> (a.hora_vencimiento||'99:99').localeCompare(b.hora_vencimiento||'99:99'));
+  const actos = actividadesDeDia(dStr).sort((a,b)=> (a.hora||'99:99').localeCompare(b.hora||'99:99'));
   container.innerHTML = `
     <div class="today-row">
-      ${casosDia.length ? casosDia.map(cs=>{
-        const p = fechaProgress(cs); const m = medicoById(cs.id_medico);
-        return `<div class="today-card" data-cid="${cs.id}" style="cursor:pointer;">
-          <div style="display:flex; align-items:center; gap:6px;"><span class="dot dot-${p.color}"></span><b style="font-size:12px;">${m?m.nombre:'—'}</b>${cs.hora_vencimiento?`<span class="pill pill-guinda pill-small" style="margin-left:auto;">${cs.hora_vencimiento}</span>`:''}</div>
-          <div style="font-size:11.5px; margin:6px 0;">${cs.titulo}</div>
-          <div class="cal-progress-track"><div style="width:${p.pctClamped}%; height:100%; background:var(--${p.color}); border-radius:999px;"></div></div>
-          <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">${p.pct}% transcurrido</div>
+      ${actos.length ? actos.map(act=>{
+        const bg = act.tipo==='vencimiento' ? 'var(--'+act.color+')' : (act.tipo==='cotizacion' ? 'var(--blue)' : (act.tipo==='caso_nuevo' ? 'var(--violet)' : 'var(--primary)'));
+        return `<div class="today-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="cursor:pointer; border-top:3px solid ${bg};">
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:${bg}; flex-shrink:0;"></span><b style="font-size:12px;">${act.titulo}</b>${act.hora?`<span class="pill pill-guinda pill-small" style="margin-left:auto;">${act.hora}</span>`:''}</div>
+          <div style="font-size:11.5px; margin:6px 0; color:var(--text-muted);">${act.sub||''}</div>
+          ${act.tipo==='vencimiento' ? `<div class="cal-progress-track"><div style="width:${act.pctClamped||act.pct}%; height:100%; background:${bg}; border-radius:999px;"></div></div><div style="font-size:10px; color:var(--text-faint); margin-top:4px;">${act.pct}% transcurrido</div>` : `<div style="font-size:10px; color:var(--text-faint);">${({vencimiento:'Vencimiento', cotizacion:'Cotización capturada', caso_nuevo:'Caso nuevo', interaccion:'Interacción'})[act.tipo]}</div>`}
         </div>`;
       }).join('') : `<div class="empty-state" style="width:100%;">${icon('calendar')}<div>Sin actividades para este día.</div></div>`}
     </div>
     <button class="cal-add-btn" data-day="${dStr}" type="button" style="max-width:220px; margin-top:14px;">${icon('plus')} Nuevo caso</button>
     <div class="cal-quick-form" id="cal-form-${dStr}" style="display:none; max-width:360px;"></div>`;
-  container.querySelectorAll('[data-cid]').forEach(card=> card.onclick = ()=> openCasoDrawer(card.dataset.cid));
+  wireActivityClicks(container);
   container.querySelectorAll('.cal-add-btn').forEach(btn=> btn.onclick = ()=> toggleCalQuickForm(btn.dataset.day));
 }
 function drawCalMes(container){
@@ -2914,10 +2966,13 @@ function drawCalMes(container){
     <div class="month-grid">
       ${cells.map(d=>{
         const dStr = ymd(d); const inMonth = d.getMonth()===month; const isToday = ymd(hoy)===dStr;
-        const dia = casosDeDia(dStr);
+        const dia = actividadesDeDia(dStr);
         return `<div class="month-cell ${inMonth?'':'other-month'} ${isToday?'is-today':''}" data-day="${dStr}">
           <div class="month-cell-num">${d.getDate()}</div>
-          <div class="month-dots">${dia.slice(0,6).map(cs=>{ const p=fechaProgress(cs); return `<span class="dot dot-${p.color}" title="${(medicoById(cs.id_medico)||{}).nombre||''}"></span>`; }).join('')}${dia.length>6?`<span style="font-size:8px; color:var(--text-faint);">+${dia.length-6}</span>`:''}</div>
+          <div class="month-dots">${dia.slice(0,8).map(act=>{
+            const bg = act.tipo==='vencimiento' ? 'var(--'+act.color+')' : (act.tipo==='cotizacion' ? 'var(--blue)' : (act.tipo==='caso_nuevo' ? 'var(--violet)' : 'var(--primary)'));
+            return `<span style="width:8px; height:8px; border-radius:50%; background:${bg}; display:inline-block;" title="${act.titulo}"></span>`;
+          }).join('')}${dia.length>8?`<span style="font-size:8px; color:var(--text-faint);">+${dia.length-8}</span>`:''}</div>
         </div>`;
       }).join('')}
     </div>`;
