@@ -441,7 +441,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.14.1';
+const APP_VERSION = 'v1.15.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -788,7 +788,7 @@ function renderDashboard(){
   const procActivos = DB.procedimientos.filter(p=>p.activo!==false).length;
   const listasActivas = DB.listas_materiales.filter(l=>l.activo!==false).length;
   const conveniosActivos = DB.convenios.filter(cv=>computeConvenioEstatus(cv)==='Activo').length;
-  const casosAbiertos = DB.casos.filter(cs=>!['Realizado','Cancelado','Perdido'].includes(cs.estatus)).length;
+  const casosAbiertos = DB.casos.filter(cs=>!CASOS_CERRADOS.includes(cs.estatus)).length;
   const cirugiasProgramadas = DB.casos.filter(cs=>cs.fecha_programacion).length;
 
   const porEstatus = {}; cots.forEach(c=>{ porEstatus[c.estatus] = (porEstatus[c.estatus]||0)+1; });
@@ -804,7 +804,7 @@ function renderDashboard(){
   cots.forEach(c=>{ if(!c.fecha_creacion) return; const d = new Date(c.fecha_creacion); const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); porMes[key]=porMes[key]||{count:0,monto:0}; porMes[key].count++; porMes[key].monto+=(c.costo_propuesta||0); });
   const meses = Object.keys(porMes).sort();
   const hoy = new Date();
-  const monitorCasos = DB.casos.filter(cs=>cs.proxima_accion_fecha && !['Realizado','Cancelado','Perdido'].includes(cs.estatus))
+  const monitorCasos = DB.casos.filter(cs=>cs.proxima_accion_fecha && !CASOS_CERRADOS.includes(cs.estatus))
     .map(c=>({...c,d:new Date(c.proxima_accion_fecha)})).sort((a,b)=>a.d-b.d);
 
   function monitorRowHtml(cs){
@@ -2828,7 +2828,7 @@ function fechaProgress(caso){
   return { pctClamped: Math.min(pct,100), pct, color };
 }
 function casosDeDia(dStr){
-  return DB.casos.filter(cs=> cs.proxima_accion_fecha && cs.proxima_accion_fecha.slice(0,10)===dStr && !['Realizado','Cancelado','Perdido'].includes(cs.estatus));
+  return DB.casos.filter(cs=> cs.proxima_accion_fecha && cs.proxima_accion_fecha.slice(0,10)===dStr && !CASOS_CERRADOS.includes(cs.estatus));
 }
 function renderCalendario(){
   document.getElementById('content').innerHTML = `
@@ -3093,6 +3093,7 @@ function generateCalendarioSemanalPDF(){
   const FS = 10;
   const monday = calState.weekStart;
   const days = [...Array(7)].map((_,i)=> addDays(monday,i));
+  const TIPO_LABEL = { vencimiento:'Vencimiento', cotizacion:'Cotización', caso_nuevo:'Caso nuevo', interaccion:'Interacción' };
 
   try{ doc.addImage(window.LOGO_URI, 'JPEG', M, M-4, 34, 34); }catch(e){}
   doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(30,30,30);
@@ -3102,32 +3103,40 @@ function generateCalendarioSemanalPDF(){
   doc.setDrawColor(190,190,190); doc.line(M, M+38, pageW-M, M+38);
 
   const body = [];
-  let totalCasos = 0;
+  let totalActs = 0;
   days.forEach((d,i)=>{
     const dStr = ymd(d);
-    const casosDia = casosDeDia(dStr);
+    const actos = actividadesDeDia(dStr).sort((a,b)=> (a.hora||'99:99').localeCompare(b.hora||'99:99'));
     body.push([{content: DIAS_SEMANA[i]+' '+d.getDate()+' DE '+MESES_NOMBRE[d.getMonth()], colSpan:5, styles:{fillColor:[238,238,238], textColor:[40,40,40], fontStyle:'bold', fontSize:FS}}]);
-    if(!casosDia.length){
-      body.push([{content:'Sin actividades programadas', colSpan:5, styles:{textColor:[150,150,150], fontStyle:'italic', fontSize:FS-1}}]);
+    if(!actos.length){
+      body.push([{content:'Sin actividades registradas', colSpan:5, styles:{textColor:[150,150,150], fontStyle:'italic', fontSize:FS-1}}]);
     } else {
-      casosDia.forEach(cs=>{
-        const p = fechaProgress(cs);
-        const m = medicoById(cs.id_medico);
-        const semColor = p.color==='green'?[25,130,60]:(p.color==='amber'?[180,120,10]:[185,35,30]);
-        totalCasos++;
-        body.push([ cs.hora_vencimiento||'—', m?m.nombre:'—', cs.titulo, cs.estatus, { content:p.pct+'%', styles:{textColor:semColor, fontStyle:'bold'} } ]);
+      actos.forEach(act=>{
+        totalActs++;
+        let estatusCell;
+        if(act.tipo==='vencimiento'){
+          const semColor = act.color==='green'?[25,130,60]:(act.color==='amber'?[180,120,10]:[185,35,30]);
+          estatusCell = { content: act.pct+'%', styles:{textColor:semColor, fontStyle:'bold'} };
+        } else if(act.estatusCot){
+          const ec = ESTADOS_COT[act.estatusCot];
+          const c = ec ? (ec.color==='green'?[25,130,60]:ec.color==='amber'?[180,120,10]:ec.color==='red'?[185,35,30]:ec.color==='blue'?[35,100,180]:ec.color==='violet'?[110,74,182]:[130,130,130]) : [130,130,130];
+          estatusCell = { content: act.estatusCot, styles:{textColor:c, fontStyle:'bold'} };
+        } else {
+          estatusCell = '—';
+        }
+        body.push([ act.hora||'—', TIPO_LABEL[act.tipo]||act.tipo, act.titulo, act.sub||'', estatusCell ]);
       });
     }
   });
   doc.autoTable({
-    startY: M+50, head:[['Hora','Médico','Caso','Estatus','% Transcurrido']], body,
+    startY: M+50, head:[['Hora','Tipo','Registro','Detalle','Estatus']], body,
     theme:'plain', headStyles:{fillColor:[55,55,60], textColor:255, fontStyle:'bold', fontSize:FS, font:'helvetica'},
-    bodyStyles:{fontSize:FS, textColor:[40,40,40], font:'helvetica'}, alternateRowStyles:{fillColor:[249,249,249]},
-    margin:{left:M, right:M}, columnStyles:{0:{cellWidth:42},1:{cellWidth:120},3:{cellWidth:70},4:{cellWidth:74, halign:'center'}}
+    bodyStyles:{fontSize:FS, textColor:[40,40,50], font:'helvetica'}, alternateRowStyles:{fillColor:[249,249,249]},
+    margin:{left:M, right:M}, columnStyles:{0:{cellWidth:38}, 1:{cellWidth:66}, 2:{cellWidth:150}, 4:{cellWidth:64, halign:'center'}}
   });
   let finalY = doc.lastAutoTable.finalY + 16;
   doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
-  doc.text('Total de casos con vencimiento en la semana: '+totalCasos, M, finalY);
+  doc.text('Total de registros en la semana: '+totalActs, M, finalY);
 
   const n = doc.internal.getNumberOfPages();
   for(let i=1;i<=n;i++){
@@ -3404,10 +3413,12 @@ function generatePlanSemanalPDF(){
 ============================================================ */
 const ESTADOS_CASO = {
   'Nuevo':{color:'blue'}, 'En seguimiento':{color:'amber'}, 'Programación agendada':{color:'violet'},
-  'Confirmado':{color:'green'}, 'Realizado':{color:'green'}, 'Cancelado':{color:'red'}, 'Perdido':{color:'red'}
+  'Confirmado':{color:'green'}, 'Realizado':{color:'green'}, 'Cancelado':{color:'red'}, 'Perdido':{color:'red'},
+  'Archivado':{color:'muted'}, 'Cerrado':{color:'muted'}
 };
-const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100 };
-const TIPOS_INTERACCION = ['Llamada','Visita','WhatsApp','Correo','Reunión','Cita en hospital','Recorrido','Programación de cirugía','Sistema'];
+const CASOS_CERRADOS = ['Realizado','Cancelado','Perdido','Archivado','Cerrado'];
+const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100 };
+const TIPOS_INTERACCION = ['Llamada','Visita','WhatsApp','Correo','Reunión','Cita en hospital','Recorrido','Programación de cirugía','Cambio de estatus','Sistema'];
 function casoProgressBar(estatus){
   const pct = CASO_PROGRESS[estatus] || 10;
   const closed = estatus==='Cancelado' || estatus==='Perdido';
@@ -3487,7 +3498,7 @@ function drawCasoTree(){
   wrap.innerHTML = medicoIds.map(mid=>{
     const m = medicoById(mid);
     const casos = groups[mid].sort((a,b)=>new Date(b.fecha_apertura)-new Date(a.fecha_apertura));
-    const abiertos = casos.filter(c=>!['Realizado','Cancelado','Perdido'].includes(c.estatus)).length;
+    const abiertos = casos.filter(c=>!CASOS_CERRADOS.includes(c.estatus)).length;
     const forceOpen = !!casoState.search || casoState.estatus!=='todos';
     const open = forceOpen || !!casoState.expanded[mid];
     return `<div class="card" style="margin-bottom:10px; padding:0; overflow:hidden;">
@@ -3659,6 +3670,10 @@ function atenderAccionMonitor(id){
 function setCasoEstatus(id, estatus){
   const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
   const prev = cs.estatus; cs.estatus = estatus;
+  if(prev!==estatus){
+    cs.interacciones = cs.interacciones||[];
+    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prev+' → '+estatus});
+  }
   logAudit('Caso', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
 }
@@ -3683,7 +3698,7 @@ function openInteraccionModal(casoId){
     <div class="modal-body">
       <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">Registra algo que ya ocurrió, o programa una acción futura (llamada, WhatsApp, cita, etc.) capturando fecha y hora.</div>
       <div class="form-grid">
-        <div class="form-field"><label>Tipo</label><select class="select" id="it-tipo" style="width:100%;">${TIPOS_INTERACCION.filter(t=>t!=='Sistema').map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="form-field"><label>Tipo</label><select class="select" id="it-tipo" style="width:100%;">${TIPOS_INTERACCION.filter(t=>t!=='Sistema'&&t!=='Cambio de estatus').map(t=>`<option>${t}</option>`).join('')}</select></div>
         <div class="form-field"><label>Fecha programada (opcional)</label><input class="input" type="date" id="it-fecha-prog" style="width:100%;"></div>
         <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="it-hora-prog" style="width:100%;"></div>
         <div class="form-field full"><label>Nota / solicitud del médico</label><textarea class="input uc-input" id="it-nota" style="width:100%; min-height:80px;" placeholder="DETALLE DE LA INTERACCIÓN O SOLICITUD DEL MÉDICO…"></textarea></div>
