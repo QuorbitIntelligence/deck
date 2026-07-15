@@ -277,6 +277,13 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
 .cal-quick-form{background:var(--guinda-light); border-radius:9px; padding:9px; margin-top:8px;}
 .plan-task-card{background:var(--surface-2); border-radius:8px; padding:8px 9px; margin-bottom:7px; display:flex; gap:8px; align-items:flex-start;}
 .plan-task-card input[type=checkbox]{margin-top:2px; flex-shrink:0;}
+.plan-task-icon-btn{width:20px; height:20px; border:none; background:none; color:var(--text-faint); display:flex; align-items:center; justify-content:center; cursor:pointer; border-radius:5px; padding:0;}
+.plan-task-icon-btn:hover{background:var(--surface-3); color:var(--text);}
+.plan-task-icon-btn svg{width:11px; height:11px;}
+.week-notas{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:14px;}
+.week-notas label{font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; display:flex; align-items:center; justify-content:space-between;}
+.week-notas textarea{width:100%; min-height:96px; border:none; background:transparent; resize:vertical; font-size:12.5px; color:var(--text); outline:none; font-family:inherit; line-height:24px; padding-top:4px;
+  background-image:repeating-linear-gradient(to bottom, transparent, transparent 22px, var(--border) 22px, var(--border) 23px); background-attachment:local;}
 .week-objetivo{background:var(--guinda-light); border:1px solid var(--guinda); border-radius:12px; padding:12px 14px; margin-bottom:16px;}
 .week-objetivo textarea{width:100%; min-height:60px; border:none; background:transparent; resize:vertical; font-size:12.5px; color:var(--text); outline:none; font-family:inherit;}
 .week-objetivo label{font-size:11px; font-weight:700; color:var(--guinda); text-transform:uppercase; letter-spacing:.04em; display:flex; align-items:center; justify-content:space-between;}
@@ -441,7 +448,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.15.0';
+const APP_VERSION = 'v1.16.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3156,12 +3163,81 @@ function generateCalendarioSemanalPDF(){
 let planState = { view:'semana', weekStart: getMonday(new Date()), monthCursor: new Date(), dayCursor: new Date() };
 const PLAN_CATEGORIAS = ['Llamada','Reunión','MKT','Pacientes','Médicos','Aseguradora','Administrativo','Otro'];
 const PLAN_PRIORIDAD_COLOR = { 'Alta':'red', 'Media':'amber', 'Baja':'blue' };
-function getObjetivoSemana(weekStr){ return DB.plan_objetivos_semanales.find(o=>o.semana===weekStr); }
-function saveObjetivoSemana(weekStr, texto){
-  let o = getObjetivoSemana(weekStr);
-  if(o){ o.texto = texto; if(!o.__new) o.__edited = true; }
-  else { o = {id:uid('obj'), semana:weekStr, texto, __new:true}; DB.plan_objetivos_semanales.push(o); }
+function getSemanaRecord(weekStr){ return DB.plan_objetivos_semanales.find(o=>o.semana===weekStr); }
+function saveSemanaCampo(weekStr, campo, valor){
+  let o = getSemanaRecord(weekStr);
+  if(o){ o[campo] = valor; if(!o.__new) o.__edited = true; }
+  else { o = {id:uid('obj'), semana:weekStr, texto:'', notas:'', __new:true}; o[campo] = valor; DB.plan_objetivos_semanales.push(o); }
   persistExtra();
+}
+function getObjetivoSemana(weekStr){ return getSemanaRecord(weekStr); }
+function saveObjetivoSemana(weekStr, texto){ saveSemanaCampo(weekStr, 'texto', texto); }
+function saveNotasSemana(weekStr, notas){ saveSemanaCampo(weekStr, 'notas', notas); }
+function planTaskCardHtml(t, big){
+  const hoyStr = ymd(new Date());
+  const canDelete = t.fecha >= hoyStr;
+  return `<div class="plan-task-card">
+    <input type="checkbox" data-tid="${t.id}" ${t.completada?'checked':''}>
+    <div style="flex:1; min-width:0;">
+      <div style="font-size:${big?'12px':'11px'}; font-weight:600; ${t.completada?'text-decoration:line-through; opacity:.6;':''}">${t.titulo}</div>
+      <div style="display:flex; gap:5px; margin-top:${big?'8px':'4px'}; flex-wrap:wrap; align-items:center;">
+        <span class="pill pill-blue pill-small">${t.categoria}</span>
+        <span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>
+        ${t.hora?`<span style="font-size:${big?'10.5px':'10px'}; color:var(--text-faint);">${t.hora}</span>`:''}
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
+      <button type="button" class="plan-task-icon-btn" data-edit-tid="${t.id}" title="Editar">${icon('config')}</button>
+      ${canDelete ? `<button type="button" class="plan-task-icon-btn" data-del-tid="${t.id}" title="Eliminar">${icon('trash')}</button>` : ''}
+    </div>
+  </div>`;
+}
+function wirePlanTaskCards(container){
+  container.querySelectorAll('.plan-task-card input[type=checkbox]').forEach(cb=> cb.onchange = ()=> completarTarea(cb.dataset.tid));
+  container.querySelectorAll('[data-edit-tid]').forEach(b=> b.onclick = (e)=>{ e.stopPropagation(); openTareaEditModal(b.dataset.editTid); });
+  container.querySelectorAll('[data-del-tid]').forEach(b=> b.onclick = (e)=>{ e.stopPropagation(); eliminarTarea(b.dataset.delTid); });
+}
+function openTareaEditModal(id){
+  const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
+  const hoyStr = ymd(new Date());
+  const esPasada = t.fecha < hoyStr;
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Editar tarea</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      ${esPasada ? `<div style="font-size:11.5px; color:var(--text-faint); margin-bottom:12px;">Esta tarea ya pasó — puedes editarla o cerrarla, pero ya no se puede eliminar.</div>` : ''}
+      <div class="form-grid">
+        <div class="form-field full"><label>Tarea</label><input class="input" id="tk-titulo" style="width:100%;" value="${t.titulo}"></div>
+        <div class="form-field"><label>Categoría</label><select class="select" id="tk-cat" style="width:100%;">${PLAN_CATEGORIAS.map(c=>`<option ${t.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <div class="form-field"><label>Prioridad</label><select class="select" id="tk-prio" style="width:100%;"><option ${t.prioridad==='Media'?'selected':''}>Media</option><option ${t.prioridad==='Alta'?'selected':''}>Alta</option><option ${t.prioridad==='Baja'?'selected':''}>Baja</option></select></div>
+        <div class="form-field"><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
+        <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
+        <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px;">${t.notas||''}</textarea></div>
+        <div class="form-field full"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tk-completada" ${t.completada?'checked':''}> Tarea cerrada / completada</label></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="tk-save">Guardar</button></div>`);
+  document.getElementById('tk-save').onclick = ()=>{
+    const titulo = document.getElementById('tk-titulo').value.trim();
+    if(!titulo){ toast('Escribe la tarea'); return; }
+    t.titulo = titulo; t.categoria = document.getElementById('tk-cat').value; t.prioridad = document.getElementById('tk-prio').value;
+    t.fecha = document.getElementById('tk-fecha').value; t.hora = document.getElementById('tk-hora').value || null;
+    t.notas = document.getElementById('tk-notas').value;
+    const nowCompletada = document.getElementById('tk-completada').checked;
+    if(nowCompletada && !t.completada){ t.completada = true; t.fecha_completada = new Date().toISOString(); }
+    else if(!nowCompletada && t.completada){ t.completada = false; t.fecha_completada = null; }
+    if(!t.__new) t.__edited = true;
+    logAudit('Plan de Trabajo', id, 'Tarea editada', titulo);
+    persistExtra(); closeModal(); toast('Tarea actualizada'); renderPlanTrabajo();
+  };
+}
+function eliminarTarea(id){
+  const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
+  const hoyStr = ymd(new Date());
+  if(t.fecha < hoyStr){ toast('No puedes eliminar una tarea pasada — puedes cerrarla o editarla'); return; }
+  if(!confirm('¿Eliminar la tarea "'+t.titulo+'"?')) return;
+  DB.plan_tareas = DB.plan_tareas.filter(x=>x.id!==id);
+  logAudit('Plan de Trabajo', id, 'Tarea eliminada', t.titulo);
+  persistExtra(); toast('Tarea eliminada'); renderPlanTrabajo();
 }
 function renderPlanTrabajo(){
   document.getElementById('content').innerHTML = `
@@ -3204,6 +3280,7 @@ function drawPlanBody(){
   drawPlanSemana(body, rangeLabelEl);
 }
 function drawPlanCompletadas(body){
+  const hoyStr = ymd(new Date());
   const done = [...DB.plan_tareas].filter(t=>t.completada).sort((a,b)=>new Date(b.fecha_completada)-new Date(a.fecha_completada));
   body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Tarea</th><th>Categoría</th><th>Prioridad</th><th>Completada</th><th></th></tr></thead><tbody>
     ${done.length ? done.map(t=>`<tr>
@@ -3211,7 +3288,11 @@ function drawPlanCompletadas(body){
       <td><span class="pill pill-blue pill-small">${t.categoria}</span></td>
       <td><span class="pill pill-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'} pill-small">${t.prioridad}</span></td>
       <td style="color:var(--text-muted); font-size:12px;">${fmtDateTime(t.fecha_completada)}</td>
-      <td><button class="btn btn-sm" onclick="reabrirTarea('${t.id}')">Reabrir</button></td>
+      <td style="white-space:nowrap; display:flex; gap:4px;">
+        <button class="btn btn-sm" onclick="reabrirTarea('${t.id}')">Reabrir</button>
+        <button class="btn btn-sm" onclick="openTareaEditModal('${t.id}')">${icon('config')}</button>
+        ${t.fecha>=hoyStr ? `<button class="btn btn-sm btn-danger" onclick="eliminarTarea('${t.id}')">${icon('trash')}</button>` : ''}
+      </td>
     </tr>`).join('') : `<tr><td colspan="5"><div class="empty-state">${icon('checklist')}<div>Aún no hay tareas completadas.</div></div></td></tr>`}
     </tbody></table></div>`;
 }
@@ -3221,11 +3302,15 @@ function drawPlanSemana(body, rangeLabelEl){
   const days = [...Array(7)].map((_,i)=> addDays(monday,i));
   rangeLabelEl.textContent = fmtDate(days[0])+' — '+fmtDate(days[6]);
   const hoy = new Date();
-  const objetivo = getObjetivoSemana(weekStr);
+  const semana = getSemanaRecord(weekStr);
   body.innerHTML = `
+    <div class="week-notas">
+      <label>Notas <span id="notas-status" style="font-weight:500; text-transform:none; color:var(--text-faint); font-size:10.5px;"></span></label>
+      <textarea id="plan-notas-text" placeholder="Anota aquí lo que necesites recordar esta semana…">${semana?semana.notas||'':''}</textarea>
+    </div>
     <div class="week-objetivo">
       <label>Objetivo de la semana <span id="obj-status" style="font-weight:500; text-transform:none; color:var(--text-faint); font-size:10.5px;"></span></label>
-      <textarea id="plan-objetivo-text" placeholder="¿Qué quieres lograr esta semana?">${objetivo?objetivo.texto:''}</textarea>
+      <textarea id="plan-objetivo-text" placeholder="¿Qué quieres lograr esta semana?">${semana?semana.texto||'':''}</textarea>
     </div>
     <div class="cal-grid" id="plan-grid">${days.map((d,i)=>{
       const dStr = ymd(d);
@@ -3234,22 +3319,19 @@ function drawPlanSemana(body, rangeLabelEl){
       return `<div class="cal-day ${isToday?'is-today':''}" data-date="${dStr}">
         <div class="cal-day-head"><span>${DIAS_SEMANA[i]} ${d.getDate()}</span>${tareasDia.length?`<span class="pill pill-guinda pill-small">${tareasDia.length}</span>`:''}</div>
         <div class="cal-day-cards">
-          ${tareasDia.map(t=>`<div class="plan-task-card">
-            <input type="checkbox" data-tid="${t.id}">
-            <div style="flex:1; min-width:0;">
-              <div style="font-size:11px; font-weight:600;">${t.titulo}</div>
-              <div style="display:flex; gap:4px; margin-top:4px; flex-wrap:wrap; align-items:center;">
-                <span class="pill pill-blue pill-small">${t.categoria}</span>
-                <span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>
-                ${t.hora?`<span style="font-size:10px; color:var(--text-faint);">${t.hora}</span>`:''}
-              </div>
-            </div>
-          </div>`).join('') || ''}
+          ${tareasDia.map(t=>planTaskCardHtml(t,false)).join('') || ''}
         </div>
         <button class="cal-add-btn" data-day="${dStr}" type="button">${icon('plus')} Nueva tarea</button>
         <div class="cal-quick-form" id="plan-form-${dStr}" style="display:none;"></div>
       </div>`;
     }).join('')}</div>`;
+  const notasText = document.getElementById('plan-notas-text');
+  let notasSaveTimeout;
+  notasText.oninput = ()=>{
+    document.getElementById('notas-status').textContent = 'Guardando…';
+    clearTimeout(notasSaveTimeout);
+    notasSaveTimeout = setTimeout(()=>{ saveNotasSemana(weekStr, notasText.value); const st=document.getElementById('notas-status'); if(st) st.textContent='Guardado ✓'; }, 500);
+  };
   const objText = document.getElementById('plan-objetivo-text');
   let saveTimeout;
   objText.oninput = ()=>{
@@ -3257,7 +3339,7 @@ function drawPlanSemana(body, rangeLabelEl){
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(()=>{ saveObjetivoSemana(weekStr, objText.value); const st=document.getElementById('obj-status'); if(st) st.textContent='Guardado ✓'; }, 500);
   };
-  body.querySelectorAll('.plan-task-card input[type=checkbox]').forEach(cb=> cb.onchange = ()=> completarTarea(cb.dataset.tid));
+  wirePlanTaskCards(body);
   body.querySelectorAll('.cal-add-btn').forEach(btn=> btn.onclick = ()=> togglePlanQuickForm(btn.dataset.day));
 }
 function drawPlanHoy(body, rangeLabelEl){
@@ -3267,19 +3349,11 @@ function drawPlanHoy(body, rangeLabelEl){
   const tareasDia = DB.plan_tareas.filter(t=>!t.completada && t.fecha===dStr).sort((a,b)=>(a.hora||'99:99').localeCompare(b.hora||'99:99'));
   body.innerHTML = `
     <div class="today-row">
-      ${tareasDia.length ? tareasDia.map(t=>`
-        <div class="today-card">
-          <div style="display:flex; align-items:center; gap:6px;"><input type="checkbox" data-tid="${t.id}"><b style="font-size:12px;">${t.titulo}</b></div>
-          <div style="display:flex; gap:5px; margin-top:8px; align-items:center; flex-wrap:wrap;">
-            <span class="pill pill-blue pill-small">${t.categoria}</span>
-            <span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>
-            ${t.hora?`<span style="font-size:10.5px; color:var(--text-faint);">${t.hora}</span>`:''}
-          </div>
-        </div>`).join('') : `<div class="empty-state" style="width:100%;">${icon('checklist')}<div>Sin tareas para este día.</div></div>`}
+      ${tareasDia.length ? tareasDia.map(t=>`<div class="today-card" style="min-width:230px;">${planTaskCardHtml(t,true)}</div>`).join('') : `<div class="empty-state" style="width:100%;">${icon('checklist')}<div>Sin tareas para este día.</div></div>`}
     </div>
     <button class="cal-add-btn" data-day="${dStr}" type="button" style="max-width:220px; margin-top:14px;">${icon('plus')} Nueva tarea</button>
     <div class="cal-quick-form" id="plan-form-${dStr}" style="display:none; max-width:360px;"></div>`;
-  body.querySelectorAll('input[type=checkbox]').forEach(cb=> cb.onchange = ()=> completarTarea(cb.dataset.tid));
+  wirePlanTaskCards(body);
   body.querySelectorAll('.cal-add-btn').forEach(btn=> btn.onclick = ()=> togglePlanQuickForm(btn.dataset.day));
 }
 function drawPlanMes(body, rangeLabelEl){
@@ -3317,6 +3391,7 @@ function togglePlanQuickForm(dayStr){
       <select class="select" id="plan-qf-prio" style="flex:1; font-size:11px;"><option>Media</option><option>Alta</option><option>Baja</option></select>
     </div>
     <input class="input" type="time" id="plan-qf-hora" style="width:100%; font-size:11px; margin-bottom:6px;">
+    <textarea class="input" id="plan-qf-notas" style="width:100%; min-height:50px; font-size:11px; margin-bottom:6px;" placeholder="Notas (opcional)…"></textarea>
     <div style="display:flex; gap:6px;">
       <button class="btn btn-sm" type="button" id="plan-qf-cancel">Cancelar</button>
       <button class="btn btn-sm btn-guinda" type="button" id="plan-qf-save">Guardar</button>
@@ -3326,7 +3401,7 @@ function togglePlanQuickForm(dayStr){
     const titulo = document.getElementById('plan-qf-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
     const nueva = { id: uid('tk'), titulo, categoria: document.getElementById('plan-qf-cat').value, prioridad: document.getElementById('plan-qf-prio').value,
-      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas:'', __new:true };
+      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, __new:true };
     DB.plan_tareas.unshift(nueva);
     logAudit('Plan de Trabajo', nueva.id, 'Tarea creada', titulo);
     persistExtra(); toast('Tarea agregada'); drawPlanBody();
@@ -3355,7 +3430,7 @@ function generatePlanSemanalPDF(){
   const monday = planState.weekStart;
   const weekStr = ymd(monday);
   const days = [...Array(7)].map((_,i)=> addDays(monday,i));
-  const objetivo = getObjetivoSemana(weekStr);
+  const semana = getSemanaRecord(weekStr);
 
   try{ doc.addImage(window.LOGO_URI, 'JPEG', M, M-4, 34, 34); }catch(e){}
   doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(30,30,30);
@@ -3365,8 +3440,11 @@ function generatePlanSemanalPDF(){
   doc.setDrawColor(190,190,190); doc.line(M, M+38, pageW-M, M+38);
 
   let y = M+52;
-  if(objetivo && objetivo.texto && objetivo.texto.trim()){
-    y = drawNotasBox(doc, objetivo.texto, M, y, pageW-2*M, 'OBJETIVO DE LA SEMANA');
+  if(semana && semana.notas && semana.notas.trim()){
+    y = drawNotasBox(doc, semana.notas, M, y, pageW-2*M, 'NOTAS');
+  }
+  if(semana && semana.texto && semana.texto.trim()){
+    y = drawNotasBox(doc, semana.texto, M, y, pageW-2*M, 'OBJETIVO DE LA SEMANA');
   }
 
   const body = [];
