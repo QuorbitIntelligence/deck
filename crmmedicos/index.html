@@ -441,7 +441,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.14.0';
+const APP_VERSION = 'v1.14.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1875,9 +1875,10 @@ function sendCotizacionWhatsApp(id){
   let digits = String(m.telefono).replace(/\D/g,'');
   if(digits.length===10) digits = '52'+digits;
   const nombreCorto = (m.nombre||'').replace(/^DRA?\.?\s+/i,'');
-  let msg = `Hola Dr(a). ${nombreCorto}, buen día 👋. Le comparto su cotización *${c.id}* para *${c.procedimiento||'el procedimiento solicitado'}*, con un total de ${fmtMoney(c.costo_propuesta)} (IVA incluido)${c.fecha_vigencia?(', vigente hasta el '+fmtDate(c.fecha_vigencia)):''}.`;
-  msg += '\n\nEn un momento le adjunto el PDF con el desglose completo. Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo.';
-  msg += '\n\nSaludos cordiales.';
+  let msg = `Dr(a). ${nombreCorto}. 🫂 Le comparto su cotización *${c.id}* para *${c.procedimiento||'el procedimiento solicitado'}*, con un total de ${fmtMoney(c.costo_propuesta)} (IVA incluido)${c.fecha_vigencia?(', vigente hasta el '+fmtDate(c.fecha_vigencia)):''}.`;
+  msg += '\n\nEn un momento le adjunto el PDF con el desglose completo. Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌';
+  msg += '\n\nVisite el portal de médicos para conocer más beneficios y poder credencializarse en caso de que aún no haya concluido ese proceso 👉 https://quorbitintelligence.github.io/deck/noor/medicos/';
+  msg += '\n\nSaludos. 😊';
   const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
   try{ generateCotizacionPDF(id); }catch(e){}
   window.open(link, '_blank');
@@ -2091,7 +2092,7 @@ function drawWizardPane(){
       </div>
       <div class="form-field full" style="margin-top:14px;">
         <label>Vigencia de la cotización</label>
-        <input class="input" type="date" id="wz-vigencia" style="width:100%;" value="${wizardState.vigenciaManual || addDays(new Date(),15).toISOString().slice(0,10)}">
+        <input class="input" type="date" id="wz-vigencia" style="width:100%;" value="${wizardState.vigenciaManual || ymd(addDays(new Date(),15))}">
         <div style="font-size:11px; color:var(--text-faint); margin-top:5px;">Por defecto son 15 días naturales a partir de hoy; puedes modificarla si el caso lo requiere.</div>
       </div>
     `;
@@ -2583,7 +2584,7 @@ function drawAsgPane(){
       </div>
       <div class="form-field full" style="margin-top:16px;">
         <label>Vigencia de la cotización</label>
-        <input class="input" type="date" id="asg-vigencia" style="width:100%;" value="${asgWizard.vigenciaManual || addDays(new Date(),30).toISOString().slice(0,10)}">
+        <input class="input" type="date" id="asg-vigencia" style="width:100%;" value="${asgWizard.vigenciaManual || ymd(addDays(new Date(),30))}">
         <div style="font-size:11px; color:var(--text-faint); margin-top:5px;">Por defecto son 30 días naturales a partir de hoy; puedes modificarla si el caso lo requiere.</div>
       </div>`;
     const drawClList = wireClausulaPicker(document.getElementById('asg-cl-search'), document.getElementById('asg-cl-list'), asgWizard.clausulas, null, 'aseguradora');
@@ -2885,17 +2886,17 @@ function actividadesDeDia(dStr){
     acts.push({ tipo:'vencimiento', hora: cs.hora_vencimiento||null, color:p.color, pct:p.pct, pctClamped:p.pctClamped,
       titulo: folioTxt+(m?m.nombre:'—'), sub: cs.titulo, estatusCot: cot?cot.estatus:null, refTipo:'caso', refId:cs.id });
   });
-  DB.cotizaciones.filter(c=>c.fecha_creacion && c.fecha_creacion.slice(0,10)===dStr).forEach(c=>{
+  DB.cotizaciones.filter(c=>c.fecha_creacion && ymd(new Date(c.fecha_creacion))===dStr).forEach(c=>{
     const hora = new Date(c.fecha_creacion).toTimeString().slice(0,5);
     const m = medicoById(c.id_medico);
     acts.push({ tipo:'cotizacion', hora, titulo: c.id+' — '+(m?m.nombre:'—'), sub: c.procedimiento||'', estatusCot: c.estatus, refTipo:'cotizacion', refId:c.id });
   });
-  DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && a.fecha_creacion.slice(0,10)===dStr).forEach(a=>{
+  DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && ymd(new Date(a.fecha_creacion))===dStr).forEach(a=>{
     const hora = new Date(a.fecha_creacion).toTimeString().slice(0,5);
     const m = medicoById(a.id_medico);
     acts.push({ tipo:'cotizacion', hora, titulo: a.id+' — '+(m?m.nombre:a.aseguradora), sub: a.aseguradora+(a.procedimiento?(' · '+a.procedimiento):''), estatusCot: a.estatus, refTipo:'aseguradora', refId:a.id });
   });
-  DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,10)===dStr).forEach(cs=>{
+  DB.casos.filter(cs=>cs.fecha_apertura && ymd(new Date(cs.fecha_apertura))===dStr).forEach(cs=>{
     const hora = new Date(cs.fecha_apertura).toTimeString().slice(0,5);
     const m = medicoById(cs.id_medico);
     const cot = cotizacionLigada(cs);
@@ -2903,7 +2904,7 @@ function actividadesDeDia(dStr){
   });
   DB.casos.forEach(cs=>{
     (cs.interacciones||[]).forEach(it=>{
-      if(it.fecha && it.fecha.slice(0,10)===dStr && it.tipo!=='Sistema'){
+      if(it.fecha && ymd(new Date(it.fecha))===dStr && it.tipo!=='Sistema'){
         const hora = new Date(it.fecha).toTimeString().slice(0,5);
         const m = medicoById(cs.id_medico);
         const cot = cotizacionLigada(cs);
