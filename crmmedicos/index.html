@@ -292,12 +292,14 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
 .today-card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; min-width:220px; flex-shrink:0;}
 .hour-grid{position:relative; display:grid; grid-template-columns:44px repeat(7,1fr); gap:0; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--surface);}
 .hour-label-col{display:flex; flex-direction:column;}
-.hour-label{height:40px; font-size:9.5px; color:var(--text-faint); text-align:right; padding-right:6px; border-top:1px solid var(--border); box-sizing:border-box; padding-top:2px;}
+.hour-label{min-height:40px; font-size:9.5px; color:var(--text-faint); text-align:right; padding-right:6px; border-top:1px solid var(--border); box-sizing:border-box; padding-top:2px;}
 .hour-day-col{border-left:1px solid var(--border); position:relative;}
 .hour-day-head{font-size:10.5px; font-weight:700; text-align:center; padding:6px 2px; border-bottom:1px solid var(--border); color:var(--text-muted); background:var(--surface-2);}
 .hour-day-head.is-today{color:var(--guinda); background:var(--guinda-light);}
-.hour-slot{height:40px; border-top:1px solid var(--border); box-sizing:border-box; position:relative;}
-.hour-case-card{position:absolute; left:2px; right:2px; background:var(--guinda); color:#fff; border-radius:6px; padding:3px 5px; font-size:9px; overflow:hidden; cursor:pointer; z-index:2; line-height:1.25;}
+.hour-slot{min-height:40px; max-height:172px; overflow-y:auto; border-top:1px solid var(--border); border-left:1px solid var(--border); box-sizing:border-box; position:relative; padding:2px;}
+.hour-case-card{background:var(--guinda); color:#fff; border-radius:6px; padding:3px 5px; font-size:9px; cursor:pointer; z-index:2; line-height:1.25; margin-bottom:3px;}
+.hour-case-card .hcc-title{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hour-case-card .hcc-sub{opacity:.85; font-size:8.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .hour-allday-row{border-bottom:2px solid var(--border); padding:4px; min-height:30px; background:var(--surface-2);}
 .brand-logo{border-radius:8px; object-fit:contain; background:#fff; flex-shrink:0;}
 .vitalline{width:100%; height:100%;}
@@ -439,7 +441,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.13.2';
+const APP_VERSION = 'v1.14.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -817,7 +819,7 @@ function renderDashboard(){
         <div style="font-weight:700; font-size:11px;">${m?m.nombre:'—'}</div>
         <div style="font-size:11px; color:var(--text-muted); margin-top:1px;">${procedimiento}${cs.id_cotizacion?` <span class="mono" style="color:var(--text-faint); font-size:11px;">· ${cs.id_cotizacion}</span>`:''}</div>
         <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center;">
-          <span class="pill pill-${overdue?'red':'amber'} pill-small" style="font-size:11px;">${cs.proxima_accion_nota?cs.proxima_accion_nota+' · ':''}${fmtDate(cs.proxima_accion_fecha)}</span>
+          <span class="pill pill-${overdue?'red':'amber'} pill-small" style="font-size:11px; white-space:normal; word-break:break-word; max-width:100%;">${cs.proxima_accion_nota?cs.proxima_accion_nota+' · ':''}${fmtDate(cs.proxima_accion_fecha)}</span>
           ${cv ? `<span class="pill pill-green pill-small" style="font-size:11px;">${cv.nombre}</span>` : `<button class="btn btn-sm btn-guinda" style="padding:3px 10px; font-size:11px;" onclick="openConvenioModal(null,'${cs.id_medico}')">Negociar convenio</button>`}
         </div>
       </div>
@@ -1626,9 +1628,12 @@ function generateListaMaterialesPDF(id){
   doc.text('LISTA DE MATERIALES Y MEDICAMENTOS', MX+52, 36);
   doc.setFont('helvetica','normal'); doc.setFontSize(10);
   doc.text(lm.nombre, MX+52, 52);
-  doc.setDrawColor(...NAVY); doc.line(MX, 72, pageW-MX, 72);
 
-  let y = 88;
+  let y = 72;
+  if(lm.notas){ y = drawNotasBox(doc, lm.notas, MX, y, pageW-MX*2); y += 4; }
+  doc.setDrawColor(...NAVY); doc.line(MX, y, pageW-MX, y);
+  y += 16;
+
   const chips = [];
   chips.push(lm.activo!==false ? 'Activa' : 'Inactiva');
   chips.push(lm.autorizada ? ('Autorizada '+fmtDateTime(lm.fecha_autorizacion)) : 'Sin autorizar');
@@ -1654,9 +1659,6 @@ function generateListaMaterialesPDF(id){
       theme:'plain', headStyles:{fillColor:BLUE, textColor:255, fontStyle:'bold', fontSize:8}, bodyStyles:{fontSize:7.5, textColor:[30,40,50]},
       alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:rightX, right:MX}, tableWidth:colW, columnStyles:{1:{halign:'center', cellWidth:36}} });
   }
-  const rowH = 10;
-  let ly = Math.max(startY+16+meds.length*rowH, startY+16+mats.length*rowH) + 14;
-  if(lm.notas){ ly = drawNotasBox(doc, lm.notas, MX, ly, pageW-MX*2); }
 
   const n = doc.internal.getNumberOfPages();
   for(let i=1;i<=n;i++){
@@ -1791,7 +1793,7 @@ function openListaMaterialesModal(id){
 /* ============================================================
    COTIZACIONES — listado
 ============================================================ */
-let cotState = { page:1, perPage:9, search:'', estatus:'todos', selectedId:null };
+let cotState = { page:1, perPage:50, search:'', estatus:'todos', selectedId:null };
 function renderCotizaciones(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
@@ -1803,8 +1805,10 @@ function renderCotizaciones(){
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openCotizacionWizard()">${icon('plus')} Nueva cotización</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Folio</th><th>Médico</th><th>Procedimiento</th><th>Fecha</th><th>Monto</th><th>Estatus</th></tr></thead>
-      <tbody id="cot-tbody"></tbody></table>
+      <div style="max-height:65vh; overflow-y:auto;">
+        <table><thead style="position:sticky; top:0; z-index:5; background:var(--surface);"><tr><th>Folio</th><th>Médico</th><th>Procedimiento</th><th>Fecha</th><th>Monto</th><th>Estatus</th></tr></thead>
+        <tbody id="cot-tbody"></tbody></table>
+      </div>
       <div class="pagination" id="cot-pg"></div>
     </div>`;
   document.getElementById('cot-search').oninput = e=>{ cotState.search=e.target.value; cotState.page=1; drawCotTable(); };
@@ -1860,8 +1864,28 @@ function openCotizacionDrawer(id){
         <button class="btn" style="flex:1;" onclick="closeDrawer();editCotizacionWizard('${c.id}', true)">${icon('plus')} Regenerar / reenviar</button>
       </div>
       <button class="btn btn-accent" style="width:100%; margin-top:10px;" onclick="generateCotizacionPDF('${c.id}')">${icon('download')} Descargar reporte PDF</button>
+      <button class="btn" style="width:100%; margin-top:8px; background:#25D366; border-color:#25D366; color:#fff;" onclick="sendCotizacionWhatsApp('${c.id}')">${icon('whatsapp')} Enviar cotización por WhatsApp</button>
       ${c.regenerado_de ? `<div style="font-size:11px; color:var(--text-faint); margin-top:10px;">Regenerada a partir de ${c.regenerado_de}</div>`:''}
     </div>`);
+}
+function sendCotizacionWhatsApp(id){
+  const c = DB.cotizaciones.find(x=>String(x.id)===String(id)); if(!c) return;
+  const m = medicoById(c.id_medico);
+  if(!m || !m.telefono){ toast('Este médico no tiene teléfono registrado'); return; }
+  let digits = String(m.telefono).replace(/\D/g,'');
+  if(digits.length===10) digits = '52'+digits;
+  const nombreCorto = (m.nombre||'').replace(/^DRA?\.?\s+/i,'');
+  let msg = `Hola Dr(a). ${nombreCorto}, buen día 👋. Le comparto su cotización *${c.id}* para *${c.procedimiento||'el procedimiento solicitado'}*, con un total de ${fmtMoney(c.costo_propuesta)} (IVA incluido)${c.fecha_vigencia?(', vigente hasta el '+fmtDate(c.fecha_vigencia)):''}.`;
+  msg += '\n\nEn un momento le adjunto el PDF con el desglose completo. Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo.';
+  msg += '\n\nSaludos cordiales.';
+  const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+  try{ generateCotizacionPDF(id); }catch(e){}
+  window.open(link, '_blank');
+  const prev = c.estatus;
+  if(prev!=='Aprobada') c.estatus = 'Enviada';
+  logAudit('Cotización', id, 'Enviada por WhatsApp', 'Mensaje + PDF preparado para '+(m?m.nombre:''));
+  persistExtra(); toast('Descargando PDF y abriendo WhatsApp — adjunta el PDF manualmente en el chat');
+  openCotizacionDrawer(id); renderFollowUpBubble();
 }
 function setCotEstatus(id, estatus){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
@@ -1879,7 +1903,7 @@ function setCotEstatus(id, estatus){
 /* ---- Wizard nueva cotización / edición / regeneración (4 pasos) ---- */
 let wizardState = {};
 function openCotizacionWizard(medicoIdPreset){
-  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, _defaultsApplied:false };
+  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, _defaultsApplied:false };
   drawWizard();
 }
 function editCotizacionWizard(id, regenerar){
@@ -1891,7 +1915,7 @@ function editCotizacionWizard(id, regenerar){
     conceptos: Object.fromEntries((c.conceptos||[]).map(l=>[l.id,l.cantidad])),
     clausulas: Object.fromEntries((c.condiciones||[]).map(cl=>[cl.id,true])),
     step:1, costoManual: c.costo_propuesta, vigenciaManual: regenerar ? null : (c.fecha_vigencia ? c.fecha_vigencia.slice(0,10) : null),
-    listaAsignada: c.lista_asignada||null, _defaultsApplied:true
+    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, _defaultsApplied:true
   };
   drawWizard();
 }
@@ -1936,8 +1960,9 @@ function drawWizardPane(){
         </div>
       </div>
       <div class="form-field full picker-wrap" style="margin-top:14px;"><label style="font-size:13px;">Lista de materiales y medicamentos (opcional)</label>
-        <div class="searchbox" style="width:100%;">${icon('search')}<input id="wz-tmpl-lista-search" placeholder="Buscar por cualquier palabra…" autocomplete="off" value="${wizardState.listaAsignada?wizardState.listaAsignada.nombre:''}"></div>
+        <div class="searchbox" style="width:100%;">${icon('search')}<input id="wz-tmpl-lista-search" placeholder="Buscar por cualquier palabra…" autocomplete="off"></div>
         <div id="wz-tmpl-lista-results" class="picker-results" style="display:none;"></div>
+        <div id="wz-lista-chip" style="margin-top:8px;"></div>
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Esta lista se imprime como anexo del PDF; no afecta el costo del presupuesto.</div>
       </div>
       <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Al elegir una plantilla se agregan automáticamente sus conceptos y condiciones; podrás seguir editando en los siguientes pasos.</div>
@@ -1959,6 +1984,20 @@ function drawWizardPane(){
     if(selMed){ const chipBtn = document.querySelector('#wz-medico-chip button'); if(chipBtn) chipBtn.onclick = ()=>{ wizardState.medico=''; document.getElementById('wz-medico-chip').innerHTML=''; }; }
     document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')){ medResults.style.display='none'; } });
 
+    const refreshListaChip = ()=>{
+      const el = document.getElementById('wz-lista-chip'); if(!el) return;
+      const la = wizardState.listaAsignada, activa = wizardState.listaAsignadaActiva!==false;
+      el.innerHTML = la ? `<div class="card" style="padding:9px 12px; background:${activa?'var(--violet-light)':'var(--surface-2)'}; border-color:transparent; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:140px; font-size:12.5px; font-weight:600; ${activa?'':'text-decoration:line-through; opacity:.55;'}">${icon('catalog')} ${la.nombre}</div>
+        <label style="display:flex; align-items:center; gap:6px; font-size:11px; white-space:nowrap; font-weight:500;"><input type="checkbox" id="wz-lista-activa-chk" ${activa?'checked':''}> Incluir en la cotización</label>
+        <button type="button" id="wz-lista-quitar" class="btn btn-sm btn-danger" style="padding:4px 8px;">${icon('trash')}</button>
+      </div>` : '';
+      if(la){
+        document.getElementById('wz-lista-activa-chk').onchange = (e)=>{ wizardState.listaAsignadaActiva = e.target.checked; refreshListaChip(); };
+        document.getElementById('wz-lista-quitar').onclick = ()=>{ wizardState.listaAsignada = null; wizardState.listaAsignadaActiva = true; refreshListaChip(); toast('Lista quitada de la cotización'); };
+      }
+    };
+    refreshListaChip();
     const wireTmpl = (searchId, resultsId, items, onPick)=>{
       const s = document.getElementById(searchId), r = document.getElementById(resultsId);
       s.oninput = ()=>{
@@ -1975,7 +2014,7 @@ function drawWizardPane(){
       (item.condiciones||[]).forEach(cid=>{ wizardState.clausulas[cid]=true; });
       if(item.lista_asignada_id && !wizardState.listaAsignada){
         const lm = DB.listas_materiales.find(x=>x.id===item.lista_asignada_id);
-        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; document.getElementById('wz-tmpl-lista-search').value = lm.nombre; }
+        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); }
       }
       toast('Procedimiento predefinido aplicado');
     });
@@ -1986,13 +2025,14 @@ function drawWizardPane(){
       if(item.precio_paquete) wizardState.costoManual = item.precio_paquete;
       if(item.lista_asignada_id && !wizardState.listaAsignada){
         const lm = DB.listas_materiales.find(x=>x.id===item.lista_asignada_id);
-        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; document.getElementById('wz-tmpl-lista-search').value = lm.nombre; }
+        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); }
       }
       toast('Paquete aplicado');
     });
     wireTmpl('wz-tmpl-lista-search','wz-tmpl-lista-results', DB.listas_materiales, (item)=>{
       wizardState.listaAsignada = {id:item.id, nombre:item.nombre};
-      document.getElementById('wz-tmpl-lista-search').value = item.nombre;
+      wizardState.listaAsignadaActiva = true;
+      refreshListaChip();
       toast('Lista de materiales asignada: '+item.nombre);
     });
     document.getElementById('wz-next').onclick = ()=>{
@@ -2117,7 +2157,7 @@ function saveWizardCotizacion(){
   if(wizardState.mode==='edit'){
     const c = DB.cotizaciones.find(x=>String(x.id)===String(wizardState.originalId));
     Object.assign(c, { id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento,
-      conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, fecha_vigencia: vigenciaFecha.toISOString(), lista_asignada: wizardState.listaAsignada||null });
+      conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, fecha_vigencia: vigenciaFecha.toISOString(), lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null });
     c.historial_ediciones = c.historial_ediciones || []; c.historial_ediciones.push({fecha: now.toISOString(), accion:'Edición manual'});
     logAudit('Cotización', c.id, 'Edición', 'Cotización actualizada para '+(m?m.nombre:''));
     persistExtra(); closeModal(); toast('Cotización '+c.id+' actualizada'); navigate('cotizaciones'); setTimeout(()=>openCotizacionDrawer(c.id),250);
@@ -2128,7 +2168,7 @@ function saveWizardCotizacion(){
   const nueva = {
     id: folio, id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento,
     fecha_creacion: now.toISOString(), fecha_vigencia: vigencia.toISOString(),
-    conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: wizardState.listaAsignada||null,
+    conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null,
     estatus: wizardState.mode==='regenerate' ? 'Enviada' : 'Borrador',
     regenerado_de: wizardState.mode==='regenerate' ? wizardState.originalId : null,
     historial_ediciones: [], __new:true
@@ -2258,7 +2298,8 @@ function generateCotizacionPDF(id){
       const MX = 26, GAP = 10;
       const colW = (pageW - MX*2 - GAP)/2;
       const leftX = MX, rightX = MX + colW + GAP;
-      const startY = 70;
+      let startY = 62;
+      if(lm.notas){ startY = drawNotasBox(doc, lm.notas, MX, startY, pageW-MX*2) + 4; }
       const meds = [...(lm.medicamentos||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
       const mats = [...(lm.materiales||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
 
@@ -2276,15 +2317,6 @@ function generateCotizacionPDF(id){
           alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:rightX, right:MX},
           tableWidth:colW, columnStyles:{1:{halign:'center', cellWidth:32}} });
       }
-      let ly = startY;
-      if(meds.length || mats.length){
-        // jsPDF-AutoTable solo expone el finalY de la última llamada; estimamos con conteo de filas
-        const rowH = 9.2;
-        const medsEnd = startY + 16 + meds.length*rowH;
-        const matsEnd = startY + 16 + mats.length*rowH;
-        ly = Math.max(medsEnd, matsEnd) + 14;
-      }
-      if(lm.notas){ drawNotasBox(doc, lm.notas, MX, Math.min(ly, 720), pageW-MX*2); }
     }
   }
 
@@ -2838,36 +2870,44 @@ function drawCalBody(){
   else if(calState.view==='mes') drawCalMes(container);
   else drawCalSemana(container);
 }
+function estatusColorVar(color){ return color==='muted' ? 'var(--text-faint)' : 'var(--'+color+')'; }
+function cotizacionLigada(cs){
+  if(!cs.id_cotizacion) return null;
+  return DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) || null;
+}
 function actividadesDeDia(dStr){
   const acts = [];
   casosDeDia(dStr).forEach(cs=>{
     const p = fechaProgress(cs);
     const m = medicoById(cs.id_medico);
+    const cot = cotizacionLigada(cs);
     const folioTxt = cs.id_cotizacion ? (cs.id_cotizacion+' — ') : '';
     acts.push({ tipo:'vencimiento', hora: cs.hora_vencimiento||null, color:p.color, pct:p.pct, pctClamped:p.pctClamped,
-      titulo: folioTxt+(m?m.nombre:'—'), sub: cs.titulo, refTipo:'caso', refId:cs.id });
+      titulo: folioTxt+(m?m.nombre:'—'), sub: cs.titulo, estatusCot: cot?cot.estatus:null, refTipo:'caso', refId:cs.id });
   });
   DB.cotizaciones.filter(c=>c.fecha_creacion && c.fecha_creacion.slice(0,10)===dStr).forEach(c=>{
     const hora = new Date(c.fecha_creacion).toTimeString().slice(0,5);
     const m = medicoById(c.id_medico);
-    acts.push({ tipo:'cotizacion', hora, titulo: c.id+' — '+(m?m.nombre:'—'), sub: c.procedimiento||'', refTipo:'cotizacion', refId:c.id });
+    acts.push({ tipo:'cotizacion', hora, titulo: c.id+' — '+(m?m.nombre:'—'), sub: c.procedimiento||'', estatusCot: c.estatus, refTipo:'cotizacion', refId:c.id });
   });
   DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && a.fecha_creacion.slice(0,10)===dStr).forEach(a=>{
     const hora = new Date(a.fecha_creacion).toTimeString().slice(0,5);
     const m = medicoById(a.id_medico);
-    acts.push({ tipo:'cotizacion', hora, titulo: a.id+' — '+(m?m.nombre:a.aseguradora), sub: a.aseguradora+(a.procedimiento?(' · '+a.procedimiento):''), refTipo:'aseguradora', refId:a.id });
+    acts.push({ tipo:'cotizacion', hora, titulo: a.id+' — '+(m?m.nombre:a.aseguradora), sub: a.aseguradora+(a.procedimiento?(' · '+a.procedimiento):''), estatusCot: a.estatus, refTipo:'aseguradora', refId:a.id });
   });
   DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,10)===dStr).forEach(cs=>{
     const hora = new Date(cs.fecha_apertura).toTimeString().slice(0,5);
     const m = medicoById(cs.id_medico);
-    acts.push({ tipo:'caso_nuevo', hora, titulo: 'Nuevo caso — '+(m?m.nombre:'—'), sub: cs.titulo, refTipo:'caso', refId:cs.id });
+    const cot = cotizacionLigada(cs);
+    acts.push({ tipo:'caso_nuevo', hora, titulo: 'Nuevo caso — '+(m?m.nombre:'—'), sub: cs.titulo, estatusCot: cot?cot.estatus:null, refTipo:'caso', refId:cs.id });
   });
   DB.casos.forEach(cs=>{
     (cs.interacciones||[]).forEach(it=>{
       if(it.fecha && it.fecha.slice(0,10)===dStr && it.tipo!=='Sistema'){
         const hora = new Date(it.fecha).toTimeString().slice(0,5);
         const m = medicoById(cs.id_medico);
-        acts.push({ tipo:'interaccion', hora, titulo: it.tipo+' — '+(m?m.nombre:'—'), sub: cs.titulo, refTipo:'caso', refId:cs.id });
+        const cot = cotizacionLigada(cs);
+        acts.push({ tipo:'interaccion', hora, titulo: it.tipo+' — '+(m?m.nombre:'—'), sub: cs.titulo, estatusCot: cot?cot.estatus:null, refTipo:'caso', refId:cs.id });
       }
     });
   });
@@ -2876,13 +2916,14 @@ function actividadesDeDia(dStr){
 function actChipHtml(act){
   let bg;
   if(act.tipo==='vencimiento') bg = 'var(--'+act.color+')';
-  else if(act.tipo==='cotizacion') bg = 'var(--blue)';
+  else if(act.tipo==='cotizacion') bg = act.estatusCot && ESTADOS_COT[act.estatusCot] ? estatusColorVar(ESTADOS_COT[act.estatusCot].color) : 'var(--blue)';
   else if(act.tipo==='caso_nuevo') bg = 'var(--violet)';
   else bg = 'var(--primary)';
   const marca = act.tipo==='cotizacion' ? '$ ' : (act.tipo==='caso_nuevo' ? '★ ' : (act.tipo==='interaccion' ? '↳ ' : ''));
-  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="position:static; margin-bottom:3px; background:${bg}; line-height:1.3; padding:4px 5px;" title="${(act.sub||'').replace(/"/g,'&quot;')}">
-    <div>${act.hora?('<b>'+act.hora+'</b> '):''}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}</div>
-    ${act.sub ? `<div style="opacity:.85; font-size:8.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${act.sub}</div>` : ''}
+  const estatusTxt = act.estatusCot ? (act.tipo==='cotizacion' ? (' · '+act.estatusCot) : (' ['+act.estatusCot+']')) : '';
+  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="background:${bg};" title="${(act.sub||'').replace(/"/g,'&quot;')}">
+    <div class="hcc-title">${act.hora?('<b>'+act.hora+'</b> '):''}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}${estatusTxt}</div>
+    ${act.sub ? `<div class="hcc-sub">${act.sub}</div>` : ''}
   </div>`;
 }
 function wireActivityClicks(container){
