@@ -63,7 +63,6 @@ a{color:inherit;}
 .login-brand .mark{width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); display:flex; align-items:center; justify-content:center;}
 .login-brand h1{font-family:var(--font-display); font-size:20px; font-weight:700; letter-spacing:.2px;}
 .login-sub{color:var(--text-muted); font-size:13.5px; margin-bottom:26px; line-height:1.5;}
-.pulse-wrap{height:34px; margin:4px 0 24px; opacity:.85;}
 .field-label{font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:7px; display:block;}
 .pass-input{width:100%; padding:13px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface-2); font-size:15px; color:var(--text); outline:none; transition:.15s; letter-spacing:1px;}
 .pass-input:focus{border-color:var(--primary); background:var(--surface);}
@@ -322,8 +321,14 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
 .hour-case-card .hcc-sub{opacity:.85; font-size:8.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .hour-allday-row{border-bottom:2px solid var(--border); padding:4px; min-height:30px; background:var(--surface-2);}
 .brand-logo{border-radius:8px; object-fit:contain; background:#fff; flex-shrink:0;}
-.vitalline{width:100%; height:100%;}
-.vitalline path{fill:none; stroke:var(--primary); stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+.access-ring-wrap{position:relative; width:72px; height:72px; margin:2px auto 22px;}
+.access-ring{width:100%; height:100%; transform:rotate(-90deg);}
+.ring-track{fill:none; stroke:var(--border); stroke-width:5;}
+.ring-arc{fill:none; stroke:url(#ringGrad); stroke-width:5; stroke-linecap:round; stroke-dasharray:264; transform-origin:50px 50px; animation:ringSpin 2.2s linear infinite, ringDash 2.6s ease-in-out infinite;}
+.ring-center-dot{position:absolute; top:50%; left:50%; width:11px; height:11px; margin:-5.5px 0 0 -5.5px; border-radius:50%; background:var(--guinda); box-shadow:0 0 0 0 rgba(142,27,60,.5); animation:ringDotPulse 2.2s ease-in-out infinite;}
+@keyframes ringSpin{to{transform:rotate(270deg);}}
+@keyframes ringDash{0%,100%{stroke-dashoffset:230;} 50%{stroke-dashoffset:40;}}
+@keyframes ringDotPulse{0%,100%{transform:scale(1); box-shadow:0 0 0 0 rgba(142,27,60,.45);} 50%{transform:scale(1.35); box-shadow:0 0 0 8px rgba(142,27,60,0);}}
 
 @media(max-width:980px){
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
@@ -377,7 +382,19 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
       <h1>NOOR CRM</h1>
     </div>
     <div class="login-sub">Plataforma de cotizaciones y seguimiento médico. Ingresa la clave de acceso para continuar.</div>
-    <div class="pulse-wrap"><svg class="vitalline" viewBox="0 0 300 34" preserveAspectRatio="none"><path id="vitalpath" d="M0,17 L60,17 L72,4 L84,30 L96,17 L300,17"></path></svg></div>
+    <div class="access-ring-wrap">
+      <svg class="access-ring" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--guinda)"/>
+            <stop offset="100%" stop-color="var(--primary)"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="50" cy="50" r="42"/>
+        <circle class="ring-arc" cx="50" cy="50" r="42"/>
+      </svg>
+      <div class="ring-center-dot"></div>
+    </div>
     <label class="field-label">Clave de acceso</label>
     <input id="pass-input" class="pass-input" type="password" placeholder="••••••••" autocomplete="off">
     <button class="login-btn" id="login-btn">Entrar al CRM</button>
@@ -501,7 +518,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.19.1';
+const APP_VERSION = 'v1.20.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4402,7 +4419,6 @@ async function boot(){
     b.onclick = ()=>{ SESSION.theme=b.dataset.t; applyTheme(); saveSession(); };
   });
   document.getElementById('logout-btn').onclick = ()=>{ SESSION.authed=false; saveSession(); location.reload(); };
-  animateVitalLine();
   if(SESSION.authed){ showApp(); }
   setInterval(()=>{ if(SESSION.authed) renderFollowUpBubble(); }, 5*60*1000);
   setInterval(()=>{ if(SESSION.authed) renderReminderStack(); }, 30*1000);
@@ -4424,16 +4440,6 @@ function showApp(){
   renderNav();
   const r = location.hash.slice(1);
   navigate(ROUTES.find(x=>x.id===r) ? r : 'dashboard');
-}
-function animateVitalLine(){
-  const path = document.getElementById('vitalpath');
-  if(!path) return;
-  let t=0;
-  setInterval(()=>{
-    t+=1;
-    const shift = (t%40);
-    path.setAttribute('d', `M0,17 L${50+shift},17 L${62+shift},4 L${74+shift},30 L${86+shift},17 L300,17`);
-  }, 120);
 }
 document.getElementById('global-search').addEventListener('keydown', e=>{
   if(e.key==='Enter'){ const q=e.target.value.trim(); if(q){ navigate('medicos'); setTimeout(()=>{ const inp=document.getElementById('medico-search'); if(inp){inp.value=q; inp.dispatchEvent(new Event('input'));} },50); } }
