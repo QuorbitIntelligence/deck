@@ -458,7 +458,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.18.0';
+const APP_VERSION = 'v1.18.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -588,7 +588,19 @@ document.addEventListener('input', e=>{
   }
 });
 function fmtMoney(n){ return (n||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}); }
-function fmtDate(d){ if(!d) return '—'; try{ return new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});}catch(e){return d;} }
+function fmtDate(d){
+  if(!d) return '—';
+  try{
+    let dt;
+    if(typeof d==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d)){
+      const [y,mo,da] = d.split('-').map(Number);
+      dt = new Date(y, mo-1, da); // fecha-solo (sin hora): se interpreta en horario LOCAL, no UTC
+    } else {
+      dt = new Date(d);
+    }
+    return dt.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+  }catch(e){return d;}
+}
 function fmtDateTime(d){ if(!d) return '—'; try{ return new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return d;} }
 function initials(name){ return (name||'').replace(/^DR[A]?\.?\s+/i,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function medicoById(id){ return DB.medicos.find(m=>String(m.id)===String(id)); }
@@ -823,7 +835,7 @@ function renderDashboard(){
   const meses = Object.keys(porMes).sort();
   const hoy = new Date();
   const monitorCasos = DB.casos.filter(cs=>cs.proxima_accion_fecha && !CASOS_CERRADOS.includes(cs.estatus))
-    .map(c=>({...c,d:new Date(c.proxima_accion_fecha)})).sort((a,b)=>a.d-b.d);
+    .map(c=>({...c,d:new Date(c.proxima_accion_fecha+'T23:59:59')})).sort((a,b)=>a.d-b.d);
 
   function monitorRowHtml(cs){
     const m = medicoById(cs.id_medico);
@@ -3624,7 +3636,7 @@ function drawCasoTree(){
       <div class="medico-tree-body" style="display:${open?'block':'none'}; border-top:1px solid var(--border);">
         ${casos.map(cs=>{
           let accion = '';
-          if(cs.proxima_accion_fecha){ const d=new Date(cs.proxima_accion_fecha); accion = `<span class="pill pill-${d<hoy?'red':'amber'} pill-small">${icon('followup')} ${fmtDate(cs.proxima_accion_fecha)}</span>`; }
+          if(cs.proxima_accion_fecha){ const d=new Date(cs.proxima_accion_fecha+'T23:59:59'); accion = `<span class="pill pill-${d<hoy?'red':'amber'} pill-small">${icon('followup')} ${fmtDate(cs.proxima_accion_fecha)}</span>`; }
           const prog = cs.fecha_programacion ? `<span class="pill pill-violet pill-small">${icon('bolt')} Cirugía ${fmtDate(cs.fecha_programacion)}</span>` : '';
           const nextIt = nextPendingInteraction(cs);
           return `<div class="clickable" data-cid="${cs.id}" style="padding:12px 18px 12px 46px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:10px;">
@@ -3868,7 +3880,7 @@ function openInteraccionModal(casoId){
     const it = { id:uid('it'), fecha:new Date().toISOString(), tipo:document.getElementById('it-tipo').value, nota:document.getElementById('it-nota').value,
       fecha_programada: fechaProg, hora_programada: horaProg, estatus: fechaProg ? 'Pendiente' : null, adjuntos: pendingFiles };
     cs.interacciones = cs.interacciones||[]; cs.interacciones.push(it);
-    if(fechaProg){ cs.proxima_accion_fecha = fechaProg; cs.proxima_accion_nota = it.tipo+(horaProg?' '+horaProg:'')+(it.nota?': '+it.nota:''); }
+    if(fechaProg){ cs.proxima_accion_fecha = fechaProg; cs.hora_vencimiento = horaProg||null; cs.proxima_accion_nota = it.tipo+(horaProg?' '+horaProg:'')+(it.nota?': '+it.nota:''); }
     const md = medicoById(cs.id_medico);
     logAudit('Caso', casoId, 'Interacción registrada', it.tipo+' · '+(md?md.nombre:'')+(fechaProg?' · programada '+fmtDate(fechaProg)+(horaProg?' '+horaProg:''):'')+(pendingFiles.length?' · '+pendingFiles.length+' adjunto(s)':''));
     persistExtra(); closeModal(); toast(fechaProg?'Interacción programada':'Interacción registrada'); openCasoDrawer(casoId); renderFollowUpBubble();
