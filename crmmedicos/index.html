@@ -458,7 +458,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.18.1';
+const APP_VERSION = 'v1.18.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2972,8 +2972,10 @@ function actChipHtml(act){
   else bg = 'var(--primary)';
   const marca = act.tipo==='cotizacion' ? '$ ' : (act.tipo==='caso_nuevo' ? '★ ' : (act.tipo==='interaccion' ? '↳ ' : ''));
   const estatusTxt = act.estatusCot ? (act.tipo==='cotizacion' ? (' · '+act.estatusCot) : (' ['+act.estatusCot+']')) : '';
-  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="background:${bg};" title="${(act.sub||'').replace(/"/g,'&quot;')}">
-    <div class="hcc-title">${act.hora?('<b>'+act.hora+'</b> '):''}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}${estatusTxt}</div>
+  const horaTxt = act.hora ? ('<b>'+act.hora+'</b> ') : '<span style="opacity:.8; font-style:italic;">(sin hora) </span>';
+  const dimStyle = act.hora ? '' : 'opacity:.72;';
+  return `<div class="hour-case-card" data-reftipo="${act.refTipo}" data-refid="${act.refId}" style="background:${bg}; ${dimStyle}" title="${act.hora?'':'Sin hora específica capturada — '}${(act.sub||'').replace(/"/g,'&quot;')}">
+    <div class="hcc-title">${horaTxt}${marca}${act.titulo}${act.tipo==='vencimiento'?(' · '+act.pct+'%'):''}${estatusTxt}</div>
     ${act.sub ? `<div class="hcc-sub">${act.sub}</div>` : ''}
   </div>`;
 }
