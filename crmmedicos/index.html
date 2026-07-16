@@ -124,6 +124,16 @@ a{color:inherit;}
 .dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
 .dot-green{background:var(--green);} .dot-amber{background:var(--amber);} .dot-red{background:var(--red);} .dot-blue{background:var(--blue);} .dot-violet{background:var(--violet);}
 .followup-bubble{position:fixed; bottom:22px; left:22px; z-index:410; background:var(--surface); border:1.5px solid var(--amber); border-radius:14px; padding:13px 34px 13px 16px; box-shadow:var(--shadow-lg); max-width:300px; animation:fbIn .25s ease;}
+#reminder-stack{position:fixed; bottom:22px; right:22px; z-index:411; display:flex; flex-direction:column-reverse; gap:10px; max-width:300px;}
+.reminder-card{position:relative; background:var(--surface); border:1.5px solid var(--guinda); border-radius:12px; padding:12px 30px 12px 14px; box-shadow:var(--shadow-lg); display:flex; gap:10px; animation:fbIn .25s ease;}
+.reminder-card.is-overdue{border-color:var(--red); background:var(--red-bg);}
+.reminder-body{display:flex; gap:10px; cursor:pointer; flex:1; min-width:0;}
+.reminder-icon{width:26px; height:26px; border-radius:50%; background:var(--guinda-light); color:var(--guinda); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.reminder-card.is-overdue .reminder-icon{background:var(--red-bg); color:var(--red);}
+.reminder-title{font-size:12px; font-weight:700; color:var(--text);}
+.reminder-sub{font-size:10.5px; color:var(--text-muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.reminder-dismiss{position:absolute; top:8px; right:8px; width:18px; height:18px; border:none; background:none; color:var(--text-faint); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+.reminder-dismiss svg{width:11px; height:11px;}
 .fb-body{display:flex; gap:10px; align-items:flex-start; cursor:pointer;}
 .fb-body svg{width:18px; height:18px; color:var(--amber); flex-shrink:0; margin-top:1px;}
 .fb-title{font-size:12.5px; font-weight:700; color:var(--text);}
@@ -448,7 +458,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.16.0';
+const APP_VERSION = 'v1.17.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -668,6 +678,7 @@ function navigate(route){
   document.getElementById('content').scrollTo?.(0,0);
   window.scrollTo(0,0);
   renderFollowUpBubble();
+  renderReminderStack();
 }
 window.addEventListener('hashchange', ()=>{ const r = location.hash.slice(1)||'dashboard'; if(ROUTES.find(x=>x.id===r)) navigate(r); });
 
@@ -2202,7 +2213,7 @@ function saveWizardCotizacion(){
 /* ---- Reporte PDF profesional (sin costos por concepto) ---- */
 const HOSP_INFO = {
   telefono: '55 7657 6669',
-  direccion: 'Bulevar 85, Huixquilucan, Estado de México · Bosque Real, C.P. 52774',
+  direccion: 'Blvd. 85, Huixquilucan, Estado de México · Bosque Real, C.P. 52774',
   portal: 'https://quorbitintelligence.github.io/deck/noor/medicos/',
   contactoNombre: 'Óscar Ramírez',
   contactoRol: 'Programación de cirugías',
@@ -4131,21 +4142,10 @@ function getPendingInteractionAlerts(){
 function renderFollowUpBubble(){
   let wrap = document.getElementById('followup-bubble');
   const pending = getPendingFollowUps();
-  const pendingIt = getPendingInteractionAlerts();
-  const total = pending.length + pendingIt.length;
-  if(!total){ if(wrap) wrap.remove(); return; }
+  if(!pending.length){ if(wrap) wrap.remove(); return; }
   if(!wrap){ wrap = document.createElement('div'); wrap.id='followup-bubble'; wrap.className='followup-bubble'; document.body.appendChild(wrap); }
-  let title, sub;
-  if(pending.length && pendingIt.length){
-    title = total+' pendientes por atender en el CRM';
-    sub = pending.length+' cotización(es) sin seguimiento y '+pendingIt.length+' interacción(es) programada(s) ya vencida(s).';
-  } else if(pendingIt.length){
-    title = pendingIt.length+' interacción'+(pendingIt.length>1?'es':'')+' programada'+(pendingIt.length>1?'s':'')+' por cumplir';
-    sub = 'Ya se cumplió la fecha programada. Toca para revisar en el CRM.';
-  } else {
-    title = pending.length+' cotización'+(pending.length>1?'es':'')+' sin seguimiento';
-    sub = 'Pasaron 24 hrs desde su creación sin actividad. Toca para revisar en el CRM.';
-  }
+  const title = pending.length+' cotización'+(pending.length>1?'es':'')+' sin seguimiento';
+  const sub = 'Pasaron 24 hrs desde su creación sin actividad. Toca para revisar en el CRM.';
   wrap.innerHTML = `<button class="fb-dismiss" id="fb-dismiss">${icon('x')}</button>
     <div class="fb-body" id="fb-body">${icon('followup')}
       <div><div class="fb-title">${title}</div><div class="fb-sub">${sub}</div></div>
@@ -4157,13 +4157,116 @@ function renderFollowUpBubble(){
       let dismissed = JSON.parse(localStorage.getItem('crm_dismissed_alerts')||'[]');
       pending.forEach(p=>dismissed.push(p.id));
       localStorage.setItem('crm_dismissed_alerts', JSON.stringify(dismissed));
-      let dismissedIt = JSON.parse(localStorage.getItem('crm_dismissed_interactions')||'[]');
-      pendingIt.forEach(p=>dismissedIt.push(p.itId));
-      localStorage.setItem('crm_dismissed_interactions', JSON.stringify(dismissedIt));
     }catch(err){}
     wrap.remove();
   };
 }
+
+/* ============ RECORDATORIOS (20 min antes del vencimiento: tareas, casos, interacciones) ============ */
+const REMINDER_WINDOW_MS = 20*60*1000;
+let notifiedReminderIds = new Set();
+function getReminderId(tipo, refId){ return tipo+':'+refId; }
+function getUpcomingReminders(){
+  if(!SESSION.authed) return [];
+  const now = Date.now();
+  let dismissed = [];
+  try{ dismissed = JSON.parse(localStorage.getItem('crm_dismissed_reminders')||'[]'); }catch(e){}
+  const out = [];
+
+  (DB.plan_tareas||[]).forEach(t=>{
+    if(t.completada || !t.hora || !t.fecha) return;
+    const id = getReminderId('tarea', t.id);
+    if(dismissed.includes(id)) return;
+    const target = new Date(t.fecha+'T'+t.hora+':00').getTime();
+    if(isNaN(target)) return;
+    if(target - now <= REMINDER_WINDOW_MS){
+      out.push({ id, tipo:'tarea', titulo:t.titulo, sub:t.categoria+' · '+t.hora, target, overdue: now>target, refId:t.id });
+    }
+  });
+
+  (DB.casos||[]).forEach(cs=>{
+    if((typeof CASOS_CERRADOS!=='undefined' && CASOS_CERRADOS.includes(cs.estatus)) || !cs.proxima_accion_fecha || !cs.hora_vencimiento) return;
+    const id = getReminderId('caso', cs.id);
+    if(dismissed.includes(id)) return;
+    const target = new Date(cs.proxima_accion_fecha+'T'+cs.hora_vencimiento+':00').getTime();
+    if(isNaN(target)) return;
+    if(target - now <= REMINDER_WINDOW_MS){
+      const m = typeof medicoById==='function' ? medicoById(cs.id_medico) : null;
+      out.push({ id, tipo:'caso', titulo:(m?m.nombre:'—'), sub:cs.titulo+' · '+cs.hora_vencimiento, target, overdue: now>target, refId:cs.id });
+    }
+  });
+
+  (DB.casos||[]).forEach(cs=>{
+    (cs.interacciones||[]).forEach(it=>{
+      if(it.estatus!=='Pendiente' || !it.fecha_programada || !it.hora_programada) return;
+      const id = getReminderId('interaccion', it.id);
+      if(dismissed.includes(id)) return;
+      const target = new Date(it.fecha_programada+'T'+it.hora_programada+':00').getTime();
+      if(isNaN(target)) return;
+      if(target - now <= REMINDER_WINDOW_MS){
+        const m = typeof medicoById==='function' ? medicoById(cs.id_medico) : null;
+        out.push({ id, tipo:'interaccion', titulo:it.tipo+' — '+(m?m.nombre:'—'), sub:cs.titulo+' · '+it.hora_programada, target, overdue: now>target, refId:cs.id });
+      }
+    });
+  });
+
+  return out.sort((a,b)=>a.target-b.target);
+}
+function playReminderSound(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const beep = (freq, delay)=> setTimeout(()=>{
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type='sine'; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.35);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime+0.4);
+    }, delay);
+    beep(880,0); beep(1100,220);
+  }catch(e){}
+}
+function renderReminderStack(){
+  const reminders = getUpcomingReminders();
+  let wrap = document.getElementById('reminder-stack');
+  if(!reminders.length){ if(wrap) wrap.innerHTML=''; return; }
+  if(!wrap){ wrap = document.createElement('div'); wrap.id='reminder-stack'; document.body.appendChild(wrap); }
+  const icoMap = {tarea:'checklist', caso:'followup', interaccion:'bolt'};
+  wrap.innerHTML = reminders.map(r=> `<div class="reminder-card ${r.overdue?'is-overdue':''}" data-rid="${r.id}">
+      <button class="reminder-dismiss" data-dismiss="${r.id}">${icon('x')}</button>
+      <div class="reminder-body" data-goto="${r.tipo}" data-refid="${r.refId}">
+        <div class="reminder-icon">${icon(icoMap[r.tipo]||'followup')}</div>
+        <div style="flex:1; min-width:0;">
+          <div class="reminder-title">${r.overdue?'⏰ Venció: ':'⏰ En 20 min: '}${r.titulo}</div>
+          <div class="reminder-sub">${r.sub}</div>
+        </div>
+      </div>
+    </div>`).join('');
+  wrap.querySelectorAll('[data-dismiss]').forEach(b=> b.onclick = (e)=>{
+    e.stopPropagation();
+    const id = b.dataset.dismiss;
+    try{
+      let dismissed = JSON.parse(localStorage.getItem('crm_dismissed_reminders')||'[]');
+      dismissed.push(id);
+      localStorage.setItem('crm_dismissed_reminders', JSON.stringify(dismissed));
+    }catch(err){}
+    renderReminderStack();
+  });
+  wrap.querySelectorAll('.reminder-body').forEach(el=> el.onclick = ()=>{
+    const tipo = el.dataset.goto, refId = el.dataset.refid;
+    if(tipo==='tarea') navigate('plan_trabajo');
+    else openCasoDrawer(refId);
+  });
+  reminders.forEach(r=>{
+    if(!notifiedReminderIds.has(r.id)){
+      notifiedReminderIds.add(r.id);
+      playReminderSound();
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+    }
+  });
+}
+
 
 async function boot(){
   await loadSession();
@@ -4175,6 +4278,7 @@ async function boot(){
   animateVitalLine();
   if(SESSION.authed){ showApp(); }
   setInterval(()=>{ if(SESSION.authed) renderFollowUpBubble(); }, 5*60*1000);
+  setInterval(()=>{ if(SESSION.authed) renderReminderStack(); }, 30*1000);
   document.getElementById('login-btn').onclick = doLogin;
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 }
