@@ -458,7 +458,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.17.0';
+const APP_VERSION = 'v1.17.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1869,6 +1869,7 @@ function openCotizacionDrawer(id){
       <div class="detail-row"><span class="k">Fecha de creación</span><span class="v">${fmtDateTime(c.fecha_creacion)}</span></div>
       <div class="detail-row"><span class="k">Vigencia</span><span class="v">${c.fecha_vigencia?fmtDate(c.fecha_vigencia):'15 días naturales'}</span></div>
       <div class="detail-row"><span class="k">Monto total (IVA incluido)</span><span class="v" style="font-size:16px; color:var(--primary);">${fmtMoney(c.costo_propuesta)}</span></div>
+      ${c.tipo_procedimiento ? `<div class="detail-row"><span class="k">Tipo de procedimiento</span><span class="v"><span class="pill pill-blue">${c.tipo_procedimiento}</span></span></div>` : ''}
       ${c.lista_asignada ? `<div class="detail-row"><span class="k">Lista de materiales</span><span class="v"><span class="pill pill-violet">${c.lista_asignada.nombre}</span></span></div>` : ''}
       <div style="margin:18px 0 8px; font-weight:700; font-size:13px;">Conceptos incluidos ${lines.length?('('+lines.length+')'):''}</div>
       ${lines.length ? lines.slice(0,60).map(l=>`<div class="line-item"><div class="desc">${l.descripcion}<div class="cat">${l.cantidad}×</div></div><div style="font-weight:600; font-size:12.5px;">${fmtMoney(l.total)}</div></div>`).join('') : emptyMini('Sin desglose de conceptos capturado.')}
@@ -1922,7 +1923,7 @@ function setCotEstatus(id, estatus){
 /* ---- Wizard nueva cotización / edición / regeneración (4 pasos) ---- */
 let wizardState = {};
 function openCotizacionWizard(medicoIdPreset){
-  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, _defaultsApplied:false };
+  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, tipoProcedimiento:null, _defaultsApplied:false };
   drawWizard();
 }
 function editCotizacionWizard(id, regenerar){
@@ -1934,7 +1935,7 @@ function editCotizacionWizard(id, regenerar){
     conceptos: Object.fromEntries((c.conceptos||[]).map(l=>[l.id,l.cantidad])),
     clausulas: Object.fromEntries((c.condiciones||[]).map(cl=>[cl.id,true])),
     step:1, costoManual: c.costo_propuesta, vigenciaManual: regenerar ? null : (c.fecha_vigencia ? c.fecha_vigencia.slice(0,10) : null),
-    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, _defaultsApplied:true
+    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, tipoProcedimiento: c.tipo_procedimiento||null, _defaultsApplied:true
   };
   drawWizard();
 }
@@ -1983,6 +1984,14 @@ function drawWizardPane(){
         <div id="wz-tmpl-lista-results" class="picker-results" style="display:none;"></div>
         <div id="wz-lista-chip" style="margin-top:8px;"></div>
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Esta lista se imprime como anexo del PDF; no afecta el costo del presupuesto.</div>
+      </div>
+      <div class="form-field full" style="margin-top:10px;">
+        <label style="font-size:12px;">Tipo de procedimiento (se imprime debajo del nombre del procedimiento)</label>
+        <select class="select" id="wz-tipo-proc" style="width:100%;">
+          <option value="" ${!wizardState.tipoProcedimiento?'selected':''}>— No especificar —</option>
+          <option value="PROCEDIMIENTO AMBULATORIO" ${wizardState.tipoProcedimiento==='PROCEDIMIENTO AMBULATORIO'?'selected':''}>PROCEDIMIENTO AMBULATORIO</option>
+          <option value="PROCEDIMIENTO CON HOSPITALIZACIÓN" ${wizardState.tipoProcedimiento==='PROCEDIMIENTO CON HOSPITALIZACIÓN'?'selected':''}>PROCEDIMIENTO CON HOSPITALIZACIÓN</option>
+        </select>
       </div>
       <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Al elegir una plantilla se agregan automáticamente sus conceptos y condiciones; podrás seguir editando en los siguientes pasos.</div>
     `;
@@ -2056,6 +2065,7 @@ function drawWizardPane(){
     });
     document.getElementById('wz-next').onclick = ()=>{
       wizardState.procedimiento = document.getElementById('wz-proc').value;
+      wizardState.tipoProcedimiento = document.getElementById('wz-tipo-proc').value || null;
       if(!wizardState.medico || !wizardState.procedimiento){ toast('Selecciona médico y captura el procedimiento'); return; }
       wizardState.step=2; drawWizardPane();
     };
@@ -2176,7 +2186,7 @@ function saveWizardCotizacion(){
   if(wizardState.mode==='edit'){
     const c = DB.cotizaciones.find(x=>String(x.id)===String(wizardState.originalId));
     Object.assign(c, { id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento,
-      conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, fecha_vigencia: vigenciaFecha.toISOString(), lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null });
+      conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, fecha_vigencia: vigenciaFecha.toISOString(), lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null });
     c.historial_ediciones = c.historial_ediciones || []; c.historial_ediciones.push({fecha: now.toISOString(), accion:'Edición manual'});
     logAudit('Cotización', c.id, 'Edición', 'Cotización actualizada para '+(m?m.nombre:''));
     persistExtra(); closeModal(); toast('Cotización '+c.id+' actualizada'); navigate('cotizaciones'); setTimeout(()=>openCotizacionDrawer(c.id),250);
@@ -2187,7 +2197,7 @@ function saveWizardCotizacion(){
   const nueva = {
     id: folio, id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento,
     fecha_creacion: now.toISOString(), fecha_vigencia: vigencia.toISOString(),
-    conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null,
+    conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null,
     estatus: wizardState.mode==='regenerate' ? 'Enviada' : 'Borrador',
     regenerado_de: wizardState.mode==='regenerate' ? wizardState.originalId : null,
     historial_ediciones: [], __new:true
@@ -2243,6 +2253,8 @@ function generateCotizacionPDF(id){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'pt', format:'letter'});
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const FOOTER_TOP = 726; // línea del pie de página: nada de contenido debe pasar de aquí
   const BLUE = [38,96,171], NAVY=[27,62,115];
 
   doc.setFillColor(255,255,255); doc.rect(0,0,pageW,96,'F');
@@ -2266,15 +2278,21 @@ function generateCotizacionPDF(id){
   doc.setTextColor(20,30,40); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
   doc.text('PROCEDIMIENTO', 320, y);
   doc.setFont('helvetica','normal'); doc.setFontSize(10.5);
-  doc.text(doc.splitTextToSize((c.procedimiento||'—').toUpperCase(), 230), 320, y+16);
+  const procLines = doc.splitTextToSize((c.procedimiento||'—').toUpperCase(), 230);
+  doc.text(procLines, 320, y+16);
+  if(c.tipo_procedimiento){
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...BLUE);
+    doc.text(c.tipo_procedimiento, 320, y+16+procLines.length*12+8);
+  }
 
   y += 58;
   const rows = getConceptosRows(c).map(l=>[l.descripcion, String(l.cantidad||1)]);
   doc.autoTable({ startY:y, head:[['CONCEPTO INCLUIDO','CANT.']], body: rows.length?rows:[['Sin desglose capturado','—']],
     theme:'plain', headStyles:{fillColor:BLUE, textColor:255, fontStyle:'bold', fontSize:9}, bodyStyles:{fontSize:9, textColor:[30,40,50]},
-    alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:48,right:48}, columnStyles:{1:{halign:'center', cellWidth:60}} });
+    alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:48,right:48,bottom:pageH-FOOTER_TOP+6}, columnStyles:{1:{halign:'center', cellWidth:60}} });
 
   let finalY = doc.lastAutoTable.finalY + 22;
+  if(finalY > FOOTER_TOP-100){ doc.addPage(); finalY = 60; }
   doc.setFillColor(...BLUE); doc.roundedRect(48, finalY, pageW-96, 46, 8, 8, 'F');
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(11);
   doc.text('TOTAL DEL PRESUPUESTO (IVA INCLUIDO)', 62, finalY+19);
@@ -2282,6 +2300,7 @@ function generateCotizacionPDF(id){
   doc.text(fmtMoney(c.costo_propuesta), pageW-62, finalY+30, {align:'right'});
   finalY += 66;
 
+  if(finalY > FOOTER_TOP-140){ doc.addPage(); finalY = 60; }
   doc.setFillColor(...NAVY); doc.roundedRect(48, finalY, pageW-96, 58, 8, 8, 'F');
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
   doc.text('CONFIRME SU CIRUGÍA', 62, finalY+18);
@@ -2292,14 +2311,14 @@ function generateCotizacionPDF(id){
 
   const condiciones = getCondicionesTexts(c);
   if(condiciones.length){
-    if(finalY > 610){ doc.addPage(); finalY = 60; }
+    if(finalY > FOOTER_TOP-116){ doc.addPage(); finalY = 60; }
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...NAVY);
     doc.text('CONDICIONES DEL PRESUPUESTO', 48, finalY);
     doc.setFont('helvetica','normal'); doc.setFontSize(7.8); doc.setTextColor(100,110,118);
     let cy = finalY+15;
     condiciones.forEach(txt=>{
       const lines = doc.splitTextToSize('•  '+txt, pageW-96);
-      if(cy + lines.length*10 > 750){ doc.addPage(); cy = 50; }
+      if(cy + lines.length*10 > FOOTER_TOP-16){ doc.addPage(); cy = 50; }
       doc.text(lines, 48, cy); cy += lines.length*10 + 4;
     });
   }
@@ -2321,19 +2340,20 @@ function generateCotizacionPDF(id){
       if(lm.notas){ startY = drawNotasBox(doc, lm.notas, MX, startY, pageW-MX*2) + 4; }
       const meds = [...(lm.medicamentos||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
       const mats = [...(lm.materiales||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
+      const footerReserve = pageH-FOOTER_TOP+6;
 
       if(meds.length){
         doc.autoTable({ startY, head:[['MEDICAMENTOS','CANT.']], body: meds.map(i=>[i.descripcion, String(i.cantidad)]),
           theme:'plain', headStyles:{fillColor:NAVY, textColor:255, fontStyle:'bold', fontSize:7.6, cellPadding:{top:3,bottom:3,left:4,right:2}},
           bodyStyles:{fontSize:6.8, textColor:[30,40,50], cellPadding:{top:2,bottom:2,left:4,right:2}},
-          alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:leftX, right:pageW-leftX-colW},
+          alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:leftX, right:pageW-leftX-colW, bottom:footerReserve},
           tableWidth:colW, columnStyles:{1:{halign:'center', cellWidth:32}} });
       }
       if(mats.length){
         doc.autoTable({ startY, head:[['MATERIALES E INSUMOS','CANT.']], body: mats.map(i=>[i.descripcion, String(i.cantidad)]),
           theme:'plain', headStyles:{fillColor:BLUE, textColor:255, fontStyle:'bold', fontSize:7.6, cellPadding:{top:3,bottom:3,left:4,right:2}},
           bodyStyles:{fontSize:6.8, textColor:[30,40,50], cellPadding:{top:2,bottom:2,left:4,right:2}},
-          alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:rightX, right:MX},
+          alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:rightX, right:MX, bottom:footerReserve},
           tableWidth:colW, columnStyles:{1:{halign:'center', cellWidth:32}} });
       }
     }
@@ -2342,7 +2362,7 @@ function generateCotizacionPDF(id){
   const pageCount = doc.internal.getNumberOfPages();
   for(let i=1;i<=pageCount;i++){
     doc.setPage(i);
-    doc.setDrawColor(230,233,235); doc.line(48, 726, pageW-48, 726);
+    doc.setDrawColor(230,233,235); doc.line(48, FOOTER_TOP, pageW-48, FOOTER_TOP);
     doc.setFontSize(7.3); doc.setTextColor(110,120,130); doc.setFont('helvetica','bold');
     doc.text('HOSPITAL NOOR', 48, 738);
     doc.setFont('helvetica','normal');
