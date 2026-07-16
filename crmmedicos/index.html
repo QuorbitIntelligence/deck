@@ -458,7 +458,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.17.1';
+const APP_VERSION = 'v1.18.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3713,6 +3713,16 @@ function openCasoDrawer(id){
         <div style="font-size:11px; font-weight:700; color:var(--amber); text-transform:uppercase;">Próxima acción</div>
         <div style="font-size:13px; font-weight:600; margin-top:4px;">${cs.proxima_accion_nota||'Sin nota'}</div>
         <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">${fmtDate(cs.proxima_accion_fecha)}</div></div>` : ''}
+      <div class="card" style="margin-bottom:16px; padding:12px 14px;">
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Registrar acción rápida</div>
+        <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+          <button type="button" class="chip qn-canal-btn active" data-canal="Nota rápida">Nota rápida</button>
+          <button type="button" class="chip qn-canal-btn" data-canal="WhatsApp">WhatsApp</button>
+          <button type="button" class="chip qn-canal-btn" data-canal="Llamada">Llamada</button>
+        </div>
+        <textarea id="qn-texto" class="input" style="width:100%; min-height:60px; font-size:12.5px;" placeholder="Describe brevemente el mensaje o la plática que vas a tener…"></textarea>
+        <button type="button" class="btn btn-sm btn-primary" id="qn-save" style="margin-top:8px;">${icon('plus')} Guardar en historial</button>
+      </div>
       <div style="font-weight:700; font-size:13px; margin-bottom:10px;">Historial de interacciones (${(cs.interacciones||[]).length})</div>
       ${(cs.interacciones||[]).length ? [...cs.interacciones].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).map(it=>{
         const p = interactionProgress(it);
@@ -3727,6 +3737,22 @@ function openCasoDrawer(id){
       }).join('')
         : emptyMini('Sin interacciones registradas todavía.')}
     </div>`);
+  document.querySelectorAll('.qn-canal-btn').forEach(b=> b.onclick = ()=>{
+    document.querySelectorAll('.qn-canal-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  });
+  const qnTexto = document.getElementById('qn-texto');
+  const guardarNotaRapida = ()=>{
+    const texto = qnTexto.value.trim();
+    if(!texto){ toast('Escribe una nota antes de guardar'); return; }
+    const canal = document.querySelector('.qn-canal-btn.active')?.dataset.canal || 'Nota rápida';
+    const it = { id:uid('it'), fecha:new Date().toISOString(), tipo:canal, nota:texto };
+    cs.interacciones = cs.interacciones||[]; cs.interacciones.push(it);
+    logAudit('Caso', cs.id, 'Nota rápida registrada', canal+': '+texto.slice(0,50));
+    persistExtra(); toast('Registrado en el historial'); openCasoDrawer(cs.id);
+  };
+  document.getElementById('qn-save').onclick = guardarNotaRapida;
+  qnTexto.onkeydown = (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='Enter'){ e.preventDefault(); guardarNotaRapida(); } };
 }
 function completarInteraccion(casoId, itId){
   const cs = DB.casos.find(x=>x.id===casoId); if(!cs) return;
