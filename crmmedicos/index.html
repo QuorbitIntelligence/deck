@@ -534,7 +534,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.20.2';
+const APP_VERSION = 'v1.21.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -680,6 +680,10 @@ function fmtDate(d){
 function fmtDateTime(d){ if(!d) return '—'; try{ return new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return d;} }
 function initials(name){ return (name||'').replace(/^DR[A]?\.?\s+/i,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function medicoById(id){ return DB.medicos.find(m=>String(m.id)===String(id)); }
+function conveniosActivosParaMedico(medicoId){
+  if(!medicoId) return [];
+  return DB.convenios.filter(cv => (cv.medicos||[]).includes(medicoId) && computeConvenioEstatus(cv)==='Activo');
+}
 function conceptoById(id){ return DB.conceptos.find(c=>String(c.id).toUpperCase()===String(id).toUpperCase()); }
 function especialidadNombre(id){ const e = DB.especialidades.find(e=>e.id===id); return e?e.nombre:'—'; }
 function uid(prefix){ return prefix + Math.random().toString(36).slice(2,8); }
@@ -1969,6 +1973,7 @@ function openCotizacionDrawer(id){
       <div class="detail-row"><span class="k">Vigencia</span><span class="v">${c.fecha_vigencia?fmtDate(c.fecha_vigencia):'15 días naturales'}</span></div>
       <div class="detail-row"><span class="k">Monto total (IVA incluido)</span><span class="v" style="font-size:16px; color:var(--primary);">${fmtMoney(c.costo_propuesta)}</span></div>
       ${c.tipo_procedimiento ? `<div class="detail-row"><span class="k">Tipo de procedimiento</span><span class="v"><span class="pill pill-blue">${c.tipo_procedimiento}</span></span></div>` : ''}
+      ${c.convenios_aplicados && c.convenios_aplicados.length ? `<div class="detail-row"><span class="k">Convenio${c.convenios_aplicados.length>1?'s':''} aplicado${c.convenios_aplicados.length>1?'s':''}</span><span class="v" style="display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;">${c.convenios_aplicados.map(cv=>`<span class="pill pill-green">${icon('deals')} ${cv.nombre}</span>`).join('')}</span></div>` : ''}
       ${c.lista_asignada ? `<div class="detail-row"><span class="k">Lista de materiales</span><span class="v"><span class="pill pill-violet">${c.lista_asignada.nombre}</span></span></div>` : ''}
       <div style="margin:18px 0 8px; font-weight:700; font-size:13px;">Conceptos incluidos ${lines.length?('('+lines.length+')'):''}</div>
       ${lines.length ? lines.slice(0,60).map(l=>`<div class="line-item"><div class="desc">${l.descripcion}<div class="cat">${l.cantidad}×</div></div><div style="font-weight:600; font-size:12.5px;">${fmtMoney(l.total)}</div></div>`).join('') : emptyMini('Sin desglose de conceptos capturado.')}
@@ -2022,7 +2027,7 @@ function setCotEstatus(id, estatus){
 /* ---- Wizard nueva cotización / edición / regeneración (4 pasos) ---- */
 let wizardState = {};
 function openCotizacionWizard(medicoIdPreset){
-  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, tipoProcedimiento:null, _defaultsApplied:false };
+  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, tipoProcedimiento:null, _defaultsApplied:false, _conveniosChecked:false, conveniosIncluidos:{} };
   drawWizard();
 }
 function editCotizacionWizard(id, regenerar){
@@ -2034,7 +2039,7 @@ function editCotizacionWizard(id, regenerar){
     conceptos: Object.fromEntries((c.conceptos||[]).map(l=>[l.id,l.cantidad])),
     clausulas: Object.fromEntries((c.condiciones||[]).map(cl=>[cl.id,true])),
     step:1, costoManual: c.costo_propuesta, vigenciaManual: regenerar ? null : (c.fecha_vigencia ? c.fecha_vigencia.slice(0,10) : null),
-    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, tipoProcedimiento: c.tipo_procedimiento||null, _defaultsApplied:true
+    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, tipoProcedimiento: c.tipo_procedimiento||null, _defaultsApplied:true, _conveniosChecked:false, conveniosIncluidos: Object.fromEntries((c.convenios_aplicados||[]).map(cv=>[cv.id,true]))
   };
   drawWizard();
 }
@@ -2044,15 +2049,23 @@ function drawWizard(){
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:17px;">${titleMap[wizardState.mode]}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body" style="padding:26px 30px;">
-      <div class="step-track"><div class="${wizardState.step>=1?'done':''}"></div><div class="${wizardState.step>=2?'done':''}"></div><div class="${wizardState.step>=3?'done':''}"></div><div class="${wizardState.step>=4?'done':''}"></div></div>
-      <div style="font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:16px;">Paso ${wizardState.step} de 4 · ${['Datos generales','Conceptos','Condiciones y costo','Revisión final'][wizardState.step-1]}</div>
+      <div class="step-track" id="wizard-step-track"></div>
+      <div id="wizard-step-label" style="font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:16px;"></div>
       <div id="wizard-pane"></div>
     </div>
     <div class="modal-foot" id="wizard-foot"></div>`);
   document.querySelector('.modal').style.width = '720px';
   drawWizardPane();
 }
+function refreshWizardStepHeader(){
+  const track = document.getElementById('wizard-step-track');
+  const label = document.getElementById('wizard-step-label');
+  if(!track || !label) return;
+  track.innerHTML = `<div class="${wizardState.step>=1?'done':''}"></div><div class="${wizardState.step>=2?'done':''}"></div><div class="${wizardState.step>=3?'done':''}"></div><div class="${wizardState.step>=4?'done':''}"></div>`;
+  label.textContent = `Paso ${wizardState.step} de 4 · ${['Datos generales','Conceptos','Condiciones y costo','Revisión final'][wizardState.step-1]}`;
+}
 function drawWizardPane(){
+  refreshWizardStepHeader();
   const pane = document.getElementById('wizard-pane');
   const foot = document.getElementById('wizard-foot');
   if(wizardState.step===1){
@@ -2201,8 +2214,32 @@ function drawWizardPane(){
       DB.clausulas.filter(cl=>cl.default && cl.activa!==false && (!cl.contexto || cl.contexto==='medico' || cl.contexto==='ambos')).forEach(cl=>{ wizardState.clausulas[cl.id]=true; });
       wizardState._defaultsApplied = true;
     }
+    const conveniosDetectados = conveniosActivosParaMedico(wizardState.medico);
+    if(conveniosDetectados.length && !wizardState._conveniosChecked){
+      wizardState._conveniosChecked = true;
+      conveniosDetectados.forEach(cv=>{
+        wizardState.conveniosIncluidos[cv.id] = true;
+        (cv.condiciones||[]).forEach(clId=>{ wizardState.clausulas[clId]=true; });
+      });
+    }
     const conceptTotal = Object.entries(wizardState.conceptos).reduce((s,[id,qty])=>{ const c=conceptoById(id); return s+(c?c.costo_sin_iva*qty:0); },0);
     pane.innerHTML = `
+      ${conveniosDetectados.length ? conveniosDetectados.map(cv=>{
+        const incl = wizardState.conveniosIncluidos[cv.id]!==false;
+        return `<div class="card" style="background:${incl?'var(--green-bg)':'var(--surface-2)'}; border-color:${incl?'var(--green)':'transparent'}; margin-bottom:10px;">
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+          <div style="width:32px; height:32px; border-radius:50%; background:${incl?'var(--green)':'var(--surface-3)'}; color:${incl?'#fff':'var(--text-faint)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${icon('deals')}</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em;">Convenio detectado para este médico</div>
+            <div style="font-size:13.5px; font-weight:700; margin-top:2px;">${cv.nombre}</div>
+            <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">${cv.tipo||''}${cv.condiciones&&cv.condiciones.length?' · '+cv.condiciones.length+' condición(es) asociadas':''}</div>
+          </div>
+          <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; white-space:nowrap; flex-shrink:0;">
+            <input type="checkbox" class="wz-convenio-chk" data-cvid="${cv.id}" ${incl?'checked':''}> Incluir
+          </label>
+        </div>
+      </div>`;
+      }).join('') : ''}
       <div class="searchbox" style="width:100%; margin-bottom:10px;">${icon('search')}<input class="uc-input" id="wz-cl-search" placeholder="BUSCAR CONDICIÓN…" autocomplete="off"></div>
       <div id="wz-cl-list" style="max-height:210px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px;"></div>
       <div style="display:flex; gap:8px; margin-top:10px;">
@@ -2223,6 +2260,23 @@ function drawWizardPane(){
         <div style="font-size:11px; color:var(--text-faint); margin-top:5px;">Por defecto son 15 días naturales a partir de hoy; puedes modificarla si el caso lo requiere.</div>
       </div>
     `;
+    document.querySelectorAll('.wz-convenio-chk').forEach(chk=>{
+      chk.onchange = (e)=>{
+        const cvId = chk.dataset.cvid;
+        const cv = conveniosDetectados.find(x=>x.id===cvId);
+        wizardState.conveniosIncluidos[cvId] = e.target.checked;
+        const ids = cv?cv.condiciones||[]:[];
+        if(e.target.checked){
+          ids.forEach(clId=>{ wizardState.clausulas[clId]=true; });
+        } else {
+          ids.forEach(clId=>{
+            const stillNeeded = conveniosDetectados.some(other=> other.id!==cvId && wizardState.conveniosIncluidos[other.id]!==false && (other.condiciones||[]).includes(clId));
+            if(!stillNeeded) delete wizardState.clausulas[clId];
+          });
+        }
+        drawWizardPane();
+      };
+    });
     const drawClList = wireClausulaPicker(document.getElementById('wz-cl-search'), document.getElementById('wz-cl-list'), wizardState.clausulas, null, 'medico');
     document.getElementById('wz-cl-add').onclick = ()=>{
       const input = document.getElementById('wz-cl-new'); const txt = input.value.trim();
@@ -2240,6 +2294,7 @@ function drawWizardPane(){
     wizardState.costoManual = costo;
     const conceptosArr = Object.entries(wizardState.conceptos).map(([id,qty])=>{ const c=conceptoById(id); return {id, descripcion:c?c.descripcion:id, cantidad:qty}; });
     const condicionesArr = DB.clausulas.filter(cl=>wizardState.clausulas[cl.id]);
+    const conveniosIncluidosArr = conveniosActivosParaMedico(wizardState.medico).filter(cv=>wizardState.conveniosIncluidos[cv.id]!==false);
     pane.innerHTML = `
       <div style="background:var(--surface-2); border-radius:14px; padding:18px 20px; margin-bottom:16px;">
         <div class="detail-row"><span class="k">Médico</span><span class="v">${m?m.nombre:''}</span></div>
@@ -2252,6 +2307,10 @@ function drawWizardPane(){
         <div style="font-size:11px; font-weight:700; color:var(--violet); text-transform:uppercase;">Lista de materiales asignada</div>
         <div style="font-size:13px; font-weight:600; margin-top:4px;">${wizardState.listaAsignada.nombre}</div>
         <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">Se imprimirá como anexo del PDF.</div></div>` : ''}
+      ${conveniosIncluidosArr.length ? `<div class="card" style="background:var(--green-bg); border-color:transparent; margin-bottom:16px;">
+        <div style="font-size:11px; font-weight:700; color:var(--green); text-transform:uppercase;">${icon('deals')} Convenio${conveniosIncluidosArr.length>1?'s':''} aplicado${conveniosIncluidosArr.length>1?'s':''}</div>
+        ${conveniosIncluidosArr.map(cv=>`<div style="font-size:13px; font-weight:600; margin-top:4px;">${cv.nombre}</div>`).join('')}
+        <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Sus condiciones ya están incluidas abajo.</div></div>` : ''}
       <div style="font-weight:700; font-size:12.5px; margin-bottom:8px;">Conceptos (${conceptosArr.length})</div>
       ${conceptosArr.length ? conceptosArr.map(l=>`<div class="line-item"><div class="desc">${l.descripcion}</div><div style="font-size:12px; color:var(--text-muted);">${l.cantidad}×</div></div>`).join('') : emptyMini('Sin conceptos.')}
       <div style="font-weight:700; font-size:12.5px; margin:16px 0 8px;">Condiciones (${condicionesArr.length})</div>
@@ -2285,7 +2344,7 @@ function saveWizardCotizacion(){
   if(wizardState.mode==='edit'){
     const c = DB.cotizaciones.find(x=>String(x.id)===String(wizardState.originalId));
     Object.assign(c, { id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento,
-      conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, fecha_vigencia: vigenciaFecha.toISOString(), lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null });
+      conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, fecha_vigencia: vigenciaFecha.toISOString(), lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null, convenios_aplicados: conveniosActivosParaMedico(wizardState.medico).filter(cv=>wizardState.conveniosIncluidos[cv.id]!==false).map(cv=>({id:cv.id, nombre:cv.nombre})) });
     c.historial_ediciones = c.historial_ediciones || []; c.historial_ediciones.push({fecha: now.toISOString(), accion:'Edición manual'});
     logAudit('Cotización', c.id, 'Edición', 'Cotización actualizada para '+(m?m.nombre:''));
     persistExtra(); closeModal(); toast('Cotización '+c.id+' actualizada'); navigate('cotizaciones'); setTimeout(()=>openCotizacionDrawer(c.id),250);
@@ -2296,7 +2355,7 @@ function saveWizardCotizacion(){
   const nueva = {
     id: folio, id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento,
     fecha_creacion: now.toISOString(), fecha_vigencia: vigencia.toISOString(),
-    conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null,
+    conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null, convenios_aplicados: conveniosActivosParaMedico(wizardState.medico).filter(cv=>wizardState.conveniosIncluidos[cv.id]!==false).map(cv=>({id:cv.id, nombre:cv.nombre})),
     estatus: wizardState.mode==='regenerate' ? 'Enviada' : 'Borrador',
     regenerado_de: wizardState.mode==='regenerate' ? wizardState.originalId : null,
     historial_ediciones: [], __new:true
@@ -2580,15 +2639,23 @@ function drawAsgWizard(){
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:17px;">${titleMap[asgWizard.mode]}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body" style="padding:26px 30px;">
-      <div class="step-track"><div class="${asgWizard.step>=1?'done':''}"></div><div class="${asgWizard.step>=2?'done':''}"></div><div class="${asgWizard.step>=3?'done':''}"></div><div class="${asgWizard.step>=4?'done':''}"></div></div>
-      <div style="font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:16px;">Paso ${asgWizard.step} de 4 · ${['Datos y conceptos del hospital','Insumos del proveedor','Condiciones','Revisión final'][asgWizard.step-1]}</div>
+      <div class="step-track" id="asg-step-track"></div>
+      <div id="asg-step-label" style="font-size:11px; color:var(--text-faint); font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:16px;"></div>
       <div id="asg-pane"></div>
     </div>
     <div class="modal-foot" id="asg-foot"></div>`);
   document.querySelector('.modal').style.width = '760px';
   drawAsgPane();
 }
+function refreshAsgStepHeader(){
+  const track = document.getElementById('asg-step-track');
+  const label = document.getElementById('asg-step-label');
+  if(!track || !label) return;
+  track.innerHTML = `<div class="${asgWizard.step>=1?'done':''}"></div><div class="${asgWizard.step>=2?'done':''}"></div><div class="${asgWizard.step>=3?'done':''}"></div><div class="${asgWizard.step>=4?'done':''}"></div>`;
+  label.textContent = `Paso ${asgWizard.step} de 4 · ${['Datos y conceptos del hospital','Insumos del proveedor','Condiciones','Revisión final'][asgWizard.step-1]}`;
+}
 function drawAsgPane(){
+  refreshAsgStepHeader();
   const pane = document.getElementById('asg-pane');
   const foot = document.getElementById('asg-foot');
   if(asgWizard.step===1){
