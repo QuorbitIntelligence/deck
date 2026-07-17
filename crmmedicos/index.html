@@ -104,7 +104,7 @@ a{color:inherit;}
 .logout-link:hover{color:#fff;}
 
 .main{flex:1; min-width:0;}
-.topbar{position:sticky; top:0; z-index:20; background:var(--bg); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:space-between; padding:18px 28px; border-bottom:1px solid transparent;}
+.topbar{position:sticky; top:0; z-index:20; background:var(--bg); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:space-between; padding:calc(18px + env(safe-area-inset-top,0px)) 28px 18px; border-bottom:1px solid transparent;}
 .topbar::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:linear-gradient(90deg,var(--primary),var(--guinda) 60%,transparent);}
 .topbar h2{font-family:var(--font-display); font-size:22px; font-weight:700;}
 .topbar .crumbs{font-size:12.5px; color:var(--text-faint); margin-top:2px;}
@@ -131,8 +131,8 @@ a{color:inherit;}
 
 .dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
 .dot-green{background:var(--green);} .dot-amber{background:var(--amber);} .dot-red{background:var(--red);} .dot-blue{background:var(--blue);} .dot-violet{background:var(--violet);}
-.followup-bubble{position:fixed; bottom:22px; left:22px; z-index:410; background:var(--surface); border:1.5px solid var(--amber); border-radius:14px; padding:13px 34px 13px 16px; box-shadow:var(--shadow-lg); max-width:300px; animation:fbIn .25s ease;}
-#reminder-stack{position:fixed; bottom:22px; right:22px; z-index:411; display:flex; flex-direction:column-reverse; gap:10px; max-width:300px;}
+.followup-bubble{position:fixed; bottom:calc(22px + env(safe-area-inset-bottom,0px)); left:22px; z-index:410; background:var(--surface); border:1.5px solid var(--amber); border-radius:14px; padding:13px 34px 13px 16px; box-shadow:var(--shadow-lg); max-width:300px; animation:fbIn .25s ease;}
+#reminder-stack{position:fixed; bottom:calc(22px + env(safe-area-inset-bottom,0px)); right:22px; z-index:411; display:flex; flex-direction:column-reverse; gap:10px; max-width:300px;}
 .reminder-card{position:relative; background:var(--surface); border:1.5px solid var(--guinda); border-radius:12px; padding:12px 30px 12px 14px; box-shadow:var(--shadow-lg); display:flex; gap:10px; animation:fbIn .25s ease;}
 .reminder-card.is-overdue{border-color:var(--red); background:var(--red-bg);}
 .reminder-body{display:flex; gap:10px; cursor:pointer; flex:1; min-width:0;}
@@ -351,9 +351,9 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
 .sidebar-overlay.show{display:block;}
 @media (max-width: 900px){
   .mobile-menu-btn{display:flex;}
-  .sidebar{position:fixed; top:0; left:0; z-index:100; width:80vw; max-width:300px; transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow-lg);}
+  .sidebar{position:fixed; top:0; left:0; z-index:100; width:80vw; max-width:300px; transform:translateX(-100%); transition:transform .22s ease; box-shadow:var(--shadow-lg); padding-top:calc(20px + env(safe-area-inset-top,0px)); padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));}
   .sidebar.mobile-open{transform:translateX(0);}
-  .topbar{padding:14px 16px;}
+  .topbar{padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;}
   .topbar h2{font-size:17px;}
   .topbar .searchbox{display:none;}
   .content{padding:6px 14px 60px;}
@@ -534,7 +534,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.20.1';
+const APP_VERSION = 'v1.20.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
