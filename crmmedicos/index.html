@@ -537,7 +537,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.24.1';
+const APP_VERSION = 'v1.25.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1084,8 +1084,10 @@ function renderMedicos(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:260px;">${icon('search')}<input id="medico-search" placeholder="Buscar médico…" value="${medState.search}"></div>
-      <select class="select" id="medico-esp-filter"><option value="todas">Todas las especialidades</option>
-        ${[...new Set(DB.medicos.map(m=>m.especialidad))].sort().map(e=>`<option ${medState.esp===e?'selected':''}>${e}</option>`).join('')}</select>
+      <div class="picker-wrap" style="position:relative; width:230px;">
+        <div class="searchbox" style="width:100%;">${icon('search')}<input id="medico-esp-filter" placeholder="Especialidad (todas)…" autocomplete="off" value="${medState.esp!=='todas'?medState.esp:''}"></div>
+        <div id="medico-esp-results" class="picker-results" style="display:none;"></div>
+      </div>
       <div class="chip-filter" id="medico-chips">
         ${['todos','TRABAJANDO','NUEVO REGISTRO','EN NEGOCIACIÓN','CON CONVENIO','MÉDICO INACTIVO'].map(s=>
           `<button class="chip ${medState.estatus===s?'active':''}" data-s="${s}">${s==='todos'?'Todos':s}</button>`).join('')}
@@ -1102,7 +1104,23 @@ function renderMedicos(){
       <div class="pagination" id="medicos-pg"></div>
     </div>`;
   document.getElementById('medico-search').oninput = e=>{ medState.search=e.target.value; medState.page=1; drawMedTable(); };
-  document.getElementById('medico-esp-filter').onchange = e=>{ medState.esp=e.target.value; medState.page=1; drawMedTable(); };
+  const espFilterEl = document.getElementById('medico-esp-filter');
+  const espResultsEl = document.getElementById('medico-esp-results');
+  const especialidadesList = [...new Set(DB.medicos.map(m=>m.especialidad))].sort();
+  espFilterEl.oninput = ()=>{
+    const q = espFilterEl.value;
+    if(!q.trim()){ medState.esp='todas'; medState.page=1; drawMedTable(); espResultsEl.style.display='none'; return; }
+    const res = especialidadesList.filter(s=>fuzzyMatch(s,q)).slice(0,12);
+    espResultsEl.innerHTML = (`<div class="result-row" data-val="todas"><div class="result-main"><div class="result-title">Todas las especialidades</div></div></div>` +
+      res.map(s=>`<div class="result-row" data-val="${s.replace(/"/g,'&quot;')}"><div class="result-main"><div class="result-title">${s}</div></div></div>`).join('')) || `<div class="picker-empty">Sin coincidencias para "${q}"</div>`;
+    espResultsEl.style.display='block';
+    espResultsEl.querySelectorAll('[data-val]').forEach(row=> row.onclick=()=>{
+      medState.esp = row.dataset.val; medState.page=1;
+      espFilterEl.value = medState.esp==='todas' ? '' : medState.esp;
+      espResultsEl.style.display='none'; drawMedTable();
+    });
+  };
+  document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')) espResultsEl.style.display='none'; });
   document.getElementById('medico-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ medState.estatus=b.dataset.s; medState.page=1; drawMedTable(); });
   document.getElementById('medico-ver-inactivos').onchange = e=>{ medState.verInactivos=e.target.checked; medState.page=1; drawMedTable(); };
   document.querySelectorAll('.sortable-th').forEach(th=> th.onclick = ()=>{
@@ -1284,6 +1302,16 @@ function reactivarMedico(id){
   m.activo = true; if(!m.__new) m.__edited = true;
   logAudit('Médico', id, 'Reactivación', m.nombre);
   persistExtra(); toast('Registro reactivado'); openMedicoDrawer(id); renderMedicos();
+}
+function wireStringSearch(searchEl, resultsEl, items, onPick){
+  searchEl.oninput = ()=>{
+    const q = searchEl.value; if(!q.trim()){ resultsEl.style.display='none'; return; }
+    const res = items.filter(s=>fuzzyMatch(s,q)).slice(0,12);
+    resultsEl.innerHTML = res.length ? res.map(s=>`<div class="result-row" data-val="${s.replace(/"/g,'&quot;')}"><div class="result-main"><div class="result-title">${s}</div></div></div>`).join('') : `<div class="picker-empty">Sin coincidencias para "${q}"</div>`;
+    resultsEl.style.display='block';
+    resultsEl.querySelectorAll('[data-val]').forEach(row=> row.onclick=()=>{ onPick(row.dataset.val); resultsEl.style.display='none'; });
+  };
+  document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')) resultsEl.style.display='none'; });
 }
 function medicoChipHtml(m){
   if(!m) return '';
@@ -1557,8 +1585,10 @@ function openProcedimientoModal(id){
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:14px;">
         <div class="form-field full"><label>Nombre del procedimiento</label><input class="input uc-input" id="pr-nombre" style="width:100%;" value="${p?p.nombre:''}" placeholder="EJ. COLECISTECTOMÍA LAPAROSCÓPICA"></div>
-        <div class="form-field full"><label>Especialidad</label><select class="select" id="pr-esp" style="width:100%;"><option value="">Sin especificar</option>
-          ${DB.especialidades.map(e=>`<option ${p&&p.especialidad===e.nombre?'selected':''}>${e.nombre}</option>`).join('')}</select></div>
+        <div class="form-field full picker-wrap" style="position:relative;"><label>Especialidad</label>
+          <div class="searchbox" style="width:100%;">${icon('search')}<input id="pr-esp-search" placeholder="Buscar especialidad (opcional)…" autocomplete="off" value="${p&&p.especialidad?p.especialidad:''}"></div>
+          <div id="pr-esp-results" class="picker-results" style="display:none;"></div>
+        </div>
       </div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Conceptos incluidos</div>
       <div class="picker-wrap" style="margin-bottom:10px;"><div class="searchbox" style="width:100%;">${icon('search')}<input class="uc-input" id="pr-c-search" placeholder="AGREGAR CONCEPTO…"></div><div id="pr-c-results" class="picker-results" style="display:none;"></div></div>
@@ -1581,10 +1611,13 @@ function openProcedimientoModal(id){
   renderConceptSelection(listEl, selC);
   wireConceptPicker(document.getElementById('pr-c-search'), document.getElementById('pr-c-results'), (cid)=>{ selC[cid]=(selC[cid]||0)+1; renderConceptSelection(listEl, selC); });
   wireClausulaPicker(document.getElementById('pr-cl-search'), document.getElementById('pr-cl-list'), selCl);
+  wireStringSearch(document.getElementById('pr-esp-search'), document.getElementById('pr-esp-results'), DB.especialidades.map(e=>e.nombre), (val)=>{
+    document.getElementById('pr-esp-search').value = val;
+  });
   document.getElementById('pr-save').onclick = ()=>{
     const nombre = document.getElementById('pr-nombre').value.trim();
     if(!nombre){ toast('Captura el nombre del procedimiento'); return; }
-    const payload = { nombre, especialidad: document.getElementById('pr-esp').value,
+    const payload = { nombre, especialidad: document.getElementById('pr-esp-search').value.trim() || null,
       conceptos: Object.entries(selC).map(([id,cantidad])=>({id,cantidad})),
       condiciones: Object.entries(selCl).filter(([,v])=>v).map(([id])=>id),
       lista_asignada_id: prListaId,
@@ -3958,12 +3991,16 @@ function drawCasoTree(){
 }
 function openCasoModal(id, medicoPreset){
   const cs = id ? DB.casos.find(x=>x.id===id) : null;
+  const medicoInicial = cs ? medicoById(cs.id_medico) : (medicoPreset ? medicoById(medicoPreset) : null);
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${cs?'Editar caso':'Nuevo caso CRM'}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-field full"><label>Médico</label><select class="select" id="cs-medico" style="width:100%;">
-          <option value="">Selecciona…</option>${DB.medicos.map(m=>`<option value="${m.id}" ${(cs?cs.id_medico:medicoPreset)==m.id?'selected':''}>${m.nombre}</option>`).join('')}</select></div>
+        <div class="form-field full picker-wrap" style="position:relative;"><label>Médico</label>
+          <div class="searchbox" style="width:100%;">${icon('search')}<input id="cs-medico-search" placeholder="Buscar médico por cualquier palabra…" autocomplete="off"></div>
+          <div id="cs-medico-results" class="picker-results" style="display:none;"></div>
+          <div id="cs-medico-chip" style="margin-top:6px;">${medicoInicial?medicoChipHtml(medicoInicial):''}</div>
+        </div>
         <div class="form-field full"><label>Título del caso</label><input class="input uc-input" id="cs-titulo" style="width:100%;" value="${cs?cs.titulo:''}" placeholder="EJ. SEGUIMIENTO POST-COTIZACIÓN"></div>
         <div class="form-field"><label>Estatus</label><select class="select" id="cs-estatus" style="width:100%;">${Object.keys(ESTADOS_CASO).map(s=>`<option ${cs&&cs.estatus===s?'selected':''}>${s}</option>`).join('')}</select></div>
         <div class="form-field"><label>Prioridad</label><select class="select" id="cs-prioridad" style="width:100%;">${['Alta','Media','Baja'].map(p=>`<option ${cs&&cs.prioridad===p?'selected':''}>${p}</option>`).join('')}</select></div>
@@ -3976,8 +4013,23 @@ function openCasoModal(id, medicoPreset){
       </div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="cs-save">Guardar caso</button></div>`);
+  let medicoSel = medicoInicial ? medicoInicial.id : null;
+  const searchEl = document.getElementById('cs-medico-search');
+  const resultsEl = document.getElementById('cs-medico-results');
+  searchEl.oninput = ()=>{
+    const q = searchEl.value; if(!q.trim()){ resultsEl.style.display='none'; return; }
+    const res = DB.medicos.filter(m=>fuzzyMatch(m.nombre,q)).slice(0,8);
+    resultsEl.innerHTML = res.length ? res.map(m=>`<div class="result-row" data-pick="${m.id}"><div class="result-main"><div class="result-title">${m.nombre}</div><div class="result-sub">${m.especialidad}</div></div></div>`).join('') : `<div class="picker-empty">Sin coincidencias para "${q}"</div>`;
+    resultsEl.style.display='block';
+    resultsEl.querySelectorAll('[data-pick]').forEach(row=> row.onclick=()=>{
+      medicoSel = row.dataset.pick;
+      document.getElementById('cs-medico-chip').innerHTML = medicoChipHtml(medicoById(medicoSel));
+      resultsEl.style.display='none'; searchEl.value='';
+    });
+  };
+  document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')) resultsEl.style.display='none'; });
   document.getElementById('cs-save').onclick = ()=>{
-    const idm = document.getElementById('cs-medico').value;
+    const idm = medicoSel;
     const titulo = document.getElementById('cs-titulo').value.trim();
     if(!idm || !titulo){ toast('Selecciona médico y captura un título'); return; }
     const payload = { id_medico: idm, titulo, estatus: document.getElementById('cs-estatus').value, prioridad: document.getElementById('cs-prioridad').value,
@@ -4237,10 +4289,11 @@ function openGrupoModal(id){
         <button type="button" class="chip ${!g||g.modo==='especialidad'?'active':''}" data-modo="especialidad">Por especialidad</button>
         <button type="button" class="chip ${g&&g.modo==='manual'?'active':''}" data-modo="manual">Grupo manual</button>
       </div>
-      <div id="dg-especialidad-block" style="${g&&g.modo==='manual'?'display:none;':''}">
-        <div class="form-field full"><label>Especialidad</label><select class="select" id="dg-especialidad" style="width:100%;">
-          ${especialidades.map(e=>`<option ${g&&g.especialidad===e?'selected':''}>${e}</option>`).join('')}
-        </select></div>
+      <div id="dg-especialidad-block" class="picker-wrap" style="position:relative; ${g&&g.modo==='manual'?'display:none;':''}">
+        <div class="form-field full"><label>Especialidad</label>
+          <div class="searchbox" style="width:100%;">${icon('search')}<input id="dg-especialidad-search" placeholder="Buscar especialidad por cualquier palabra…" autocomplete="off" value="${g&&g.especialidad?g.especialidad:''}"></div>
+          <div id="dg-especialidad-results" class="picker-results" style="display:none;"></div>
+        </div>
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">El grupo se actualiza solo: siempre incluirá a todos los médicos activos de esta especialidad, aunque se agreguen nuevos después.</div>
       </div>
       <div id="dg-manual-block" style="${!g||g.modo==='especialidad'?'display:none;':''}">
@@ -4258,11 +4311,16 @@ function openGrupoModal(id){
     document.getElementById('dg-manual-block').style.display = modoActual==='manual' ? 'block':'none';
   });
   wireMedicoMultiPicker(document.getElementById('dg-med-search'), document.getElementById('dg-med-list'), selMed);
+  let especialidadSel = g && g.especialidad ? g.especialidad : (especialidades[0]||'');
+  wireStringSearch(document.getElementById('dg-especialidad-search'), document.getElementById('dg-especialidad-results'), especialidades, (val)=>{
+    especialidadSel = val;
+    document.getElementById('dg-especialidad-search').value = val;
+  });
   document.getElementById('dg-save').onclick = ()=>{
     const nombre = document.getElementById('dg-nombre').value.trim();
     if(!nombre){ toast('Captura el nombre del grupo'); return; }
     const payload = { nombre, modo: modoActual,
-      especialidad: modoActual==='especialidad' ? document.getElementById('dg-especialidad').value : null,
+      especialidad: modoActual==='especialidad' ? (document.getElementById('dg-especialidad-search').value.trim() || especialidadSel) : null,
       medicos: modoActual==='manual' ? Object.entries(selMed).filter(([,v])=>v).map(([id])=>id) : [],
       activo: document.getElementById('dg-activo').checked };
     if(g){ Object.assign(g, payload); logAudit('Grupo de difusión', g.id, 'Edición', nombre); }
@@ -4272,41 +4330,117 @@ function openGrupoModal(id){
   const delBtn = document.getElementById('dg-del');
   if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Eliminar este grupo de difusión?')){ DB.grupos_difusion = DB.grupos_difusion.filter(x=>x.id!==g.id); logAudit('Grupo de difusión', g.id, 'Eliminación', g.nombre); persistExtra(); closeModal(); renderDifusion(); } };
 }
+const RESEND_COOLDOWN_MS = 24*60*60*1000;
+function envioPuedeReenviarse(e){ return !e.fecha_envio || (Date.now()-new Date(e.fecha_envio).getTime()) >= RESEND_COOLDOWN_MS; }
+function horasParaReenvio(e){ if(!e.fecha_envio) return 0; const rest = RESEND_COOLDOWN_MS-(Date.now()-new Date(e.fecha_envio).getTime()); return Math.max(0,Math.ceil(rest/3600000)); }
 function openCampanaModal(grupoId){
   const g = DB.grupos_difusion.find(x=>x.id===grupoId); if(!g) return;
   const medicos = resolveGrupoMedicos(g);
-  let campana = DB.campanas_difusion.find(c=>c.grupo_id===grupoId && c.envios.some(e=>!e.enviado));
+  let campana = DB.campanas_difusion.find(c=>c.grupo_id===grupoId);
   if(!campana){
-    campana = { id: uid('camp'), grupo_id: grupoId, mensaje:'', fecha_creacion: new Date().toISOString(),
-      envios: medicos.map(m=>({medico_id:m.id, enviado:false, fecha_envio:null})), __new:true };
+    campana = { id: uid('camp'), grupo_id: grupoId, mensaje:'', imagenDataUrl:null, fecha_creacion: new Date().toISOString(),
+      envios: medicos.map(m=>({medico_id:m.id, fecha_envio:null, veces_enviado:0})), __new:true };
     DB.campanas_difusion.unshift(campana);
   } else {
-    medicos.forEach(m=>{ if(!campana.envios.find(e=>e.medico_id===m.id)){ campana.envios.push({medico_id:m.id, enviado:false, fecha_envio:null}); } });
+    medicos.forEach(m=>{ if(!campana.envios.find(e=>String(e.medico_id)===String(m.id))){ campana.envios.push({medico_id:m.id, fecha_envio:null, veces_enviado:0}); } });
   }
   persistExtra();
   drawCampanaDrawer(campana.id);
 }
+const PLANTILLA_TONOS = ['Formal','Cercano','Urgente / promocional'];
+const PLANTILLA_TIPOS = ['Descuento en procedimiento','Paquete especial','Nuevo servicio','Recordatorio de vigencia','Libre'];
+function generarMensajePlantilla(tono, tipo, promo, beneficio, fechaLimite, extra){
+  const saludos = { 'Formal':'Estimado(a) Dr(a). {nombre},', 'Cercano':'Hola Dr(a). {nombre}, ¿cómo ha estado?', 'Urgente / promocional':'¡Dr(a). {nombre}! 🎉 Tenemos algo especial para usted:' };
+  let cuerpo = '';
+  const tipoFrases = {
+    'Descuento en procedimiento': `Le informamos que ${promo||'este procedimiento'} cuenta actualmente con ${beneficio||'una condición especial'}.`,
+    'Paquete especial': `Hemos preparado el paquete "${promo||'esta promoción'}", que incluye ${beneficio||'beneficios especiales'}.`,
+    'Nuevo servicio': `Nos da mucho gusto informarle que ahora contamos con ${promo||'un nuevo servicio'}. ${beneficio?('Incluye '+beneficio+'.'):''}`,
+    'Recordatorio de vigencia': `Le recordamos que ${promo||'esta promoción'} está por concluir. ${beneficio?('Aproveche '+beneficio+'.'):''}`,
+    'Libre': `${promo||''} ${beneficio?('— '+beneficio):''}`
+  };
+  cuerpo = tipoFrases[tipo] || tipoFrases['Libre'];
+  if(fechaLimite) cuerpo += ` Vigente hasta el ${fmtDate(fechaLimite)}.`;
+  if(extra) cuerpo += ' '+extra;
+  const cierres = { 'Formal':'Quedo atento(a) a sus comentarios. Saludos cordiales.', 'Cercano':'Cualquier duda con gusto la resolvemos. ¡Saludos! 😊', 'Urgente / promocional':'¡No se lo pierda! Escríbanos para más información. 🙌' };
+  return saludos[tono]+'\n\n'+cuerpo.trim()+'\n\n'+cierres[tono];
+}
 function drawCampanaDrawer(campanaId){
   const campana = DB.campanas_difusion.find(x=>x.id===campanaId); if(!campana) return;
   const g = DB.grupos_difusion.find(x=>x.id===campana.grupo_id);
-  const enviados = campana.envios.filter(e=>e.enviado).length;
+  const disponibles = campana.envios.filter(e=>envioPuedeReenviarse(e)).length;
   const total = campana.envios.length;
+  const yaContactados = campana.envios.filter(e=>e.veces_enviado>0).length;
   openDrawer(`
-    <div class="drawer-head"><div><div style="font-weight:700; font-size:16px;">${g?g.nombre:'Grupo'}</div><div class="sub">${enviados} de ${total} enviados</div></div><button class="drawer-close" onclick="closeDrawer()">${icon('x')}</button></div>
+    <div class="drawer-head"><div><div style="font-weight:700; font-size:16px;">${g?g.nombre:'Grupo'}</div><div class="sub">${yaContactados} de ${total} contactados alguna vez · ${disponibles} disponibles para enviar ahora</div></div><button class="drawer-close" onclick="closeDrawer()">${icon('x')}</button></div>
     <div class="drawer-body">
-      <div class="cal-progress-track" style="height:8px; margin-bottom:16px;"><div style="width:${total?Math.round(enviados/total*100):0}%; height:100%; background:var(--green); border-radius:999px;"></div></div>
+      <div class="cal-progress-track" style="height:8px; margin-bottom:16px;"><div style="width:${total?Math.round(yaContactados/total*100):0}%; height:100%; background:var(--green); border-radius:999px;"></div></div>
+
+      <div class="card" style="background:var(--surface-2); margin-bottom:14px;">
+        <div style="font-weight:700; font-size:12px; margin-bottom:8px;">Generar mensaje con plantilla</div>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <select class="select" id="camp-tono" style="flex:1; font-size:11px;">${PLANTILLA_TONOS.map(t=>`<option>${t}</option>`).join('')}</select>
+          <select class="select" id="camp-tipo" style="flex:1; font-size:11px;">${PLANTILLA_TIPOS.map(t=>`<option>${t}</option>`).join('')}</select>
+        </div>
+        <input class="input" id="camp-promo" style="width:100%; font-size:11px; margin-bottom:6px;" placeholder="¿Qué se promociona? (ej. Blefaroplastía)">
+        <input class="input" id="camp-beneficio" style="width:100%; font-size:11px; margin-bottom:6px;" placeholder="Beneficio o descuento (ej. 20% de descuento)">
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <input class="input" type="date" id="camp-fecha-limite" style="flex:1; font-size:11px;">
+          <input class="input" id="camp-extra" style="flex:1.4; font-size:11px;" placeholder="Dato extra (opcional)">
+        </div>
+        <button class="btn btn-sm" id="camp-generar-msg" type="button">${icon('bolt')} Generar mensaje</button>
+      </div>
+
       <div class="form-field full" style="margin-bottom:14px;">
         <label>Mensaje de la promoción <span style="font-weight:500; color:var(--text-faint); text-transform:none;">— usa {nombre} para personalizar el saludo</span></label>
         <textarea class="input" id="camp-mensaje" style="width:100%; min-height:110px;" placeholder="Hola Dr(a). {nombre}, le comparto esta promoción especial…">${campana.mensaje||''}</textarea>
         <button class="btn btn-sm" id="camp-guardar-msg" style="margin-top:8px;">${icon('check')} Guardar mensaje</button>
       </div>
+
+      <div class="form-field full" style="margin-bottom:16px;">
+        <label>Imagen de la promoción (opcional)</label>
+        <input type="file" id="camp-img-file" accept="image/*" style="display:none;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-sm" id="camp-img-btn" type="button">${icon('upload')} Subir imagen</button>
+          ${campana.imagenDataUrl ? `<button class="btn btn-sm" id="camp-img-copy" type="button">${icon('catalog')} Copiar imagen</button><button class="btn btn-sm btn-danger" id="camp-img-del" type="button">${icon('trash')}</button>` : ''}
+        </div>
+        ${campana.imagenDataUrl ? `<img src="${campana.imagenDataUrl}" style="max-width:160px; border-radius:9px; margin-top:8px; display:block;">` : ''}
+        <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">WhatsApp no permite adjuntar imágenes desde un link automáticamente. Súbela aquí una sola vez y usa "Copiar imagen" para pegarla directo en cada chat después de abrirlo.</div>
+      </div>
+
       <div style="font-weight:700; font-size:12.5px; margin-bottom:8px;">Cola de envío</div>
       <div id="camp-lista"></div>
     </div>`);
+  document.getElementById('camp-generar-msg').onclick = ()=>{
+    const tono = document.getElementById('camp-tono').value, tipo = document.getElementById('camp-tipo').value;
+    const promo = document.getElementById('camp-promo').value.trim(), beneficio = document.getElementById('camp-beneficio').value.trim();
+    const fechaLimite = document.getElementById('camp-fecha-limite').value, extra = document.getElementById('camp-extra').value.trim();
+    document.getElementById('camp-mensaje').value = generarMensajePlantilla(tono, tipo, promo, beneficio, fechaLimite, extra);
+    toast('Mensaje generado — revísalo y ajústalo si quieres, luego guárdalo');
+  };
   document.getElementById('camp-guardar-msg').onclick = ()=>{
     campana.mensaje = document.getElementById('camp-mensaje').value;
     persistExtra(); toast('Mensaje guardado');
   };
+  document.getElementById('camp-img-btn').onclick = ()=> document.getElementById('camp-img-file').click();
+  document.getElementById('camp-img-file').onchange = (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(file.size > 4*1024*1024){ toast('La imagen es muy pesada (máx. 4MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{ campana.imagenDataUrl = reader.result; persistExtra(); toast('Imagen guardada'); drawCampanaDrawer(campanaId); };
+    reader.readAsDataURL(file);
+  };
+  const copyBtn = document.getElementById('camp-img-copy');
+  if(copyBtn) copyBtn.onclick = async ()=>{
+    try{
+      const resp = await fetch(campana.imagenDataUrl);
+      const blob = await resp.blob();
+      await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
+      toast('Imagen copiada — pégala en el chat de WhatsApp (Ctrl/Cmd+V)');
+    }catch(err){ toast('Tu navegador no permite copiar la imagen automáticamente; descárgala y adjúntala manualmente'); }
+  };
+  const delImgBtn = document.getElementById('camp-img-del');
+  if(delImgBtn) delImgBtn.onclick = ()=>{ campana.imagenDataUrl = null; persistExtra(); drawCampanaDrawer(campanaId); };
   drawCampanaLista(campanaId);
 }
 function drawCampanaLista(campanaId){
@@ -4314,13 +4448,21 @@ function drawCampanaLista(campanaId){
   const listEl = document.getElementById('camp-lista'); if(!listEl) return;
   listEl.innerHTML = campana.envios.map(e=>{
     const m = medicoById(e.medico_id);
+    const puedeReenviar = envioPuedeReenviarse(e);
+    const yaEnviado = !!e.fecha_envio;
+    let accion;
+    if(!m || !m.telefono){ accion = `<span class="pill pill-muted">Sin teléfono</span>`; }
+    else if(!yaEnviado || puedeReenviar){ accion = `<button class="btn btn-sm btn-guinda" data-send="${e.medico_id}">${icon('whatsapp')} ${yaEnviado?'Reenviar':'Enviar'}</button>`; }
+    else { accion = `<span class="pill pill-green">${icon('check')} Enviado</span>`; }
+    const contador = e.veces_enviado>0 ? `<span class="pill pill-blue pill-small" title="Veces que se le ha enviado una promoción" style="margin-left:5px;">✉ ${e.veces_enviado}</span>` : '';
+    const cooldownTxt = (yaEnviado && !puedeReenviar) ? (' · Podrás reenviar en '+horasParaReenvio(e)+'h') : '';
     return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border);">
       <div class="avatar">${m?initials(m.nombre):'—'}</div>
       <div style="flex:1; min-width:0;">
-        <div style="font-size:12.5px; font-weight:600;">${m?m.nombre:'Médico no encontrado'}</div>
-        <div style="font-size:11px; color:var(--text-faint);">${m&&m.telefono?('📞 '+m.telefono):'Sin teléfono'}${e.enviado?(' · Enviado '+fmtDateTime(e.fecha_envio)):''}</div>
+        <div style="font-size:12.5px; font-weight:600;">${m?m.nombre:'Médico no encontrado'}${contador}</div>
+        <div style="font-size:11px; color:var(--text-faint);">${m&&m.telefono?('📞 '+m.telefono):'Sin teléfono'}${yaEnviado?(' · Últ. envío '+fmtDateTime(e.fecha_envio)):''}${cooldownTxt}</div>
       </div>
-      ${e.enviado ? `<span class="pill pill-green">${icon('check')} Enviado</span>` : (m&&m.telefono ? `<button class="btn btn-sm btn-guinda" data-send="${e.medico_id}">${icon('whatsapp')} Enviar</button>` : `<span class="pill pill-muted">Sin teléfono</span>`)}
+      ${accion}
     </div>`;
   }).join('');
   listEl.querySelectorAll('[data-send]').forEach(btn=> btn.onclick = ()=>{
@@ -4335,7 +4477,7 @@ function drawCampanaLista(campanaId){
     const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(mensaje);
     window.open(link, '_blank');
     const envio = campana.envios.find(x=>String(x.medico_id)===String(medId));
-    envio.enviado = true; envio.fecha_envio = new Date().toISOString();
+    envio.fecha_envio = new Date().toISOString(); envio.veces_enviado = (envio.veces_enviado||0)+1;
     logAudit('Difusión', campana.id, 'Mensaje enviado', m.nombre);
     persistExtra();
     drawCampanaDrawer(campana.id);
