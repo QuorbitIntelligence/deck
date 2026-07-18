@@ -537,7 +537,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.25.0';
+const APP_VERSION = 'v1.25.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4249,8 +4249,14 @@ function computeConvenioEstatus(cv){
    GRUPOS DE DIFUSIÓN — promociones masivas por WhatsApp (cola de envío)
 ============================================================ */
 function resolveGrupoMedicos(g){
-  if(g.modo==='especialidad') return DB.medicos.filter(m=>m.activo!==false && m.especialidad===g.especialidad);
-  return (g.medicos||[]).map(id=>medicoById(id)).filter(m=>m && m.activo!==false);
+  const extra = (g.medicos||[]).map(id=>medicoById(id)).filter(m=>m && m.activo!==false);
+  if(g.modo==='especialidad'){
+    const base = DB.medicos.filter(m=>m.activo!==false && m.especialidad===g.especialidad);
+    const merged = [...base];
+    extra.forEach(m=>{ if(!merged.find(x=>String(x.id)===String(m.id))) merged.push(m); });
+    return merged;
+  }
+  return extra;
 }
 function renderDifusion(){
   document.getElementById('content').innerHTML = `
@@ -4266,7 +4272,7 @@ function drawGruposGrid(){
     return `<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div><div style="font-weight:700; font-size:14px;">${g.nombre}</div>
-        <div style="font-size:11.5px; color:var(--text-faint); margin-top:2px;">${g.modo==='especialidad' ? 'Por especialidad: '+(g.especialidad||'—') : 'Grupo manual'}</div></div>
+        <div style="font-size:11.5px; color:var(--text-faint); margin-top:2px;">${g.modo==='especialidad' ? 'Por especialidad: '+(g.especialidad||'—')+((g.medicos&&g.medicos.length)?(' + '+g.medicos.length+' adicional'+(g.medicos.length>1?'es':'')):'') : 'Grupo manual'}</div></div>
         <button class="btn btn-sm" onclick="openGrupoModal('${g.id}')">${icon('config')}</button>
       </div>
       <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
@@ -4280,7 +4286,7 @@ function drawGruposGrid(){
 function openGrupoModal(id){
   const g = id ? DB.grupos_difusion.find(x=>x.id===id) : null;
   const especialidades = [...new Set(DB.medicos.map(m=>m.especialidad).filter(Boolean))].sort();
-  const selMed = g && g.modo==='manual' ? Object.fromEntries((g.medicos||[]).map(mid=>[mid,true])) : {};
+  const selMed = g ? Object.fromEntries((g.medicos||[]).map(mid=>[mid,true])) : {};
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${g?'Editar grupo':'Nuevo grupo de difusión'}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
@@ -4296,8 +4302,9 @@ function openGrupoModal(id){
         </div>
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">El grupo se actualiza solo: siempre incluirá a todos los médicos activos de esta especialidad, aunque se agreguen nuevos después.</div>
       </div>
-      <div id="dg-manual-block" style="${!g||g.modo==='especialidad'?'display:none;':''}">
-        <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="dg-med-search" placeholder="Buscar médico por cualquier palabra…"></div>
+      <div id="dg-manual-block" style="margin-top:14px;">
+        <label id="dg-manual-label" style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; display:block; margin-bottom:6px;">${!g||g.modo==='especialidad' ? 'Miembros adicionales (opcional)' : 'Miembros del grupo'}</label>
+        <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="dg-med-search" placeholder="Buscar médico por cualquier palabra… (ej. tu gerente o director médico)"></div>
         <div id="dg-med-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px;"></div>
       </div>
       <div class="form-field full" style="margin-top:14px;"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="dg-activo" ${!g||g.activo!==false?'checked':''}> Grupo activo</label></div>
@@ -4308,7 +4315,7 @@ function openGrupoModal(id){
     modoActual = b.dataset.modo;
     document.getElementById('dg-modo-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active', x===b));
     document.getElementById('dg-especialidad-block').style.display = modoActual==='especialidad' ? 'block':'none';
-    document.getElementById('dg-manual-block').style.display = modoActual==='manual' ? 'block':'none';
+    document.getElementById('dg-manual-label').textContent = modoActual==='especialidad' ? 'Miembros adicionales (opcional)' : 'Miembros del grupo';
   });
   wireMedicoMultiPicker(document.getElementById('dg-med-search'), document.getElementById('dg-med-list'), selMed);
   let especialidadSel = g && g.especialidad ? g.especialidad : (especialidades[0]||'');
@@ -4321,7 +4328,7 @@ function openGrupoModal(id){
     if(!nombre){ toast('Captura el nombre del grupo'); return; }
     const payload = { nombre, modo: modoActual,
       especialidad: modoActual==='especialidad' ? (document.getElementById('dg-especialidad-search').value.trim() || especialidadSel) : null,
-      medicos: modoActual==='manual' ? Object.entries(selMed).filter(([,v])=>v).map(([id])=>id) : [],
+      medicos: Object.entries(selMed).filter(([,v])=>v).map(([id])=>id),
       activo: document.getElementById('dg-activo').checked };
     if(g){ Object.assign(g, payload); logAudit('Grupo de difusión', g.id, 'Edición', nombre); }
     else { const nuevo = Object.assign({id:uid('dg'), __new:true}, payload); DB.grupos_difusion.push(nuevo); logAudit('Grupo de difusión', nuevo.id, 'Creación', nombre); }
@@ -4347,24 +4354,6 @@ function openCampanaModal(grupoId){
   persistExtra();
   drawCampanaDrawer(campana.id);
 }
-const PLANTILLA_TONOS = ['Formal','Cercano','Urgente / promocional'];
-const PLANTILLA_TIPOS = ['Descuento en procedimiento','Paquete especial','Nuevo servicio','Recordatorio de vigencia','Libre'];
-function generarMensajePlantilla(tono, tipo, promo, beneficio, fechaLimite, extra){
-  const saludos = { 'Formal':'Estimado(a) Dr(a). {nombre},', 'Cercano':'Hola Dr(a). {nombre}, ¿cómo ha estado?', 'Urgente / promocional':'¡Dr(a). {nombre}! 🎉 Tenemos algo especial para usted:' };
-  let cuerpo = '';
-  const tipoFrases = {
-    'Descuento en procedimiento': `Le informamos que ${promo||'este procedimiento'} cuenta actualmente con ${beneficio||'una condición especial'}.`,
-    'Paquete especial': `Hemos preparado el paquete "${promo||'esta promoción'}", que incluye ${beneficio||'beneficios especiales'}.`,
-    'Nuevo servicio': `Nos da mucho gusto informarle que ahora contamos con ${promo||'un nuevo servicio'}. ${beneficio?('Incluye '+beneficio+'.'):''}`,
-    'Recordatorio de vigencia': `Le recordamos que ${promo||'esta promoción'} está por concluir. ${beneficio?('Aproveche '+beneficio+'.'):''}`,
-    'Libre': `${promo||''} ${beneficio?('— '+beneficio):''}`
-  };
-  cuerpo = tipoFrases[tipo] || tipoFrases['Libre'];
-  if(fechaLimite) cuerpo += ` Vigente hasta el ${fmtDate(fechaLimite)}.`;
-  if(extra) cuerpo += ' '+extra;
-  const cierres = { 'Formal':'Quedo atento(a) a sus comentarios. Saludos cordiales.', 'Cercano':'Cualquier duda con gusto la resolvemos. ¡Saludos! 😊', 'Urgente / promocional':'¡No se lo pierda! Escríbanos para más información. 🙌' };
-  return saludos[tono]+'\n\n'+cuerpo.trim()+'\n\n'+cierres[tono];
-}
 function drawCampanaDrawer(campanaId){
   const campana = DB.campanas_difusion.find(x=>x.id===campanaId); if(!campana) return;
   const g = DB.grupos_difusion.find(x=>x.id===campana.grupo_id);
@@ -4375,21 +4364,6 @@ function drawCampanaDrawer(campanaId){
     <div class="drawer-head"><div><div style="font-weight:700; font-size:16px;">${g?g.nombre:'Grupo'}</div><div class="sub">${yaContactados} de ${total} contactados alguna vez · ${disponibles} disponibles para enviar ahora</div></div><button class="drawer-close" onclick="closeDrawer()">${icon('x')}</button></div>
     <div class="drawer-body">
       <div class="cal-progress-track" style="height:8px; margin-bottom:16px;"><div style="width:${total?Math.round(yaContactados/total*100):0}%; height:100%; background:var(--green); border-radius:999px;"></div></div>
-
-      <div class="card" style="background:var(--surface-2); margin-bottom:14px;">
-        <div style="font-weight:700; font-size:12px; margin-bottom:8px;">Generar mensaje con plantilla</div>
-        <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <select class="select" id="camp-tono" style="flex:1; font-size:11px;">${PLANTILLA_TONOS.map(t=>`<option>${t}</option>`).join('')}</select>
-          <select class="select" id="camp-tipo" style="flex:1; font-size:11px;">${PLANTILLA_TIPOS.map(t=>`<option>${t}</option>`).join('')}</select>
-        </div>
-        <input class="input" id="camp-promo" style="width:100%; font-size:11px; margin-bottom:6px;" placeholder="¿Qué se promociona? (ej. Blefaroplastía)">
-        <input class="input" id="camp-beneficio" style="width:100%; font-size:11px; margin-bottom:6px;" placeholder="Beneficio o descuento (ej. 20% de descuento)">
-        <div style="display:flex; gap:6px; margin-bottom:6px;">
-          <input class="input" type="date" id="camp-fecha-limite" style="flex:1; font-size:11px;">
-          <input class="input" id="camp-extra" style="flex:1.4; font-size:11px;" placeholder="Dato extra (opcional)">
-        </div>
-        <button class="btn btn-sm" id="camp-generar-msg" type="button">${icon('bolt')} Generar mensaje</button>
-      </div>
 
       <div class="form-field full" style="margin-bottom:14px;">
         <label>Mensaje de la promoción <span style="font-weight:500; color:var(--text-faint); text-transform:none;">— usa {nombre} para personalizar el saludo</span></label>
@@ -4411,13 +4385,6 @@ function drawCampanaDrawer(campanaId){
       <div style="font-weight:700; font-size:12.5px; margin-bottom:8px;">Cola de envío</div>
       <div id="camp-lista"></div>
     </div>`);
-  document.getElementById('camp-generar-msg').onclick = ()=>{
-    const tono = document.getElementById('camp-tono').value, tipo = document.getElementById('camp-tipo').value;
-    const promo = document.getElementById('camp-promo').value.trim(), beneficio = document.getElementById('camp-beneficio').value.trim();
-    const fechaLimite = document.getElementById('camp-fecha-limite').value, extra = document.getElementById('camp-extra').value.trim();
-    document.getElementById('camp-mensaje').value = generarMensajePlantilla(tono, tipo, promo, beneficio, fechaLimite, extra);
-    toast('Mensaje generado — revísalo y ajústalo si quieres, luego guárdalo');
-  };
   document.getElementById('camp-guardar-msg').onclick = ()=>{
     campana.mensaje = document.getElementById('camp-mensaje').value;
     persistExtra(); toast('Mensaje guardado');
