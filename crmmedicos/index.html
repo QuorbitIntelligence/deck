@@ -537,7 +537,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.24.0';
+const APP_VERSION = 'v1.24.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2493,17 +2493,26 @@ function generateCotizacionPDF(id){
   if(c.convenios_aplicados && c.convenios_aplicados.length){
     const GOLD = [178,138,38], GOLD_BG = [253,248,232];
     c.convenios_aplicados.forEach(cvRef=>{
-      const boxH = 27;
+      const cv = DB.convenios.find(x=>x.id===cvRef.id);
+      const condTexts = cv ? (cv.condiciones||[]).map(clId=>{ const cl=DB.clausulas.find(x=>x.id===clId); return cl?stripEmoji(cl.texto):null; }).filter(Boolean) : [];
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      let lines = [];
+      condTexts.forEach(t=>{ lines = lines.concat(doc.splitTextToSize(t, pageW-96-18)); });
+      const boxH = 24 + (lines.length ? lines.length*9.5+6 : 0);
       if(finalY + boxH > FOOTER_TOP-10){ doc.addPage(); finalY = 60; }
       doc.setDrawColor(...GOLD); doc.setLineWidth(1); doc.setFillColor(...GOLD_BG);
       doc.roundedRect(48, finalY, pageW-96, boxH, 7, 7, 'FD');
       doc.setFillColor(...GOLD); doc.roundedRect(48, finalY, 5, boxH, 2, 2, 'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...GOLD);
       const label = 'Beneficio: ';
-      doc.text(label, 63, finalY+17);
+      doc.text(label, 63, finalY+16);
       const labelW = doc.getTextWidth(label);
       doc.setTextColor(70,58,20);
-      doc.text(cvRef.nombre, 63+labelW, finalY+17);
+      doc.text(cvRef.nombre, 63+labelW, finalY+16);
+      if(lines.length){
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,88,55);
+        doc.text(lines, 63, finalY+29);
+      }
       finalY += boxH + 9;
     });
   }
