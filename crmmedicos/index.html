@@ -542,7 +542,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.26.0';
+const APP_VERSION = 'v1.26.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4356,7 +4356,10 @@ function drawGruposGrid(){
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div><div style="font-weight:700; font-size:14px;">${g.nombre}</div>
         <div style="font-size:11.5px; color:var(--text-faint); margin-top:2px;">${g.modo==='especialidad' ? 'Por especialidad: '+(g.especialidad||'—')+((g.medicos&&g.medicos.length)?(' + '+g.medicos.length+' adicional'+(g.medicos.length>1?'es':'')):'') : 'Grupo manual'}</div></div>
-        <button class="btn btn-sm" onclick="openGrupoModal('${g.id}')">${icon('config')}</button>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button class="btn btn-sm" onclick="openGrupoModal('${g.id}')" title="Editar grupo">${icon('config')}</button>
+          <button class="btn btn-sm" onclick="generateGrupoDifusionPDF('${g.id}')" title="Reporte de difusión" ${!medicos.length?'disabled':''}>${icon('download')}</button>
+        </div>
       </div>
       <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;">
         <span class="pill pill-blue">${icon('doctor')} ${medicos.length} médico${medicos.length!==1?'s':''}</span>
@@ -4365,6 +4368,57 @@ function drawGruposGrid(){
       <button class="btn btn-guinda" style="width:100%; margin-top:12px;" onclick="openCampanaModal('${g.id}')" ${!medicos.length?'disabled':''}>${icon('megaphone')} Enviar promoción</button>
     </div>`;
   }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('megaphone')}<div>Aún no hay grupos de difusión. Crea uno para empezar a enviar promociones.</div></div>`;
+}
+function generateGrupoDifusionPDF(grupoId){
+  const g = DB.grupos_difusion.find(x=>x.id===grupoId);
+  if(!g || !window.jspdf){ toast('No se pudo generar el PDF'); return; }
+  const medicos = [...resolveGrupoMedicos(g)].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'letter'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 28.35; // 1 cm
+  const FS = 10;
+
+  try{ doc.addImage(window.LOGO_URI, 'JPEG', M, M-4, 40, 40); }catch(e){}
+  doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(30,30,30);
+  doc.text('REPORTE DE DIFUSIÓN POR ESPECIALIDAD Y ADICIONALES', M+50, M+10);
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
+  doc.text('Grupo: '+g.nombre+(g.modo==='especialidad'?(' · Especialidad base: '+(g.especialidad||'—')):' · Grupo manual'), M+50, M+26);
+  doc.setDrawColor(190,190,190); doc.line(M, M+42, pageW-M, M+42);
+
+  const body = medicos.map(m=>[ m.nombre, m.especialidad||'—', m.telefono || '' ]);
+  doc.autoTable({
+    startY: M+56, head:[['Médico','Especialidad','Teléfono']], body,
+    theme:'plain', headStyles:{fillColor:[55,55,60], textColor:255, fontStyle:'bold', fontSize:FS, font:'helvetica'},
+    bodyStyles:{fontSize:FS, textColor:[40,40,40], font:'helvetica', minCellHeight:20},
+    alternateRowStyles:{fillColor:[249,249,249]},
+    margin:{left:M, right:M},
+    columnStyles:{2:{cellWidth:130}},
+    didDrawCell: (data)=>{
+      if(data.section==='body' && data.column.index===2 && !data.cell.raw){
+        const y = data.cell.y + data.cell.height - 6;
+        doc.setDrawColor(160,160,160);
+        doc.line(data.cell.x+5, y, data.cell.x+data.cell.width-5, y);
+      }
+    }
+  });
+
+  let finalY = doc.lastAutoTable.finalY + 16;
+  const conTelefono = medicos.filter(m=>m.telefono).length;
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
+  doc.text('Total de médicos: '+medicos.length+'   ·   Con teléfono registrado: '+conTelefono+'   ·   Por capturar manualmente: '+(medicos.length-conTelefono), M, finalY);
+
+  const n = doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);
+    doc.setFontSize(FS-2); doc.setTextColor(150,150,150); doc.setFont('helvetica','normal');
+    doc.text(HOSP_INFO.direccion+' | Tel. '+HOSP_INFO.telefono, M, pageH-M+10);
+    doc.text('Página '+i+' de '+n, pageW-M, pageH-M+10, {align:'right'});
+  }
+  doc.save('Reporte_Difusion_'+slugify(g.nombre)+'.pdf');
+  logAudit('Grupo de difusión', g.id, 'Reporte generado', g.nombre);
+  toast('Reporte generado');
 }
 function openGrupoModal(id){
   const g = id ? DB.grupos_difusion.find(x=>x.id===id) : null;
