@@ -196,6 +196,11 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
 .chip-filter{display:flex; gap:6px; flex-wrap:wrap;}
 .chip{padding:6px 12px; border-radius:999px; border:1px solid var(--border); font-size:12px; font-weight:600; color:var(--text-muted); background:var(--surface);}
 .chip.active{background:var(--text); color:var(--surface); border-color:var(--text);}
+.estatus-glow-row{flex-wrap:wrap;}
+.estatus-glow{border-color:var(--glow-color,var(--border)); color:var(--glow-color,var(--text-muted)); box-shadow:0 0 0 1px var(--glow-color,transparent), 0 0 10px -2px var(--glow-color,transparent); font-weight:700;}
+.estatus-glow.active{background:var(--glow-color,var(--text)); color:#fff; box-shadow:0 0 14px -1px var(--glow-color,transparent), 0 0 0 1px var(--glow-color,transparent);}
+.estatus-count{display:inline-block; min-width:18px; padding:1px 5px; border-radius:999px; background:rgba(0,0,0,.08); font-size:10.5px; font-weight:800; margin-left:3px;}
+.estatus-glow.active .estatus-count{background:rgba(255,255,255,.28);}
 
 .pagination{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; font-size:12px; color:var(--text-muted);}
 .pagination .btns{display:flex; gap:6px;}
@@ -537,7 +542,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.25.1';
+const APP_VERSION = 'v1.26.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3483,19 +3488,25 @@ function deleteNotaVoz(weekStr, vnId){
 function planTaskCardHtml(t, big){
   const hoyStr = ymd(new Date());
   const canDelete = t.fecha >= hoyStr;
-  return `<div class="plan-task-card" style="${t.completada?'background:var(--green-bg);':''}">
-    <input type="checkbox" data-tid="${t.id}" ${t.completada?'checked':''}>
+  const bg = t.completada ? 'var(--green-bg)' : (t.extendida ? 'var(--amber-bg)' : '');
+  return `<div class="plan-task-card" style="${bg?('background:'+bg+';'):''}">
+    <input type="checkbox" data-tid="${t.id}" ${t.completada?'checked':''} ${t.extendida?'disabled':''}>
     <div style="flex:1; min-width:0;">
       <div style="font-size:${big?'12px':'11px'}; font-weight:600;">${t.titulo}</div>
       <div style="display:flex; gap:5px; margin-top:${big?'8px':'4px'}; flex-wrap:wrap; align-items:center;">
         ${t.completada
           ? `<span class="pill pill-green pill-small">${icon('check')} Realizada</span>`
-          : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>`}
+          : t.extendida
+            ? `<span class="pill pill-amber pill-small">${icon('calendar')} Extendida</span>`
+            : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>`}
         ${t.hora?`<span style="font-size:${big?'10.5px':'10px'}; color:var(--text-faint);">${t.hora}</span>`:''}
+        ${t.documento?`<span class="pill pill-violet pill-small" title="${t.documento.nombre}">${icon('catalog')} Doc</span>`:''}
       </div>
+      ${t.extendida && t.extendida_nota ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px; font-style:italic;">"${t.extendida_nota}"</div>` : ''}
     </div>
     <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
       <button type="button" class="plan-task-icon-btn" data-edit-tid="${t.id}" title="Editar">${icon('config')}</button>
+      ${(!t.completada && !t.extendida) ? `<button type="button" class="plan-task-icon-btn" data-ext-tid="${t.id}" title="Extender a fecha futura">${icon('calendar')}</button>` : ''}
       ${canDelete ? `<button type="button" class="plan-task-icon-btn" data-del-tid="${t.id}" title="Eliminar">${icon('trash')}</button>` : ''}
     </div>
   </div>`;
@@ -3504,6 +3515,36 @@ function wirePlanTaskCards(container){
   container.querySelectorAll('.plan-task-card input[type=checkbox]').forEach(cb=> cb.onchange = ()=> completarTarea(cb.dataset.tid));
   container.querySelectorAll('[data-edit-tid]').forEach(b=> b.onclick = (e)=>{ e.stopPropagation(); openTareaEditModal(b.dataset.editTid); });
   container.querySelectorAll('[data-del-tid]').forEach(b=> b.onclick = (e)=>{ e.stopPropagation(); eliminarTarea(b.dataset.delTid); });
+  container.querySelectorAll('[data-ext-tid]').forEach(b=> b.onclick = (e)=>{ e.stopPropagation(); openExtenderTareaModal(b.dataset.extTid); });
+}
+function openExtenderTareaModal(id){
+  const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
+  const manana = ymd(addDays(new Date(),1));
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Extender tarea a fecha futura</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">"${t.titulo}" quedará marcada como <b>Extendida</b> (en amarillo) con tu nota de atraso, y se creará una nueva tarea pendiente en la fecha que elijas.</div>
+      <div class="form-grid">
+        <div class="form-field"><label>Nueva fecha</label><input class="input" type="date" id="ext-fecha" style="width:100%;" value="${manana}" min="${ymd(new Date())}"></div>
+        <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="ext-hora" style="width:100%;" value="${t.hora||''}"></div>
+        <div class="form-field full"><label>Nota de atraso</label><textarea class="input" id="ext-nota" style="width:100%; min-height:80px;" placeholder="¿Por qué no se resolvió en la fecha original?"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="ext-save">Extender tarea</button></div>`);
+  document.getElementById('ext-save').onclick = ()=>{
+    const nuevaFecha = document.getElementById('ext-fecha').value;
+    if(!nuevaFecha){ toast('Elige la nueva fecha'); return; }
+    if(nuevaFecha < ymd(new Date())){ toast('La nueva fecha debe ser hoy o futura'); return; }
+    const nota = document.getElementById('ext-nota').value.trim();
+    const nuevaHora = document.getElementById('ext-hora').value || null;
+    const nueva = { id: uid('tk'), titulo: t.titulo, categoria: t.categoria, prioridad: t.prioridad,
+      fecha: nuevaFecha, hora: nuevaHora, completada:false, fecha_completada:null, notas: t.notas||'', documento: t.documento||null,
+      extendida:false, extendida_de: t.id, __new:true };
+    DB.plan_tareas.unshift(nueva);
+    t.extendida = true; t.extendida_a = nueva.id; t.extendida_nota = nota; t.fecha_extendida = new Date().toISOString();
+    logAudit('Plan de Trabajo', t.id, 'Tarea extendida', t.titulo+' → '+nuevaFecha);
+    persistExtra(); closeModal(); toast('Tarea extendida a '+fmtDate(nuevaFecha)); renderPlanTrabajo();
+  };
 }
 function openTareaEditModal(id){
   const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
@@ -3520,16 +3561,35 @@ function openTareaEditModal(id){
         <div class="form-field"><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
         <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
         <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px;">${t.notas||''}</textarea></div>
+        <div class="form-field full"><label>Documento de evidencia (opcional)</label>
+          <input type="file" id="tk-doc-file" style="display:none;">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-sm" type="button" id="tk-doc-btn">${icon('upload')} ${t.documento?'Reemplazar documento':'Adjuntar documento'}</button>
+            ${t.documento ? `<a href="${t.documento.dataUrl}" download="${t.documento.nombre}" class="pill pill-violet" style="text-decoration:none;">${icon('catalog')} ${t.documento.nombre}</a><button class="btn btn-sm btn-danger" type="button" id="tk-doc-del">${icon('trash')}</button>` : ''}
+          </div>
+        </div>
         <div class="form-field full"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tk-completada" ${t.completada?'checked':''}> Tarea cerrada / completada</label></div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="tk-save">Guardar</button></div>`);
+  let documentoActual = t.documento || null;
+  document.getElementById('tk-doc-btn').onclick = ()=> document.getElementById('tk-doc-file').click();
+  document.getElementById('tk-doc-file').onchange = (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(file.size > 5*1024*1024){ toast('El archivo es muy pesado (máx. 5MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{ documentoActual = {nombre:file.name, dataUrl:reader.result, tamano:file.size}; toast('Documento listo — guarda para confirmar'); };
+    reader.readAsDataURL(file);
+  };
+  const docDelBtn = document.getElementById('tk-doc-del');
+  if(docDelBtn) docDelBtn.onclick = ()=>{ documentoActual = null; toast('Documento quitado — guarda para confirmar'); };
   document.getElementById('tk-save').onclick = ()=>{
     const titulo = document.getElementById('tk-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
     t.titulo = titulo; t.categoria = document.getElementById('tk-cat').value; t.prioridad = document.getElementById('tk-prio').value;
     t.fecha = document.getElementById('tk-fecha').value; t.hora = document.getElementById('tk-hora').value || null;
     t.notas = document.getElementById('tk-notas').value;
+    t.documento = documentoActual;
     const nowCompletada = document.getElementById('tk-completada').checked;
     if(nowCompletada && !t.completada){ t.completada = true; t.fecha_completada = new Date().toISOString(); }
     else if(!nowCompletada && t.completada){ t.completada = false; t.fecha_completada = null; }
@@ -3638,10 +3698,10 @@ function drawPlanSemana(body, rangeLabelEl){
       const dStr = ymd(d);
       const isToday = ymd(hoy)===dStr;
       const tareasDia = DB.plan_tareas.filter(t=>t.fecha===dStr).sort((a,b)=>{
-        if(a.completada!==b.completada) return a.completada?1:-1;
+        const aDone=a.completada||a.extendida, bDone=b.completada||b.extendida; if(aDone!==bDone) return aDone?1:-1;
         return (a.hora||'99:99').localeCompare(b.hora||'99:99');
       });
-      const pendCount = tareasDia.filter(t=>!t.completada).length;
+      const pendCount = tareasDia.filter(t=>!t.completada && !t.extendida).length;
       return `<div class="cal-day ${isToday?'is-today':''}" data-date="${dStr}">
         <div class="cal-day-head"><span>${DIAS_SEMANA[i]} ${d.getDate()}</span>${pendCount?`<span class="pill pill-guinda pill-small">${pendCount}</span>`:''}</div>
         <div class="cal-day-cards">
@@ -3716,7 +3776,7 @@ function drawPlanHoy(body, rangeLabelEl){
   const dStr = ymd(d);
   rangeLabelEl.textContent = fmtDate(d);
   const tareasDia = DB.plan_tareas.filter(t=>t.fecha===dStr).sort((a,b)=>{
-    if(a.completada!==b.completada) return a.completada?1:-1;
+    const aDone=a.completada||a.extendida, bDone=b.completada||b.extendida; if(aDone!==bDone) return aDone?1:-1;
     return (a.hora||'99:99').localeCompare(b.hora||'99:99');
   });
   body.innerHTML = `
@@ -3764,16 +3824,28 @@ function togglePlanQuickForm(dayStr){
     </div>
     <input class="input" type="time" id="plan-qf-hora" style="width:100%; font-size:11px; margin-bottom:6px;" value="${(()=>{ const n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); })()}">
     <textarea class="input" id="plan-qf-notas" style="width:100%; min-height:50px; font-size:11px; margin-bottom:6px;" placeholder="Notas (opcional)…"></textarea>
+    <input type="file" id="plan-qf-doc-file" style="display:none;">
+    <button class="btn btn-sm" type="button" id="plan-qf-doc-btn" style="width:100%; margin-bottom:6px;">${icon('upload')} Adjuntar documento (opcional)</button>
+    <div id="plan-qf-doc-status" style="font-size:10.5px; color:var(--text-faint); margin-bottom:6px;"></div>
     <div style="display:flex; gap:6px;">
       <button class="btn btn-sm" type="button" id="plan-qf-cancel">Cancelar</button>
       <button class="btn btn-sm btn-guinda" type="button" id="plan-qf-save">Guardar</button>
     </div>`;
+  let docAdjunto = null;
+  document.getElementById('plan-qf-doc-btn').onclick = ()=> document.getElementById('plan-qf-doc-file').click();
+  document.getElementById('plan-qf-doc-file').onchange = (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    if(file.size > 5*1024*1024){ toast('El archivo es muy pesado (máx. 5MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{ docAdjunto = {nombre:file.name, dataUrl:reader.result, tamano:file.size}; document.getElementById('plan-qf-doc-status').textContent = '📎 '+file.name; };
+    reader.readAsDataURL(file);
+  };
   document.getElementById('plan-qf-cancel').onclick = ()=>{ el.style.display='none'; el.innerHTML=''; };
   document.getElementById('plan-qf-save').onclick = ()=>{
     const titulo = document.getElementById('plan-qf-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
     const nueva = { id: uid('tk'), titulo, categoria: document.getElementById('plan-qf-cat').value, prioridad: document.getElementById('plan-qf-prio').value,
-      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, __new:true };
+      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, documento: docAdjunto, __new:true };
     DB.plan_tareas.unshift(nueva);
     logAudit('Plan de Trabajo', nueva.id, 'Tarea creada', titulo);
     persistExtra(); toast('Tarea agregada'); drawPlanBody();
@@ -3862,12 +3934,12 @@ function generatePlanSemanalPDF(){
    agrupados en árbol por médico con barra de progreso
 ============================================================ */
 const ESTADOS_CASO = {
-  'Nuevo':{color:'blue'}, 'En seguimiento':{color:'amber'}, 'Programación agendada':{color:'violet'},
+  'Nuevo':{color:'blue'}, 'En seguimiento':{color:'amber'}, 'En negociación':{color:'amber'}, 'Con promoción':{color:'violet'}, 'Programación agendada':{color:'violet'},
   'Confirmado':{color:'green'}, 'Realizado':{color:'green'}, 'Cancelado':{color:'red'}, 'Perdido':{color:'red'},
   'Archivado':{color:'muted'}, 'Cerrado':{color:'muted'}
 };
 const CASOS_CERRADOS = ['Realizado','Cancelado','Perdido','Archivado','Cerrado'];
-const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100 };
+const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'En negociación':50, 'Con promoción':45, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100 };
 const TIPOS_INTERACCION = ['Llamada','Visita','WhatsApp','Correo','Reunión','Cita en hospital','Recorrido','Programación de cirugía','Cambio de estatus','Sistema'];
 function casoProgressBar(estatus){
   const pct = CASO_PROGRESS[estatus] || 10;
@@ -3919,14 +3991,25 @@ function renderCasos(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:260px;">${icon('search')}<input id="caso-search" placeholder="Buscar médico o caso…"></div>
-      <div class="chip-filter" id="caso-chips"><button class="chip active" data-s="todos">Todos</button>
-        ${Object.keys(ESTADOS_CASO).map(s=>`<button class="chip" data-s="${s}">${s}</button>`).join('')}</div>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openCasoModal()">${icon('plus')} Nuevo caso</button>
     </div>
+    <div class="chip-filter estatus-glow-row" id="caso-chips" style="margin-bottom:16px;"></div>
     <div id="caso-tree"></div>`;
   document.getElementById('caso-search').oninput = e=>{ casoState.search=e.target.value; drawCasoTree(); };
-  document.getElementById('caso-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ casoState.estatus=b.dataset.s; drawCasoTree(); document.getElementById('caso-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===b)); });
+  drawCasoChips();
   drawCasoTree();
+}
+function drawCasoChips(){
+  const wrap = document.getElementById('caso-chips'); if(!wrap) return;
+  const counts = {};
+  DB.casos.forEach(cs=>{ counts[cs.estatus] = (counts[cs.estatus]||0)+1; });
+  const total = DB.casos.length;
+  wrap.innerHTML = `<button class="chip estatus-glow ${casoState.estatus==='todos'?'active':''}" data-s="todos" style="--glow-color:var(--primary);">Todos <span class="estatus-count">${total}</span></button>` +
+    Object.keys(ESTADOS_CASO).map(s=>{
+      const color = ESTADOS_CASO[s].color==='muted' ? 'var(--text-faint)' : 'var(--'+ESTADOS_CASO[s].color+')';
+      return `<button class="chip estatus-glow ${casoState.estatus===s?'active':''}" data-s="${s}" style="--glow-color:${color};">${s} <span class="estatus-count">${counts[s]||0}</span></button>`;
+    }).join('');
+  wrap.querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ casoState.estatus=b.dataset.s; drawCasoTree(); drawCasoChips(); });
 }
 function drawCasoTree(){
   const hoy = new Date();
