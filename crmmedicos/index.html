@@ -94,6 +94,9 @@ a{color:inherit;}
 .nav-item .nav-icon-chip svg{width:14px; height:14px;}
 .nav-item:hover{background:rgba(255,255,255,.10); color:#fff;}
 .nav-item.active{background:#fff; color:var(--guinda); font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,.18);}
+.nav-badge{flex-shrink:0; min-width:20px; text-align:center; padding:2px 6px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.02em;
+  background:#CFFF04; color:#1a2e05; box-shadow:0 0 6px rgba(207,255,4,.85), 0 0 1px rgba(207,255,4,1) inset;}
+.nav-item.active .nav-badge{background:var(--guinda); color:#CFFF04; box-shadow:0 0 6px rgba(142,27,60,.55);}
 .nav-item.active .nav-icon-chip{background:var(--guinda-light) !important; color:var(--guinda) !important;}
 [data-theme="dark"] .nav-item.active{color:var(--guinda);}
 .sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid rgba(255,255,255,.18);}
@@ -542,7 +545,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.26.1';
+const APP_VERSION = 'v1.27.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -741,6 +744,27 @@ function navToneVars(tone){
   return { bg:`var(${lightMap[tone]||'--surface-2'})`, fg:`var(${map[tone]||'--text-muted'})` };
 }
 
+function navBadgeCount(routeId){
+  try{
+    switch(routeId){
+      case 'medicos': return DB.medicos.length;
+      case 'catalogo': return DB.conceptos.length;
+      case 'procedimientos': return DB.procedimientos.length;
+      case 'paquetes': return DB.paquetes.length;
+      case 'listas_materiales': return DB.listas_materiales.length;
+      case 'bloques': return DB.bloques.length;
+      case 'cotizaciones': return DB.cotizaciones.length;
+      case 'aseguradoras': return DB.cotizaciones_aseguradora.length;
+      case 'casos': return DB.casos.length;
+      case 'calendario': return DB.casos.filter(cs=>cs.proxima_accion_fecha).length;
+      case 'plan_trabajo': return DB.plan_tareas.length;
+      case 'convenios': return DB.convenios.length;
+      case 'difusion': return DB.grupos_difusion.length;
+      case 'condiciones': return DB.clausulas.length;
+      default: return null;
+    }
+  }catch(e){ return null; }
+}
 function renderNav(){
   const groups = {};
   ROUTES.forEach(r=>{ (groups[r.group]=groups[r.group]||[]).push(r); });
@@ -749,8 +773,9 @@ function renderNav(){
     html += `<div class="nav-group-label">${g}</div>`;
     groups[g].forEach(r=>{
       const t = navToneVars(r.tone);
+      const count = navBadgeCount(r.id);
       html += `<button class="nav-item ${CURRENT_ROUTE===r.id?'active':''}" data-route="${r.id}">
-        <span class="nav-icon-chip" style="background:${t.bg}; color:${t.fg};">${icon(r.icon)}</span>${r.label}</button>`;
+        <span class="nav-icon-chip" style="background:${t.bg}; color:${t.fg};">${icon(r.icon)}</span><span style="flex:1; text-align:left;">${r.label}</span>${count!=null?`<span class="nav-badge">${count}</span>`:''}</button>`;
     });
   });
   document.getElementById('nav').innerHTML = html;
