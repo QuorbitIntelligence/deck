@@ -545,7 +545,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.27.0';
+const APP_VERSION = 'v1.27.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2798,11 +2798,15 @@ function drawAsgPane(){
       <div id="asg-bloque-panel" style="display:none; margin-bottom:14px;"></div>
       <div id="asg-c-list" style="margin-bottom:14px;"></div>
       <div style="background:var(--surface-2); border-radius:12px; padding:14px 16px;">
-        <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Costo aproximado del hospital (IVA incluido)</label>
+        <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+          Costo aproximado del hospital (IVA incluido)
+          <button type="button" id="asg-hospital-recalc" class="btn btn-sm" style="padding:3px 8px; font-size:10.5px; font-weight:600; text-transform:none;">${icon('history')} Recalcular con conceptos</button>
+        </label>
         <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
           <span style="font-family:var(--font-display); font-size:18px; font-weight:700;">$</span>
           <input id="asg-hospital-costo" type="number" style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-display); font-size:17px; font-weight:700;">
         </div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Se suma solo al agregar conceptos si no la has editado a mano; si quieres volver a la suma automática después de escribir un monto, usa "Recalcular".</div>
       </div>`;
     foot.innerHTML = `<button class="btn btn-guinda" id="asg-next">Siguiente</button>`;
     const medSearch = document.getElementById('asg-medico-search'), medResults = document.getElementById('asg-medico-results');
@@ -2840,10 +2844,14 @@ function drawAsgPane(){
     const costoInput = document.getElementById('asg-hospital-costo');
     costoInput.value = asgWizard.hospitalCostoManual!=null ? asgWizard.hospitalCostoManual : Math.round(sumConceptMap(asgWizard.hospitalConceptos));
     costoInput.oninput = ()=>{ asgWizard.hospitalCostoManual = parseFloat(costoInput.value)||0; };
+    document.getElementById('asg-hospital-recalc').onclick = ()=>{
+      asgWizard.hospitalCostoManual = null;
+      costoInput.value = Math.round(sumConceptMap(asgWizard.hospitalConceptos));
+      toast('Recalculado con la suma de conceptos');
+    };
     document.getElementById('asg-next').onclick = ()=>{
       asgWizard.aseguradora = document.getElementById('asg-aseguradora').value.trim();
       asgWizard.procedimiento = document.getElementById('asg-proc').value.trim();
-      asgWizard.hospitalCostoManual = parseFloat(document.getElementById('asg-hospital-costo').value)||0;
       if(!asgWizard.aseguradora || !asgWizard.medico || !asgWizard.procedimiento){ toast('Completa aseguradora, médico y procedimiento'); return; }
       asgWizard.step=2; drawAsgPane();
     };
@@ -2859,7 +2867,10 @@ function drawAsgPane(){
       </div>
       <div id="asg-item-list" style="margin-bottom:14px;"></div>
       <div style="background:var(--surface-2); border-radius:12px; padding:14px 16px;">
-        <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Costo aproximado del proveedor (IVA incluido)</label>
+        <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+          Costo aproximado del proveedor (IVA incluido)
+          <button type="button" id="asg-prov-recalc" class="btn btn-sm" style="padding:3px 8px; font-size:10.5px; font-weight:600; text-transform:none;">${icon('history')} Recalcular con insumos</button>
+        </label>
         <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
           <span style="font-family:var(--font-display); font-size:18px; font-weight:700;">$</span>
           <input id="asg-prov-costo" type="number" style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-display); font-size:17px; font-weight:700;">
@@ -2888,11 +2899,15 @@ function drawAsgPane(){
     const provCostoInput = document.getElementById('asg-prov-costo');
     provCostoInput.value = asgWizard.proveedorCostoManual!=null ? asgWizard.proveedorCostoManual : Math.round(asgWizard.proveedorItems.reduce((s,i)=>s+i.total,0));
     provCostoInput.oninput = ()=>{ asgWizard.proveedorCostoManual = parseFloat(provCostoInput.value)||0; };
+    document.getElementById('asg-prov-recalc').onclick = ()=>{
+      asgWizard.proveedorCostoManual = null;
+      provCostoInput.value = Math.round(asgWizard.proveedorItems.reduce((s,i)=>s+i.total,0));
+      toast('Recalculado con la suma de insumos');
+    };
     function updateAsgProveedorTotalField(){ if(asgWizard.proveedorCostoManual==null) provCostoInput.value = Math.round(asgWizard.proveedorItems.reduce((s,i)=>s+i.total,0)); }
     document.getElementById('asg-back').onclick = ()=>{ asgWizard.step=1; drawAsgPane(); };
     document.getElementById('asg-next').onclick = ()=>{
       asgWizard.proveedorNombre = document.getElementById('asg-prov-nombre').value.trim();
-      asgWizard.proveedorCostoManual = parseFloat(document.getElementById('asg-prov-costo').value)||0;
       asgWizard.step=3; drawAsgPane();
     };
   } else if(asgWizard.step===3){
