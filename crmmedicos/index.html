@@ -536,8 +536,10 @@ const ESTADOS_COT = {
   'Cancelada':{color:'red', label:'Cancelada'},
   'Prueba':{color:'violet', label:'Prueba'},
   'Archivada':{color:'muted', label:'Archivada'},
+  'Caducado':{color:'muted', label:'Caducado'},
   'Borrador':{color:'muted', label:'Borrador'},
 };
+const ESTADOS_COT_FINALES = ['Aprobada','Rechazada','Cancelada','Archivada','Prueba','Caducado'];
 const ESTADOS_MED = {
   'TRABAJANDO':{color:'green'}, 'CON CONVENIO':{color:'green'},
   'NUEVO REGISTRO':{color:'amber'}, 'EN NEGOCIACIÓN':{color:'amber'},
@@ -545,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.27.1';
+const APP_VERSION = 'v1.28.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2083,9 +2085,9 @@ function sendCotizacionWhatsApp(id){
   if(digits.length===10) digits = '52'+digits;
   const nombreCorto = (m?m.nombre:'').replace(/^DRA?\.?\s+/i,'');
   let msg = `Dr(a). ${nombreCorto}. 🫂 Le comparto su cotización *${c.id}* para *${c.procedimiento||'el procedimiento solicitado'}*, con un total de ${fmtMoney(c.costo_propuesta)} (IVA incluido)${c.fecha_vigencia?(', vigente hasta el '+fmtDate(c.fecha_vigencia)):''}.`;
-  msg += '\n\nEn un momento le adjunto el PDF con el desglose completo. Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌';
-  msg += '\n\nVisite el portal de médicos para conocer más beneficios y poder credencializarse en caso de que aún no haya concluido ese proceso 👉 https://quorbitintelligence.github.io/deck/noor/medicos/';
-  msg += '\n\nSaludos. 😊';
+  msg += '\nLe adjunto el PDF con el desglose completo. Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌';
+  msg += '\nVisite el portal de médicos para conocer más beneficios y poder credencializarse en caso de que aún no haya concluido ese proceso 👉 https://quorbitintelligence.github.io/deck/noor/medicos/';
+  msg += '\nSaludos. 😊';
   const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
   try{ generateCotizacionPDF(id); }catch(e){}
   window.open(link, '_blank');
@@ -5086,10 +5088,35 @@ function doLogin(){
     document.getElementById('login-err').textContent = 'Clave incorrecta. Intenta nuevamente.';
   }
 }
+function checkCotizacionesCaducadas(){
+  const ahora = Date.now();
+  const LIMITE_MS = 60*24*60*60*1000; // 60 días
+  let cambios = 0;
+  DB.cotizaciones.forEach(c=>{
+    if(ESTADOS_COT_FINALES.includes(c.estatus)) return;
+    if(!c.fecha_creacion) return;
+    if(ahora - new Date(c.fecha_creacion).getTime() >= LIMITE_MS){
+      c.estatus = 'Caducado';
+      logAudit('Cotización', c.id, 'Caducidad automática', '60 días sin cambio de estatus');
+      cambios++;
+    }
+  });
+  DB.cotizaciones_aseguradora.forEach(a=>{
+    if(ESTADOS_COT_FINALES.includes(a.estatus)) return;
+    if(!a.fecha_creacion) return;
+    if(ahora - new Date(a.fecha_creacion).getTime() >= LIMITE_MS){
+      a.estatus = 'Caducado';
+      logAudit('Cotización Aseguradora', a.id, 'Caducidad automática', '60 días sin cambio de estatus');
+      cambios++;
+    }
+  });
+  if(cambios) persistExtra();
+}
 function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('app-version').textContent = 'CRM Médicos '+APP_VERSION;
+  checkCotizacionesCaducadas();
   renderNav();
   const r = location.hash.slice(1);
   navigate(ROUTES.find(x=>x.id===r) ? r : 'dashboard');
