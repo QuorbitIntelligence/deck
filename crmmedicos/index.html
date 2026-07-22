@@ -547,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.28.0';
+const APP_VERSION = 'v1.28.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3978,10 +3978,10 @@ function generatePlanSemanalPDF(){
 const ESTADOS_CASO = {
   'Nuevo':{color:'blue'}, 'En seguimiento':{color:'amber'}, 'En negociación':{color:'amber'}, 'Con promoción':{color:'violet'}, 'Programación agendada':{color:'violet'},
   'Confirmado':{color:'green'}, 'Realizado':{color:'green'}, 'Cancelado':{color:'red'}, 'Perdido':{color:'red'},
-  'Archivado':{color:'muted'}, 'Cerrado':{color:'muted'}
+  'Archivado':{color:'muted'}, 'Cerrado':{color:'muted'}, 'Caducado':{color:'red'}
 };
 const CASOS_CERRADOS = ['Realizado','Cancelado','Perdido','Archivado','Cerrado'];
-const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'En negociación':50, 'Con promoción':45, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100 };
+const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'En negociación':50, 'Con promoción':45, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100, 'Caducado':100 };
 const TIPOS_INTERACCION = ['Llamada','Visita','WhatsApp','Correo','Reunión','Cita en hospital','Recorrido','Programación de cirugía','Cambio de estatus','Sistema'];
 function casoProgressBar(estatus){
   const pct = CASO_PROGRESS[estatus] || 10;
@@ -5099,6 +5099,14 @@ function checkCotizacionesCaducadas(){
       c.estatus = 'Caducado';
       logAudit('Cotización', c.id, 'Caducidad automática', '60 días sin cambio de estatus');
       cambios++;
+      const casoVinculado = DB.casos.find(cs=>String(cs.id_cotizacion)===String(c.id));
+      if(casoVinculado && !CASOS_CERRADOS.includes(casoVinculado.estatus) && casoVinculado.estatus!=='Caducado'){
+        const prevEstatus = casoVinculado.estatus;
+        casoVinculado.estatus = 'Caducado';
+        casoVinculado.interacciones = casoVinculado.interacciones||[];
+        casoVinculado.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevEstatus+' → Caducado (cotización sin cambio en 60 días)'});
+        logAudit('Caso', casoVinculado.id, 'Caducidad automática', 'Cotización '+c.id+' caducada — caso movido a Caducado');
+      }
     }
   });
   DB.cotizaciones_aseguradora.forEach(a=>{
