@@ -547,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.29.0';
+const APP_VERSION = 'v1.29.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -608,8 +608,9 @@ let saveTimer=null;
 function persistExtra(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async ()=>{
+    let ok = false;
     try{
-      await lsSet('crm_extra_data', JSON.stringify({
+      ok = await lsSet('crm_extra_data', JSON.stringify({
         cotizaciones: DB.cotizaciones,
         detalle: DB.detalle,
         auditoria: DB.auditoria,
@@ -641,7 +642,12 @@ function persistExtra(){
           DB.clausulas.filter(c=>!c.__new && (c.default || c.activa===false)).map(c=>[String(c.id),{default:!!c.default, activa:c.activa!==false}])
         )
       }));
-    }catch(e){}
+    }catch(e){ ok = false; }
+    if(!ok && !window.__storageWarned){
+      window.__storageWarned = true;
+      toast('⚠️ No se pudo guardar — el almacenamiento del navegador está lleno. Borra imágenes de promociones antiguas o usa "Reiniciar datos" con respaldo previo.');
+      setTimeout(()=>{ window.__storageWarned = false; }, 15000);
+    }
   }, 300);
 }
 
@@ -4103,8 +4109,8 @@ function drawCasoTree(){
               <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}</div>
               ${nextIt ? `<div style="margin-top:4px; max-width:260px;"><span class="pill pill-blue pill-small" style="margin-bottom:2px;">${nextIt.tipo}</span>${interactionProgressBar(nextIt, true)}</div>` : ''}
             </div>
-            <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
-              ${abrirConversacionButtonHtml(cs.id, 28)}
+            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+              ${abrirConversacionButtonHtml(cs.id)}
               ${whatsappButtonHtml(cs.id, 28)}
             </div>
           </div>`;
@@ -4279,8 +4285,8 @@ function abrirConversacionLink(cs){
   if(digits.length===10) digits = '52'+digits;
   return 'https://wa.me/'+digits;
 }
-function abrirConversacionButtonHtml(casoId, size){
-  return `<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); abrirConversacion('${casoId}')" title="Abrir conversación" style="background:var(--surface-3); color:var(--text-muted);${size?(' width:'+size+'px;height:'+size+'px;'):''}">${icon('followup')}</button>`;
+function abrirConversacionButtonHtml(casoId){
+  return `<button type="button" class="btn btn-sm" style="white-space:nowrap; font-size:10.5px; padding:4px 8px; gap:4px;" onclick="event.stopPropagation(); abrirConversacion('${casoId}')" title="Abrir conversación">${icon('followup')} Abrir conversación</button>`;
 }
 function abrirConversacion(casoId){
   const cs = DB.casos.find(x=>x.id===casoId); if(!cs) return;
@@ -4598,9 +4604,25 @@ function drawCampanaDrawer(campanaId){
   document.getElementById('camp-img-btn').onclick = ()=> document.getElementById('camp-img-file').click();
   document.getElementById('camp-img-file').onchange = (e)=>{
     const file = e.target.files[0]; if(!file) return;
-    if(file.size > 4*1024*1024){ toast('La imagen es muy pesada (máx. 4MB)'); return; }
+    if(file.size > 10*1024*1024){ toast('La imagen es muy pesada (máx. 10MB de origen)'); return; }
     const reader = new FileReader();
-    reader.onload = ()=>{ campana.imagenDataUrl = reader.result; persistExtra(); toast('Imagen guardada'); drawCampanaDrawer(campanaId); };
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const MAXDIM = 1000;
+        let w = img.width, h = img.height;
+        if(w>MAXDIM || h>MAXDIM){ const ratio = Math.min(MAXDIM/w, MAXDIM/h); w = Math.round(w*ratio); h = Math.round(h*ratio); }
+        const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img, 0, 0, w, h);
+        campana.imagenDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        persistExtra(); toast('Imagen guardada (comprimida para no llenar el almacenamiento)'); drawCampanaDrawer(campanaId);
+      };
+      img.onerror = ()=>{ toast('No se pudo procesar esa imagen'); };
+      img.src = reader.result;
+    };
+    reader.onerror = ()=>{ toast('No se pudo leer el archivo'); };
     reader.readAsDataURL(file);
   };
   const copyBtn = document.getElementById('camp-img-copy');
@@ -4889,6 +4911,8 @@ function renderConfig(){
         <div style="margin-top:12px;"><span class="pill pill-blue">${icon('history')} ${APP_VERSION}</span></div>
       </div>
     </div>
+    <div class="section-title">Almacenamiento del navegador</div>
+    <div class="card" id="storage-usage-card"></div>
     <div class="section-title">Respaldos</div>
     <div class="card">
       <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">Genera un respaldo completo en JSON, o restaura uno previamente descargado.</div>
@@ -4937,7 +4961,27 @@ function renderConfig(){
     try{ await lsDelete('crm_extra_data'); }catch(e){}
     location.reload();
   };
+  drawStorageUsage();
   drawHistTable();
+}
+function drawStorageUsage(){
+  const el = document.getElementById('storage-usage-card'); if(!el) return;
+  let usedBytes = 0;
+  try{ usedBytes = new Blob([localStorage.getItem('crm_extra_data')||'']).size; }catch(e){ usedBytes = (localStorage.getItem('crm_extra_data')||'').length; }
+  const QUOTA_APROX = 5*1024*1024; // la mayoría de navegadores dan ~5MB por dominio
+  const pct = Math.min(100, Math.round(usedBytes/QUOTA_APROX*100));
+  const usedMB = (usedBytes/1024/1024).toFixed(2);
+  const color = pct>85 ? 'var(--red)' : (pct>60 ? 'var(--amber)' : 'var(--green)');
+  const imgCount = (DB.campanas_difusion||[]).filter(c=>c.imagenDataUrl).length;
+  el.innerHTML = `
+    <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:10px; line-height:1.6;">Todos tus datos (cotizaciones, casos, imágenes de promociones, etc.) se guardan en el almacenamiento local de este navegador, que tiene un límite aproximado de 5MB. Si se llena, los cambios nuevos <b>dejan de guardarse</b> aunque la app no muestre error — por eso es importante vigilarlo.</div>
+    <div class="cal-progress-track" style="height:10px; margin-bottom:8px;"><div style="width:${pct}%; height:100%; background:${color}; border-radius:999px;"></div></div>
+    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted);">
+      <span>${usedMB} MB usados de ~5 MB (${pct}%)</span>
+      <span>${imgCount} imagen(es) de promoción guardada(s)</span>
+    </div>
+    ${pct>70 ? `<div style="margin-top:10px; font-size:12px; color:${color}; font-weight:600;">⚠️ Te estás acercando al límite. Borra imágenes de promociones antiguas en Grupos de Difusión, o genera un respaldo y libera espacio.</div>` : ''}
+  `;
 }
 function drawHistTable(){
   const all = [...DB.auditoria].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
