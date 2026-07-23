@@ -547,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.28.1';
+const APP_VERSION = 'v1.29.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4103,7 +4103,10 @@ function drawCasoTree(){
               <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}</div>
               ${nextIt ? `<div style="margin-top:4px; max-width:260px;"><span class="pill pill-blue pill-small" style="margin-bottom:2px;">${nextIt.tipo}</span>${interactionProgressBar(nextIt, true)}</div>` : ''}
             </div>
-            ${whatsappButtonHtml(cs.id, 28)}
+            <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
+              ${abrirConversacionButtonHtml(cs.id, 28)}
+              ${whatsappButtonHtml(cs.id, 28)}
+            </div>
           </div>`;
         }).join('')}
       </div>
@@ -4186,6 +4189,7 @@ function openCasoDrawer(id){
         <button class="btn btn-sm" onclick="closeDrawer();openCasoModal('${cs.id}')">${icon('config')} Editar caso</button>
         <button class="btn btn-sm btn-primary" onclick="openInteraccionModal('${cs.id}')">${icon('plus')} Nueva interacción</button>
         ${cs.id_cotizacion ? `<button class="btn btn-sm" onclick="closeDrawer();openCotizacionDrawer('${cs.id_cotizacion}')">${icon('quote')} Ver cotización</button>` : ''}
+        <button class="btn btn-sm" onclick="abrirConversacion('${cs.id}')">${icon('followup')} Abrir conversación</button>
         ${whatsappButtonHtml(cs.id)}
       </div>
       ${cs.fecha_programacion ? `<div class="card" style="margin-bottom:12px; background:var(--violet-light); border-color:transparent;">
@@ -4266,6 +4270,23 @@ function whatsappSeguimientoLink(cs){
 }
 function whatsappButtonHtml(casoId, size){
   return `<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); sendWhatsAppSeguimiento('${casoId}')" title="Enviar seguimiento por WhatsApp" style="${size?('width:'+size+'px;height:'+size+'px;'):''}">${icon('whatsapp')}</button>`;
+}
+function abrirConversacionLink(cs){
+  const m = medicoById(cs.id_medico);
+  if(!m || !m.telefono) return null;
+  let digits = String(m.telefono).replace(/\D/g,'');
+  if(!digits) return null;
+  if(digits.length===10) digits = '52'+digits;
+  return 'https://wa.me/'+digits;
+}
+function abrirConversacionButtonHtml(casoId, size){
+  return `<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); abrirConversacion('${casoId}')" title="Abrir conversación" style="background:var(--surface-3); color:var(--text-muted);${size?(' width:'+size+'px;height:'+size+'px;'):''}">${icon('followup')}</button>`;
+}
+function abrirConversacion(casoId){
+  const cs = DB.casos.find(x=>x.id===casoId); if(!cs) return;
+  const link = abrirConversacionLink(cs);
+  if(!link){ toast('Este médico no tiene teléfono registrado'); return; }
+  window.open(link, '_blank');
 }
 function sendWhatsAppSeguimiento(casoId){
   const cs = DB.casos.find(x=>x.id===casoId); if(!cs) return;
@@ -4383,16 +4404,22 @@ function resolveGrupoMedicos(g){
   }
   return extra;
 }
+let difState = { search:'' };
 function renderDifusion(){
   document.getElementById('content').innerHTML = `
-    <div class="toolbar"><span style="font-size:12.5px; color:var(--text-muted); max-width:580px;">Crea grupos de médicos por especialidad o armados a mano, y envía promociones por WhatsApp a cada uno con seguimiento de quién ya la recibió. WhatsApp no permite envío automático masivo: irás confirmando el envío uno por uno, pero el sistema arma el mensaje y lleva el control por ti.</span>
+    <div class="toolbar">
+      <div class="searchbox" style="width:260px;">${icon('search')}<input id="dif-search" placeholder="Buscar grupo por nombre…"></div>
+      <span style="font-size:12.5px; color:var(--text-muted); max-width:460px;">Crea grupos de médicos por especialidad o armados a mano, y envía promociones por WhatsApp con seguimiento de quién ya la recibió.</span>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openGrupoModal()">${icon('plus')} Nuevo grupo</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));" id="dif-grid"></div>`;
+  document.getElementById('dif-search').oninput = e=>{ difState.search=e.target.value; drawGruposGrid(); };
   drawGruposGrid();
 }
 function drawGruposGrid(){
   const grid = document.getElementById('dif-grid');
-  grid.innerHTML = DB.grupos_difusion.length ? DB.grupos_difusion.map(g=>{
+  const filtrados = DB.grupos_difusion.filter(g=> !difState.search || fuzzyMatch(g.nombre, difState.search));
+  const ordenados = [...filtrados].sort((a,b)=> new Date(b.fecha_creacion||0) - new Date(a.fecha_creacion||0));
+  grid.innerHTML = ordenados.length ? ordenados.map(g=>{
     const medicos = resolveGrupoMedicos(g);
     return `<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -4510,7 +4537,7 @@ function openGrupoModal(id){
       medicos: Object.entries(selMed).filter(([,v])=>v).map(([id])=>id),
       activo: document.getElementById('dg-activo').checked };
     if(g){ Object.assign(g, payload); logAudit('Grupo de difusión', g.id, 'Edición', nombre); }
-    else { const nuevo = Object.assign({id:uid('dg'), __new:true}, payload); DB.grupos_difusion.push(nuevo); logAudit('Grupo de difusión', nuevo.id, 'Creación', nombre); }
+    else { const nuevo = Object.assign({id:uid('dg'), fecha_creacion:new Date().toISOString(), __new:true}, payload); DB.grupos_difusion.push(nuevo); logAudit('Grupo de difusión', nuevo.id, 'Creación', nombre); }
     persistExtra(); closeModal(); toast('Grupo guardado'); renderDifusion();
   };
   const delBtn = document.getElementById('dg-del');
@@ -4669,7 +4696,14 @@ function openConvenioModal(id, medicoPreset){
         <div class="form-field full"><label>Notas</label><input class="input uc-input" id="cv-notas" style="width:100%;" value="${cv?cv.notas||'':''}"></div>
       </div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Médicos asignados</div>
-      <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="cv-med-search" placeholder="Buscar médico por cualquier palabra…"></div>
+      <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap;">
+        <select class="select" id="cv-esp-filter" style="flex:1; min-width:180px; font-size:12px;">
+          <option value="">Filtrar / seleccionar por especialidad…</option>
+          ${[...new Set(DB.medicos.map(m=>m.especialidad).filter(Boolean))].sort().map(e=>`<option>${e}</option>`).join('')}
+        </select>
+        <button class="btn btn-sm" type="button" id="cv-esp-select-all">${icon('check')} Seleccionar todos de esa especialidad</button>
+      </div>
+      <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="cv-med-search" placeholder="Buscar médico por nombre o especialidad…"></div>
       <div id="cv-med-list" style="max-height:170px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px; margin-bottom:14px;"></div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Condiciones aplicables</div>
       <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="cv-cl-search" placeholder="Buscar condición…"></div>
@@ -4677,7 +4711,20 @@ function openConvenioModal(id, medicoPreset){
       <div class="form-field full" style="margin-top:14px;"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cv-activo" ${!cv||cv.estatus!=='Inactivo'?'checked':''}> Convenio activo</label></div>
     </div>
     <div class="modal-foot">${cv?`<button class="btn btn-danger" id="cv-del">${icon('trash')} Eliminar</button>`:''}<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="cv-save">Guardar convenio</button></div>`);
-  wireMedicoMultiPicker(document.getElementById('cv-med-search'), document.getElementById('cv-med-list'), medSel);
+  const drawMedList = wireMedicoMultiPicker(document.getElementById('cv-med-search'), document.getElementById('cv-med-list'), medSel);
+  const espFilterEl = document.getElementById('cv-esp-filter');
+  espFilterEl.onchange = ()=>{
+    if(espFilterEl.value){ document.getElementById('cv-med-search').value = espFilterEl.value; drawMedList(espFilterEl.value); }
+  };
+  document.getElementById('cv-esp-select-all').onclick = ()=>{
+    const esp = espFilterEl.value;
+    if(!esp){ toast('Primero elige una especialidad en el filtro'); return; }
+    const afectados = DB.medicos.filter(m=>m.especialidad===esp);
+    afectados.forEach(m=>{ medSel[m.id]=true; });
+    document.getElementById('cv-med-search').value = esp;
+    drawMedList(esp);
+    toast(afectados.length+' médico(s) de '+esp+' agregados');
+  };
   wireClausulaPicker(document.getElementById('cv-cl-search'), document.getElementById('cv-cl-list'), selCl);
   document.getElementById('cv-save').onclick = ()=>{
     const nombre = document.getElementById('cv-nombre').value.trim();
@@ -4698,7 +4745,7 @@ function openConvenioModal(id, medicoPreset){
 /* Checklist de médicos con buscador por palabras, reutilizable (ej. convenios) */
 function wireMedicoMultiPicker(searchEl, listEl, selMap){
   const draw = (filter)=>{
-    const items = filter ? DB.medicos.filter(m=>fuzzyMatch(m.nombre, filter)) : DB.medicos.filter(m=>selMap[m.id]);
+    const items = filter ? DB.medicos.filter(m=>fuzzyMatch(m.nombre, filter) || fuzzyMatch(m.especialidad, filter)) : DB.medicos.filter(m=>selMap[m.id]);
     listEl.innerHTML = items.length ? items.map(m=>`
       <label class="clausula-row" style="cursor:pointer;">
         <input type="checkbox" data-mid="${m.id}" ${selMap[m.id]?'checked':''}>
