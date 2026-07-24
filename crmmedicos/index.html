@@ -547,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.31.1';
+const APP_VERSION = 'v1.31.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1092,11 +1092,39 @@ function renderDashboard(){
       const casoColors = casoLabels.map(s=> cssVar('--'+(ESTADOS_CASO[s].color==='muted'?'text-faint':ESTADOS_CASO[s].color)));
       const esPorcentaje = dashCasoChartMode==='porcentaje';
       const casoValues = esPorcentaje ? casoMontos.map(v=> totalMontoTodos ? Math.round(v/totalMontoTodos*1000)/10 : 0) : casoMontos;
+      const bubbleLabelPlugin = {
+        id: 'casoMontoBubbles',
+        afterDatasetsDraw(chart){
+          const meta = chart.getDatasetMeta(0);
+          const ctx = chart.ctx;
+          ctx.save();
+          meta.data.forEach((bar, i)=>{
+            const monto = casoMontos[i];
+            if(!monto) return;
+            const pct = totalMontoTodos ? (monto/totalMontoTodos*100).toFixed(1) : '0.0';
+            const label = fmtMoney(monto)+'  ·  '+pct+'%';
+            const pos = bar.getProps(['x','y'], true);
+            ctx.font = '700 10.5px Inter, Helvetica, Arial, sans-serif';
+            const textW = ctx.measureText(label).width;
+            const padX = 9, boxH = 20, boxW = textW+padX*2;
+            const boxX = pos.x-boxW/2, boxY = pos.y-boxH-8;
+            ctx.fillStyle = casoColors[i];
+            ctx.beginPath();
+            if(ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 10); else ctx.rect(boxX, boxY, boxW, boxH);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(label, pos.x, boxY+boxH/2+0.5);
+          });
+          ctx.restore();
+        }
+      };
       new Chart(document.getElementById('chart-caso-monto'), { type:'bar', data:{ labels: casoLabels, datasets:[{ label:'Monto', data: casoValues, backgroundColor: casoColors, borderRadius:6 }]},
-        options:{ maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+        plugins: [bubbleLabelPlugin],
+        options:{ maintainAspectRatio:false, layout:{padding:{top:26}}, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
           const i = ctx.dataIndex; const monto = casoMontos[i]; const pct = totalMontoTodos ? (monto/totalMontoTodos*100).toFixed(1) : '0.0';
           return fmtMoney(monto)+' · '+pct+'% del total cotizado';
-        }}}}, scales:{ y:{ticks:{callback:v=> esPorcentaje ? (v+'%') : fmtMoney(v), font:{size:10}}, grid:{color:cssVar('--border')}}, x:{ticks:{font:{size:10}, autoSkip:false, maxRotation:35, minRotation:0}, grid:{display:false}} } } });
+        }}}}, scales:{ y:{suggestedMax: Math.max(...casoValues)*1.18 || 10, ticks:{callback:v=> esPorcentaje ? (v+'%') : fmtMoney(v), font:{size:10}}, grid:{color:cssVar('--border')}}, x:{ticks:{font:{size:10}, autoSkip:false, maxRotation:35, minRotation:0}, grid:{display:false}} } } });
     }catch(e){ chartFallback(document.getElementById('chart-caso-monto')?.closest('.chart-wrap'), 'No se pudo dibujar esta gráfica.'); }
   } else {
     chartFallback(document.getElementById('chart-mes')?.closest('.chart-wrap'), 'Sin datos aún');
