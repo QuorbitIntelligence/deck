@@ -547,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.29.1';
+const APP_VERSION = 'v1.30.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1691,7 +1691,10 @@ function drawPaqGrid(){
     return `<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div><div style="font-weight:700; font-size:14px;">${pk.nombre}</div><div style="font-size:11.5px; color:var(--text-faint); margin-top:2px;">${pk.descripcion||''}</div></div>
-        <button class="btn btn-sm" onclick="openPaqueteModal('${pk.id}')">${icon('config')}</button>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="btn btn-sm" onclick="duplicarPaquete('${pk.id}')" title="Duplicar paquete">${icon('history')}</button>
+          <button class="btn btn-sm" onclick="openPaqueteModal('${pk.id}')" title="Editar paquete">${icon('config')}</button>
+        </div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:6px;">
         <span class="pill ${vigente?'pill-green':'pill-red'}">${vigente?'Vigente':(pk.activo===false?'Inactivo':'Vencido')}</span>
@@ -1702,6 +1705,21 @@ function drawPaqGrid(){
       <div style="font-size:11px; color:var(--text-faint); margin-top:4px;">${meds.length ? '👤 '+meds.map(m=>m.nombre).join(', ') : '👤 Disponible para cualquier médico'}</div>
     </div>`;
   }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('building')}<div>Aún no hay paquetes registrados.</div></div>`;
+}
+function duplicarPaquete(id){
+  const original = DB.paquetes.find(x=>x.id===id); if(!original) return;
+  const copia = {
+    ...JSON.parse(JSON.stringify(original)),
+    id: uid('pk'),
+    nombre: original.nombre+' (copia)',
+    __new: true
+  };
+  delete copia.__edited;
+  DB.paquetes.unshift(copia);
+  logAudit('Paquete', copia.id, 'Duplicado', 'A partir de '+original.nombre);
+  persistExtra(); toast('Paquete duplicado — ajústalo y guarda los cambios');
+  drawPaqGrid();
+  openPaqueteModal(copia.id);
 }
 function openPaqueteModal(id){
   const pk = id ? DB.paquetes.find(x=>x.id===id) : null;
