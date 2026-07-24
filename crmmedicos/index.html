@@ -547,7 +547,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.30.0';
+const APP_VERSION = 'v1.31.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -937,6 +937,7 @@ function wireClausulaPicker(searchEl, listEl, selMap, onToggle, contexto){
 /* ============================================================
    DASHBOARD
 ============================================================ */
+let dashCasoChartMode = 'monto';
 function renderDashboard(){
   const cots = DB.cotizaciones;
   const totalMonto = cots.reduce((s,c)=>s+(c.costo_propuesta||0),0);
@@ -954,6 +955,14 @@ function renderDashboard(){
   const porMedEstatus = {}; DB.medicos.forEach(m=>{ porMedEstatus[m.estatus_relacion] = (porMedEstatus[m.estatus_relacion]||0)+1; });
   const porConvEstatus = {}; DB.convenios.forEach(cv=>{ const e=computeConvenioEstatus(cv); porConvEstatus[e]=(porConvEstatus[e]||0)+1; });
   const porCasoEstatus = {}; DB.casos.forEach(cs=>{ porCasoEstatus[cs.estatus]=(porCasoEstatus[cs.estatus]||0)+1; });
+  const montoPorCasoEstatus = {};
+  Object.keys(ESTADOS_CASO).forEach(s=> montoPorCasoEstatus[s]=0);
+  DB.casos.forEach(cs=>{
+    if(!cs.id_cotizacion) return;
+    const cot = DB.cotizaciones.find(c=>String(c.id)===String(cs.id_cotizacion));
+    if(!cot) return;
+    montoPorCasoEstatus[cs.estatus] = (montoPorCasoEstatus[cs.estatus]||0) + (cot.costo_propuesta||0);
+  });
   const porPaqEstatus = { 'Activo': paquetesActivos, 'Inactivo': DB.paquetes.length-paquetesActivos };
 
   const espMonto = {};
@@ -1037,7 +1046,23 @@ function renderDashboard(){
       <div class="card"><div style="font-weight:700; font-size:13px; margin-bottom:10px;">Cotizaciones por mes</div><div class="chart-wrap" style="height:190px;"><canvas id="chart-mes"></canvas></div></div>
       <div class="card"><div style="font-weight:700; font-size:13px; margin-bottom:10px;">Monto cotizado por especialidad</div><div class="chart-wrap" style="height:190px;"><canvas id="chart-esp"></canvas></div></div>
     </div>
+
+    <div class="section-title" style="margin:20px 0 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <span>Monto cotizado por estatus de Seguimiento (CRM)</span>
+      <div class="chip-filter" id="caso-monto-toggle" style="margin:0;">
+        <button class="chip ${dashCasoChartMode==='monto'?'active':''}" data-mode="monto">Monto ($)</button>
+        <button class="chip ${dashCasoChartMode==='porcentaje'?'active':''}" data-mode="porcentaje">Porcentaje (%)</button>
+      </div>
+    </div>
+    <div class="card"><div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Suma del monto de las cotizaciones cuyo caso vinculado está en cada estatus — para comparar de un vistazo cuánto llevas cotizado vs. lo ya confirmado, agendado o realizado. En modo porcentaje, el 100% es la suma de todo lo cotizado.</div>
+      <div class="chart-wrap" style="height:280px;"><canvas id="chart-caso-monto"></canvas></div>
+    </div>
   `;
+
+  document.getElementById('caso-monto-toggle').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
+    dashCasoChartMode = b.dataset.mode;
+    renderDashboard();
+  });
 
   function chartFallback(el, msg){
     if(!el) return;
@@ -1050,6 +1075,7 @@ function renderDashboard(){
   if(!chartsOk){
     chartFallback(document.getElementById('chart-mes')?.closest('.chart-wrap'), 'No se pudo cargar la librería de gráficas (Chart.js). Revisa tu conexión a internet o si tu red bloquea cdnjs.cloudflare.com.');
     chartFallback(document.getElementById('chart-esp')?.closest('.chart-wrap'), 'No se pudo cargar la librería de gráficas.');
+    chartFallback(document.getElementById('chart-caso-monto')?.closest('.chart-wrap'), 'No se pudo cargar la librería de gráficas.');
   } else if(cots.length){
     try{
       new Chart(document.getElementById('chart-mes'), { type:'bar', data:{ labels: meses.map(fmtMesLabel), datasets:[{label:'Monto', data: meses.map(m=>porMes[m].monto), backgroundColor: cssVar('--primary'), borderRadius:6}]},
@@ -1059,9 +1085,23 @@ function renderDashboard(){
       new Chart(document.getElementById('chart-esp'), { type:'bar', data:{ labels: topEsp.map(e=>e[0]), datasets:[{ data: topEsp.map(e=>e[1]), backgroundColor: cssVar('--violet'), borderRadius:6 }]},
         options:{ maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ticks:{callback:v=>fmtMoney(v), font:{size:10}}, grid:{color:cssVar('--border')}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } } });
     }catch(e){ chartFallback(document.getElementById('chart-esp')?.closest('.chart-wrap'), 'No se pudo dibujar esta gráfica.'); }
+    try{
+      const casoLabels = Object.keys(ESTADOS_CASO);
+      const casoMontos = casoLabels.map(s=>montoPorCasoEstatus[s]||0);
+      const totalMontoTodos = casoMontos.reduce((a,b)=>a+b,0);
+      const casoColors = casoLabels.map(s=> cssVar('--'+(ESTADOS_CASO[s].color==='muted'?'text-faint':ESTADOS_CASO[s].color)));
+      const esPorcentaje = dashCasoChartMode==='porcentaje';
+      const casoValues = esPorcentaje ? casoMontos.map(v=> totalMontoTodos ? Math.round(v/totalMontoTodos*1000)/10 : 0) : casoMontos;
+      new Chart(document.getElementById('chart-caso-monto'), { type:'bar', data:{ labels: casoLabels, datasets:[{ label:'Monto', data: casoValues, backgroundColor: casoColors, borderRadius:6 }]},
+        options:{ maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+          const i = ctx.dataIndex; const monto = casoMontos[i]; const pct = totalMontoTodos ? (monto/totalMontoTodos*100).toFixed(1) : '0.0';
+          return fmtMoney(monto)+' · '+pct+'% del total cotizado';
+        }}}}, scales:{ y:{ticks:{callback:v=> esPorcentaje ? (v+'%') : fmtMoney(v), font:{size:10}}, grid:{color:cssVar('--border')}}, x:{ticks:{font:{size:10}, autoSkip:false, maxRotation:35, minRotation:0}, grid:{display:false}} } } });
+    }catch(e){ chartFallback(document.getElementById('chart-caso-monto')?.closest('.chart-wrap'), 'No se pudo dibujar esta gráfica.'); }
   } else {
     chartFallback(document.getElementById('chart-mes')?.closest('.chart-wrap'), 'Sin datos aún');
     chartFallback(document.getElementById('chart-esp')?.closest('.chart-wrap'), 'Sin datos aún');
+    chartFallback(document.getElementById('chart-caso-monto')?.closest('.chart-wrap'), 'Sin datos aún');
   }
   if(chartsOk){
     ['cots','meds','paq','conv','casos'].forEach(key=>{
