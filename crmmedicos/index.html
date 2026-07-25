@@ -557,7 +557,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.32.2';
+const APP_VERSION = 'v1.33.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1039,6 +1039,15 @@ function renderDashboard(){
       ${miniKpi('Convenios vigentes', conveniosActivos+'/'+DB.convenios.length, 'deals', 'green')}
       ${miniKpi('Casos CRM abiertos', casosAbiertos+'/'+DB.casos.length, 'followup', 'guinda')}
       ${miniKpi('Cirugías programadas', cirugiasProgramadas, 'bolt', 'violet')}
+      ${miniKpi('En seguimiento', porEstatus['En seguimiento']||0, 'followup', 'amber', "irACotizacionesConEstatus('En seguimiento')")}
+      ${miniKpi('En negociación', porEstatus['En negociación']||0, 'deals', 'amber', "irACotizacionesConEstatus('En negociación')")}
+      ${miniKpi('Aprobada', porEstatus['Aprobada']||0, 'check', 'green', "irACotizacionesConEstatus('Aprobada')")}
+      ${miniKpi('Confirmado', porEstatus['Confirmado']||0, 'check', 'green', "irACotizacionesConEstatus('Confirmado')")}
+      ${miniKpi('Realizado', porEstatus['Realizado']||0, 'check', 'green', "irACotizacionesConEstatus('Realizado')")}
+      ${miniKpi('Vencida', porEstatus['Vencida']||0, 'calendar', 'red', "irACotizacionesConEstatus('Vencida')")}
+      ${miniKpi('Cancelado', porEstatus['Cancelado']||0, 'x', 'red', "irACotizacionesConEstatus('Cancelado')")}
+      ${miniKpi('Perdido', porEstatus['Perdido']||0, 'x', 'red', "irACotizacionesConEstatus('Perdido')")}
+      ${miniKpi('Archivado', porEstatus['Archivado']||0, 'catalog', 'blue', "irACotizacionesConEstatus('Archivado')")}
     </div>
 
     ${!cots.length ? `<div class="card" style="margin-top:14px; text-align:center; padding:20px 20px;">
@@ -1162,10 +1171,14 @@ function renderDashboard(){
     });
   }
 }
-function miniKpi(label,value,ic,tone){ return `<div class="card kpi-card" style="padding:12px 14px;">
+function miniKpi(label,value,ic,tone,onclickJs){ return `<div class="card kpi-card" style="padding:12px 14px;${onclickJs?' cursor:pointer;':''}" ${onclickJs?`onclick="${onclickJs}"`:''}>
   <div class="kpi-top"><span class="kpi-label" style="font-size:10.5px;">${label}</span>
   <div class="kpi-icon" style="width:24px;height:24px; background:var(--${tone}-light,var(--surface-2)); color:var(--${tone});">${icon(ic)}</div></div>
   <div class="kpi-value" style="font-size:19px;">${value}</div></div>`; }
+function irACotizacionesConEstatus(estatus){
+  navigate('cotizaciones');
+  setTimeout(()=>{ cotState.estatus = estatus; cotState.page = 1; drawCotTable(); drawCotChips(); }, 60);
+}
 function bubbleDonutCard(key, title, dataObj, colorMap){
   const labels = Object.keys(dataObj).filter(k=>dataObj[k]);
   const values = labels.map(k=>dataObj[k]);
