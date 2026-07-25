@@ -468,6 +468,7 @@ window.CRM_ICON_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAI
 /* ============ ICONS ============ */
 if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
 const ICON = {
+  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   megaphone:'<path d="M3 11v3a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 8a4 4 0 0 1 0 7"/><path d="M18.5 5.5a8 8 0 0 1 0 12"/>',
   mic:'<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
   stop:'<rect x="5" y="5" width="14" height="14" rx="2"/>',
@@ -558,7 +559,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.34.0';
+const APP_VERSION = 'v2.0.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2243,10 +2244,12 @@ function setCotEstatus(id, estatus){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
   if(!c) return;
   const prev = c.estatus; c.estatus = estatus;
+  if(estatus==='Vencida') c.fecha_vencida = new Date().toISOString();
   logAudit('Cotización', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   const cs = DB.casos.find(x=>x.id_cotizacion===id);
   if(cs && cs.estatus!==estatus){
     const prevCaso = cs.estatus; cs.estatus = estatus;
+    if(estatus==='Vencida') cs.fecha_vencida = c.fecha_vencida;
     cs.interacciones = cs.interacciones||[];
     cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde la cotización)'});
     logAudit('Caso', cs.id, 'Cambio de estatus', prevCaso+' → '+estatus+' (sincronizado desde cotización)');
@@ -4251,11 +4254,14 @@ function drawCasoTree(){
                 ${estatusPillGeneric(cs.estatus, ESTADOS_CASO)}
               </div>
               ${casoProgressBar(cs.estatus)}
-              <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}</div>
+              <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">${accion}${prog}
+                ${(cs.estatus==='Nuevo' && (Date.now()-new Date(cs.fecha_apertura).getTime())>=3*86400000) ? `<span class="pill pill-amber pill-small">${icon('bell')} 3+ días sin primer contacto</span>` : ''}
+              </div>
               ${nextIt ? `<div style="margin-top:4px; max-width:260px;"><span class="pill pill-blue pill-small" style="margin-bottom:2px;">${nextIt.tipo}</span>${interactionProgressBar(nextIt, true)}</div>` : ''}
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
               ${abrirConversacionButtonHtml(cs.id)}
+              ${cs.estatus==='Vencida' ? recordatorioVencidaButtonHtml(cs.id, 28) : ''}
               ${whatsappButtonHtml(cs.id, 28)}
             </div>
           </div>`;
@@ -4422,6 +4428,35 @@ function whatsappSeguimientoLink(cs){
 function whatsappButtonHtml(casoId, size){
   return `<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); sendWhatsAppSeguimiento('${casoId}')" title="Enviar seguimiento por WhatsApp" style="${size?('width:'+size+'px;height:'+size+'px;'):''}">${icon('whatsapp')}</button>`;
 }
+function whatsappRecordatorioVencidaLink(cs){
+  const m = medicoById(cs.id_medico);
+  if(!m || !m.telefono) return null;
+  let digits = String(m.telefono).replace(/\D/g,'');
+  if(!digits) return null;
+  if(digits.length===10) digits = '52'+digits;
+  const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
+  const procedimiento = cot ? cot.procedimiento : cs.titulo;
+  const nombreCorto = (m.nombre||'').replace(/^DRA?\.?\s+/i,'');
+  const fechaVig = cot && cot.fecha_vigencia ? fmtDate(cot.fecha_vigencia) : 'hace unos días';
+  let msg = `Dr(a). ${nombreCorto}. 👋 Le escribo para darle seguimiento a su cotización *${cs.id_cotizacion||''}* para *${procedimiento}*, la cual venció el ${fechaVig}.`;
+  msg += '\nSi aún está interesado(a), con gusto la actualizamos — ya sea el monto, la fecha para programar, o cualquier ajuste que necesite. Quedo atento(a) para resolver cualquier duda o agendar en cuanto usted me indique. 🙌';
+  msg += '\nSaludos. 😊';
+  return 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+}
+function recordatorioVencidaButtonHtml(casoId, size){
+  return `<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); enviarRecordatorioVencida('${casoId}')" title="Enviar recordatorio de cotización vencida" style="background:var(--red-light,var(--surface-2)); color:var(--red);${size?(' width:'+size+'px;height:'+size+'px;'):''}">${icon('calendar')}</button>`;
+}
+function enviarRecordatorioVencida(casoId){
+  const cs = DB.casos.find(x=>x.id===casoId); if(!cs) return;
+  const link = whatsappRecordatorioVencidaLink(cs);
+  if(!link){ toast('Este médico no tiene teléfono registrado'); return; }
+  window.open(link, '_blank');
+  cs.interacciones = cs.interacciones||[];
+  cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'WhatsApp', nota:'Recordatorio de cotización vencida enviado por WhatsApp'});
+  logAudit('Caso', casoId, 'Recordatorio enviado', 'Cotización vencida');
+  persistExtra(); toast('Abriendo WhatsApp…');
+  if(CURRENT_ROUTE==='casos') drawCasoTree();
+}
 function abrirConversacionLink(cs){
   const m = medicoById(cs.id_medico);
   if(!m || !m.telefono) return null;
@@ -4447,6 +4482,15 @@ function sendWhatsAppSeguimiento(casoId){
   cs.interacciones = cs.interacciones||[];
   cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'WhatsApp', nota:'Mensaje de seguimiento enviado por WhatsApp'});
   logAudit('Caso', casoId, 'WhatsApp enviado', 'Mensaje de seguimiento');
+  if(cs.estatus==='Nuevo'){
+    cs.estatus = 'En seguimiento';
+    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: Nuevo → En seguimiento (primer mensaje de seguimiento enviado)'});
+    logAudit('Caso', casoId, 'Cambio de estatus', 'Nuevo → En seguimiento (primer mensaje enviado)');
+    if(cs.id_cotizacion){
+      const c = DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion));
+      if(c && c.estatus!==cs.estatus){ const prevCot = c.estatus; c.estatus = cs.estatus; logAudit('Cotización', c.id, 'Cambio de estatus', prevCot+' → '+cs.estatus+' (sincronizado desde Seguimiento CRM)'); }
+    }
+  }
   persistExtra(); toast('Abriendo WhatsApp…');
   if(CURRENT_ROUTE==='casos') drawCasoTree();
   if(CURRENT_ROUTE==='dashboard') renderDashboard();
@@ -4462,6 +4506,7 @@ function atenderAccionMonitor(id){
 function setCasoEstatus(id, estatus){
   const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
   const prev = cs.estatus; cs.estatus = estatus;
+  if(estatus==='Vencida') cs.fecha_vencida = new Date().toISOString();
   if(prev!==estatus){
     cs.interacciones = cs.interacciones||[];
     cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prev+' → '+estatus});
@@ -4471,6 +4516,7 @@ function setCasoEstatus(id, estatus){
     const c = DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion));
     if(c && c.estatus!==estatus){
       const prevCot = c.estatus; c.estatus = estatus;
+      if(estatus==='Vencida') c.fecha_vencida = cs.fecha_vencida;
       logAudit('Cotización', c.id, 'Cambio de estatus', prevCot+' → '+estatus+' (sincronizado desde Seguimiento CRM)');
     }
   }
@@ -5339,11 +5385,11 @@ function checkCotizacionesVencidas(){
     if(ESTADOS_NO_VENCEN.includes(c.estatus)) return;
     if(!c.fecha_vigencia) return;
     if(new Date(c.fecha_vigencia) < hoy){
-      const prev = c.estatus; c.estatus = 'Vencida';
+      const prev = c.estatus; c.estatus = 'Vencida'; c.fecha_vencida = new Date().toISOString();
       logAudit('Cotización', c.id, 'Vencimiento automático', prev+' → Vencida (fecha de vigencia superada)');
       const cs = DB.casos.find(x=>x.id_cotizacion===c.id);
       if(cs && cs.estatus!==c.estatus && !ESTADOS_NO_VENCEN.includes(cs.estatus)){
-        const prevCaso = cs.estatus; cs.estatus = 'Vencida';
+        const prevCaso = cs.estatus; cs.estatus = 'Vencida'; cs.fecha_vencida = c.fecha_vencida;
         cs.interacciones = cs.interacciones||[];
         cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → Vencida (venció la vigencia de la cotización)'});
         logAudit('Caso', cs.id, 'Vencimiento automático', prevCaso+' → Vencida');
@@ -5355,13 +5401,43 @@ function checkCotizacionesVencidas(){
     if(ESTADOS_NO_VENCEN.includes(a.estatus)) return;
     if(!a.fecha_vigencia) return;
     if(new Date(a.fecha_vigencia) < hoy){
-      const prev = a.estatus; a.estatus = 'Vencida';
+      const prev = a.estatus; a.estatus = 'Vencida'; a.fecha_vencida = new Date().toISOString();
       logAudit('Cotización Aseguradora', a.id, 'Vencimiento automático', prev+' → Vencida (fecha de vigencia superada)');
       cambios++;
     }
   });
   if(cambios) persistExtra();
   return cambios;
+}
+const DIAS_VENCIDA_A_PERDIDO = 5;
+function checkVencidasAPerdido(){
+  const LIMITE_MS = DIAS_VENCIDA_A_PERDIDO*24*60*60*1000;
+  const ahora = Date.now();
+  let cambios = 0;
+  DB.cotizaciones.forEach(c=>{
+    if(c.estatus!=='Vencida' || !c.fecha_vencida) return;
+    if(ahora - new Date(c.fecha_vencida).getTime() >= LIMITE_MS){
+      c.estatus = 'Perdido';
+      logAudit('Cotización', c.id, 'Pérdida automática', DIAS_VENCIDA_A_PERDIDO+' días en Vencida sin respuesta → Perdido');
+      const cs = DB.casos.find(x=>x.id_cotizacion===c.id);
+      if(cs && cs.estatus!=='Perdido'){
+        const prevCaso = cs.estatus; cs.estatus = 'Perdido';
+        cs.interacciones = cs.interacciones||[];
+        cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → Perdido ('+DIAS_VENCIDA_A_PERDIDO+' días vencida sin respuesta)'});
+        logAudit('Caso', cs.id, 'Pérdida automática', prevCaso+' → Perdido');
+      }
+      cambios++;
+    }
+  });
+  DB.cotizaciones_aseguradora.forEach(a=>{
+    if(a.estatus!=='Vencida' || !a.fecha_vencida) return;
+    if(ahora - new Date(a.fecha_vencida).getTime() >= LIMITE_MS){
+      a.estatus = 'Perdido';
+      logAudit('Cotización Aseguradora', a.id, 'Pérdida automática', DIAS_VENCIDA_A_PERDIDO+' días en Vencida sin respuesta → Perdido');
+      cambios++;
+    }
+  });
+  if(cambios) persistExtra();
 }
 function sincronizarEstatusCasoCotizacion(){
   let cambios = 0;
@@ -5414,6 +5490,7 @@ function showApp(){
   document.getElementById('app-version').textContent = 'CRM Médicos '+APP_VERSION;
   sincronizarEstatusCasoCotizacion();
   checkCotizacionesVencidas();
+  checkVencidasAPerdido();
   checkCotizacionesCaducadas();
   renderNav();
   const r = location.hash.slice(1);
