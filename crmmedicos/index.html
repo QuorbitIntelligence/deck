@@ -557,7 +557,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.32.1';
+const APP_VERSION = 'v1.32.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5312,6 +5312,19 @@ function doLogin(){
     document.getElementById('login-err').textContent = 'Clave incorrecta. Intenta nuevamente.';
   }
 }
+function sincronizarEstatusCasoCotizacion(){
+  let cambios = 0;
+  DB.casos.forEach(cs=>{
+    if(!cs.id_cotizacion) return;
+    const c = DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion));
+    if(c && c.estatus!==cs.estatus){
+      c.estatus = cs.estatus;
+      cambios++;
+    }
+  });
+  if(cambios){ logAudit('Sistema', '-', 'Sincronización de estatus', cambios+' cotización(es) alineada(s) con Seguimiento CRM'); persistExtra(); }
+  return cambios;
+}
 function checkCotizacionesCaducadas(){
   const ahora = Date.now();
   const LIMITE_MS = 60*24*60*60*1000; // 60 días
@@ -5348,6 +5361,7 @@ function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('app-version').textContent = 'CRM Médicos '+APP_VERSION;
+  sincronizarEstatusCasoCotizacion();
   checkCotizacionesCaducadas();
   renderNav();
   const r = location.hash.slice(1);
