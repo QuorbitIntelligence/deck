@@ -557,7 +557,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.32.0';
+const APP_VERSION = 'v1.32.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -953,7 +953,8 @@ let dashCasoChartMode = 'monto';
 function renderDashboard(){
   const cots = DB.cotizaciones;
   const totalMonto = cots.reduce((s,c)=>s+(c.costo_propuesta||0),0);
-  const aprobadas = cots.filter(c=>c.estatus==='Aprobada').length;
+  const APROBADAS_O_MAS = ['Aprobada','Confirmado','Realizado'];
+  const aprobadas = cots.filter(c=>APROBADAS_O_MAS.includes(c.estatus)).length;
   const tasaAprob = cots.length ? Math.round(aprobadas/cots.length*100) : 0;
   const medicosActivos = DB.medicos.filter(m=>['TRABAJANDO','CON CONVENIO'].includes(m.estatus_relacion)).length;
   const paquetesActivos = DB.paquetes.filter(p=>p.activo!==false).length;
@@ -961,7 +962,8 @@ function renderDashboard(){
   const listasActivas = DB.listas_materiales.filter(l=>l.activo!==false).length;
   const conveniosActivos = DB.convenios.filter(cv=>computeConvenioEstatus(cv)==='Activo').length;
   const casosAbiertos = DB.casos.filter(cs=>!CASOS_CERRADOS.includes(cs.estatus)).length;
-  const cirugiasProgramadas = DB.casos.filter(cs=>cs.fecha_programacion).length;
+  const PROGRAMADAS_O_MAS = ['Programación agendada','Confirmado','Realizado'];
+  const cirugiasProgramadas = DB.casos.filter(cs=>PROGRAMADAS_O_MAS.includes(cs.estatus)).length;
 
   const porEstatus = {}; cots.forEach(c=>{ porEstatus[c.estatus] = (porEstatus[c.estatus]||0)+1; });
   const porMedEstatus = {}; DB.medicos.forEach(m=>{ porMedEstatus[m.estatus_relacion] = (porMedEstatus[m.estatus_relacion]||0)+1; });
