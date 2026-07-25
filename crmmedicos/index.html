@@ -126,6 +126,7 @@ a{color:inherit;}
 .kpi-icon{width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;}
 .kpi-icon svg{width:15px; height:15px;}
 .kpi-value{font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:-.3px;}
+.kpi-pct{display:inline-block; font-family:var(--font-body); font-size:11px; font-weight:700; color:var(--text-faint); background:var(--surface-2); border-radius:999px; padding:1.5px 7px; vertical-align:middle; margin-left:2px;}
 .kpi-delta{font-size:11.5px; font-weight:600;}
 
 .section-title{font-family:var(--font-display); font-size:16px; font-weight:700; margin:28px 0 14px; display:flex; align-items:center; justify-content:space-between;}
@@ -557,7 +558,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.33.0';
+const APP_VERSION = 'v1.33.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1039,15 +1040,15 @@ function renderDashboard(){
       ${miniKpi('Convenios vigentes', conveniosActivos+'/'+DB.convenios.length, 'deals', 'green')}
       ${miniKpi('Casos CRM abiertos', casosAbiertos+'/'+DB.casos.length, 'followup', 'guinda')}
       ${miniKpi('Cirugías programadas', cirugiasProgramadas, 'bolt', 'violet')}
-      ${miniKpi('En seguimiento', porEstatus['En seguimiento']||0, 'followup', 'amber', "irACotizacionesConEstatus('En seguimiento')")}
-      ${miniKpi('En negociación', porEstatus['En negociación']||0, 'deals', 'amber', "irACotizacionesConEstatus('En negociación')")}
-      ${miniKpi('Aprobada', porEstatus['Aprobada']||0, 'check', 'green', "irACotizacionesConEstatus('Aprobada')")}
-      ${miniKpi('Confirmado', porEstatus['Confirmado']||0, 'check', 'green', "irACotizacionesConEstatus('Confirmado')")}
-      ${miniKpi('Realizado', porEstatus['Realizado']||0, 'check', 'green', "irACotizacionesConEstatus('Realizado')")}
-      ${miniKpi('Vencida', porEstatus['Vencida']||0, 'calendar', 'red', "irACotizacionesConEstatus('Vencida')")}
-      ${miniKpi('Cancelado', porEstatus['Cancelado']||0, 'x', 'red', "irACotizacionesConEstatus('Cancelado')")}
-      ${miniKpi('Perdido', porEstatus['Perdido']||0, 'x', 'red', "irACotizacionesConEstatus('Perdido')")}
-      ${miniKpi('Archivado', porEstatus['Archivado']||0, 'catalog', 'blue', "irACotizacionesConEstatus('Archivado')")}
+      ${miniKpi('En seguimiento', kpiCountPct(porEstatus['En seguimiento'], cots.length), 'followup', 'amber', "irACotizacionesConEstatus('En seguimiento')")}
+      ${miniKpi('En negociación', kpiCountPct(porEstatus['En negociación'], cots.length), 'deals', 'amber', "irACotizacionesConEstatus('En negociación')")}
+      ${miniKpi('Aprobada', kpiCountPct(porEstatus['Aprobada'], cots.length), 'check', 'green', "irACotizacionesConEstatus('Aprobada')")}
+      ${miniKpi('Confirmado', kpiCountPct(porEstatus['Confirmado'], cots.length), 'check', 'green', "irACotizacionesConEstatus('Confirmado')")}
+      ${miniKpi('Realizado', kpiCountPct(porEstatus['Realizado'], cots.length), 'check', 'green', "irACotizacionesConEstatus('Realizado')")}
+      ${miniKpi('Vencida', kpiCountPct(porEstatus['Vencida'], cots.length), 'calendar', 'red', "irACotizacionesConEstatus('Vencida')")}
+      ${miniKpi('Cancelado', kpiCountPct(porEstatus['Cancelado'], cots.length), 'x', 'red', "irACotizacionesConEstatus('Cancelado')")}
+      ${miniKpi('Perdido', kpiCountPct(porEstatus['Perdido'], cots.length), 'x', 'red', "irACotizacionesConEstatus('Perdido')")}
+      ${miniKpi('Archivado', kpiCountPct(porEstatus['Archivado'], cots.length), 'catalog', 'blue', "irACotizacionesConEstatus('Archivado')")}
     </div>
 
     ${!cots.length ? `<div class="card" style="margin-top:14px; text-align:center; padding:20px 20px;">
@@ -1175,6 +1176,11 @@ function miniKpi(label,value,ic,tone,onclickJs){ return `<div class="card kpi-ca
   <div class="kpi-top"><span class="kpi-label" style="font-size:10.5px;">${label}</span>
   <div class="kpi-icon" style="width:24px;height:24px; background:var(--${tone}-light,var(--surface-2)); color:var(--${tone});">${icon(ic)}</div></div>
   <div class="kpi-value" style="font-size:19px;">${value}</div></div>`; }
+function kpiCountPct(count, total){
+  count = count||0;
+  const pct = total ? Math.round(count/total*100) : 0;
+  return `${count} <span class="kpi-pct">${pct}%</span>`;
+}
 function irACotizacionesConEstatus(estatus){
   navigate('cotizaciones');
   setTimeout(()=>{ cotState.estatus = estatus; cotState.page = 1; drawCotTable(); drawCotChips(); }, 60);
