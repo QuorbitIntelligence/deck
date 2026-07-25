@@ -526,20 +526,30 @@ let DB = {
   auditoria: []
 };
 const ESTADOS_COT = {
-  'Aprobada':{color:'green', label:'Aprobada'},
-  'Enviada':{color:'amber', label:'Enviada'},
-  'En negociación':{color:'amber', label:'En negociación'},
-  'Programada':{color:'blue', label:'Programada'},
-  'Reprogramada':{color:'amber', label:'Reprogramada'},
-  'Vencida':{color:'red', label:'Vencida'},
-  'Rechazada':{color:'red', label:'Rechazada'},
-  'Cancelada':{color:'red', label:'Cancelada'},
-  'Prueba':{color:'violet', label:'Prueba'},
-  'Archivada':{color:'muted', label:'Archivada'},
-  'Caducado':{color:'muted', label:'Caducado'},
   'Borrador':{color:'muted', label:'Borrador'},
+  'Nuevo':{color:'blue', label:'Nuevo'},
+  'En seguimiento':{color:'amber', label:'En seguimiento'},
+  'En negociación':{color:'amber', label:'En negociación'},
+  'Con promoción':{color:'violet', label:'Con promoción'},
+  'Programación agendada':{color:'violet', label:'Programación agendada'},
+  'Aprobada':{color:'green', label:'Aprobada'},
+  'Confirmado':{color:'green', label:'Confirmado'},
+  'Realizado':{color:'green', label:'Realizado'},
+  'Vencida':{color:'red', label:'Vencida'},
+  'Cancelado':{color:'red', label:'Cancelado'},
+  'Perdido':{color:'red', label:'Perdido'},
+  'Archivado':{color:'muted', label:'Archivado'},
+  'Cerrado':{color:'muted', label:'Cerrado'},
+  'Caducado':{color:'red', label:'Caducado'},
 };
-const ESTADOS_COT_FINALES = ['Aprobada','Rechazada','Cancelada','Archivada','Prueba','Caducado'];
+// Estatus que ya no requieren caducidad automática por inactividad (60 días)
+const ESTADOS_COT_FINALES = ['Realizado','Cancelado','Perdido','Archivado','Cerrado','Caducado'];
+// Migra nombres de estatus de versiones anteriores de cotizaciones al vocabulario unificado con Seguimiento CRM
+const MIGRACION_ESTATUS_COT = {
+  'Enviada':'Nuevo', 'Programada':'Programación agendada', 'Reprogramada':'Programación agendada',
+  'Rechazada':'Perdido', 'Cancelada':'Cancelado', 'Prueba':'Borrador', 'Archivada':'Archivado'
+};
+function migrarEstatusCot(c){ if(c.estatus && MIGRACION_ESTATUS_COT[c.estatus]) c.estatus = MIGRACION_ESTATUS_COT[c.estatus]; }
 const ESTADOS_MED = {
   'TRABAJANDO':{color:'green'}, 'CON CONVENIO':{color:'green'},
   'NUEVO REGISTRO':{color:'amber'}, 'EN NEGOCIACIÓN':{color:'amber'},
@@ -547,7 +557,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.31.2';
+const APP_VERSION = 'v1.32.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -600,6 +610,8 @@ async function loadSession(){
       }
     }
   }catch(e){}
+  DB.cotizaciones.forEach(migrarEstatusCot);
+  DB.cotizaciones_aseguradora.forEach(migrarEstatusCot);
 }
 async function saveSession(){
   try{ await lsSet('crm_session', JSON.stringify({authed:SESSION.authed, theme:SESSION.theme})); }catch(e){}
@@ -2095,12 +2107,9 @@ function renderCotizaciones(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:240px;">${icon('search')}<input id="cot-search" placeholder="Buscar médico o folio…"></div>
-      <div class="chip-filter" id="cot-chips">
-        <button class="chip active" data-s="todos">Todos</button>
-        ${Object.keys(ESTADOS_COT).map(s=>`<button class="chip" data-s="${s}">${s}</button>`).join('')}
-      </div>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openCotizacionWizard()">${icon('plus')} Nueva cotización</button>
     </div>
+    <div class="chip-filter estatus-glow-row" id="cot-chips" style="margin-bottom:16px;"></div>
     <div class="table-wrap">
       <div style="max-height:65vh; overflow-y:auto;">
         <table><thead style="position:sticky; top:0; z-index:5; background:var(--surface);"><tr><th>Folio</th><th>Médico</th><th>Procedimiento</th><th>Fecha</th><th>Monto</th><th>Estatus</th></tr></thead>
@@ -2109,8 +2118,20 @@ function renderCotizaciones(){
       <div class="pagination" id="cot-pg"></div>
     </div>`;
   document.getElementById('cot-search').oninput = e=>{ cotState.search=e.target.value; cotState.page=1; drawCotTable(); };
-  document.getElementById('cot-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ cotState.estatus=b.dataset.s; cotState.page=1; drawCotTable(); document.getElementById('cot-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===b)); });
+  drawCotChips();
   drawCotTable();
+}
+function drawCotChips(){
+  const wrap = document.getElementById('cot-chips'); if(!wrap) return;
+  const counts = {};
+  DB.cotizaciones.forEach(c=>{ counts[c.estatus] = (counts[c.estatus]||0)+1; });
+  const total = DB.cotizaciones.length;
+  wrap.innerHTML = `<button class="chip estatus-glow ${cotState.estatus==='todos'?'active':''}" data-s="todos" style="--glow-color:var(--primary);">Todos <span class="estatus-count">${total}</span></button>` +
+    Object.keys(ESTADOS_COT).map(s=>{
+      const color = ESTADOS_COT[s].color==='muted' ? 'var(--text-faint)' : 'var(--'+ESTADOS_COT[s].color+')';
+      return `<button class="chip estatus-glow ${cotState.estatus===s?'active':''}" data-s="${s}" style="--glow-color:${color};">${s} <span class="estatus-count">${counts[s]||0}</span></button>`;
+    }).join('');
+  wrap.querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ cotState.estatus=b.dataset.s; cotState.page=1; drawCotTable(); drawCotChips(); });
 }
 function drawCotTable(){
   let list = DB.cotizaciones.filter(c=>{
@@ -2184,7 +2205,15 @@ function sendCotizacionWhatsApp(id){
   try{ generateCotizacionPDF(id); }catch(e){}
   window.open(link, '_blank');
   const prev = c.estatus;
-  if(prev!=='Aprobada') c.estatus = 'Enviada';
+  if(prev==='Borrador'){
+    c.estatus = 'Nuevo';
+    const csLink = DB.casos.find(x=>x.id_cotizacion===id);
+    if(csLink && csLink.estatus!==c.estatus){
+      const prevCaso = csLink.estatus; csLink.estatus = c.estatus;
+      csLink.interacciones = csLink.interacciones||[];
+      csLink.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+c.estatus+' (cotización enviada por WhatsApp)'});
+    }
+  }
   logAudit('Cotización', id, 'Enviada por WhatsApp', 'Mensaje + PDF preparado para '+(m?m.nombre:''));
   persistExtra(); toast('Descargando PDF y abriendo WhatsApp — adjunta el PDF manualmente en el chat');
   openCotizacionDrawer(id); renderFollowUpBubble();
@@ -2195,9 +2224,11 @@ function setCotEstatus(id, estatus){
   const prev = c.estatus; c.estatus = estatus;
   logAudit('Cotización', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   const cs = DB.casos.find(x=>x.id_cotizacion===id);
-  if(cs && cs.estatus==='Nuevo' && ['Aprobada','Enviada','En negociación'].includes(estatus)){
-    cs.estatus = 'En seguimiento';
-    logAudit('Caso', cs.id, 'Cambio de estatus', 'Nuevo → En seguimiento (por estatus de cotización)');
+  if(cs && cs.estatus!==estatus){
+    const prevCaso = cs.estatus; cs.estatus = estatus;
+    cs.interacciones = cs.interacciones||[];
+    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde la cotización)'});
+    logAudit('Caso', cs.id, 'Cambio de estatus', prevCaso+' → '+estatus+' (sincronizado desde cotización)');
   }
   persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCotizacionDrawer(id); renderFollowUpBubble();
 }
@@ -2540,7 +2571,7 @@ function saveWizardCotizacion(){
     id: folio, id_medico: wizardState.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'', procedimiento: wizardState.procedimiento, telefono_contacto: telefonoContacto,
     fecha_creacion: now.toISOString(), fecha_vigencia: vigencia.toISOString(),
     conceptos: conceptosArr, condiciones: condicionesArr, subtotal, costo_propuesta: costo, lista_asignada: (wizardState.listaAsignada && wizardState.listaAsignadaActiva!==false) ? wizardState.listaAsignada : null, tipo_procedimiento: wizardState.tipoProcedimiento||null, convenios_aplicados: conveniosActivosParaMedico(wizardState.medico).filter(cv=>wizardState.conveniosIncluidos[cv.id]!==false).map(cv=>({id:cv.id, nombre:cv.nombre})),
-    estatus: wizardState.mode==='regenerate' ? 'Enviada' : 'Borrador',
+    estatus: wizardState.mode==='regenerate' ? 'Nuevo' : 'Borrador',
     regenerado_de: wizardState.mode==='regenerate' ? wizardState.originalId : null,
     historial_ediciones: [], __new:true
   };
@@ -2550,7 +2581,7 @@ function saveWizardCotizacion(){
   const casoNuevo = {
     id: uid('cs'), id_medico: wizardState.medico, id_cotizacion: folio,
     titulo: 'Cotización '+folio+' — '+wizardState.procedimiento,
-    estatus: 'Nuevo', prioridad: 'Media', fecha_apertura: now.toISOString(),
+    estatus: nueva.estatus, prioridad: 'Media', fecha_apertura: now.toISOString(),
     proxima_accion_fecha: null, proxima_accion_nota: '', fecha_programacion: null, convenio_id: null,
     interacciones: [{id:uid('it'), fecha:now.toISOString(), tipo:'Sistema', nota:'Cotización '+folio+' generada automáticamente por '+fmtMoney(costo)+'.'}],
     __new: true
@@ -2763,18 +2794,29 @@ function renderAseguradoras(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:250px;">${icon('search')}<input id="asg-search" placeholder="Buscar aseguradora, médico o folio…"></div>
-      <div class="chip-filter" id="asg-chips"><button class="chip active" data-s="todos">Todos</button>
-        ${Object.keys(ESTADOS_COT).map(s=>`<button class="chip" data-s="${s}">${s}</button>`).join('')}</div>
       <button class="btn btn-guinda" style="margin-left:auto;" onclick="openAseguradoraWizard()">${icon('plus')} Nueva cotización aseguradora</button>
     </div>
+    <div class="chip-filter estatus-glow-row" id="asg-chips" style="margin-bottom:16px;"></div>
     <div class="table-wrap">
       <table><thead><tr><th>Folio</th><th>Aseguradora</th><th>Procedimiento</th><th>Médico</th><th>Total</th><th>Estatus</th></tr></thead>
       <tbody id="asg-tbody"></tbody></table>
       <div class="pagination" id="asg-pg"></div>
     </div>`;
   document.getElementById('asg-search').oninput = e=>{ asgState.search=e.target.value; asgState.page=1; drawAsgTable(); };
-  document.getElementById('asg-chips').querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ asgState.estatus=b.dataset.s; asgState.page=1; drawAsgTable(); document.getElementById('asg-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x===b)); });
+  drawAsgChips();
   drawAsgTable();
+}
+function drawAsgChips(){
+  const wrap = document.getElementById('asg-chips'); if(!wrap) return;
+  const counts = {};
+  DB.cotizaciones_aseguradora.forEach(a=>{ counts[a.estatus] = (counts[a.estatus]||0)+1; });
+  const total = DB.cotizaciones_aseguradora.length;
+  wrap.innerHTML = `<button class="chip estatus-glow ${asgState.estatus==='todos'?'active':''}" data-s="todos" style="--glow-color:var(--primary);">Todos <span class="estatus-count">${total}</span></button>` +
+    Object.keys(ESTADOS_COT).map(s=>{
+      const color = ESTADOS_COT[s].color==='muted' ? 'var(--text-faint)' : 'var(--'+ESTADOS_COT[s].color+')';
+      return `<button class="chip estatus-glow ${asgState.estatus===s?'active':''}" data-s="${s}" style="--glow-color:${color};">${s} <span class="estatus-count">${counts[s]||0}</span></button>`;
+    }).join('');
+  wrap.querySelectorAll('.chip').forEach(b=> b.onclick=()=>{ asgState.estatus=b.dataset.s; asgState.page=1; drawAsgTable(); drawAsgChips(); });
 }
 function drawAsgTable(){
   let list = DB.cotizaciones_aseguradora.filter(a=>{
@@ -4067,13 +4109,9 @@ function generatePlanSemanalPDF(){
    SEGUIMIENTO CRM (Casos por médico) — cada cotización genera un caso,
    agrupados en árbol por médico con barra de progreso
 ============================================================ */
-const ESTADOS_CASO = {
-  'Nuevo':{color:'blue'}, 'En seguimiento':{color:'amber'}, 'En negociación':{color:'amber'}, 'Con promoción':{color:'violet'}, 'Programación agendada':{color:'violet'},
-  'Confirmado':{color:'green'}, 'Realizado':{color:'green'}, 'Cancelado':{color:'red'}, 'Perdido':{color:'red'},
-  'Archivado':{color:'muted'}, 'Cerrado':{color:'muted'}, 'Caducado':{color:'red'}
-};
+const ESTADOS_CASO = ESTADOS_COT; // misma lista unificada — un solo lugar para editar estatus en toda la plataforma
 const CASOS_CERRADOS = ['Realizado','Cancelado','Perdido','Archivado','Cerrado'];
-const CASO_PROGRESS = { 'Nuevo':12, 'En seguimiento':35, 'En negociación':50, 'Con promoción':45, 'Programación agendada':62, 'Confirmado':85, 'Realizado':100, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100, 'Caducado':100 };
+const CASO_PROGRESS = { 'Borrador':5, 'Nuevo':12, 'En seguimiento':35, 'En negociación':50, 'Con promoción':45, 'Programación agendada':62, 'Aprobada':75, 'Confirmado':85, 'Realizado':100, 'Vencida':70, 'Cancelado':100, 'Perdido':100, 'Archivado':100, 'Cerrado':100, 'Caducado':100 };
 const TIPOS_INTERACCION = ['Llamada','Visita','WhatsApp','Correo','Reunión','Cita en hospital','Recorrido','Programación de cirugía','Cambio de estatus','Sistema'];
 function casoProgressBar(estatus){
   const pct = CASO_PROGRESS[estatus] || 10;
@@ -4408,6 +4446,13 @@ function setCasoEstatus(id, estatus){
     cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prev+' → '+estatus});
   }
   logAudit('Caso', id, 'Cambio de estatus', `${prev} → ${estatus}`);
+  if(cs.id_cotizacion){
+    const c = DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion));
+    if(c && c.estatus!==estatus){
+      const prevCot = c.estatus; c.estatus = estatus;
+      logAudit('Cotización', c.id, 'Cambio de estatus', prevCot+' → '+estatus+' (sincronizado desde Seguimiento CRM)');
+    }
+  }
   persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
 }
 function formatBytes(n){ if(!n) return '0 KB'; if(n<1024*1024) return Math.round(n/1024)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; }
