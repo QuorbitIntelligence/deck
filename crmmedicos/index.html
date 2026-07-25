@@ -558,7 +558,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v1.33.1';
+const APP_VERSION = 'v1.34.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5331,6 +5331,38 @@ function doLogin(){
     document.getElementById('login-err').textContent = 'Clave incorrecta. Intenta nuevamente.';
   }
 }
+const ESTADOS_NO_VENCEN = ['Aprobada','Confirmado','Realizado','Cancelado','Perdido','Archivado','Cerrado','Caducado','Vencida','Borrador'];
+function checkCotizacionesVencidas(){
+  const hoy = new Date();
+  let cambios = 0;
+  DB.cotizaciones.forEach(c=>{
+    if(ESTADOS_NO_VENCEN.includes(c.estatus)) return;
+    if(!c.fecha_vigencia) return;
+    if(new Date(c.fecha_vigencia) < hoy){
+      const prev = c.estatus; c.estatus = 'Vencida';
+      logAudit('Cotización', c.id, 'Vencimiento automático', prev+' → Vencida (fecha de vigencia superada)');
+      const cs = DB.casos.find(x=>x.id_cotizacion===c.id);
+      if(cs && cs.estatus!==c.estatus && !ESTADOS_NO_VENCEN.includes(cs.estatus)){
+        const prevCaso = cs.estatus; cs.estatus = 'Vencida';
+        cs.interacciones = cs.interacciones||[];
+        cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → Vencida (venció la vigencia de la cotización)'});
+        logAudit('Caso', cs.id, 'Vencimiento automático', prevCaso+' → Vencida');
+      }
+      cambios++;
+    }
+  });
+  DB.cotizaciones_aseguradora.forEach(a=>{
+    if(ESTADOS_NO_VENCEN.includes(a.estatus)) return;
+    if(!a.fecha_vigencia) return;
+    if(new Date(a.fecha_vigencia) < hoy){
+      const prev = a.estatus; a.estatus = 'Vencida';
+      logAudit('Cotización Aseguradora', a.id, 'Vencimiento automático', prev+' → Vencida (fecha de vigencia superada)');
+      cambios++;
+    }
+  });
+  if(cambios) persistExtra();
+  return cambios;
+}
 function sincronizarEstatusCasoCotizacion(){
   let cambios = 0;
   DB.casos.forEach(cs=>{
@@ -5381,6 +5413,7 @@ function showApp(){
   document.getElementById('app').classList.add('show');
   document.getElementById('app-version').textContent = 'CRM Médicos '+APP_VERSION;
   sincronizarEstatusCasoCotizacion();
+  checkCotizacionesVencidas();
   checkCotizacionesCaducadas();
   renderNav();
   const r = location.hash.slice(1);
