@@ -564,7 +564,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.6';
+const APP_VERSION = 'v2.0.7';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1389,7 +1389,7 @@ function emptyMini(text){ return `<div style="text-align:center; color:var(--tex
 /* ============================================================
    EDICIÓN MASIVA DE LEADS — pantalla independiente sobre Leads
 ============================================================ */
-let massEditState = { especialidad:'todas', search:'' };
+let massEditState = { especialidad:'todas', search:'', selected:{} };
 function openMassEdit(){
   const pass = prompt('Esta pantalla permite editar datos sensibles de varios médicos a la vez.\n\nEscribe la clave de acceso para continuar:');
   if(pass===null) return;
@@ -1412,10 +1412,10 @@ function drawMassEdit(){
   const especialidades = [...new Set(DB.medicos.map(m=>m.especialidad).filter(Boolean))].sort();
   const el = document.getElementById('mass-edit-overlay');
   el.innerHTML = `
-    <div style="padding:22px 30px; max-width:1100px; margin:0 auto;">
+    <div style="padding:22px 30px; max-width:1500px; margin:0 auto;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
         <div><div style="font-weight:700; font-size:19px;">Edición masiva de Leads</div>
-          <div style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">Agrupa médicos por especialidad o búsqueda, y edita teléfono o nombre directamente en la tabla — se guarda solo.</div></div>
+          <div style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">Agrupa médicos por especialidad o búsqueda, y edita cualquier campo directamente en la tabla — se guarda solo.</div></div>
         <button class="btn" onclick="closeMassEdit()">${icon('x')} Cerrar</button>
       </div>
       <div class="toolbar" style="margin-bottom:14px;">
@@ -1424,81 +1424,131 @@ function drawMassEdit(){
           ${especialidades.map(e=>`<option value="${e}" ${massEditState.especialidad===e?'selected':''}>${e}</option>`).join('')}
         </select>
         <div class="searchbox" style="width:240px;">${icon('search')}<input id="me-search" placeholder="Buscar por nombre…" value="${massEditState.search}"></div>
-        <button class="btn btn-sm" id="me-add-dr">${icon('doctor')} Agregar "DR." a los visibles</button>
-        <button class="btn btn-sm btn-guinda" style="margin-left:auto;" id="me-pdf">${icon('download')} Reporte PDF de esta vista</button>
+        <span id="me-selected-count" style="font-size:11.5px; color:var(--text-muted);"></span>
+        <button class="btn btn-sm btn-guinda" style="margin-left:auto;" id="me-pdf">${icon('download')} Generar reporte PDF</button>
       </div>
       <div id="me-count" style="font-size:11.5px; color:var(--text-faint); margin-bottom:8px;"></div>
       <div class="table-wrap">
-        <table><thead><tr><th style="min-width:280px;">Médico</th><th>Especialidad</th><th style="min-width:160px;">Teléfono</th></tr></thead>
+        <table><thead><tr>
+          <th style="width:34px;"><input type="checkbox" id="me-select-all" title="Seleccionar todos los visibles"></th>
+          <th style="width:40px;">#</th>
+          <th style="min-width:230px;">Médico</th>
+          <th style="min-width:170px;">Especialidad</th>
+          <th style="min-width:180px;">Correo</th>
+          <th style="min-width:140px;">Teléfono</th>
+          <th style="min-width:150px;">Estatus de relación</th>
+          <th style="min-width:150px;">Credencialización</th>
+          <th style="min-width:160px;">Origen del lead</th>
+          <th style="min-width:140px;">Cédula(s)</th>
+          <th style="min-width:200px;">Notas</th>
+        </tr></thead>
         <tbody id="me-tbody"></tbody></table>
       </div>
     </div>`;
   document.getElementById('me-especialidad').onchange = (e)=>{ massEditState.especialidad = e.target.value; drawMassEditTable(); };
   document.getElementById('me-search').oninput = (e)=>{ massEditState.search = e.target.value; drawMassEditTable(); };
-  document.getElementById('me-add-dr').onclick = agregarDRMasivo;
   document.getElementById('me-pdf').onclick = generateLeadsEspecialidadPDF;
+  document.getElementById('me-select-all').onchange = (e)=>{
+    getMassEditFilteredMedicos().forEach(m=>{ massEditState.selected[m.id] = e.target.checked; });
+    drawMassEditTable();
+  };
   drawMassEditTable();
 }
 function drawMassEditTable(){
   const tbody = document.getElementById('me-tbody'); if(!tbody) return;
   const medicos = getMassEditFilteredMedicos();
   document.getElementById('me-count').textContent = medicos.length+' médico(s) en esta vista';
-  tbody.innerHTML = medicos.map(m=>`<tr>
+  const camposTexto = [
+    ['nombre','uc-input'], ['especialidad','uc-input'], ['correo',''], ['telefono',''], ['cedulas_raw','']
+  ];
+  const ESTATUS_CRED = ['SIN CREDENCIALIZAR','EN PROCESO','CREDENCIALIZADO'];
+  const ORIGENES = ['Referido por médico','Referido por paciente','Redes sociales','Sitio web','Llamada telefónica','Evento / Congreso','Publicidad','Base de datos del hospital','Otro'];
+  tbody.innerHTML = medicos.map((m,i)=>`<tr>
+    <td><input type="checkbox" class="me-select" data-mid="${m.id}" ${massEditState.selected[m.id]?'checked':''}></td>
+    <td style="color:var(--text-faint); font-size:11.5px;">${i+1}</td>
     <td><input class="input me-inline uc-input" data-mid="${m.id}" data-field="nombre" value="${m.nombre}" style="width:100%; border:1px solid transparent; background:transparent;"></td>
-    <td style="font-size:12px; color:var(--text-muted);">${m.especialidad||'—'}</td>
+    <td><input class="input me-inline uc-input" data-mid="${m.id}" data-field="especialidad" value="${m.especialidad||''}" style="width:100%; border:1px solid transparent; background:transparent;"></td>
+    <td><input class="input me-inline" data-mid="${m.id}" data-field="correo" value="${m.correo||''}" placeholder="Sin correo" style="width:100%; border:1px solid transparent; background:transparent;"></td>
     <td><input class="input me-inline" data-mid="${m.id}" data-field="telefono" value="${m.telefono||''}" placeholder="Sin teléfono" style="width:100%; border:1px solid transparent; background:transparent;"></td>
-  </tr>`).join('') || `<tr><td colspan="3"><div class="empty-state">${icon('doctor')}<div>Sin médicos con este filtro.</div></div></td></tr>`;
+    <td><select class="select me-inline-select" data-mid="${m.id}" data-field="estatus_relacion" style="width:100%; border:1px solid transparent; background:transparent;">
+      ${Object.keys(ESTADOS_MED).map(s=>`<option ${m.estatus_relacion===s?'selected':''}>${s}</option>`).join('')}</select></td>
+    <td><select class="select me-inline-select" data-mid="${m.id}" data-field="estatus_credencializacion" style="width:100%; border:1px solid transparent; background:transparent;">
+      ${ESTATUS_CRED.map(s=>`<option ${m.estatus_credencializacion===s?'selected':''}>${s}</option>`).join('')}</select></td>
+    <td><select class="select me-inline-select" data-mid="${m.id}" data-field="origen_lead" style="width:100%; border:1px solid transparent; background:transparent;">
+      <option value="">— Sin especificar —</option>${ORIGENES.map(o=>`<option ${m.origen_lead===o?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td><input class="input me-inline" data-mid="${m.id}" data-field="cedulas_raw" value="${m.cedulas_raw||''}" placeholder="—" style="width:100%; border:1px solid transparent; background:transparent;"></td>
+    <td><input class="input me-inline" data-mid="${m.id}" data-field="notas" value="${(m.notas||'').replace(/"/g,'&quot;')}" placeholder="—" style="width:100%; border:1px solid transparent; background:transparent;"></td>
+  </tr>`).join('') || `<tr><td colspan="11"><div class="empty-state">${icon('doctor')}<div>Sin médicos con este filtro.</div></div></td></tr>`;
+
+  tbody.querySelectorAll('.me-select').forEach(cb=> cb.onchange = ()=>{ massEditState.selected[cb.dataset.mid] = cb.checked; updateMeSelectedCount(); });
   tbody.querySelectorAll('.me-inline').forEach(inp=>{
     inp.onfocus = ()=>{ inp.style.borderColor = 'var(--border)'; inp.style.background='var(--surface)'; };
     inp.onblur = ()=>{
       inp.style.borderColor = 'transparent'; inp.style.background='transparent';
       const m = medicoById(inp.dataset.mid); if(!m) return;
       const field = inp.dataset.field;
-      const val = field==='nombre' ? inp.value.trim().toUpperCase() : inp.value.trim();
+      const val = (field==='nombre'||field==='especialidad') ? inp.value.trim().toUpperCase() : inp.value.trim();
       if(m[field]===val) return;
       m[field] = val; m.__edited = true;
       logAudit('Médico', m.id, 'Edición masiva', field+' actualizado');
       persistExtra(); toast('Guardado');
     };
   });
-}
-function agregarDRMasivo(){
-  const medicos = getMassEditFilteredMedicos();
-  let cambios = 0;
-  medicos.forEach(m=>{
-    if(!/^DRA?\.?\s/i.test(m.nombre)){
-      m.nombre = 'DR ' + m.nombre;
-      m.__edited = true;
-      cambios++;
-    }
+  tbody.querySelectorAll('.me-inline-select').forEach(sel=>{
+    sel.onchange = ()=>{
+      const m = medicoById(sel.dataset.mid); if(!m) return;
+      const field = sel.dataset.field;
+      const val = sel.value;
+      if(m[field]===val) return;
+      m[field] = val; m.__edited = true;
+      logAudit('Médico', m.id, 'Edición masiva', field+' actualizado');
+      persistExtra(); toast('Guardado');
+    };
   });
-  if(cambios){ logAudit('Médico', '-', 'Edición masiva', cambios+' médico(s) con prefijo DR. agregado'); persistExtra(); }
-  toast(cambios+' registro(s) actualizados con "DR."');
-  drawMassEditTable();
+  updateMeSelectedCount();
+}
+function updateMeSelectedCount(){
+  const el = document.getElementById('me-selected-count'); if(!el) return;
+  const n = Object.values(massEditState.selected).filter(Boolean).length;
+  el.textContent = n ? n+' seleccionado(s) para reporte por bloque' : '';
 }
 function generateLeadsEspecialidadPDF(){
   if(!window.jspdf){ toast('No se pudo generar el PDF'); return; }
-  const medicos = getMassEditFilteredMedicos();
+  const seleccionados = Object.entries(massEditState.selected).filter(([,v])=>v).map(([id])=>id);
+  let medicos, tipoReporte;
+  if(seleccionados.length){
+    medicos = DB.medicos.filter(m=>seleccionados.includes(String(m.id))).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+    tipoReporte = 'REPORTE POR BLOQUE (SELECCIÓN MANUAL)';
+  } else if(massEditState.especialidad!=='todas'){
+    medicos = getMassEditFilteredMedicos();
+    tipoReporte = 'REPORTE POR ESPECIALIDAD — '+massEditState.especialidad.toUpperCase();
+  } else {
+    medicos = getMassEditFilteredMedicos();
+    tipoReporte = 'REPORTE GENERAL';
+  }
+
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt', format:'letter'});
+  const doc = new jsPDF({unit:'pt', format:'letter', orientation:'landscape'});
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const M = 14.17; // 0.5 cm
-  const FS = 8;
+  const FS = 7;
   const AZUL = [30,70,150], AZUL_CLARO = [237,243,255];
 
   doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...AZUL);
-  const titulo = 'DIRECTORIO DE MÉDICOS'+(massEditState.especialidad!=='todas' ? ' — '+massEditState.especialidad.toUpperCase() : '');
-  doc.text(titulo, M, M+10);
+  doc.text('DIRECTORIO DE MÉDICOS', M, M+10);
   doc.setDrawColor(...AZUL); doc.setLineWidth(1); doc.line(M, M+18, pageW-M, M+18);
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS+1); doc.setTextColor(...AZUL);
+  doc.text(tipoReporte, M, M+30);
   doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(100,100,100);
-  doc.text('Generado el '+fmtDate(new Date())+' · '+medicos.length+' médico(s)', M, M+30);
+  doc.text('Generado el '+fmtDate(new Date())+' · '+medicos.length+' médico(s)', M, M+41);
 
-  const body = medicos.map(m=>[m.nombre, m.especialidad||'—', m.telefono||'']);
+  const body = medicos.map((m,i)=>[i+1, m.nombre, m.especialidad||'—', m.correo||'—', m.telefono||'—', m.estatus_relacion||'—', m.estatus_credencializacion||'—', m.origen_lead||'—', m.cedulas_raw||'—', m.notas||'—']);
   doc.autoTable({
-    startY: M+40, head:[['Médico','Especialidad','Teléfono']], body,
-    theme:'plain', styles:{font:'helvetica', fontSize:FS, textColor:[40,40,40], cellPadding:3},
+    startY: M+50, head:[['#','Médico','Especialidad','Correo','Teléfono','Estatus relación','Credencialización','Origen','Cédula(s)','Notas']], body,
+    theme:'plain', styles:{font:'helvetica', fontSize:FS, textColor:[40,40,40], cellPadding:2.5, overflow:'linebreak'},
     headStyles:{fillColor:AZUL_CLARO, textColor:AZUL, fontStyle:'bold', fontSize:FS},
+    columnStyles:{0:{cellWidth:20}, 1:{cellWidth:95}, 2:{cellWidth:75}, 3:{cellWidth:95}, 4:{cellWidth:65}, 5:{cellWidth:65}, 6:{cellWidth:65}, 7:{cellWidth:70}, 8:{cellWidth:60}},
     margin:{left:M, right:M, bottom:M+12}
   });
 
@@ -1509,9 +1559,9 @@ function generateLeadsEspecialidadPDF(){
     doc.text('Hospital Noor Clinic', M, pageH-M+8);
     doc.text('Página '+i+' de '+n, pageW-M, pageH-M+8, {align:'right'});
   }
-  const sufijo = massEditState.especialidad!=='todas' ? '_'+slugify(massEditState.especialidad) : '';
+  const sufijo = seleccionados.length ? '_bloque' : (massEditState.especialidad!=='todas' ? '_'+slugify(massEditState.especialidad) : '_general');
   doc.save('Directorio_Medicos'+sufijo+'.pdf');
-  logAudit('Médico', '-', 'Reporte generado', titulo);
+  logAudit('Médico', '-', 'Reporte generado', tipoReporte);
   toast('Reporte generado');
 }
 function openMedicoModal(id){
