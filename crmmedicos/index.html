@@ -559,7 +559,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.3';
+const APP_VERSION = 'v2.0.4';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3704,7 +3704,7 @@ function planTaskCardHtml(t, big){
       <div style="font-size:${big?'12px':'11px'}; font-weight:600;">${t.titulo}</div>
       <div style="display:flex; gap:5px; margin-top:${big?'8px':'4px'}; flex-wrap:wrap; align-items:center;">
         ${t.completada
-          ? `<span class="pill pill-green pill-small">${icon('check')} Realizada</span>`
+          ? ''
           : t.extendida
             ? `<span class="pill pill-amber pill-small">${icon('calendar')} Extendida</span>`
             : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>`}
