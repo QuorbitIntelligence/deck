@@ -559,7 +559,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.1';
+const APP_VERSION = 'v2.0.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3699,9 +3699,12 @@ function planTaskCardHtml(t, big){
           : t.extendida
             ? `<span class="pill pill-amber pill-small">${icon('calendar')} Extendida</span>`
             : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>`}
+        ${t.extendida_de ? `<span class="pill pill-violet pill-small" title="Esta tarea viene de una extensión">${icon('history')} Viene extendida</span>` : ''}
         ${t.hora?`<span style="font-size:${big?'10.5px':'10px'}; color:var(--text-faint);">${t.hora}</span>`:''}
         ${t.documento?`<span class="pill pill-violet pill-small" title="${t.documento.nombre}">${icon('catalog')} Doc</span>`:''}
       </div>
+      ${t.completada && t.fecha_completada ? `<div style="font-size:10.5px; color:var(--green); margin-top:4px;">${icon('check')} Realizada el ${fmtDateTime(t.fecha_completada)}</div>` : ''}
+      ${t.extendida_de && t.fecha_creacion ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px;">↳ Creada como seguimiento el ${fmtDateTime(t.fecha_creacion)}</div>` : ''}
       ${t.extendida && t.extendida_nota ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px; font-style:italic;">"${t.extendida_nota}"</div>` : ''}
     </div>
     <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
@@ -3739,7 +3742,7 @@ function openExtenderTareaModal(id){
     const nuevaHora = document.getElementById('ext-hora').value || null;
     const nueva = { id: uid('tk'), titulo: t.titulo, categoria: t.categoria, prioridad: t.prioridad,
       fecha: nuevaFecha, hora: nuevaHora, completada:false, fecha_completada:null, notas: t.notas||'', documento: t.documento||null,
-      extendida:false, extendida_de: t.id, __new:true };
+      extendida:false, extendida_de: t.id, fecha_creacion: new Date().toISOString(), __new:true };
     DB.plan_tareas.unshift(nueva);
     t.extendida = true; t.extendida_a = nueva.id; t.extendida_nota = nota; t.fecha_extendida = new Date().toISOString();
     logAudit('Plan de Trabajo', t.id, 'Tarea extendida', t.titulo+' → '+nuevaFecha);
@@ -4045,7 +4048,7 @@ function togglePlanQuickForm(dayStr){
     const titulo = document.getElementById('plan-qf-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
     const nueva = { id: uid('tk'), titulo, categoria: document.getElementById('plan-qf-cat').value, prioridad: document.getElementById('plan-qf-prio').value,
-      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, documento: docAdjunto, __new:true };
+      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, documento: docAdjunto, fecha_creacion: new Date().toISOString(), __new:true };
     DB.plan_tareas.unshift(nueva);
     logAudit('Plan de Trabajo', nueva.id, 'Tarea creada', titulo);
     persistExtra(); toast('Tarea agregada'); drawPlanBody();
@@ -4055,13 +4058,13 @@ function completarTarea(id){
   const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
   t.completada = true; t.fecha_completada = new Date().toISOString();
   logAudit('Plan de Trabajo', id, 'Tarea completada', t.titulo);
-  persistExtra(); toast('Tarea completada'); drawPlanBody();
+  persistExtra(); toast('Tarea completada'); if(CURRENT_ROUTE==='plan_trabajo') drawPlanBody();
 }
 function reabrirTarea(id){
   const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
   t.completada = false; t.fecha_completada = null;
   logAudit('Plan de Trabajo', id, 'Tarea reabierta', t.titulo);
-  persistExtra(); toast('Tarea reabierta'); renderPlanTrabajo();
+  persistExtra(); toast('Tarea reabierta'); if(CURRENT_ROUTE==='plan_trabajo') renderPlanTrabajo();
 }
 function generatePlanSemanalPDF(){
   if(!window.jspdf){ toast('No se pudo generar el PDF'); return; }
