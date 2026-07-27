@@ -564,7 +564,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.7';
+const APP_VERSION = 'v2.0.8';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1389,7 +1389,7 @@ function emptyMini(text){ return `<div style="text-align:center; color:var(--tex
 /* ============================================================
    EDICIÓN MASIVA DE LEADS — pantalla independiente sobre Leads
 ============================================================ */
-let massEditState = { especialidad:'todas', search:'', selected:{} };
+let massEditState = { especialidad:'todas', search:'', selected:{}, sortField:null, sortDir:'asc' };
 function openMassEdit(){
   const pass = prompt('Esta pantalla permite editar datos sensibles de varios médicos a la vez.\n\nEscribe la clave de acceso para continuar:');
   if(pass===null) return;
@@ -1402,11 +1402,19 @@ function closeMassEdit(){
   if(CURRENT_ROUTE==='medicos') drawMedTable();
 }
 function getMassEditFilteredMedicos(){
-  return DB.medicos.filter(m=>{
+  const list = DB.medicos.filter(m=>{
     if(massEditState.especialidad!=='todas' && m.especialidad!==massEditState.especialidad) return false;
     if(massEditState.search && !fuzzyMatch(m.nombre, massEditState.search)) return false;
     return true;
-  }).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  });
+  const field = massEditState.sortField || 'nombre';
+  const dir = massEditState.sortDir==='desc' ? -1 : 1;
+  return list.sort((a,b)=> String(a[field]||'').localeCompare(String(b[field]||''),'es',{numeric:true}) * dir);
+}
+function meSortBy(field){
+  if(massEditState.sortField===field){ massEditState.sortDir = massEditState.sortDir==='asc' ? 'desc' : 'asc'; }
+  else { massEditState.sortField = field; massEditState.sortDir = 'asc'; }
+  drawMassEditTable();
 }
 function drawMassEdit(){
   const especialidades = [...new Set(DB.medicos.map(m=>m.especialidad).filter(Boolean))].sort();
@@ -1432,14 +1440,14 @@ function drawMassEdit(){
         <table><thead><tr>
           <th style="width:34px;"><input type="checkbox" id="me-select-all" title="Seleccionar todos los visibles"></th>
           <th style="width:40px;">#</th>
-          <th style="min-width:230px;">Médico</th>
-          <th style="min-width:170px;">Especialidad</th>
-          <th style="min-width:180px;">Correo</th>
-          <th style="min-width:140px;">Teléfono</th>
-          <th style="min-width:150px;">Estatus de relación</th>
-          <th style="min-width:150px;">Credencialización</th>
-          <th style="min-width:160px;">Origen del lead</th>
-          <th style="min-width:140px;">Cédula(s)</th>
+          <th class="me-th-sort" data-field="nombre" style="min-width:230px; cursor:pointer;">Médico <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="especialidad" style="min-width:170px; cursor:pointer;">Especialidad <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="correo" style="min-width:180px; cursor:pointer;">Correo <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="telefono" style="min-width:140px; cursor:pointer;">Teléfono <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="estatus_relacion" style="min-width:150px; cursor:pointer;">Estatus de relación <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="estatus_credencializacion" style="min-width:150px; cursor:pointer;">Credencialización <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="origen_lead" style="min-width:160px; cursor:pointer;">Origen del lead <span class="me-sort-ic"></span></th>
+          <th class="me-th-sort" data-field="cedulas_raw" style="min-width:190px; cursor:pointer;">Cédula(s) <span class="me-sort-ic"></span></th>
           <th style="min-width:200px;">Notas</th>
         </tr></thead>
         <tbody id="me-tbody"></tbody></table>
@@ -1452,6 +1460,7 @@ function drawMassEdit(){
     getMassEditFilteredMedicos().forEach(m=>{ massEditState.selected[m.id] = e.target.checked; });
     drawMassEditTable();
   };
+  el.querySelectorAll('.me-th-sort').forEach(th=> th.onclick = ()=> meSortBy(th.dataset.field));
   drawMassEditTable();
 }
 function drawMassEditTable(){
@@ -1476,9 +1485,15 @@ function drawMassEditTable(){
       ${ESTATUS_CRED.map(s=>`<option ${m.estatus_credencializacion===s?'selected':''}>${s}</option>`).join('')}</select></td>
     <td><select class="select me-inline-select" data-mid="${m.id}" data-field="origen_lead" style="width:100%; border:1px solid transparent; background:transparent;">
       <option value="">— Sin especificar —</option>${ORIGENES.map(o=>`<option ${m.origen_lead===o?'selected':''}>${o}</option>`).join('')}</select></td>
-    <td><input class="input me-inline" data-mid="${m.id}" data-field="cedulas_raw" value="${m.cedulas_raw||''}" placeholder="—" style="width:100%; border:1px solid transparent; background:transparent;"></td>
+    <td><input class="input me-inline" data-mid="${m.id}" data-field="cedulas_raw" value="${m.cedulas_raw||''}" placeholder="—" style="width:100%; min-width:170px; font-size:12.5px; border:1px solid transparent; background:transparent;"></td>
     <td><input class="input me-inline" data-mid="${m.id}" data-field="notas" value="${(m.notas||'').replace(/"/g,'&quot;')}" placeholder="—" style="width:100%; border:1px solid transparent; background:transparent;"></td>
   </tr>`).join('') || `<tr><td colspan="11"><div class="empty-state">${icon('doctor')}<div>Sin médicos con este filtro.</div></div></td></tr>`;
+
+  document.querySelectorAll('.me-th-sort .me-sort-ic').forEach(ic=> ic.textContent='');
+  if(massEditState.sortField){
+    const activeTh = document.querySelector(`.me-th-sort[data-field="${massEditState.sortField}"] .me-sort-ic`);
+    if(activeTh) activeTh.textContent = massEditState.sortDir==='asc' ? '▲' : '▼';
+  }
 
   tbody.querySelectorAll('.me-select').forEach(cb=> cb.onchange = ()=>{ massEditState.selected[cb.dataset.mid] = cb.checked; updateMeSelectedCount(); });
   tbody.querySelectorAll('.me-inline').forEach(inp=>{
@@ -1546,9 +1561,9 @@ function generateLeadsEspecialidadPDF(){
   const body = medicos.map((m,i)=>[i+1, m.nombre, m.especialidad||'—', m.correo||'—', m.telefono||'—', m.estatus_relacion||'—', m.estatus_credencializacion||'—', m.origen_lead||'—', m.cedulas_raw||'—', m.notas||'—']);
   doc.autoTable({
     startY: M+50, head:[['#','Médico','Especialidad','Correo','Teléfono','Estatus relación','Credencialización','Origen','Cédula(s)','Notas']], body,
-    theme:'plain', styles:{font:'helvetica', fontSize:FS, textColor:[40,40,40], cellPadding:2.5, overflow:'linebreak'},
-    headStyles:{fillColor:AZUL_CLARO, textColor:AZUL, fontStyle:'bold', fontSize:FS},
-    columnStyles:{0:{cellWidth:20}, 1:{cellWidth:95}, 2:{cellWidth:75}, 3:{cellWidth:95}, 4:{cellWidth:65}, 5:{cellWidth:65}, 6:{cellWidth:65}, 7:{cellWidth:70}, 8:{cellWidth:60}},
+    theme:'grid', styles:{font:'helvetica', fontSize:FS, textColor:[40,40,40], cellPadding:2.5, overflow:'linebreak', lineColor:[170,190,230], lineWidth:0.5},
+    headStyles:{fillColor:AZUL_CLARO, textColor:AZUL, fontStyle:'bold', fontSize:FS, lineColor:AZUL, lineWidth:0.6},
+    columnStyles:{0:{cellWidth:20}, 1:{cellWidth:95}, 2:{cellWidth:75}, 3:{cellWidth:80}, 4:{cellWidth:65}, 5:{cellWidth:65}, 6:{cellWidth:65}, 7:{cellWidth:70}, 8:{cellWidth:85}},
     margin:{left:M, right:M, bottom:M+12}
   });
 
