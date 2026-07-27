@@ -135,6 +135,10 @@ a{color:inherit;}
 
 .dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
 .dot-green{background:var(--green);} .dot-amber{background:var(--amber);} .dot-red{background:var(--red);} .dot-blue{background:var(--blue);} .dot-violet{background:var(--violet);}
+.dot-prio{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
+.dot-prio-alta{background:#FF2D4E; box-shadow:0 0 7px 1.5px #FF2D4E, 0 0 2px #FF2D4E;}
+.dot-prio-media{background:#FFDE21; box-shadow:0 0 7px 1.5px #FFDE21, 0 0 2px #FFDE21;}
+.dot-prio-baja{background:#FF8A00; box-shadow:0 0 7px 1.5px #FF8A00, 0 0 2px #FF8A00;}
 .followup-bubble{position:fixed; bottom:calc(22px + env(safe-area-inset-bottom,0px)); left:22px; z-index:410; background:var(--surface); border:1.5px solid var(--amber); border-radius:14px; padding:13px 34px 13px 16px; box-shadow:var(--shadow-lg); max-width:300px; animation:fbIn .25s ease;}
 #reminder-stack{position:fixed; bottom:calc(22px + env(safe-area-inset-bottom,0px)); right:22px; z-index:411; display:flex; flex-direction:column-reverse; gap:10px; max-width:300px;}
 .reminder-card{position:relative; background:var(--surface); border:1.5px solid var(--guinda); border-radius:12px; padding:12px 30px 12px 14px; box-shadow:var(--shadow-lg); display:flex; gap:10px; animation:fbIn .25s ease;}
@@ -559,7 +563,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.4';
+const APP_VERSION = 'v2.0.5';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3666,8 +3670,24 @@ function generateCalendarioSemanalPDF(){
    PLAN DE TRABAJO (tareas propias — semana/hoy/mes/completadas)
 ============================================================ */
 let planState = { view:'semana', weekStart: getMonday(new Date()), monthCursor: new Date(), dayCursor: new Date() };
+let planSortState = 'default';
+function ordenarTareasPlan(arr){
+  const list = [...arr];
+  switch(planSortState){
+    case 'creacion_desc': return list.sort((a,b)=> new Date(b.fecha_creacion||0) - new Date(a.fecha_creacion||0));
+    case 'creacion_asc': return list.sort((a,b)=> new Date(a.fecha_creacion||0) - new Date(b.fecha_creacion||0));
+    case 'alfabetico': return list.sort((a,b)=> (a.titulo||'').localeCompare(b.titulo||'','es'));
+    case 'prioridad': { const ord={'Alta':0,'Media':1,'Baja':2}; return list.sort((a,b)=> (ord[a.prioridad]??3)-(ord[b.prioridad]??3)); }
+    case 'estatus': return list.sort((a,b)=> (a.completada?1:0)-(b.completada?1:0));
+    default: return list.sort((a,b)=>{
+      const aDone=a.completada||a.extendida, bDone=b.completada||b.extendida; if(aDone!==bDone) return aDone?1:-1;
+      return (a.hora||'99:99').localeCompare(b.hora||'99:99');
+    });
+  }
+}
 const PLAN_CATEGORIAS = ['Llamada','WhatsApp','Reunión','MKT','Pacientes','Médicos','Aseguradora','Administrativo','Jefes','Propia','Otro'];
 const PLAN_PRIORIDAD_COLOR = { 'Alta':'red', 'Media':'amber', 'Baja':'blue' };
+const PLAN_PRIORIDAD_DOT_CLASS = { 'Alta':'dot-prio-alta', 'Media':'dot-prio-media', 'Baja':'dot-prio-baja' };
 function getSemanaRecord(weekStr){ return DB.plan_objetivos_semanales.find(o=>o.semana===weekStr); }
 function saveSemanaCampo(weekStr, campo, valor){
   let o = getSemanaRecord(weekStr);
@@ -3707,7 +3727,7 @@ function planTaskCardHtml(t, big){
           ? ''
           : t.extendida
             ? `<span class="pill pill-amber pill-small">${icon('calendar')} Extendida</span>`
-            : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>`}
+            : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot-prio ${PLAN_PRIORIDAD_DOT_CLASS[t.prioridad]||''}" title="Prioridad ${t.prioridad}"></span>`}
         ${t.extendida_de ? `<span class="pill pill-violet pill-small" title="Esta tarea viene de una extensión">${icon('history')} Viene extendida</span>` : ''}
         ${t.hora?`<span style="font-size:${big?'10.5px':'10px'}; color:var(--text-faint);">${t.hora}</span>`:''}
       </div>
@@ -3812,9 +3832,18 @@ function renderPlanTrabajo(){
       <button class="btn btn-sm" id="plan-today">Ir a hoy</button>
       <button class="btn btn-sm" id="plan-next">›</button>
       <div class="cal-range-label" id="plan-range-label"></div>
+      <select class="select" id="plan-sort" style="font-size:11.5px; padding:6px 10px;">
+        <option value="default" ${planSortState==='default'?'selected':''}>Orden predeterminado</option>
+        <option value="creacion_desc" ${planSortState==='creacion_desc'?'selected':''}>Creación · más recientes primero</option>
+        <option value="creacion_asc" ${planSortState==='creacion_asc'?'selected':''}>Creación · más antiguas primero</option>
+        <option value="alfabetico" ${planSortState==='alfabetico'?'selected':''}>Alfabético (A-Z)</option>
+        <option value="prioridad" ${planSortState==='prioridad'?'selected':''}>Prioridad (Alta → Baja)</option>
+        <option value="estatus" ${planSortState==='estatus'?'selected':''}>Estatus · pendientes primero</option>
+      </select>
       <button class="btn btn-sm btn-guinda" id="plan-report-btn">${icon('download')} Reporte semanal PDF</button>
     </div>
     <div id="plan-body"></div>`;
+  document.getElementById('plan-sort').onchange = (e)=>{ planSortState = e.target.value; drawPlanBody(); };
   document.getElementById('plan-report-btn').onclick = ()=> generatePlanSemanalPDF();
   document.getElementById('plan-view-semana').onclick = ()=>{ planState.view='semana'; renderPlanTrabajo(); };
   document.getElementById('plan-view-hoy').onclick = ()=>{ planState.view='hoy'; renderPlanTrabajo(); };
@@ -3841,7 +3870,9 @@ function drawPlanBody(){
 }
 function drawPlanCompletadas(body){
   const hoyStr = ymd(new Date());
-  const done = [...DB.plan_tareas].filter(t=>t.completada).sort((a,b)=>new Date(b.fecha_completada)-new Date(a.fecha_completada));
+  const done = planSortState==='default'
+    ? [...DB.plan_tareas].filter(t=>t.completada).sort((a,b)=>new Date(b.fecha_completada)-new Date(a.fecha_completada))
+    : ordenarTareasPlan(DB.plan_tareas.filter(t=>t.completada));
   body.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Tarea</th><th>Categoría</th><th>Prioridad</th><th>Completada</th><th></th></tr></thead><tbody>
     ${done.length ? done.map(t=>`<tr>
       <td style="font-size:12.5px;">${t.titulo}</td>
@@ -3889,10 +3920,7 @@ function drawPlanSemana(body, rangeLabelEl){
     <div class="cal-grid" id="plan-grid">${days.map((d,i)=>{
       const dStr = ymd(d);
       const isToday = ymd(hoy)===dStr;
-      const tareasDia = DB.plan_tareas.filter(t=>t.fecha===dStr).sort((a,b)=>{
-        const aDone=a.completada||a.extendida, bDone=b.completada||b.extendida; if(aDone!==bDone) return aDone?1:-1;
-        return (a.hora||'99:99').localeCompare(b.hora||'99:99');
-      });
+      const tareasDia = ordenarTareasPlan(DB.plan_tareas.filter(t=>t.fecha===dStr));
       const pendCount = tareasDia.filter(t=>!t.completada && !t.extendida).length;
       return `<div class="cal-day ${isToday?'is-today':''}" data-date="${dStr}">
         <div class="cal-day-head"><span>${DIAS_SEMANA[i]} ${d.getDate()}</span>${pendCount?`<span class="pill pill-guinda pill-small">${pendCount}</span>`:''}</div>
@@ -3967,10 +3995,7 @@ function drawPlanHoy(body, rangeLabelEl){
   const d = planState.dayCursor;
   const dStr = ymd(d);
   rangeLabelEl.textContent = fmtDate(d);
-  const tareasDia = DB.plan_tareas.filter(t=>t.fecha===dStr).sort((a,b)=>{
-    const aDone=a.completada||a.extendida, bDone=b.completada||b.extendida; if(aDone!==bDone) return aDone?1:-1;
-    return (a.hora||'99:99').localeCompare(b.hora||'99:99');
-  });
+  const tareasDia = ordenarTareasPlan(DB.plan_tareas.filter(t=>t.fecha===dStr));
   body.innerHTML = `
     <div class="today-row">
       ${tareasDia.length ? tareasDia.map(t=>`<div class="today-card" style="min-width:230px;">${planTaskCardHtml(t,true)}</div>`).join('') : `<div class="empty-state" style="width:100%;">${icon('checklist')}<div>Sin tareas para este día.</div></div>`}
@@ -3995,7 +4020,7 @@ function drawPlanMes(body, rangeLabelEl){
         const tareasDia = DB.plan_tareas.filter(t=>t.fecha===dStr);
         return `<div class="month-cell ${inMonth?'':'other-month'} ${isToday?'is-today':''}" data-day="${dStr}">
           <div class="month-cell-num">${d.getDate()}</div>
-          <div class="month-dots">${tareasDia.slice(0,6).map(t=>`<span class="dot dot-${t.completada?'green':(PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted')}" title="${t.titulo}${t.completada?' (Realizada)':''}"></span>`).join('')}${tareasDia.length>6?`<span style="font-size:8px; color:var(--text-faint);">+${tareasDia.length-6}</span>`:''}</div>
+          <div class="month-dots">${tareasDia.slice(0,6).map(t=>`<span class="${t.completada?'dot dot-green':('dot-prio '+(PLAN_PRIORIDAD_DOT_CLASS[t.prioridad]||''))}" title="${t.titulo}${t.completada?' (Realizada)':''}"></span>`).join('')}${tareasDia.length>6?`<span style="font-size:8px; color:var(--text-faint);">+${tareasDia.length-6}</span>`:''}</div>
         </div>`;
       }).join('')}
     </div>`;
