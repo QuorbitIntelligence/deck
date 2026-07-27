@@ -559,7 +559,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.2';
+const APP_VERSION = 'v2.0.3';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -714,6 +714,15 @@ function fmtDate(d){
     return dt.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
   }catch(e){return d;}
 }
+function sugerirHoraTarea(){
+  const d = new Date(Date.now() + 60*60000);
+  let h = d.getHours(), mins = d.getMinutes();
+  if(mins===0){ /* ya cae en hora cerrada */ }
+  else if(mins<=30){ mins = 30; }
+  else { mins = 0; h = (h+1)%24; }
+  return String(h).padStart(2,'0')+':'+String(mins).padStart(2,'0');
+}
+function fmtHoraOnly(d){ if(!d) return '—'; try{ return new Date(d).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';} }
 function fmtDateTime(d){ if(!d) return '—'; try{ return new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return d;} }
 function initials(name){ return (name||'').replace(/^DR[A]?\.?\s+/i,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function medicoById(id){ return DB.medicos.find(m=>String(m.id)===String(id)); }
@@ -3657,7 +3666,7 @@ function generateCalendarioSemanalPDF(){
    PLAN DE TRABAJO (tareas propias — semana/hoy/mes/completadas)
 ============================================================ */
 let planState = { view:'semana', weekStart: getMonday(new Date()), monthCursor: new Date(), dayCursor: new Date() };
-const PLAN_CATEGORIAS = ['Llamada','Reunión','MKT','Pacientes','Médicos','Aseguradora','Administrativo','Otro'];
+const PLAN_CATEGORIAS = ['Llamada','WhatsApp','Reunión','MKT','Pacientes','Médicos','Aseguradora','Administrativo','Jefes','Propia','Otro'];
 const PLAN_PRIORIDAD_COLOR = { 'Alta':'red', 'Media':'amber', 'Baja':'blue' };
 function getSemanaRecord(weekStr){ return DB.plan_objetivos_semanales.find(o=>o.semana===weekStr); }
 function saveSemanaCampo(weekStr, campo, valor){
@@ -3701,10 +3710,9 @@ function planTaskCardHtml(t, big){
             : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot dot-${PLAN_PRIORIDAD_COLOR[t.prioridad]||'muted'}"></span>`}
         ${t.extendida_de ? `<span class="pill pill-violet pill-small" title="Esta tarea viene de una extensión">${icon('history')} Viene extendida</span>` : ''}
         ${t.hora?`<span style="font-size:${big?'10.5px':'10px'}; color:var(--text-faint);">${t.hora}</span>`:''}
-        ${t.documento?`<span class="pill pill-violet pill-small" title="${t.documento.nombre}">${icon('catalog')} Doc</span>`:''}
       </div>
-      ${t.completada && t.fecha_completada ? `<div style="font-size:10.5px; color:var(--green); margin-top:4px;">${icon('check')} Realizada el ${fmtDateTime(t.fecha_completada)}</div>` : ''}
-      ${t.extendida_de && t.fecha_creacion ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px;">↳ Creada como seguimiento el ${fmtDateTime(t.fecha_creacion)}</div>` : ''}
+      ${t.extendida_de ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px;">↳ Creada como seguimiento a las ${fmtHoraOnly(t.fecha_creacion)}</div>` : (t.fecha_creacion ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px;">Creada ${fmtHoraOnly(t.fecha_creacion)}</div>` : '')}
+      ${t.completada && t.fecha_completada ? `<div style="font-size:10.5px; color:var(--green); margin-top:2px;">${icon('check')} Realizada el ${fmtDateTime(t.fecha_completada)}</div>` : ''}
       ${t.extendida && t.extendida_nota ? `<div style="font-size:10.5px; color:var(--text-faint); margin-top:4px; font-style:italic;">"${t.extendida_nota}"</div>` : ''}
     </div>
     <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
@@ -3764,35 +3772,16 @@ function openTareaEditModal(id){
         <div class="form-field"><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
         <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
         <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px;">${t.notas||''}</textarea></div>
-        <div class="form-field full"><label>Documento de evidencia (opcional)</label>
-          <input type="file" id="tk-doc-file" style="display:none;">
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button class="btn btn-sm" type="button" id="tk-doc-btn">${icon('upload')} ${t.documento?'Reemplazar documento':'Adjuntar documento'}</button>
-            ${t.documento ? `<a href="${t.documento.dataUrl}" download="${t.documento.nombre}" class="pill pill-violet" style="text-decoration:none;">${icon('catalog')} ${t.documento.nombre}</a><button class="btn btn-sm btn-danger" type="button" id="tk-doc-del">${icon('trash')}</button>` : ''}
-          </div>
-        </div>
         <div class="form-field full"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tk-completada" ${t.completada?'checked':''}> Tarea cerrada / completada</label></div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="tk-save">Guardar</button></div>`);
-  let documentoActual = t.documento || null;
-  document.getElementById('tk-doc-btn').onclick = ()=> document.getElementById('tk-doc-file').click();
-  document.getElementById('tk-doc-file').onchange = (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    if(file.size > 5*1024*1024){ toast('El archivo es muy pesado (máx. 5MB)'); return; }
-    const reader = new FileReader();
-    reader.onload = ()=>{ documentoActual = {nombre:file.name, dataUrl:reader.result, tamano:file.size}; toast('Documento listo — guarda para confirmar'); };
-    reader.readAsDataURL(file);
-  };
-  const docDelBtn = document.getElementById('tk-doc-del');
-  if(docDelBtn) docDelBtn.onclick = ()=>{ documentoActual = null; toast('Documento quitado — guarda para confirmar'); };
   document.getElementById('tk-save').onclick = ()=>{
     const titulo = document.getElementById('tk-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
     t.titulo = titulo; t.categoria = document.getElementById('tk-cat').value; t.prioridad = document.getElementById('tk-prio').value;
     t.fecha = document.getElementById('tk-fecha').value; t.hora = document.getElementById('tk-hora').value || null;
     t.notas = document.getElementById('tk-notas').value;
-    t.documento = documentoActual;
     const nowCompletada = document.getElementById('tk-completada').checked;
     if(nowCompletada && !t.completada){ t.completada = true; t.fecha_completada = new Date().toISOString(); }
     else if(!nowCompletada && t.completada){ t.completada = false; t.fecha_completada = null; }
@@ -4025,30 +4014,18 @@ function togglePlanQuickForm(dayStr){
       <select class="select" id="plan-qf-cat" style="flex:1; font-size:11px;">${PLAN_CATEGORIAS.map(c=>`<option>${c}</option>`).join('')}</select>
       <select class="select" id="plan-qf-prio" style="flex:1; font-size:11px;"><option>Media</option><option>Alta</option><option>Baja</option></select>
     </div>
-    <input class="input" type="time" id="plan-qf-hora" style="width:100%; font-size:11px; margin-bottom:6px;" value="${(()=>{ const n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); })()}">
+    <input class="input" type="time" id="plan-qf-hora" style="width:100%; font-size:11px; margin-bottom:6px;" value="${sugerirHoraTarea()}">
     <textarea class="input" id="plan-qf-notas" style="width:100%; min-height:50px; font-size:11px; margin-bottom:6px;" placeholder="Notas (opcional)…"></textarea>
-    <input type="file" id="plan-qf-doc-file" style="display:none;">
-    <button class="btn btn-sm" type="button" id="plan-qf-doc-btn" style="width:100%; margin-bottom:6px;">${icon('upload')} Adjuntar documento (opcional)</button>
-    <div id="plan-qf-doc-status" style="font-size:10.5px; color:var(--text-faint); margin-bottom:6px;"></div>
     <div style="display:flex; gap:6px;">
       <button class="btn btn-sm" type="button" id="plan-qf-cancel">Cancelar</button>
       <button class="btn btn-sm btn-guinda" type="button" id="plan-qf-save">Guardar</button>
     </div>`;
-  let docAdjunto = null;
-  document.getElementById('plan-qf-doc-btn').onclick = ()=> document.getElementById('plan-qf-doc-file').click();
-  document.getElementById('plan-qf-doc-file').onchange = (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    if(file.size > 5*1024*1024){ toast('El archivo es muy pesado (máx. 5MB)'); return; }
-    const reader = new FileReader();
-    reader.onload = ()=>{ docAdjunto = {nombre:file.name, dataUrl:reader.result, tamano:file.size}; document.getElementById('plan-qf-doc-status').textContent = '📎 '+file.name; };
-    reader.readAsDataURL(file);
-  };
   document.getElementById('plan-qf-cancel').onclick = ()=>{ el.style.display='none'; el.innerHTML=''; };
   document.getElementById('plan-qf-save').onclick = ()=>{
     const titulo = document.getElementById('plan-qf-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
     const nueva = { id: uid('tk'), titulo, categoria: document.getElementById('plan-qf-cat').value, prioridad: document.getElementById('plan-qf-prio').value,
-      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, documento: docAdjunto, fecha_creacion: new Date().toISOString(), __new:true };
+      fecha: dayStr, hora: document.getElementById('plan-qf-hora').value || null, completada:false, fecha_completada:null, notas: document.getElementById('plan-qf-notas').value, fecha_creacion: new Date().toISOString(), __new:true };
     DB.plan_tareas.unshift(nueva);
     logAudit('Plan de Trabajo', nueva.id, 'Tarea creada', titulo);
     persistExtra(); toast('Tarea agregada'); drawPlanBody();
@@ -5455,6 +5432,11 @@ function sincronizarEstatusCasoCotizacion(){
   if(cambios){ logAudit('Sistema', '-', 'Sincronización de estatus', cambios+' cotización(es) alineada(s) con Seguimiento CRM'); persistExtra(); }
   return cambios;
 }
+function limpiarDocumentosPlanTrabajo(){
+  let cambios = 0;
+  DB.plan_tareas.forEach(t=>{ if(t.documento){ delete t.documento; cambios++; } });
+  if(cambios){ logAudit('Sistema', '-', 'Limpieza de documentos', cambios+' documento(s) de Plan de Trabajo eliminado(s) para liberar espacio'); persistExtra(); }
+}
 function checkCotizacionesCaducadas(){
   const ahora = Date.now();
   const LIMITE_MS = 60*24*60*60*1000; // 60 días
@@ -5491,6 +5473,7 @@ function showApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('app-version').textContent = 'CRM Médicos '+APP_VERSION;
+  limpiarDocumentosPlanTrabajo();
   sincronizarEstatusCasoCotizacion();
   checkCotizacionesVencidas();
   checkVencidasAPerdido();
