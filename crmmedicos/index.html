@@ -564,7 +564,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.9';
+const APP_VERSION = 'v2.0.10';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3113,7 +3113,7 @@ function setAsgEstatus(id, estatus){
 let asgWizard = {};
 function openAseguradoraWizard(){
   asgWizard = { mode:'new', originalId:null, aseguradora:'', procedimiento:'', medico:'', hospitalConceptos:{}, hospitalCostoManual:null,
-    proveedorNombre:'', proveedorItems:[], proveedorCostoManual:null, clausulas:{}, vigenciaManual:null, step:1, _defaultsApplied:false };
+    proveedorNombre:'', proveedorItems:[], proveedorCostoManual:null, incluirProveedor:true, clausulas:{}, vigenciaManual:null, step:1, _defaultsApplied:false };
   drawAsgWizard();
 }
 function editAseguradoraWizard(id){
@@ -3121,6 +3121,7 @@ function editAseguradoraWizard(id){
   asgWizard = { mode:'edit', originalId:a.id, aseguradora:a.aseguradora, procedimiento:a.procedimiento, medico:a.id_medico,
     hospitalConceptos: Object.fromEntries((a.hospital_conceptos||[]).map(l=>[l.id,l.cantidad])), hospitalCostoManual: a.hospital_total,
     proveedorNombre: a.proveedor_nombre||'', proveedorItems: (a.proveedor_conceptos||[]).map(l=>({...l})), proveedorCostoManual: a.proveedor_total,
+    incluirProveedor: a.incluir_proveedor!==false,
     clausulas: Object.fromEntries((a.condiciones||[]).map(c=>[c.id,true])), vigenciaManual: a.fecha_vigencia ? a.fecha_vigencia.slice(0,10) : null, step:1, _defaultsApplied:true };
   drawAsgWizard();
 }
@@ -3224,28 +3225,43 @@ function drawAsgPane(){
       asgWizard.step=2; drawAsgPane();
     };
   } else if(asgWizard.step===2){
+    const pagoDirectoCl = getPagoDirectoClausula();
     pane.innerHTML = `
-      <div class="form-field full" style="margin-bottom:16px;"><label>Nombre del proveedor</label><input class="input uc-input" id="asg-prov-nombre" style="width:100%;" value="${asgWizard.proveedorNombre}" placeholder="EJ. BELKYS MIREYA BECERRA"></div>
-      <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Insumos y servicios del proveedor (captura manual)</div>
-      <div class="form-grid" style="grid-template-columns:2fr 1fr 1fr auto; align-items:end; gap:8px; margin-bottom:10px;">
-        <div class="form-field"><label style="font-size:11px;">Descripción</label><input class="input uc-input" id="asg-item-desc" style="width:100%;" placeholder="EJ. ANCLAS PUSHLOCK 2.9"></div>
-        <div class="form-field"><label style="font-size:11px;">Cantidad</label><input class="input" type="number" id="asg-item-cant" style="width:100%;" value="1" min="1"></div>
-        <div class="form-field"><label style="font-size:11px;">Costo unitario</label><input class="input" type="number" id="asg-item-costo" style="width:100%;" value="0"></div>
-        <button class="btn btn-sm" type="button" id="asg-item-add">${icon('plus')} Agregar</button>
-      </div>
-      <div id="asg-item-list" style="margin-bottom:14px;"></div>
-      <div style="background:var(--surface-2); border-radius:12px; padding:14px 16px;">
-        <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-          Costo aproximado del proveedor (IVA incluido)
-          <button type="button" id="asg-prov-recalc" class="btn btn-sm" style="padding:3px 8px; font-size:10.5px; font-weight:600; text-transform:none;">${icon('history')} Recalcular con insumos</button>
-        </label>
-        <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-          <span style="font-family:var(--font-display); font-size:18px; font-weight:700;">$</span>
-          <input id="asg-prov-costo" type="number" style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-display); font-size:17px; font-weight:700;">
+      <label style="display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:12.5px; font-weight:700; background:var(--surface-2); border-radius:10px; padding:11px 14px;">
+        <input type="checkbox" id="asg-incluir-proveedor" ${asgWizard.incluirProveedor!==false?'checked':''}> Incluir proveedor y su desglose en esta cotización
+      </label>
+      <div id="asg-prov-fields" style="${asgWizard.incluirProveedor===false?'opacity:.45; pointer-events:none;':''}">
+        <div class="form-field full" style="margin-bottom:16px;"><label>Nombre del proveedor</label><input class="input uc-input" id="asg-prov-nombre" style="width:100%;" value="${asgWizard.proveedorNombre}" placeholder="EJ. BELKYS MIREYA BECERRA"></div>
+        <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Insumos y servicios del proveedor (captura manual)</div>
+        <div class="form-grid" style="grid-template-columns:2fr 1fr 1fr auto; align-items:end; gap:8px; margin-bottom:10px;">
+          <div class="form-field"><label style="font-size:11px;">Descripción</label><input class="input uc-input" id="asg-item-desc" style="width:100%;" placeholder="EJ. ANCLAS PUSHLOCK 2.9"></div>
+          <div class="form-field"><label style="font-size:11px;">Cantidad</label><input class="input" type="number" id="asg-item-cant" style="width:100%;" value="1" min="1"></div>
+          <div class="form-field"><label style="font-size:11px;">Costo unitario</label><input class="input" type="number" id="asg-item-costo" style="width:100%;" value="0"></div>
+          <button class="btn btn-sm" type="button" id="asg-item-add">${icon('plus')} Agregar</button>
         </div>
-        <div style="font-size:10.5px; color:var(--text-faint); margin-top:4px;">Puede variar en función del material utilizado.</div>
-      </div>`;
+        <div id="asg-item-list" style="margin-bottom:14px;"></div>
+        <div style="background:var(--surface-2); border-radius:12px; padding:14px 16px;">
+          <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+            Costo aproximado del proveedor (IVA incluido)
+            <button type="button" id="asg-prov-recalc" class="btn btn-sm" style="padding:3px 8px; font-size:10.5px; font-weight:600; text-transform:none;">${icon('history')} Recalcular con insumos</button>
+          </label>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+            <span style="font-family:var(--font-display); font-size:18px; font-weight:700;">$</span>
+            <input id="asg-prov-costo" type="number" style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-display); font-size:17px; font-weight:700;">
+          </div>
+          <div style="font-size:10.5px; color:var(--text-faint); margin-top:4px;">Puede variar en función del material utilizado.</div>
+        </div>
+      </div>
+      <label style="display:flex; align-items:flex-start; gap:9px; margin-top:16px; font-size:12px; background:var(--green-bg); border-radius:10px; padding:12px 14px;">
+        <input type="checkbox" id="asg-pago-directo" style="margin-top:2px;" ${asgWizard.clausulas[pagoDirectoCl.id]?'checked':''}>
+        <span>${pagoDirectoCl.texto}</span>
+      </label>`;
     foot.innerHTML = `<button class="btn" id="asg-back">Atrás</button><button class="btn btn-guinda" id="asg-next">Siguiente</button>`;
+    document.getElementById('asg-incluir-proveedor').onchange = (e)=>{
+      asgWizard.incluirProveedor = e.target.checked;
+      document.getElementById('asg-prov-fields').style.cssText = e.target.checked ? '' : 'opacity:.45; pointer-events:none;';
+    };
+    document.getElementById('asg-pago-directo').onchange = (e)=>{ asgWizard.clausulas[pagoDirectoCl.id] = e.target.checked; };
     const drawItems = ()=>{
       const listEl = document.getElementById('asg-item-list');
       listEl.innerHTML = asgWizard.proveedorItems.length ? asgWizard.proveedorItems.map((it,i)=>`
@@ -3336,13 +3352,25 @@ function updateAsgHospitalTotal(){
   const el = document.getElementById('asg-hospital-costo');
   if(el) el.value = Math.round(sumConceptMap(asgWizard.hospitalConceptos));
 }
+function getPagoDirectoClausula(){
+  let cl = DB.clausulas.find(c=>c.__pago_directo_proveedor);
+  if(!cl){
+    cl = { id: uid('cl'), titulo:'Pago directo a proveedor', texto:'La aseguradora realizará el pago directo al proveedor correspondiente por concepto de los materiales e insumos utilizados en este procedimiento.', default:false, activa:true, contexto:'aseguradora', __pago_directo_proveedor:true, __new:true };
+    DB.clausulas.push(cl);
+    persistExtra();
+  }
+  return cl;
+}
 function saveAsgWizard(){
   const m = medicoById(asgWizard.medico);
   const hospitalConceptosArr = Object.entries(asgWizard.hospitalConceptos).map(([id,qty])=>{
     const c = conceptoById(id); return { id, descripcion: c?c.descripcion:id, categoria: c?c.categoria:'', cantidad:qty };
   });
   const hospitalTotal = asgWizard.hospitalCostoManual || sumConceptMap(asgWizard.hospitalConceptos);
-  const provTotal = asgWizard.proveedorCostoManual!=null ? asgWizard.proveedorCostoManual : asgWizard.proveedorItems.reduce((s,i)=>s+i.total,0);
+  const incluirProveedor = asgWizard.incluirProveedor!==false;
+  const provTotal = incluirProveedor ? (asgWizard.proveedorCostoManual!=null ? asgWizard.proveedorCostoManual : asgWizard.proveedorItems.reduce((s,i)=>s+i.total,0)) : 0;
+  const proveedorNombreFinal = incluirProveedor ? asgWizard.proveedorNombre : null;
+  const proveedorItemsFinal = incluirProveedor ? asgWizard.proveedorItems : [];
   const condicionesArr = DB.clausulas.filter(cl=>asgWizard.clausulas[cl.id]).map(cl=>({id:cl.id, titulo:cl.titulo, texto:cl.texto}));
   const now = new Date();
   const vigenciaFecha = asgWizard.vigenciaManual ? new Date(asgWizard.vigenciaManual+'T12:00:00') : addDays(now, 30);
@@ -3352,7 +3380,7 @@ function saveAsgWizard(){
     Object.assign(a, {
       aseguradora: asgWizard.aseguradora, procedimiento: asgWizard.procedimiento, id_medico: asgWizard.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'',
       hospital_conceptos: hospitalConceptosArr, hospital_total: hospitalTotal,
-      proveedor_nombre: asgWizard.proveedorNombre, proveedor_conceptos: asgWizard.proveedorItems, proveedor_total: provTotal,
+      incluir_proveedor: incluirProveedor, proveedor_nombre: proveedorNombreFinal, proveedor_conceptos: proveedorItemsFinal, proveedor_total: provTotal,
       total_general: hospitalTotal+provTotal, condiciones: condicionesArr, fecha_vigencia: vigenciaFecha.toISOString()
     });
     logAudit('Cotización Aseguradora', a.id, 'Edición', a.aseguradora+' · '+a.procedimiento);
@@ -3364,7 +3392,7 @@ function saveAsgWizard(){
     id: folio, aseguradora: asgWizard.aseguradora, procedimiento: asgWizard.procedimiento, id_medico: asgWizard.medico, medico_nombre: m?m.nombre:'', especialidad: m?m.especialidad:'',
     fecha_creacion: now.toISOString(), fecha_vigencia: vigenciaFecha.toISOString(),
     hospital_conceptos: hospitalConceptosArr, hospital_total: hospitalTotal,
-    proveedor_nombre: asgWizard.proveedorNombre, proveedor_conceptos: asgWizard.proveedorItems, proveedor_total: provTotal,
+    incluir_proveedor: incluirProveedor, proveedor_nombre: proveedorNombreFinal, proveedor_conceptos: proveedorItemsFinal, proveedor_total: provTotal,
     total_general: hospitalTotal+provTotal, condiciones: condicionesArr, estatus:'Borrador', __new:true
   };
   DB.cotizaciones_aseguradora.unshift(nueva);
@@ -3451,34 +3479,37 @@ function generateAseguradoraPDF(id){
   doc.text(fmtMoney(a.hospital_total), pageW-M-8, y+14, {align:'right'});
   y += 32;
 
-  if(y > pageH-M-110){ doc.addPage(); y = M+18; }
+  if(a.incluir_proveedor!==false){
+    if(y > pageH-M-110){ doc.addPage(); y = M+18; }
 
-  // ---- Bloque PROVEEDOR ----
-  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
-  doc.text('INSUMOS DE PROVEEDOR — '+(a.proveedor_nombre||'SIN ESPECIFICAR').toUpperCase(), M, y);
-  y += 4;
+    // ---- Bloque PROVEEDOR ----
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
+    doc.text('INSUMOS DE PROVEEDOR — '+(a.proveedor_nombre||'SIN ESPECIFICAR').toUpperCase(), M, y);
+    y += 4;
 
-  const provBody = (a.proveedor_conceptos||[]).length ? a.proveedor_conceptos.map(l=>[l.descripcion, String(l.cantidad)]) : [['Sin insumos capturados','—']];
-  doc.autoTable({ startY:y+4, head:[['Descripción','Cant.']], body:provBody,
-    theme:'plain', headStyles:{fillColor:[255,255,255], textColor:GUINDA, fontStyle:'bold', fontSize:FS, lineWidth:{bottom:1}, lineColor:GUINDA},
-    bodyStyles:{fontSize:FS, textColor:[30,40,50], cellPadding:3}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:45}} });
-  y = doc.lastAutoTable.finalY + 6;
+    const provBody = (a.proveedor_conceptos||[]).length ? a.proveedor_conceptos.map(l=>[l.descripcion, String(l.cantidad)]) : [['Sin insumos capturados','—']];
+    doc.autoTable({ startY:y+4, head:[['Descripción','Cant.']], body:provBody,
+      theme:'plain', headStyles:{fillColor:[255,255,255], textColor:GUINDA, fontStyle:'bold', fontSize:FS, lineWidth:{bottom:1}, lineColor:GUINDA},
+      bodyStyles:{fontSize:FS, textColor:[30,40,50], cellPadding:3}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:45}} });
+    y = doc.lastAutoTable.finalY + 6;
 
-  doc.setFillColor(...PALEGUINDA); doc.setDrawColor(...GUINDA);
-  doc.rect(M, y, pageW-2*M, 26, 'FD');
-  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
-  doc.text('COSTO APROXIMADO DEL PROVEEDOR (IVA INCLUIDO)', M+8, y+11);
-  doc.setFont('helvetica','normal'); doc.setFontSize(FS-1.5);
-  doc.text('Puede variar en función del material utilizado.', M+8, y+21);
-  doc.setFont('helvetica','bold'); doc.setFontSize(FS);
-  doc.text(fmtMoney(a.proveedor_total), pageW-M-8, y+16, {align:'right'});
-  y += 36;
+    doc.setFillColor(...PALEGUINDA); doc.setDrawColor(...GUINDA);
+    doc.rect(M, y, pageW-2*M, 26, 'FD');
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
+    doc.text('COSTO APROXIMADO DEL PROVEEDOR (IVA INCLUIDO)', M+8, y+11);
+    doc.setFont('helvetica','normal'); doc.setFontSize(FS-1.5);
+    doc.text('Puede variar en función del material utilizado.', M+8, y+21);
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS);
+    doc.text(fmtMoney(a.proveedor_total), pageW-M-8, y+16, {align:'right'});
+    y += 36;
+  }
 
   if(y > pageH-M-50){ doc.addPage(); y = M+18; }
   doc.setFillColor(40,40,45); doc.setDrawColor(20,20,24);
   doc.rect(M, y, pageW-2*M, 24, 'FD');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(255,255,255);
-  doc.text('COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (HOSPITAL + PROVEEDOR, IVA INCLUIDO)', M+8, y+15, {maxWidth: pageW-2*M-150});
+  const totalLabel = a.incluir_proveedor!==false ? 'COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (HOSPITAL + PROVEEDOR, IVA INCLUIDO)' : 'COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (HOSPITAL, IVA INCLUIDO)';
+  doc.text(totalLabel, M+8, y+15, {maxWidth: pageW-2*M-150});
   doc.setFontSize(11);
   doc.text(fmtMoney(a.total_general), pageW-M-8, y+16, {align:'right'});
   y += 36;
