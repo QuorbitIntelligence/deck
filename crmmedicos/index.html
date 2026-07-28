@@ -566,7 +566,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.13';
+const APP_VERSION = 'v2.0.14';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5381,6 +5381,7 @@ function drawAnalisisTree(){
             ${cot ? `<div style="font-size:10.5px; font-weight:700; color:${diff>0?'var(--red)':(diff<0?'var(--green)':'var(--text-faint)')};">${diff>0?'+':''}${fmtMoney(diff)} vs. cotizado</div>` : ''}
           </div>
           ${mismos.length>1 ? `<button class="btn btn-sm" onclick="abrirComparativoAnalisis('${m.id}','${a.procedimiento.replace(/'/g,"\\'")}')">${icon('analytics')} Comparar</button>` : ''}
+          ${cot ? `<button class="btn btn-sm btn-guinda" onclick="abrirComparativoVsCotizado('${a.id}')">${icon('quote')} Vs. cotizado</button>` : ''}
           <button class="btn btn-sm" onclick="verAnalisisDetalle('${a.id}')">${icon('quote')} Ver</button>
         </div>`;
       }).join('')}
@@ -5477,6 +5478,119 @@ MEDICAMENTOS"></textarea>
     persistExtra(); closeModal(); toast('Análisis guardado'); renderAnalisis();
   };
 }
+function abrirComparativoVsCotizado(analisisId){
+  const a = DB.analisis_cuentas.find(x=>x.id===analisisId); if(!a) return;
+  const cot = a.id_cotizacion ? DB.cotizaciones.find(c=>String(c.id)===String(a.id_cotizacion)) : null;
+  if(!cot){ toast('Este análisis no está vinculado a una cotización'); return; }
+  const m = medicoById(a.id_medico);
+  const conceptosArr = cot.conceptos || [];
+  const listaM = cot.lista_asignada ? (cot.lista_asignada.materiales||[]) : [];
+  const listaMed = cot.lista_asignada ? (cot.lista_asignada.medicamentos||[]) : [];
+  const totalCotizado = cot.costo_propuesta || 0;
+  const totalReal = a.total_general || 0;
+  const diff = totalReal - totalCotizado;
+  const pct = totalCotizado ? Math.round(diff/totalCotizado*1000)/10 : 0;
+
+  openModal(`
+    <div class="modal-head"><div><div style="font-weight:700; font-size:16px;">Comparativo — Cotizado vs. Estado de cuenta real</div><div class="sub">${m?m.nombre:''} · ${a.procedimiento} · ${cot.id}</div></div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body" style="max-height:60vh; overflow-y:auto;">
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+        <div>
+          <div style="font-weight:700; font-size:12px; color:var(--primary); text-transform:uppercase; margin-bottom:8px;">Lo cotizado (${cot.id})</div>
+          ${conceptosArr.length ? `<div style="margin-bottom:10px;"><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">Conceptos con precio</div>
+            ${conceptosArr.map(it=>`<div style="display:flex; justify-content:space-between; gap:6px; font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);"><span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion}</span><span style="font-weight:600; flex-shrink:0;">${fmtMoney(it.total)}</span></div>`).join('')}</div>` : ''}
+          ${(listaM.length||listaMed.length) ? `<div><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">Lista asignada (referencia, sin precio)</div>
+            ${listaMed.map(it=>`<div style="font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);">${it.cantidad} ${it.descripcion}</div>`).join('')}
+            ${listaM.map(it=>`<div style="font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);">${it.cantidad} ${it.descripcion}</div>`).join('')}</div>` : ''}
+          ${(!conceptosArr.length && !listaM.length && !listaMed.length) ? `<div style="font-size:11px; color:var(--text-faint); font-style:italic;">Sin conceptos ni lista capturados en esta cotización.</div>` : ''}
+        </div>
+        <div>
+          <div style="font-weight:700; font-size:12px; color:var(--guinda); text-transform:uppercase; margin-bottom:8px;">Estado de cuenta real</div>
+          ${a.bloques.map(b=>`<div style="margin-bottom:8px;"><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">${b.nombre}</div>
+            ${b.items.map(it=>`<div style="display:flex; justify-content:space-between; gap:6px; font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);"><span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion}</span><span style="font-weight:600; flex-shrink:0;">${fmtMoney(it.total)}</span></div>`).join('')}</div>`).join('')}
+        </div>
+      </div>
+      <div style="margin-top:18px; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border-radius:14px; padding:16px 20px; color:#fff; display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="text-align:center;"><div style="font-size:10.5px; opacity:.85; text-transform:uppercase;">Total cotizado</div><div style="font-family:var(--font-display); font-size:18px; font-weight:700;">${fmtMoney(totalCotizado)}</div></div>
+        <div style="text-align:center;"><div style="font-size:10.5px; opacity:.85; text-transform:uppercase;">Total real</div><div style="font-family:var(--font-display); font-size:18px; font-weight:700;">${fmtMoney(totalReal)}</div></div>
+        <div style="text-align:center;"><div style="font-size:10.5px; opacity:.85; text-transform:uppercase;">Diferencia</div><div style="font-family:var(--font-display); font-size:18px; font-weight:700;">${diff>0?'+':''}${fmtMoney(diff)} (${pct>0?'+':''}${pct}%)</div></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cerrar</button><button class="btn btn-primary" id="cmp-pdf-btn">${icon('download')} Descargar PDF</button></div>`);
+  const modalEl = document.querySelector('.modal');
+  modalEl.style.cssText = 'width:940px; max-width:94vw; max-height:88vh; overflow-y:auto; background:var(--surface); backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%); border:1px solid var(--border); border-radius:20px; box-shadow:0 24px 70px rgba(20,30,60,.28); position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:101; display:block;';
+  document.getElementById('cmp-pdf-btn').onclick = ()=> generateComparativoPDF(analisisId);
+}
+function generateComparativoPDF(analisisId){
+  const a = DB.analisis_cuentas.find(x=>x.id===analisisId); if(!a || !window.jspdf) { toast('No se pudo generar el PDF'); return; }
+  const cot = a.id_cotizacion ? DB.cotizaciones.find(c=>String(c.id)===String(a.id_cotizacion)) : null;
+  if(!cot){ toast('Este análisis no está vinculado a una cotización'); return; }
+  const m = medicoById(a.id_medico);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'letter', orientation:'landscape'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 14.17; // 0.5 cm
+  const FS = 8;
+  const NAVY=[27,62,115], GUINDA=[142,27,60], PALEBLUE=[237,243,255], PALEGUINDA=[249,235,240];
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...NAVY);
+  doc.text('COMPARATIVO — COTIZADO VS. ESTADO DE CUENTA REAL', M, M+10);
+  doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(M, M+18, pageW-M, M+18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
+  doc.text((m?m.nombre:'')+' · '+a.procedimiento+' · '+cot.id, M, M+29);
+
+  const halfW = (pageW - 3*M)/2;
+  const conceptosArr = cot.conceptos || [];
+  const listaM = cot.lista_asignada ? (cot.lista_asignada.materiales||[]) : [];
+  const listaMed = cot.lista_asignada ? (cot.lista_asignada.medicamentos||[]) : [];
+  const cotBody = [
+    ...conceptosArr.map(it=>[String(it.cantidad), it.descripcion, fmtMoney(it.total)]),
+    ...listaMed.map(it=>[String(it.cantidad), it.descripcion, '—']),
+    ...listaM.map(it=>[String(it.cantidad), it.descripcion, '—'])
+  ];
+  const realBody = [];
+  a.bloques.forEach(b=>{
+    realBody.push([{content:b.nombre, colSpan:3, styles:{fillColor:PALEGUINDA, textColor:GUINDA, fontStyle:'bold', fontSize:FS}}]);
+    b.items.forEach(it=> realBody.push([String(it.cantidad), it.descripcion, fmtMoney(it.total)]));
+  });
+
+  doc.autoTable({ startY:M+40, head:[['Cant.','Concepto cotizado','Total']], body: cotBody.length?cotBody:[['—','Sin conceptos capturados','—']],
+    theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[200,210,230], lineWidth:0.4},
+    headStyles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS},
+    columnStyles:{0:{cellWidth:30}, 2:{cellWidth:60, halign:'right'}},
+    margin:{left:M, right:pageW-M-halfW}, tableWidth:halfW });
+  const y1 = doc.lastAutoTable.finalY;
+
+  doc.autoTable({ startY:M+40, head:[['Cant.','Concepto real','Total']], body: realBody.length?realBody:[['—','Sin datos','—']],
+    theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[200,210,230], lineWidth:0.4},
+    headStyles:{fillColor:PALEGUINDA, textColor:GUINDA, fontStyle:'bold', fontSize:FS},
+    columnStyles:{0:{cellWidth:30}, 2:{cellWidth:60, halign:'right'}},
+    margin:{left:pageW-M-halfW, right:M}, tableWidth:halfW });
+  const y2 = doc.lastAutoTable.finalY;
+
+  let y = Math.max(y1,y2) + 14;
+  const totalCotizado = cot.costo_propuesta||0, totalReal = a.total_general||0, diff = totalReal-totalCotizado;
+  const pct = totalCotizado ? Math.round(diff/totalCotizado*1000)/10 : 0;
+  if(y+30 > pageH-M-16){ doc.addPage(); y = M+18; }
+  doc.setFillColor(40,40,45);
+  doc.rect(M, y, pageW-2*M, 26, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS+1); doc.setTextColor(255,255,255);
+  doc.text('TOTAL COTIZADO: '+fmtMoney(totalCotizado), M+14, y+16);
+  doc.text('TOTAL REAL: '+fmtMoney(totalReal), pageW/2-40, y+16);
+  doc.text('DIFERENCIA: '+(diff>0?'+':'')+fmtMoney(diff)+' ('+(pct>0?'+':'')+pct+'%)', pageW-M-14, y+16, {align:'right'});
+
+  const n = doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(FS-1); doc.setTextColor(150,150,150);
+    doc.text('Hospital Noor Clinic', M, pageH-M+8);
+    doc.text('Página '+i+' de '+n, pageW-M, pageH-M+8, {align:'right'});
+  }
+  doc.save('Comparativo_'+slugify(a.procedimiento)+'_'+cot.id+'.pdf');
+  logAudit('Análisis de cuentas', a.id, 'Reporte comparativo generado', cot.id);
+  toast('PDF generado');
+}
 function verAnalisisDetalle(id){
   const a = DB.analisis_cuentas.find(x=>x.id===id); if(!a) return;
   const m = medicoById(a.id_medico);
@@ -5488,6 +5602,7 @@ function verAnalisisDetalle(id){
         <div class="detail-row"><span class="k">Cotización vinculada</span><span class="v">${cot.id}</span></div>
         <div class="detail-row"><span class="k">Monto cotizado</span><span class="v">${fmtMoney(cot.costo_propuesta)}</span></div>
         <div class="detail-row" style="border-bottom:none;"><span class="k">Diferencia vs. análisis real</span><span class="v" style="font-weight:700; color:${a.total_general>cot.costo_propuesta?'var(--red)':'var(--green)'};">${fmtMoney(a.total_general-cot.costo_propuesta)}</span></div>
+        <button class="btn btn-sm btn-guinda" style="width:100%; margin-top:10px;" onclick="abrirComparativoVsCotizado('${a.id}')">${icon('analytics')} Ver comparativo visual</button>
       </div>` : ''}
       ${a.bloques.map(b=>`
         <div class="card" style="margin-bottom:10px;">
