@@ -566,7 +566,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.12';
+const APP_VERSION = 'v2.0.13';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5369,12 +5369,17 @@ function drawAnalisisTree(){
       </div>
       ${analisisM.map(a=>{
         const mismos = analisisM.filter(x=>x.procedimiento.trim().toLowerCase()===a.procedimiento.trim().toLowerCase());
-        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border);">
-          <div style="flex:1; min-width:0;">
+        const cot = a.id_cotizacion ? DB.cotizaciones.find(c=>String(c.id)===String(a.id_cotizacion)) : null;
+        const diff = cot ? a.total_general - cot.costo_propuesta : null;
+        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border); flex-wrap:wrap;">
+          <div style="flex:1; min-width:220px;">
             <div style="font-size:12.5px; font-weight:600;">${a.procedimiento}${a.id_cotizacion?` <span class="mono" style="font-weight:500; color:var(--text-faint);">· ${a.id_cotizacion}</span>`:''}</div>
-            <div style="font-size:11px; color:var(--text-faint);">${fmtDate(a.fecha_creacion)} · ${a.bloques.length} bloque(s)</div>
+            <div style="font-size:11px; color:var(--text-faint);">${fmtDate(a.fecha_creacion)} · ${a.bloques.length} bloque(s)${cot?` · Cotizado: ${fmtMoney(cot.costo_propuesta)}`:''}</div>
           </div>
-          <div style="font-weight:700; font-family:var(--font-display); font-size:14px; color:var(--primary);">${fmtMoney(a.total_general)}</div>
+          <div style="text-align:right;">
+            <div style="font-weight:700; font-family:var(--font-display); font-size:14px; color:var(--primary);">${fmtMoney(a.total_general)}</div>
+            ${cot ? `<div style="font-size:10.5px; font-weight:700; color:${diff>0?'var(--red)':(diff<0?'var(--green)':'var(--text-faint)')};">${diff>0?'+':''}${fmtMoney(diff)} vs. cotizado</div>` : ''}
+          </div>
           ${mismos.length>1 ? `<button class="btn btn-sm" onclick="abrirComparativoAnalisis('${m.id}','${a.procedimiento.replace(/'/g,"\\'")}')">${icon('analytics')} Comparar</button>` : ''}
           <button class="btn btn-sm" onclick="verAnalisisDetalle('${a.id}')">${icon('quote')} Ver</button>
         </div>`;
