@@ -564,7 +564,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.8';
+const APP_VERSION = 'v2.0.9';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3383,54 +3383,54 @@ function generateAseguradoraPDF(id){
   const pageH = doc.internal.pageSize.getHeight();
   const M = 28.35; // 1 cm
   const NAVY=[27,62,115], BLUE=[38,96,171], PALEBLUE=[238,243,251], PALEGUINDA=[249,235,240], GUINDA=[142,27,60], GRAY=[70,78,86];
-  const FS = 11; // tamaño de letra único para todo el documento
+  const FS = 9; // Arial (Helvetica) 9pt en todo el documento — reporte ejecutivo compacto
 
   function footer(){
     const n = doc.internal.getNumberOfPages();
     for(let i=1;i<=n;i++){
       doc.setPage(i);
-      doc.setFontSize(9); doc.setTextColor(140,148,155); doc.setFont('helvetica','normal');
+      doc.setFontSize(7.5); doc.setTextColor(140,148,155); doc.setFont('helvetica','normal');
       doc.text(HOSP_INFO.direccion+' | Tel. '+HOSP_INFO.telefono, M, pageH-M+8);
       doc.text('Página '+i+' de '+n, pageW-M, pageH-M+8, {align:'right'});
     }
   }
 
-  try{ doc.addImage(window.LOGO_URI, 'JPEG', M, M-6, 38, 38); }catch(e){}
+  try{ doc.addImage(window.LOGO_URI, 'JPEG', M, M-6, 30, 30); }catch(e){}
   doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(60,68,76);
-  doc.text('Fecha: '+fmtDate(a.fecha_creacion), pageW-M, M+8, {align:'right'});
+  doc.text('Fecha: '+fmtDate(a.fecha_creacion), pageW-M, M+6, {align:'right'});
 
-  let y = M+52;
+  let y = M+38;
   doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(M, y, pageW-M, y);
-  y += 16;
-  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+  y += 13;
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS+1); doc.setTextColor(...NAVY);
   doc.text('COTIZACIÓN DE PROCEDIMIENTO — '+a.aseguradora.toUpperCase(), pageW/2, y, {align:'center'});
-  y += 15;
+  y += 13;
   doc.setFontSize(FS);
   const procLines = doc.splitTextToSize(a.procedimiento.toUpperCase(), pageW-2*M-20);
   doc.text(procLines, pageW/2, y, {align:'center'});
-  y += procLines.length*13 + 8;
+  y += procLines.length*11 + 6;
   doc.setDrawColor(...NAVY); doc.line(M, y, pageW-M, y);
-  y += 18;
+  y += 14;
 
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(20,30,40);
   doc.text('MÉDICO:', M, y);
   doc.setFont('helvetica','normal');
-  doc.text((m.nombre||'—').toUpperCase(), M+56, y);
-  y += 18;
+  doc.text((m.nombre||'—').toUpperCase(), M+42, y);
+  y += 14;
 
   doc.setFillColor(252,248,238); doc.setDrawColor(225,205,150);
   const disc = 'El presente presupuesto es un desglose estimado para '+a.aseguradora+'. El costo indicado es aproximado y puede variar dependiendo de la situación médica del paciente, tiempos quirúrgicos y necesidades extraordinarias de la cirugía. Los conceptos y montos aquí expresados tienen carácter informativo y están sujetos a las condiciones generales descritas al final de este documento.';
   const discLines = doc.splitTextToSize(disc, pageW-2*M-14);
-  const discH = discLines.length*13 + 12;
+  const discH = discLines.length*10.5 + 9;
   doc.rect(M, y, pageW-2*M, discH, 'FD');
   doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(100,80,30);
-  doc.text(discLines, M+7, y+15);
-  y += discH + 16;
+  doc.text(discLines, M+7, y+12);
+  y += discH + 10;
 
   // ---- Bloque HOSPITAL ----
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
   doc.text('HOSPITAL', M, y);
-  y += 6;
+  y += 4;
   const groups = {};
   (a.hospital_conceptos||[]).forEach(l=>{ const g=(l.categoria||'OTROS').toUpperCase(); (groups[g]=groups[g]||[]).push(l); });
   const body = [];
@@ -3439,76 +3439,79 @@ function generateAseguradoraPDF(id){
     groups[g].forEach(l=> body.push([l.descripcion, String(l.cantidad)]));
   });
   if(!body.length) body.push(['Sin conceptos capturados','—']);
-  doc.autoTable({ startY:y+6, head:[['Concepto','Cant.']], body,
+  doc.autoTable({ startY:y+4, head:[['Concepto','Cant.']], body,
     theme:'plain', headStyles:{fillColor:[255,255,255], textColor:NAVY, fontStyle:'bold', fontSize:FS, lineWidth:{bottom:1}, lineColor:NAVY},
-    bodyStyles:{fontSize:FS, textColor:[30,40,50]}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:55}} });
-  y = doc.lastAutoTable.finalY + 8;
+    bodyStyles:{fontSize:FS, textColor:[30,40,50], cellPadding:3}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:45}} });
+  y = doc.lastAutoTable.finalY + 6;
 
   doc.setFillColor(...PALEBLUE); doc.setDrawColor(...NAVY);
-  doc.rect(M, y, pageW-2*M, 28, 'FD');
+  doc.rect(M, y, pageW-2*M, 22, 'FD');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
-  doc.text('COSTO APROXIMADO DEL HOSPITAL (IVA INCLUIDO)', M+8, y+18);
-  doc.text(fmtMoney(a.hospital_total), pageW-M-8, y+18, {align:'right'});
-  y += 42;
+  doc.text('COSTO APROXIMADO DEL HOSPITAL (IVA INCLUIDO)', M+8, y+14);
+  doc.text(fmtMoney(a.hospital_total), pageW-M-8, y+14, {align:'right'});
+  y += 32;
 
-  if(y > pageH-M-140){ doc.addPage(); y = M+20; }
+  if(y > pageH-M-110){ doc.addPage(); y = M+18; }
 
   // ---- Bloque PROVEEDOR ----
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
   doc.text('INSUMOS DE PROVEEDOR — '+(a.proveedor_nombre||'SIN ESPECIFICAR').toUpperCase(), M, y);
-  y += 8;
+  y += 4;
 
   const provBody = (a.proveedor_conceptos||[]).length ? a.proveedor_conceptos.map(l=>[l.descripcion, String(l.cantidad)]) : [['Sin insumos capturados','—']];
-  doc.autoTable({ startY:y+6, head:[['Descripción','Cant.']], body:provBody,
+  doc.autoTable({ startY:y+4, head:[['Descripción','Cant.']], body:provBody,
     theme:'plain', headStyles:{fillColor:[255,255,255], textColor:GUINDA, fontStyle:'bold', fontSize:FS, lineWidth:{bottom:1}, lineColor:GUINDA},
-    bodyStyles:{fontSize:FS, textColor:[30,40,50]}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:55}} });
-  y = doc.lastAutoTable.finalY + 8;
+    bodyStyles:{fontSize:FS, textColor:[30,40,50], cellPadding:3}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:45}} });
+  y = doc.lastAutoTable.finalY + 6;
 
   doc.setFillColor(...PALEGUINDA); doc.setDrawColor(...GUINDA);
-  doc.rect(M, y, pageW-2*M, 34, 'FD');
+  doc.rect(M, y, pageW-2*M, 26, 'FD');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
-  doc.text('COSTO APROXIMADO DEL PROVEEDOR (IVA INCLUIDO)', M+8, y+15);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9);
-  doc.text('Puede variar en función del material utilizado.', M+8, y+27);
+  doc.text('COSTO APROXIMADO DEL PROVEEDOR (IVA INCLUIDO)', M+8, y+11);
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS-1.5);
+  doc.text('Puede variar en función del material utilizado.', M+8, y+21);
   doc.setFont('helvetica','bold'); doc.setFontSize(FS);
-  doc.text(fmtMoney(a.proveedor_total), pageW-M-8, y+20, {align:'right'});
-  y += 48;
+  doc.text(fmtMoney(a.proveedor_total), pageW-M-8, y+16, {align:'right'});
+  y += 36;
 
-  if(y > pageH-M-60){ doc.addPage(); y = M+20; }
+  if(y > pageH-M-50){ doc.addPage(); y = M+18; }
   doc.setFillColor(40,40,45); doc.setDrawColor(20,20,24);
-  doc.rect(M, y, pageW-2*M, 30, 'FD');
+  doc.rect(M, y, pageW-2*M, 24, 'FD');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(255,255,255);
-  doc.text('COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (HOSPITAL + PROVEEDOR, IVA INCLUIDO)', M+8, y+19, {maxWidth: pageW-2*M-160});
-  doc.setFontSize(13);
-  doc.text(fmtMoney(a.total_general), pageW-M-8, y+20, {align:'right'});
+  doc.text('COSTO TOTAL APROXIMADO DEL PROCEDIMIENTO (HOSPITAL + PROVEEDOR, IVA INCLUIDO)', M+8, y+15, {maxWidth: pageW-2*M-150});
+  doc.setFontSize(11);
+  doc.text(fmtMoney(a.total_general), pageW-M-8, y+16, {align:'right'});
+  y += 36;
 
-  footer();
-
-  // Página final: condiciones generales en 2 columnas
-  doc.addPage();
-  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
-  doc.text('CONDICIONES GENERALES DEL PRESUPUESTO', pageW/2, M+10, {align:'center'});
-  doc.setDrawColor(...NAVY); doc.line(M, M+18, pageW-M, M+18);
-
+  // ---- Condiciones generales — continúan en la misma página si hay espacio, sin salto forzado ----
   const cond = a.condiciones || [];
-  const gap = 14;
-  const colW = (pageW - M*2 - gap)/2;
-  let cx = [M, M+colW+gap], cy = [M+34, M+34];
-  doc.setFontSize(FS);
-  cond.forEach((cl,i)=>{
-    const col = i%2;
-    const titleLines = doc.splitTextToSize(cl.titulo || ('Condición '+(i+1)), colW-16);
-    const textLines = doc.splitTextToSize(cl.texto, colW-16);
-    const boxH = 12 + titleLines.length*13 + textLines.length*13 + 8;
-    if(cy[col]+boxH > pageH-M){ doc.addPage(); cy=[M+16,M+16]; }
-    doc.setDrawColor(...BLUE); doc.setFillColor(252,253,255);
-    doc.roundedRect(cx[col], cy[col], colW, boxH, 4, 4, 'FD');
-    doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...BLUE);
-    doc.text(titleLines, cx[col]+8, cy[col]+15);
-    doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(...GRAY);
-    doc.text(textLines, cx[col]+8, cy[col]+15+titleLines.length*13);
-    cy[col] += boxH + 10;
-  });
+  if(cond.length){
+    if(y > pageH-M-70){ doc.addPage(); y = M+18; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+    doc.text('CONDICIONES GENERALES DEL PRESUPUESTO', M, y);
+    y += 4;
+    doc.setDrawColor(...NAVY); doc.line(M, y, pageW-M, y);
+    y += 12;
+
+    const gap = 10;
+    const colW = (pageW - M*2 - gap)/2;
+    let cx = [M, M+colW+gap], cy = [y, y];
+    doc.setFontSize(FS);
+    cond.forEach((cl,i)=>{
+      const col = i%2;
+      const titleLines = doc.splitTextToSize(cl.titulo || ('Condición '+(i+1)), colW-14);
+      const textLines = doc.splitTextToSize(cl.texto, colW-14);
+      const boxH = 9 + titleLines.length*10.5 + textLines.length*10.5 + 6;
+      if(cy[col]+boxH > pageH-M){ doc.addPage(); cy=[M+16,M+16]; }
+      doc.setDrawColor(...BLUE); doc.setFillColor(252,253,255);
+      doc.roundedRect(cx[col], cy[col], colW, boxH, 3, 3, 'FD');
+      doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...BLUE);
+      doc.text(titleLines, cx[col]+7, cy[col]+12);
+      doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(...GRAY);
+      doc.text(textLines, cx[col]+7, cy[col]+12+titleLines.length*10.5);
+      cy[col] += boxH + 8;
+    });
+  }
 
   footer();
 
