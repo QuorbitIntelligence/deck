@@ -564,7 +564,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.10';
+const APP_VERSION = 'v2.0.11';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1753,20 +1753,28 @@ function openConceptoModal(id){
       </div>
 
       <div id="cc-block-interno" style="display:${tipoCosto==='interno'?'block':'none'}; background:var(--primary-light); border-radius:12px; padding:14px 16px; margin-bottom:14px;">
+        <div class="chip-filter" id="cc-noor-modo-chips" style="margin-bottom:10px;">
+          <button type="button" class="chip ${(!c||c.captura_modo_noor!=='total')?'active':''}" data-modo="subtotal">Voy a capturar el Subtotal (sin IVA)</button>
+          <button type="button" class="chip ${(c&&c.captura_modo_noor==='total')?'active':''}" data-modo="total">Voy a capturar el Total (con IVA incluido)</button>
+        </div>
         <div class="form-grid">
           <div class="form-field"><label>Costo Noor (sin IVA)</label><input class="input" type="number" id="cc-costo-noor" style="width:100%;" value="${c&&c.costo_noor!=null?c.costo_noor:''}"></div>
           <div class="form-field"><label>IVA (16%)</label><input class="input" id="cc-iva-noor" style="width:100%;" disabled></div>
-          <div class="form-field"><label>Total (IVA incluido)</label><input class="input" id="cc-total-noor" style="width:100%; font-weight:700;" disabled></div>
+          <div class="form-field"><label>Total (IVA incluido)</label><input class="input" type="number" id="cc-total-noor" style="width:100%; font-weight:700;" value="${c&&c.total_noor!=null?c.total_noor:''}"></div>
           <div class="form-field"><label>Vigencia del costo</label><input class="input" type="date" id="cc-vigencia-noor" style="width:100%;" value="${c&&c.vigencia_costo_noor?c.vigencia_costo_noor:'2026-12-31'}"></div>
         </div>
       </div>
 
       <div id="cc-block-proveedor" style="display:${tipoCosto==='proveedor'?'block':'none'}; background:var(--guinda-light); border-radius:12px; padding:14px 16px; margin-bottom:14px;">
+        <div class="chip-filter" id="cc-prov-modo-chips" style="margin-bottom:10px;">
+          <button type="button" class="chip ${(!c||c.captura_modo_prov!=='total')?'active':''}" data-modo="subtotal">Voy a capturar el costo base del proveedor (sin IVA)</button>
+          <button type="button" class="chip ${(c&&c.captura_modo_prov==='total')?'active':''}" data-modo="total">Voy a capturar el Total final (con IVA incluido)</button>
+        </div>
         <div class="form-grid">
           <div class="form-field"><label>Costo de proveedor</label><input class="input" type="number" id="cc-costo-prov" style="width:100%;" value="${c&&c.costo_proveedor!=null?c.costo_proveedor:''}"></div>
           <div class="form-field"><label>Ganancia Noor (%)</label><input class="input" type="number" id="cc-ganancia-pct" style="width:100%;" value="${c&&c.ganancia_noor_pct!=null?c.ganancia_noor_pct:20}"></div>
           <div class="form-field"><label>IVA (16% sobre costo + ganancia)</label><input class="input" id="cc-iva-prov" style="width:100%;" disabled></div>
-          <div class="form-field"><label>Total (costo + ganancia + IVA)</label><input class="input" id="cc-total-prov" style="width:100%; font-weight:700;" disabled></div>
+          <div class="form-field"><label>Total (costo + ganancia + IVA)</label><input class="input" type="number" id="cc-total-prov" style="width:100%; font-weight:700;" value="${c&&c.total_proveedor!=null?c.total_proveedor:''}"></div>
           <div class="form-field full"><label>Vigencia del costo (el proveedor lo actualiza)</label><input class="input" type="date" id="cc-vigencia-prov" style="width:100%;" value="${c&&c.vigencia_costo_proveedor?c.vigencia_costo_proveedor:''}"></div>
         </div>
       </div>
@@ -1787,24 +1795,60 @@ function openConceptoModal(id){
     document.getElementById('cc-block-interno').style.display = tipoActual==='interno' ? 'block':'none';
     document.getElementById('cc-block-proveedor').style.display = tipoActual==='proveedor' ? 'block':'none';
   });
+
+  let noorModo = c && c.captura_modo_noor==='total' ? 'total' : 'subtotal';
+  let provModo = c && c.captura_modo_prov==='total' ? 'total' : 'subtotal';
+  const noorSubEl = document.getElementById('cc-costo-noor'), noorTotEl = document.getElementById('cc-total-noor');
+  const provSubEl = document.getElementById('cc-costo-prov'), provTotEl = document.getElementById('cc-total-prov');
+
+  function applyNoorModoUI(){ noorSubEl.disabled = (noorModo==='total'); noorTotEl.disabled = (noorModo==='subtotal'); }
+  function applyProvModoUI(){ provSubEl.disabled = (provModo==='total'); provTotEl.disabled = (provModo==='subtotal'); }
+
+  document.getElementById('cc-noor-modo-chips').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
+    noorModo = b.dataset.modo;
+    document.getElementById('cc-noor-modo-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active', x===b));
+    applyNoorModoUI(); recalcNoor();
+  });
+  document.getElementById('cc-prov-modo-chips').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
+    provModo = b.dataset.modo;
+    document.getElementById('cc-prov-modo-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active', x===b));
+    applyProvModoUI(); recalcProveedor();
+  });
+
   function recalcNoor(){
-    const base = parseFloat(document.getElementById('cc-costo-noor').value)||0;
-    const iva = base*0.16, total = base+iva;
-    document.getElementById('cc-iva-noor').value = fmtMoney(iva);
-    document.getElementById('cc-total-noor').value = fmtMoney(total);
+    if(noorModo==='subtotal'){
+      const base = parseFloat(noorSubEl.value)||0;
+      const iva = base*0.16, total = base+iva;
+      document.getElementById('cc-iva-noor').value = fmtMoney(iva);
+      noorTotEl.value = Math.round(total*100)/100;
+    } else {
+      const total = parseFloat(noorTotEl.value)||0;
+      const base = total/1.16, iva = total-base;
+      document.getElementById('cc-iva-noor').value = fmtMoney(iva);
+      noorSubEl.value = Math.round(base*100)/100;
+    }
   }
   function recalcProveedor(){
-    const base = parseFloat(document.getElementById('cc-costo-prov').value)||0;
     const pct = parseFloat(document.getElementById('cc-ganancia-pct').value)||0;
-    const ganancia = base*(pct/100);
-    const conGanancia = base+ganancia;
-    const iva = conGanancia*0.16;
-    const total = conGanancia+iva;
-    document.getElementById('cc-iva-prov').value = fmtMoney(iva);
-    document.getElementById('cc-total-prov').value = fmtMoney(total);
+    if(provModo==='subtotal'){
+      const base = parseFloat(provSubEl.value)||0;
+      const ganancia = base*(pct/100);
+      const conGanancia = base+ganancia;
+      const iva = conGanancia*0.16, total = conGanancia+iva;
+      document.getElementById('cc-iva-prov').value = fmtMoney(iva);
+      provTotEl.value = Math.round(total*100)/100;
+    } else {
+      const total = parseFloat(provTotEl.value)||0;
+      const conGanancia = total/1.16;
+      const iva = total-conGanancia;
+      const base = conGanancia/(1+pct/100);
+      document.getElementById('cc-iva-prov').value = fmtMoney(iva);
+      provSubEl.value = Math.round(base*100)/100;
+    }
   }
-  document.getElementById('cc-costo-noor').oninput = recalcNoor;
-  document.getElementById('cc-costo-prov').oninput = recalcProveedor;
+  applyNoorModoUI(); applyProvModoUI();
+  noorSubEl.oninput = recalcNoor; noorTotEl.oninput = recalcNoor;
+  provSubEl.oninput = recalcProveedor; provTotEl.oninput = recalcProveedor;
   document.getElementById('cc-ganancia-pct').oninput = recalcProveedor;
   recalcNoor(); recalcProveedor();
 
@@ -1823,8 +1867,8 @@ function openConceptoModal(id){
       descripcion: desc, categoria: document.getElementById('cc-cat').value,
       grupo_eleccion: document.getElementById('cc-grupo').value.trim() || null,
       tipo_costo: tipoActual,
-      costo_noor: costoNoor, iva_noor: ivaNoor, total_noor: totalNoor, vigencia_costo_noor: document.getElementById('cc-vigencia-noor').value || null,
-      costo_proveedor: costoProv, ganancia_noor_pct: gananciaPct, iva_proveedor: ivaProv, total_proveedor: totalProv, vigencia_costo_proveedor: document.getElementById('cc-vigencia-prov').value || null,
+      costo_noor: costoNoor, iva_noor: ivaNoor, total_noor: totalNoor, vigencia_costo_noor: document.getElementById('cc-vigencia-noor').value || null, captura_modo_noor: noorModo,
+      costo_proveedor: costoProv, ganancia_noor_pct: gananciaPct, iva_proveedor: ivaProv, total_proveedor: totalProv, vigencia_costo_proveedor: document.getElementById('cc-vigencia-prov').value || null, captura_modo_prov: provModo,
       costo_sin_iva: tipoActual==='proveedor' ? totalProv : totalNoor,
       notas: document.getElementById('cc-notas').value,
       activo: document.getElementById('cc-activo').checked
@@ -3472,6 +3516,8 @@ function generateAseguradoraPDF(id){
     bodyStyles:{fontSize:FS, textColor:[30,40,50], cellPadding:3}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:45}} });
   y = doc.lastAutoTable.finalY + 6;
 
+  const FOOTER_TOP = pageH - M - 16;
+  if(y + 22 > FOOTER_TOP){ doc.addPage(); y = M+18; }
   doc.setFillColor(...PALEBLUE); doc.setDrawColor(...NAVY);
   doc.rect(M, y, pageW-2*M, 22, 'FD');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
@@ -3493,6 +3539,7 @@ function generateAseguradoraPDF(id){
       bodyStyles:{fontSize:FS, textColor:[30,40,50], cellPadding:3}, margin:{left:M,right:M}, columnStyles:{1:{halign:'center', cellWidth:45}} });
     y = doc.lastAutoTable.finalY + 6;
 
+    if(y + 26 > FOOTER_TOP){ doc.addPage(); y = M+18; }
     doc.setFillColor(...PALEGUINDA); doc.setDrawColor(...GUINDA);
     doc.rect(M, y, pageW-2*M, 26, 'FD');
     doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...GUINDA);
@@ -3504,7 +3551,7 @@ function generateAseguradoraPDF(id){
     y += 36;
   }
 
-  if(y > pageH-M-50){ doc.addPage(); y = M+18; }
+  if(y + 24 > FOOTER_TOP){ doc.addPage(); y = M+18; }
   doc.setFillColor(40,40,45); doc.setDrawColor(20,20,24);
   doc.rect(M, y, pageW-2*M, 24, 'FD');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(255,255,255);
