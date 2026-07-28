@@ -473,6 +473,7 @@ window.CRM_ICON_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAI
 /* ============ ICONS ============ */
 if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
 const ICON = {
+  analytics:'<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   megaphone:'<path d="M3 11v3a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 8a4 4 0 0 1 0 7"/><path d="M18.5 5.5a8 8 0 0 1 0 12"/>',
   mic:'<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
@@ -530,6 +531,7 @@ let DB = {
   plan_objetivos_semanales: RAW.plan_objetivos_semanales || [],
   grupos_difusion: RAW.grupos_difusion || [],
   campanas_difusion: RAW.campanas_difusion || [],
+  analisis_cuentas: RAW.analisis_cuentas || [],
   auditoria: []
 };
 const ESTADOS_COT = {
@@ -564,7 +566,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.11';
+const APP_VERSION = 'v2.0.12';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -594,6 +596,7 @@ async function loadSession(){
       if(extra.plan_objetivos_semanales) DB.plan_objetivos_semanales = extra.plan_objetivos_semanales;
       if(extra.grupos_difusion) DB.grupos_difusion = extra.grupos_difusion;
       if(extra.campanas_difusion) DB.campanas_difusion = extra.campanas_difusion;
+      if(extra.analisis_cuentas) DB.analisis_cuentas = extra.analisis_cuentas;
       if(extra.medicos_overrides){
         Object.entries(extra.medicos_overrides).forEach(([id,ov])=>{
           const md = DB.medicos.find(m=>String(m.id)===id);
@@ -644,6 +647,7 @@ function persistExtra(){
         plan_objetivos_semanales: DB.plan_objetivos_semanales,
         grupos_difusion: DB.grupos_difusion,
         campanas_difusion: DB.campanas_difusion,
+        analisis_cuentas: DB.analisis_cuentas,
         medicos_custom: DB.medicos.filter(m=>m.__new),
         medicos_overrides: Object.fromEntries(
           DB.medicos.filter(m=>!m.__new && m.__edited).map(m=>[String(m.id),{
@@ -770,6 +774,7 @@ const ROUTES = [
   {id:'convenios', label:'Convenios', icon:'deals', group:'Relación', tone:'green'},
   {id:'difusion', label:'Grupos de Difusión', icon:'megaphone', group:'Relación', tone:'guinda'},
   {id:'condiciones', label:'Condiciones', icon:'history', group:'Relación', tone:'blue'},
+  {id:'analisis', label:'Análisis de Cuentas', icon:'analytics', group:'Relación', tone:'green'},
   {id:'config', label:'Configuración', icon:'config', group:'Sistema', tone:'muted'},
 ];
 let CURRENT_ROUTE = 'dashboard';
@@ -837,12 +842,13 @@ function navigate(route){
     convenios:['Convenios','Descuentos y beneficios por médico'],
     difusion:['Grupos de Difusión','Envío de promociones por WhatsApp a grupos de médicos'],
     condiciones:['Condiciones predefinidas','Cláusulas reutilizables para cotizaciones y convenios'],
+    analisis:['Análisis de Cuentas','Desglose real de costos por médico, para cotizar más exacto la próxima vez'],
     config:['Configuración','Preferencias, respaldos e histórico de auditoría']};
   document.getElementById('page-title').textContent = titles[route][0];
   document.getElementById('page-crumb').textContent = titles[route][1];
   const renderers = {dashboard:renderDashboard, medicos:renderMedicos, catalogo:renderCatalogo,
     procedimientos:renderProcedimientos, paquetes:renderPaquetes, listas_materiales:renderListasMateriales, bloques:renderBloques,
-    cotizaciones:renderCotizaciones, aseguradoras:renderAseguradoras, casos:renderCasos, calendario:renderCalendario, plan_trabajo:renderPlanTrabajo, convenios:renderConvenios, difusion:renderDifusion, condiciones:renderCondiciones, config:renderConfig};
+    cotizaciones:renderCotizaciones, aseguradoras:renderAseguradoras, casos:renderCasos, calendario:renderCalendario, plan_trabajo:renderPlanTrabajo, convenios:renderConvenios, difusion:renderDifusion, condiciones:renderCondiciones, analisis:renderAnalisis, config:renderConfig};
   renderers[route]();
   document.getElementById('content').scrollTo?.(0,0);
   window.scrollTo(0,0);
@@ -5289,6 +5295,242 @@ function openCondicionEditModal(id){
     logAudit('Condición', cl.id, 'Edición', (cl.titulo?cl.titulo+': ':'')+texto.slice(0,50));
     persistExtra(); closeModal(); toast('Condición actualizada'); drawCondList();
   };
+}
+/* ============================================================
+   ANÁLISIS DE CUENTAS — desglose real de costos por médico
+============================================================ */
+function parsearAnalisisTexto(texto){
+  const lines = (texto||'').split('\n').map(l=>l.trim()).filter(l=>l.length);
+  const bloques = [];
+  let currentBlock = null;
+  const HEADER_RE = /^cantidad\s+descripci[oó]n\s+precio(\s+unitario)?\s+total$/i;
+  function parseNum(s){
+    if(s==null) return null;
+    const cleaned = String(s).replace(/[$,]/g,'').trim();
+    if(!/^-?\d+(\.\d+)?$/.test(cleaned)) return null;
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  }
+  lines.forEach(line=>{
+    if(HEADER_RE.test(line)) return;
+    const tokens = line.split(/\s+/);
+    if(tokens.length >= 4){
+      const cantidad = parseNum(tokens[0]);
+      const total = parseNum(tokens[tokens.length-1]);
+      const precio = parseNum(tokens[tokens.length-2]);
+      if(cantidad!=null && total!=null && precio!=null){
+        const descripcion = tokens.slice(1, tokens.length-2).join(' ');
+        if(descripcion){
+          if(!currentBlock){ currentBlock = {nombre:'General', items:[]}; bloques.push(currentBlock); }
+          currentBlock.items.push({cantidad, descripcion, precio, total});
+          return;
+        }
+      }
+    }
+    currentBlock = {nombre: line, items:[]};
+    bloques.push(currentBlock);
+  });
+  bloques.forEach(b=> b.subtotal = b.items.reduce((s,it)=>s+(it.total||0),0));
+  const total_general = bloques.reduce((s,b)=>s+b.subtotal,0);
+  return { bloques, total_general };
+}
+function medicosConCotizacion(){
+  const ids = new Set(DB.cotizaciones.map(c=>String(c.id_medico)));
+  return DB.medicos.filter(m=>ids.has(String(m.id)));
+}
+function cotizacionesDeMedico(medId){
+  return DB.cotizaciones.filter(c=>String(c.id_medico)===String(medId)).sort((a,b)=>new Date(b.fecha_creacion)-new Date(a.fecha_creacion));
+}
+function renderAnalisis(){
+  document.getElementById('content').innerHTML = `
+    <div class="toolbar">
+      <div class="searchbox" style="width:260px;">${icon('search')}<input id="an-search" placeholder="Buscar médico…"></div>
+      <button class="btn btn-primary" style="margin-left:auto;" onclick="openAnalisisForm()">${icon('plus')} Nuevo análisis</button>
+    </div>
+    <div id="an-tree"></div>`;
+  document.getElementById('an-search').oninput = ()=> drawAnalisisTree();
+  drawAnalisisTree();
+}
+function drawAnalisisTree(){
+  const el = document.getElementById('an-tree'); if(!el) return;
+  const search = document.getElementById('an-search')?.value || '';
+  const medIdsConAnalisis = [...new Set(DB.analisis_cuentas.map(a=>String(a.id_medico)))];
+  let medicos = medIdsConAnalisis.map(id=>medicoById(id)).filter(Boolean);
+  if(search) medicos = medicos.filter(m=>fuzzyMatch(m.nombre, search));
+  medicos.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  if(!medicos.length){ el.innerHTML = `<div class="empty-state">${icon('analytics')}<div>${DB.analisis_cuentas.length?'Sin resultados para esa búsqueda.':'Aún no hay análisis de cuentas capturados. Crea el primero con "Nuevo análisis".'}</div></div>`; return; }
+  el.innerHTML = medicos.map(m=>{
+    const analisisM = DB.analisis_cuentas.filter(a=>String(a.id_medico)===String(m.id)).sort((a,b)=>new Date(b.fecha_creacion)-new Date(a.fecha_creacion));
+    return `<div class="card" style="margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <div class="avatar">${initials(m.nombre)}</div>
+        <div style="flex:1; min-width:0;"><div style="font-weight:700; font-size:13.5px;">${m.nombre}</div><div style="font-size:11px; color:var(--text-faint);">${m.especialidad}</div></div>
+        <span class="pill pill-green">${analisisM.length} análisis</span>
+      </div>
+      ${analisisM.map(a=>{
+        const mismos = analisisM.filter(x=>x.procedimiento.trim().toLowerCase()===a.procedimiento.trim().toLowerCase());
+        return `<div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border);">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:12.5px; font-weight:600;">${a.procedimiento}${a.id_cotizacion?` <span class="mono" style="font-weight:500; color:var(--text-faint);">· ${a.id_cotizacion}</span>`:''}</div>
+            <div style="font-size:11px; color:var(--text-faint);">${fmtDate(a.fecha_creacion)} · ${a.bloques.length} bloque(s)</div>
+          </div>
+          <div style="font-weight:700; font-family:var(--font-display); font-size:14px; color:var(--primary);">${fmtMoney(a.total_general)}</div>
+          ${mismos.length>1 ? `<button class="btn btn-sm" onclick="abrirComparativoAnalisis('${m.id}','${a.procedimiento.replace(/'/g,"\\'")}')">${icon('analytics')} Comparar</button>` : ''}
+          <button class="btn btn-sm" onclick="verAnalisisDetalle('${a.id}')">${icon('quote')} Ver</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+function openAnalisisForm(medicoPreset){
+  const conCotizacion = medicosConCotizacion();
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Nuevo análisis de cuentas</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div class="form-field full picker-wrap" style="position:relative; margin-bottom:12px;"><label>Médico (solo los que ya tienen alguna cotización)</label>
+        <div class="searchbox" style="width:100%;">${icon('search')}<input id="an-medico-search" placeholder="Buscar médico…" autocomplete="off"></div>
+        <div id="an-medico-results" class="picker-results" style="display:none;"></div>
+        <div id="an-medico-chip" style="margin-top:6px;"></div>
+      </div>
+      <div class="form-field full" style="margin-bottom:12px;"><label>Cotización relacionada (opcional, ayuda a autocompletar y comparar)</label>
+        <select class="select" id="an-cotizacion" style="width:100%;"><option value="">— Sin vincular a una cotización —</option></select>
+      </div>
+      <div class="form-field full" style="margin-bottom:14px;"><label>Nombre del procedimiento</label><input class="input uc-input" id="an-procedimiento" style="width:100%;" placeholder="EJ. RINOPLASTÍA FUNCIONAL Y ESTÉTICA"></div>
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+        <div>
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:6px;">Pega aquí el desglose real</label>
+          <textarea class="input" id="an-texto" style="width:100%; min-height:340px; font-family:var(--font-mono,monospace); font-size:11.5px;" placeholder="Hospitalización
+2 CUARTO DE RECUPERACION 1500.00 3000.00
+EQUIPO MEDICO
+1 TORRE DE LAPAROSCOPIA 2500.00 2500.00
+MATERIALES
+MEDICAMENTOS"></textarea>
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:6px;">Vista previa</label>
+          <div id="an-preview" style="border:1px solid var(--border); border-radius:10px; padding:12px; min-height:340px; max-height:340px; overflow-y:auto; background:var(--surface-2);"></div>
+        </div>
+      </div>
+      <div class="form-field full" style="margin-top:14px;"><label>Notas (opcional)</label><textarea class="input" id="an-notas" style="width:100%; min-height:60px;"></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="an-save">Guardar análisis</button></div>`);
+  document.querySelector('.modal').style.width = '920px';
+
+  let medicoSel = null;
+  const searchEl = document.getElementById('an-medico-search');
+  const resultsEl = document.getElementById('an-medico-results');
+  function fillCotizacionSelect(medId){
+    const sel = document.getElementById('an-cotizacion');
+    const cots = cotizacionesDeMedico(medId);
+    sel.innerHTML = '<option value="">— Sin vincular a una cotización —</option>' + cots.map(c=>`<option value="${c.id}">${c.id} — ${c.procedimiento}</option>`).join('');
+  }
+  searchEl.oninput = ()=>{
+    const q = searchEl.value; if(!q.trim()){ resultsEl.style.display='none'; return; }
+    const res = conCotizacion.filter(m=>fuzzyMatch(m.nombre,q)).slice(0,8);
+    resultsEl.innerHTML = res.length ? res.map(m=>`<div class="result-row" data-pick="${m.id}"><div class="result-main"><div class="result-title">${m.nombre}</div><div class="result-sub">${m.especialidad} · ${cotizacionesDeMedico(m.id).length} cotización(es)</div></div></div>`).join('') : `<div class="picker-empty">Sin coincidencias — recuerda que solo aparecen médicos con al menos una cotización.</div>`;
+    resultsEl.style.display='block';
+    resultsEl.querySelectorAll('[data-pick]').forEach(row=> row.onclick=()=>{
+      medicoSel = row.dataset.pick;
+      document.getElementById('an-medico-chip').innerHTML = medicoChipHtml(medicoById(medicoSel));
+      resultsEl.style.display='none'; searchEl.value='';
+      fillCotizacionSelect(medicoSel);
+    });
+  };
+  document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')) resultsEl.style.display='none'; });
+  document.getElementById('an-cotizacion').onchange = (e)=>{
+    const cot = DB.cotizaciones.find(c=>String(c.id)===e.target.value);
+    if(cot) document.getElementById('an-procedimiento').value = cot.procedimiento;
+  };
+  function drawPreview(){
+    const { bloques, total_general } = parsearAnalisisTexto(document.getElementById('an-texto').value);
+    const prev = document.getElementById('an-preview');
+    if(!bloques.length){ prev.innerHTML = `<div style="font-size:11.5px; color:var(--text-faint); text-align:center; padding:30px 10px;">Pega tu desglose a la izquierda y aquí verás la vista previa organizada.</div>`; return; }
+    prev.innerHTML = bloques.map(b=>`
+      <div style="margin-bottom:12px;">
+        <div style="font-weight:700; font-size:11.5px; color:var(--primary); text-transform:uppercase; margin-bottom:4px;">${b.nombre}</div>
+        ${b.items.length ? b.items.map(it=>`<div style="display:flex; justify-content:space-between; gap:8px; font-size:11px; padding:3px 0; border-bottom:1px dashed var(--border);">
+          <span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion}</span><span style="flex-shrink:0; font-weight:600;">${fmtMoney(it.total)}</span>
+        </div>`).join('') : `<div style="font-size:10.5px; color:var(--text-faint); font-style:italic;">Sin renglones detectados en este bloque.</div>`}
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; margin-top:4px; color:var(--text-muted);"><span>Subtotal ${b.nombre}</span><span>${fmtMoney(b.subtotal)}</span></div>
+      </div>`).join('') + `<div style="display:flex; justify-content:space-between; font-size:13px; font-weight:800; margin-top:10px; padding-top:8px; border-top:2px solid var(--primary); color:var(--primary);"><span>TOTAL GENERAL</span><span>${fmtMoney(total_general)}</span></div>`;
+  }
+  document.getElementById('an-texto').oninput = drawPreview;
+  drawPreview();
+  if(medicoPreset){ medicoSel = medicoPreset; document.getElementById('an-medico-chip').innerHTML = medicoChipHtml(medicoById(medicoPreset)); fillCotizacionSelect(medicoPreset); }
+  document.getElementById('an-save').onclick = ()=>{
+    const procedimiento = document.getElementById('an-procedimiento').value.trim();
+    if(!medicoSel || !procedimiento){ toast('Selecciona médico y captura el procedimiento'); return; }
+    const { bloques, total_general } = parsearAnalisisTexto(document.getElementById('an-texto').value);
+    if(!bloques.length){ toast('Pega el desglose para poder guardar el análisis'); return; }
+    const nuevo = {
+      id: uid('an'), id_medico: medicoSel, procedimiento, id_cotizacion: document.getElementById('an-cotizacion').value || null,
+      fecha_creacion: new Date().toISOString(), texto_raw: document.getElementById('an-texto').value,
+      bloques, total_general, notas: document.getElementById('an-notas').value, __new:true
+    };
+    DB.analisis_cuentas.unshift(nuevo);
+    logAudit('Análisis de cuentas', nuevo.id, 'Creación', (medicoById(medicoSel)?.nombre||'')+' · '+procedimiento);
+    persistExtra(); closeModal(); toast('Análisis guardado'); renderAnalisis();
+  };
+}
+function verAnalisisDetalle(id){
+  const a = DB.analisis_cuentas.find(x=>x.id===id); if(!a) return;
+  const m = medicoById(a.id_medico);
+  const cot = a.id_cotizacion ? DB.cotizaciones.find(c=>String(c.id)===String(a.id_cotizacion)) : null;
+  openDrawer(`
+    <div class="drawer-head"><div><div style="font-weight:700; font-size:16px;">${a.procedimiento}</div><div class="sub">${m?m.nombre:''} · ${fmtDate(a.fecha_creacion)}</div></div><button class="drawer-close" onclick="closeDrawer()">${icon('x')}</button></div>
+    <div class="drawer-body">
+      ${cot ? `<div class="card" style="background:var(--surface-2); margin-bottom:14px;">
+        <div class="detail-row"><span class="k">Cotización vinculada</span><span class="v">${cot.id}</span></div>
+        <div class="detail-row"><span class="k">Monto cotizado</span><span class="v">${fmtMoney(cot.costo_propuesta)}</span></div>
+        <div class="detail-row" style="border-bottom:none;"><span class="k">Diferencia vs. análisis real</span><span class="v" style="font-weight:700; color:${a.total_general>cot.costo_propuesta?'var(--red)':'var(--green)'};">${fmtMoney(a.total_general-cot.costo_propuesta)}</span></div>
+      </div>` : ''}
+      ${a.bloques.map(b=>`
+        <div class="card" style="margin-bottom:10px;">
+          <div style="font-weight:700; font-size:12.5px; color:var(--primary); margin-bottom:6px;">${b.nombre}</div>
+          ${b.items.map(it=>`<div style="display:flex; justify-content:space-between; gap:8px; font-size:12px; padding:4px 0; border-bottom:1px dashed var(--border);">
+            <span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion} <span style="color:var(--text-faint);">(${fmtMoney(it.precio)} c/u)</span></span><span style="flex-shrink:0; font-weight:600;">${fmtMoney(it.total)}</span>
+          </div>`).join('') || `<div style="font-size:11px; color:var(--text-faint); font-style:italic;">Sin renglones.</div>`}
+          <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-top:6px;"><span>Subtotal</span><span>${fmtMoney(b.subtotal)}</span></div>
+        </div>`).join('')}
+      <div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border-radius:14px; padding:16px 18px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:700; font-size:12.5px; text-transform:uppercase;">Total general</span><span style="font-family:var(--font-display); font-size:20px; font-weight:700;">${fmtMoney(a.total_general)}</span>
+      </div>
+      ${a.notas ? `<div class="card" style="margin-top:12px;"><div style="font-weight:700; font-size:11.5px; margin-bottom:4px;">Notas</div><div style="font-size:12px; color:var(--text-muted);">${a.notas}</div></div>` : ''}
+      <button class="btn btn-danger btn-sm" style="margin-top:14px;" onclick="eliminarAnalisis('${a.id}')">${icon('trash')} Eliminar este análisis</button>
+    </div>`);
+}
+function eliminarAnalisis(id){
+  if(!confirm('¿Eliminar este análisis de cuentas?')) return;
+  DB.analisis_cuentas = DB.analisis_cuentas.filter(x=>x.id!==id);
+  logAudit('Análisis de cuentas', id, 'Eliminación', '-');
+  persistExtra(); closeDrawer(); toast('Análisis eliminado'); if(CURRENT_ROUTE==='analisis') drawAnalisisTree();
+}
+function abrirComparativoAnalisis(medId, procedimiento){
+  const m = medicoById(medId);
+  const registros = DB.analisis_cuentas.filter(a=>String(a.id_medico)===String(medId) && a.procedimiento.trim().toLowerCase()===procedimiento.trim().toLowerCase())
+    .sort((a,b)=>new Date(a.fecha_creacion)-new Date(b.fecha_creacion));
+  if(registros.length<2){ toast('Se necesitan al menos 2 análisis del mismo procedimiento para comparar'); return; }
+  const nombresBloques = [...new Set(registros.flatMap(r=>r.bloques.map(b=>b.nombre)))];
+  openDrawer(`
+    <div class="drawer-head"><div><div style="font-weight:700; font-size:16px;">Comparativo — ${procedimiento}</div><div class="sub">${m?m.nombre:''} · ${registros.length} análisis</div></div><button class="drawer-close" onclick="closeDrawer()">${icon('x')}</button></div>
+    <div class="drawer-body">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Bloque</th>${registros.map(r=>`<th>${fmtDate(r.fecha_creacion)}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${nombresBloques.map(nb=>`<tr><td style="font-weight:600;">${nb}</td>${registros.map(r=>{
+            const b = r.bloques.find(x=>x.nombre===nb);
+            return `<td>${b?fmtMoney(b.subtotal):'—'}</td>`;
+          }).join('')}</tr>`).join('')}
+          <tr style="font-weight:800; background:var(--surface-2);"><td>TOTAL GENERAL</td>${registros.map(r=>`<td>${fmtMoney(r.total_general)}</td>`).join('')}</tr>
+        </tbody>
+      </table></div>
+      <div style="margin-top:14px; font-size:12px; color:var(--text-muted);">
+        ${registros.slice(1).map((r,i)=>{
+          const prev = registros[i]; const diff = r.total_general-prev.total_general; const pct = prev.total_general ? Math.round(diff/prev.total_general*1000)/10 : 0;
+          return `<div style="margin-bottom:4px;">Del ${fmtDate(prev.fecha_creacion)} al ${fmtDate(r.fecha_creacion)}: <b style="color:${diff>0?'var(--red)':'var(--green)'};">${diff>0?'+':''}${fmtMoney(diff)} (${pct>0?'+':''}${pct}%)</b></div>`;
+        }).join('')}
+      </div>
+    </div>`);
 }
 function renderCondiciones(){
   document.getElementById('content').innerHTML = `
