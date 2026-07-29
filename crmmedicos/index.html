@@ -567,7 +567,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.18';
+const APP_VERSION = 'v2.0.19';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4023,6 +4023,10 @@ function ordenarTareasPlan(arr){
 const PLAN_CATEGORIAS = ['Llamada','WhatsApp','Reunión','MKT','Pacientes','Médicos','Aseguradora','Administrativo','Jefes','Propia','Otro'];
 const PLAN_PRIORIDAD_COLOR = { 'Alta':'red', 'Media':'amber', 'Baja':'blue' };
 const PLAN_PRIORIDAD_DOT_CLASS = { 'Alta':'dot-prio-alta', 'Media':'dot-prio-media', 'Baja':'dot-prio-baja' };
+const PLAN_CATEGORIA_COLOR = {
+  'Llamada':'#2E6FDB', 'WhatsApp':'#25D366', 'Reunión':'#8B5CF6', 'MKT':'#C0175C', 'Pacientes':'#0EA5A5',
+  'Médicos':'#1B3E73', 'Aseguradora':'#D69A1F', 'Administrativo':'#6B7280', 'Jefes':'#E23434', 'Propia':'#F08A1E', 'Otro':'#9CA3AF'
+};
 function getSemanaRecord(weekStr){ return DB.plan_objetivos_semanales.find(o=>o.semana===weekStr); }
 function saveSemanaCampo(weekStr, campo, valor){
   let o = getSemanaRecord(weekStr);
@@ -4053,7 +4057,9 @@ function planTaskCardHtml(t, big){
   const hoyStr = ymd(new Date());
   const canDelete = t.fecha >= hoyStr;
   const bg = t.completada ? 'var(--green-bg)' : (t.extendida ? 'var(--amber-bg)' : '');
-  return `<div class="plan-task-card" style="${bg?('background:'+bg+';'):''}">
+  const catColor = (!t.completada && !t.extendida) ? (PLAN_CATEGORIA_COLOR[t.categoria]||'#9CA3AF') : null;
+  const borderStyle = catColor ? ('border-left:4px solid '+catColor+';') : '';
+  return `<div class="plan-task-card" style="${bg?('background:'+bg+';'):''}${borderStyle}">
     <input type="checkbox" data-tid="${t.id}" ${t.completada?'checked':''} ${t.extendida?'disabled':''}>
     <div style="flex:1; min-width:0;">
       <div style="font-size:${big?'12px':'11px'}; font-weight:600;">${t.titulo}</div>
@@ -4062,7 +4068,7 @@ function planTaskCardHtml(t, big){
           ? ''
           : t.extendida
             ? `<span class="pill pill-amber pill-small">${icon('calendar')} Extendida</span>`
-            : `<span class="pill pill-blue pill-small">${t.categoria}</span><span class="dot-prio ${PLAN_PRIORIDAD_DOT_CLASS[t.prioridad]||''}" title="Prioridad ${t.prioridad}"></span>`}
+            : `<span class="pill pill-small" style="background:${catColor}22; color:${catColor}; font-weight:700;">${t.categoria}</span><span class="dot-prio ${PLAN_PRIORIDAD_DOT_CLASS[t.prioridad]||''}" title="Prioridad ${t.prioridad}"></span>`}
         ${t.extendida_de ? `<span class="pill pill-violet pill-small" title="Esta tarea viene de una extensión">${icon('history')} Viene extendida</span>` : ''}
         ${t.hora?`<span style="font-size:${big?'10.5px':'10px'}; color:var(--text-faint);">${t.hora}</span>`:''}
       </div>
@@ -6239,6 +6245,62 @@ function sincronizarEstatusCasoCotizacion(){
   if(cambios){ logAudit('Sistema', '-', 'Sincronización de estatus', cambios+' cotización(es) alineada(s) con Seguimiento CRM'); persistExtra(); }
   return cambios;
 }
+const TELEFONOS_IMPORTAR_2026_07 = [
+  ['ADOLFO ALEJANDRO YAÑEZ ACEVEDO','5513426416'],['DR. ALEJANDRO ALVAREZ IGLESIAS','5522424548'],
+  ['DR. ALEJANDRO MIRAVETE GALVEZ','5513394331'],['DRA. ANA LILIA RENDON CASTILLO','5533230775'],
+  ['DRA. ANA MARIA SERRANO ARDILA','5533993589'],['DR. ANTONIO HURTADO PADILLA','5533345463'],
+  ['DR. AVI FISHBEIN FREIMAN','5540808696'],['DRA. CARLA BEATRIZ FONSECA SOTO','5540417740'],
+  ['DR. CARLOS ALBERTO VIDAL RUIZ','5537342877'],['DR. CARLOS SALVADOR JUAREZ ROJAS','5554073753'],
+  ['DR. CESAR GERARDO NUNCIO HERNANDEZ','5554182529'],['DR. DANIEL ZIMBRON LOPEZ','5518498220'],
+  ['DR. AARON ENRIQUE BEREBICHEZ FASTLICHT','5551447728'],['DR. ALEJANDRO GARCIA VELARDE SILVA','5519661607'],
+  ['DR. CARLOS OLIVA RAYGOZA','5537349898'],['DR. DAVID EMMANUEL CASTRO GUERRERO','5632276532'],
+  ['DR. DIEGO ALBERTO NUÑEZ ARREOLA','5527623335'],['DR. EDUARDO FRAGOSO MARTINEZ','7223809807'],
+  ['DR. EFRAIN DIAZ BORJON','5541408769'],['DR. ENRIQUE ACEVEDO LUCIO','5526999338'],
+  ['DR. FELIPE NAGIB CHAMLATI SALEM','5522722137'],['DR. FRANCISCO ADOLFO CUAUHTEMOC DE LOS SANTOS MONTOYA','5521504074'],
+  ['DR. FRANCISCO SALVADOR ALVAREZ SALAS','5516826342'],['DR. GABRIEL FRAIND MAYA','5577417021'],
+  ['DR. GERARDO FRANCISCO MELLADO CRUZ','2292034000'],['DR. GESSNER CASAS FUENTES','3318849451'],
+  ['DR. GUILLERMO ARTURO PONS CARRERA','5634108504'],['DR. JAVIER CAMACHO GALINDO','5516647154'],
+  ['DR. JAVIER MARTIN BECERRA','5552140107'],['DR. JESUS RAFAEL GARCIA ANDINO','5566951274'],
+  ['DR. JORGE ARTURO BARRAZA SILVA','3317998440'],['DR. JORGE CEJA DIAZ','5534888947'],
+  ['DR. JORGE FISHLEDER PERSOVSKI','5611697595'],['DR. JOSÉ LUIS HERRERA OJEDA','2721649161'],
+  ['DR. JOSSUE CASTAÑEDA GARDUÑO','7227688990'],['DR. JOSUE DE JESUS CASTAÑEDA SOTO','5634108504'],
+  ['DR. JUAN JOSE GOMEZ AMEZCUA','5526798494'],['DR. JULIO CESAR TORRES QUINTANA','5514959097'],
+  ['DR. LUIS JONATHAN RANGEL PEREZ','5543950740'],['DR. PABLO FELIPE TARAZONA VELUTINI','5543828647'],
+  ['DR. RAMON GONZALEZ POLA','5534912367'],['DR. RICARDO TORRES','5543909629'],
+  ['DR. ROMAN CAPDEVILA LEONORI','5634108504'],['DR. RUBEN GARCIA LINAJE','5543721016'],
+  ['DR. SAMUEL CARLO BAUTISTA','5567429864'],['DR. UBALDO AYALA GAMBOA','5513209219'],
+  ['DR. WILLIAM EMMANUEL PADILLA CALDERON','9992064774'],['DR. XAVIER MEDINA MORA VELASCO SILES','5522701200'],
+  ['DRA. CLAUDIA ARROYO BEREZOWSKY','5513137023'],['DRA. GABRIELA ZERMEÑO GARCIA','5537349898'],
+  ['DRA. VENESSA JAIMES FLORES','5532410078'],['DR. EDUARDO GERARDO CARRIEDO RICO','5551042866'],
+  ['DR. FERNANDO GONZALEZ RAMOS','5551001782'],['DR. GUILLERMO DE JESUS GARCIA FELIX','5591852312'],
+  ['DR. GUSTAVO CARDENAS RODRIGUEZ','5526676912'],['DR. HENRY HERBERT HARTJEN ISLAS','4423433069'],
+  ['DR. ISAAC ENRIQUE HERNANDEZ TELLEZ','5518001881'],['DR. JAIM ATRI LEVY','5510528213'],
+  ['DR. JORGE ROMO RIVERA','5554557976'],['DR. JOSE EMMANUEL VILLANUEVA HERNANDEZ','5554447976'],
+  ['DR. JOSEF LORENZ SCHENK PALAO','5524033609'],['DRA. JULIANA ANEA ROJAS NEIRA','5519062660'],
+  ['DR. LUIS ANTONIO HERNANDEZ ROBLEDO','5554157262'],['DR. LUIS OCHOA OLVERA','5516647161'],
+  ['DR. MARCO SANCHEZ BRETON','5519494780'],['DR. MIGUEL ANGEL HERNANDEZ ALVAREZ','5634168356'],
+  ['DR. MINSEUNG JEONG','5579219913'],['DR. MOISES MICHA MIZRAHI','5521071439'],
+  ['DR. OMAR RUVALCABA LUNA','8441760905'],['DR. ORLANDO ENRIQUE BARRERA GARDUÑO','5542241467'],
+  ['DR. ROBERTO BEREBICHEZ FRIDMAN','5551447728'],['DR. RODRIGO SANCHEZ ROWOLD','5537170986']
+];
+function normalizarNombreMedico(s){
+  return String(s||'')
+    .toUpperCase()
+    .replace(/^\.*\s*/,'')
+    .replace(/^DRA?\.?\s+/,'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function importarTelefonosMedicos(){
+  let actualizados = 0;
+  TELEFONOS_IMPORTAR_2026_07.forEach(([nombreRaw, telefono])=>{
+    const norm = normalizarNombreMedico(nombreRaw);
+    const med = DB.medicos.find(m=> normalizarNombreMedico(m.nombre)===norm);
+    if(med && med.telefono!==telefono){ med.telefono = telefono; med.__edited = true; actualizados++; }
+  });
+  if(actualizados){ logAudit('Médico', '-', 'Importación de teléfonos', actualizados+' médico(s) actualizados'); persistExtra(); }
+}
 function limpiarDocumentosPlanTrabajo(){
   let cambios = 0;
   DB.plan_tareas.forEach(t=>{ if(t.documento){ delete t.documento; cambios++; } });
@@ -6281,6 +6343,7 @@ function showApp(){
   document.getElementById('app').classList.add('show');
   document.getElementById('app-version').textContent = 'CRM Médicos '+APP_VERSION;
   limpiarDocumentosPlanTrabajo();
+  importarTelefonosMedicos();
   sincronizarEstatusCasoCotizacion();
   checkCotizacionesVencidas();
   checkVencidasAPerdido();
