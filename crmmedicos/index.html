@@ -566,7 +566,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.16';
+const APP_VERSION = 'v2.0.17';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5481,7 +5481,13 @@ MEDICAMENTOS"></textarea>
   };
 }
 function ordenarBloquesConMatMedAlFinal(bloques){
-  const esTipo = (b, tipo) => b.tipo===tipo || (!b.tipo && (b.nombre||'').trim().toLowerCase()===tipo);
+  const esTipo = (b, tipo) => {
+    if(b.tipo) return b.tipo===tipo;
+    const n = (b.nombre||'').trim().toLowerCase();
+    if(tipo==='materiales') return /materia/.test(n);
+    if(tipo==='medicamentos') return /medicament/.test(n);
+    return false;
+  };
   const sorted = bloques.map(b => ({ nombre:b.nombre, tipo:b.tipo, items: [...b.items].sort((x,y)=> (x.descripcion||'').localeCompare(y.descripcion||'','es')) }));
   const materiales = sorted.filter(b=> esTipo(b,'materiales'));
   const medicamentos = sorted.filter(b=> esTipo(b,'medicamentos'));
