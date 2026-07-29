@@ -566,7 +566,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.15';
+const APP_VERSION = 'v2.0.16';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -868,9 +868,11 @@ function closeDrawer(){
   document.getElementById('drawer').classList.remove('show');
 }
 function openModal(html){
-  document.getElementById('modal').innerHTML = html;
+  const modalEl = document.getElementById('modal');
+  modalEl.removeAttribute('style');
+  modalEl.innerHTML = html;
   document.getElementById('overlay').classList.add('show');
-  document.getElementById('modal').classList.add('show');
+  modalEl.classList.add('show');
 }
 function closeModal(){
   document.getElementById('overlay').classList.remove('show');
@@ -5478,15 +5480,37 @@ MEDICAMENTOS"></textarea>
     persistExtra(); closeModal(); toast('Análisis guardado'); renderAnalisis();
   };
 }
+function ordenarBloquesConMatMedAlFinal(bloques){
+  const esTipo = (b, tipo) => b.tipo===tipo || (!b.tipo && (b.nombre||'').trim().toLowerCase()===tipo);
+  const sorted = bloques.map(b => ({ nombre:b.nombre, tipo:b.tipo, items: [...b.items].sort((x,y)=> (x.descripcion||'').localeCompare(y.descripcion||'','es')) }));
+  const materiales = sorted.filter(b=> esTipo(b,'materiales'));
+  const medicamentos = sorted.filter(b=> esTipo(b,'medicamentos'));
+  const otros = sorted.filter(b=> !esTipo(b,'materiales') && !esTipo(b,'medicamentos'));
+  return [...otros, ...medicamentos, ...materiales];
+}
+function construirBloquesCotizado(cot){
+  const bloques = [];
+  const conceptosArr = cot.conceptos || [];
+  if(conceptosArr.length) bloques.push({ nombre:'Conceptos cotizados', items: conceptosArr.map(it=>({cantidad:it.cantidad, descripcion:it.descripcion, total:it.total})) });
+  const listaCompleta = cot.lista_asignada ? DB.listas_materiales.find(l=>String(l.id)===String(cot.lista_asignada.id)) : null;
+  if(listaCompleta){
+    const meds = (listaCompleta.medicamentos||[]).map(it=>({cantidad:it.cantidad, descripcion:it.descripcion, total:null}));
+    const mats = (listaCompleta.materiales||[]).map(it=>({cantidad:it.cantidad, descripcion:it.descripcion, total:null}));
+    if(meds.length) bloques.push({nombre:'Medicamentos ('+listaCompleta.nombre+')', tipo:'medicamentos', items: meds});
+    if(mats.length) bloques.push({nombre:'Materiales ('+listaCompleta.nombre+')', tipo:'materiales', items: mats});
+  }
+  return ordenarBloquesConMatMedAlFinal(bloques);
+}
+function construirBloquesReal(a){
+  return ordenarBloquesConMatMedAlFinal(a.bloques.map(b=>({nombre:b.nombre, items:b.items.map(it=>({cantidad:it.cantidad, descripcion:it.descripcion, total:it.total}))})));
+}
 function abrirComparativoVsCotizado(analisisId){
   const a = DB.analisis_cuentas.find(x=>x.id===analisisId); if(!a) return;
   const cot = a.id_cotizacion ? DB.cotizaciones.find(c=>String(c.id)===String(a.id_cotizacion)) : null;
   if(!cot){ toast('Este análisis no está vinculado a una cotización'); return; }
   const m = medicoById(a.id_medico);
-  const conceptosArr = cot.conceptos || [];
-  const listaCompleta = cot.lista_asignada ? DB.listas_materiales.find(l=>String(l.id)===String(cot.lista_asignada.id)) : null;
-  const listaM = listaCompleta ? (listaCompleta.materiales||[]) : [];
-  const listaMed = listaCompleta ? (listaCompleta.medicamentos||[]) : [];
+  const bloquesCot = construirBloquesCotizado(cot);
+  const bloquesReal = construirBloquesReal(a);
   const totalCotizado = cot.costo_propuesta || 0;
   const totalReal = a.total_general || 0;
   const diff = totalReal - totalCotizado;
@@ -5498,16 +5522,12 @@ function abrirComparativoVsCotizado(analisisId){
       <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
         <div>
           <div style="font-weight:700; font-size:12px; color:var(--primary); text-transform:uppercase; margin-bottom:8px;">Lo cotizado (${cot.id})</div>
-          ${conceptosArr.length ? `<div style="margin-bottom:10px;"><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">Conceptos con precio</div>
-            ${conceptosArr.map(it=>`<div style="display:flex; justify-content:space-between; gap:6px; font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);"><span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion}</span><span style="font-weight:600; flex-shrink:0;">${fmtMoney(it.total)}</span></div>`).join('')}</div>` : ''}
-          ${(listaM.length||listaMed.length) ? `<div><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">Lista asignada: ${listaCompleta?listaCompleta.nombre:''} (referencia, sin precio)</div>
-            ${listaMed.map(it=>`<div style="font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);">${it.cantidad} ${it.descripcion}</div>`).join('')}
-            ${listaM.map(it=>`<div style="font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);">${it.cantidad} ${it.descripcion}</div>`).join('')}</div>` : ''}
-          ${(!conceptosArr.length && !listaM.length && !listaMed.length) ? `<div style="font-size:11px; color:var(--text-faint); font-style:italic;">Sin conceptos ni lista capturados en esta cotización.</div>` : ''}
+          ${bloquesCot.length ? bloquesCot.map(b=>`<div style="margin-bottom:10px;"><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">${b.nombre}</div>
+            ${b.items.map(it=>`<div style="display:flex; justify-content:space-between; gap:6px; font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);"><span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion}</span><span style="font-weight:600; flex-shrink:0;">${it.total!=null?fmtMoney(it.total):'—'}</span></div>`).join('')}</div>`).join('') : `<div style="font-size:11px; color:var(--text-faint); font-style:italic;">Sin conceptos ni lista capturados en esta cotización.</div>`}
         </div>
         <div>
           <div style="font-weight:700; font-size:12px; color:var(--guinda); text-transform:uppercase; margin-bottom:8px;">Estado de cuenta real</div>
-          ${a.bloques.map(b=>`<div style="margin-bottom:8px;"><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">${b.nombre}</div>
+          ${bloquesReal.map(b=>`<div style="margin-bottom:8px;"><div style="font-size:10.5px; font-weight:700; color:var(--text-faint); text-transform:uppercase; margin-bottom:3px;">${b.nombre}</div>
             ${b.items.map(it=>`<div style="display:flex; justify-content:space-between; gap:6px; font-size:11.5px; padding:3px 0; border-bottom:1px dashed var(--border);"><span style="flex:1; min-width:0;">${it.cantidad}× ${it.descripcion}</span><span style="font-weight:600; flex-shrink:0;">${fmtMoney(it.total)}</span></div>`).join('')}</div>`).join('')}
         </div>
       </div>
@@ -5519,7 +5539,7 @@ function abrirComparativoVsCotizado(analisisId){
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cerrar</button><button class="btn btn-primary" id="cmp-pdf-btn">${icon('download')} Descargar PDF</button></div>`);
   const modalEl = document.querySelector('.modal');
-  modalEl.style.cssText = 'width:940px; max-width:94vw; max-height:88vh; overflow-y:auto; background:var(--surface); backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%); border:1px solid var(--border); border-radius:20px; box-shadow:0 24px 70px rgba(20,30,60,.28); position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:101; display:block;';
+  modalEl.style.cssText = 'width:940px; max-width:94vw; max-height:88vh; overflow-y:auto; background:var(--surface); backdrop-filter:blur(22px) saturate(160%); -webkit-backdrop-filter:blur(22px) saturate(160%); border:1px solid var(--border); border-radius:20px; box-shadow:0 24px 70px rgba(20,30,60,.28); position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:101;';
   document.getElementById('cmp-pdf-btn').onclick = ()=> generateComparativoPDF(analisisId);
 }
 function generateComparativoPDF(analisisId){
@@ -5534,48 +5554,63 @@ function generateComparativoPDF(analisisId){
   const M = 14.17; // 0.5 cm
   const FS = 8;
   const NAVY=[27,62,115], GUINDA=[142,27,60], PALEBLUE=[237,243,255], PALEGUINDA=[249,235,240];
-
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...NAVY);
-  doc.text('COMPARATIVO — COTIZADO VS. ESTADO DE CUENTA REAL', M, M+10);
-  doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(M, M+18, pageW-M, M+18);
-  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
-  doc.text((m?m.nombre:'')+' · '+a.procedimiento+' · '+cot.id, M, M+29);
-
   const halfW = (pageW - 3*M)/2;
-  const conceptosArr = cot.conceptos || [];
-  const listaCompleta = cot.lista_asignada ? DB.listas_materiales.find(l=>String(l.id)===String(cot.lista_asignada.id)) : null;
-  const listaM = listaCompleta ? (listaCompleta.materiales||[]) : [];
-  const listaMed = listaCompleta ? (listaCompleta.medicamentos||[]) : [];
-  const cotBody = [
-    ...(conceptosArr.length ? [[{content:'CONCEPTOS COTIZADOS', colSpan:3, styles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS}}], ...conceptosArr.map(it=>[String(it.cantidad), it.descripcion, fmtMoney(it.total)])] : []),
-    ...((listaM.length||listaMed.length) ? [[{content:'LISTA ASIGNADA: '+(listaCompleta?listaCompleta.nombre.toUpperCase():'')+' (SIN PRECIO)', colSpan:3, styles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS}}],
-      ...listaMed.map(it=>[String(it.cantidad), it.descripcion, '—']),
-      ...listaM.map(it=>[String(it.cantidad), it.descripcion, '—'])] : [])
-  ];
-  const realBody = [];
-  a.bloques.forEach(b=>{
-    realBody.push([{content:b.nombre, colSpan:3, styles:{fillColor:PALEGUINDA, textColor:GUINDA, fontStyle:'bold', fontSize:FS}}]);
-    b.items.forEach(it=> realBody.push([String(it.cantidad), it.descripcion, fmtMoney(it.total)]));
-  });
 
-  doc.autoTable({ startY:M+40, head:[['Cant.','Concepto cotizado','Total']], body: cotBody.length?cotBody:[['—','Sin conceptos capturados','—']],
-    theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[200,210,230], lineWidth:0.4},
-    headStyles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS},
-    columnStyles:{0:{cellWidth:30}, 2:{cellWidth:60, halign:'right'}},
-    margin:{left:M, right:pageW-M-halfW}, tableWidth:halfW });
-  const y1 = doc.lastAutoTable.finalY;
+  function drawHeader(){
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...NAVY);
+    doc.text('COMPARATIVO — COTIZADO VS. ESTADO DE CUENTA REAL', M, M+10);
+    doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(M, M+18, pageW-M, M+18);
+    doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
+    doc.text((m?m.nombre:'')+' · '+a.procedimiento+' · '+cot.id, M, M+29);
+  }
+  function flattenBloques(bloques, headerFill, headerText){
+    const rows = [];
+    bloques.forEach(b=>{
+      rows.push([{content:b.nombre.toUpperCase(), colSpan:3, styles:{fillColor:headerFill, textColor:headerText, fontStyle:'bold', fontSize:FS}}]);
+      b.items.forEach(it=> rows.push([String(it.cantidad), it.descripcion, it.total!=null?fmtMoney(it.total):'—']));
+    });
+    return rows;
+  }
+  const cotRows = flattenBloques(construirBloquesCotizado(cot), PALEBLUE, NAVY);
+  const realRows = flattenBloques(construirBloquesReal(a), PALEGUINDA, GUINDA);
 
-  doc.autoTable({ startY:M+40, head:[['Cant.','Concepto real','Total']], body: realBody.length?realBody:[['—','Sin datos','—']],
-    theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[200,210,230], lineWidth:0.4},
-    headStyles:{fillColor:PALEGUINDA, textColor:GUINDA, fontStyle:'bold', fontSize:FS},
-    columnStyles:{0:{cellWidth:30}, 2:{cellWidth:60, halign:'right'}},
-    margin:{left:pageW-M-halfW, right:M}, tableWidth:halfW });
-  const y2 = doc.lastAutoTable.finalY;
+  // Paginación manual: se dividen ambas listas en bloques del mismo tamaño para que
+  // el lado cotizado y el lado real avancen SIEMPRE juntos, página por página.
+  const ROWS_PER_PAGE = 32;
+  const totalPaginas = Math.max(1, Math.ceil(Math.max(cotRows.length, realRows.length) / ROWS_PER_PAGE) || 1);
+  let lastY = M+40;
 
-  let y = Math.max(y1,y2) + 14;
+  for(let p=0; p<totalPaginas; p++){
+    if(p>0) doc.addPage();
+    drawHeader();
+    const startY = M+40;
+    const cotChunk = cotRows.slice(p*ROWS_PER_PAGE, (p+1)*ROWS_PER_PAGE);
+    const realChunk = realRows.slice(p*ROWS_PER_PAGE, (p+1)*ROWS_PER_PAGE);
+    let y1 = startY, y2 = startY;
+
+    if(cotChunk.length || p===0){
+      doc.autoTable({ startY, head:[['Cant.','Concepto cotizado','Total']], body: cotChunk.length?cotChunk:[['—','Sin conceptos capturados','—']],
+        theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[200,210,230], lineWidth:0.4},
+        headStyles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS},
+        columnStyles:{0:{cellWidth:30}, 2:{cellWidth:60, halign:'right'}},
+        margin:{left:M, right:pageW-M-halfW}, tableWidth:halfW, pageBreak:'avoid' });
+      y1 = doc.lastAutoTable.finalY;
+    }
+    if(realChunk.length || p===0){
+      doc.autoTable({ startY, head:[['Cant.','Concepto real','Total']], body: realChunk.length?realChunk:[['—','Sin datos','—']],
+        theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[200,210,230], lineWidth:0.4},
+        headStyles:{fillColor:PALEGUINDA, textColor:GUINDA, fontStyle:'bold', fontSize:FS},
+        columnStyles:{0:{cellWidth:30}, 2:{cellWidth:60, halign:'right'}},
+        margin:{left:pageW-M-halfW, right:M}, tableWidth:halfW, pageBreak:'avoid' });
+      y2 = doc.lastAutoTable.finalY;
+    }
+    lastY = Math.max(y1,y2);
+  }
+
+  let y = lastY + 14;
   const totalCotizado = cot.costo_propuesta||0, totalReal = a.total_general||0, diff = totalReal-totalCotizado;
   const pct = totalCotizado ? Math.round(diff/totalCotizado*1000)/10 : 0;
-  if(y+30 > pageH-M-16){ doc.addPage(); y = M+18; }
+  if(y+30 > pageH-M-16){ doc.addPage(); drawHeader(); y = M+40; }
   doc.setFillColor(40,40,45);
   doc.rect(M, y, pageW-2*M, 26, 'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(FS+1); doc.setTextColor(255,255,255);
