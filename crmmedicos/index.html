@@ -532,6 +532,7 @@ let DB = {
   grupos_difusion: RAW.grupos_difusion || [],
   campanas_difusion: RAW.campanas_difusion || [],
   analisis_cuentas: RAW.analisis_cuentas || [],
+  mensajes_whatsapp: RAW.mensajes_whatsapp || {},
   auditoria: []
 };
 const ESTADOS_COT = {
@@ -566,7 +567,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.17';
+const APP_VERSION = 'v2.0.18';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -597,6 +598,7 @@ async function loadSession(){
       if(extra.grupos_difusion) DB.grupos_difusion = extra.grupos_difusion;
       if(extra.campanas_difusion) DB.campanas_difusion = extra.campanas_difusion;
       if(extra.analisis_cuentas) DB.analisis_cuentas = extra.analisis_cuentas;
+      if(extra.mensajes_whatsapp) DB.mensajes_whatsapp = extra.mensajes_whatsapp;
       if(extra.medicos_overrides){
         Object.entries(extra.medicos_overrides).forEach(([id,ov])=>{
           const md = DB.medicos.find(m=>String(m.id)===id);
@@ -648,6 +650,7 @@ function persistExtra(){
         grupos_difusion: DB.grupos_difusion,
         campanas_difusion: DB.campanas_difusion,
         analisis_cuentas: DB.analisis_cuentas,
+        mensajes_whatsapp: DB.mensajes_whatsapp,
         medicos_custom: DB.medicos.filter(m=>m.__new),
         medicos_overrides: Object.fromEntries(
           DB.medicos.filter(m=>!m.__new && m.__edited).map(m=>[String(m.id),{
@@ -734,6 +737,28 @@ function sugerirHoraTarea(){
 function fmtHoraOnly(d){ if(!d) return '—'; try{ return new Date(d).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';} }
 function fmtDateTime(d){ if(!d) return '—'; try{ return new Date(d).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return d;} }
 function initials(name){ return (name||'').replace(/^DR[A]?\.?\s+/i,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+const PLANTILLAS_WHATSAPP_DEFAULT = {
+  cotizacion: `Dr(a). {nombre}. 🫂 Le comparto su cotización *{folio}* para *{procedimiento}*, con un total de {monto} (IVA incluido){vigencia}.{beneficio}
+Le adjunto el PDF con el desglose completo. Este presupuesto es para pago directo / particular y no aplica para trámite con aseguradora.
+Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌
+Visite el portal de médicos para conocer más beneficios y poder credencializarse en caso de que aún no haya concluido ese proceso 👉 {portal}
+Saludos. 😊`,
+  seguimiento: `Hola Dr(a). {nombre}, buen día 👋. Le escribimos de Hospital Noor para darle seguimiento a su presupuesto de *{procedimiento}*{folio_texto}.
+{nota}
+¿Le gustaría confirmar la programación o tiene alguna duda al respecto? Quedamos atentos.`,
+  vencida: `Dr(a). {nombre}. 👋 Le escribo para darle seguimiento a su cotización *{folio}* para *{procedimiento}*, la cual venció el {fecha_venc}.
+Si aún está interesado(a), con gusto la actualizamos — ya sea el monto, la fecha para programar, o cualquier ajuste que necesite. Quedo atento(a) para resolver cualquier duda o agendar en cuanto usted me indique. 🙌
+Saludos. 😊`,
+  cotizacion_aseguradora: `Dr(a). {nombre}. 🫂 Le comparto la cotización *{folio}* para *{procedimiento}* con {aseguradora}, con un total aproximado de {monto} (IVA incluido).
+Le adjunto el PDF con el desglose completo (hospital y proveedor). Quedo al pendiente por si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌
+Saludos. 😊`
+};
+function getPlantillaWhatsApp(clave){ return (DB.mensajes_whatsapp && DB.mensajes_whatsapp[clave]) || PLANTILLAS_WHATSAPP_DEFAULT[clave]; }
+function aplicarPlantillaWhatsApp(plantilla, valores){
+  let msg = plantilla;
+  Object.keys(valores).forEach(k=>{ msg = msg.split('{'+k+'}').join(valores[k]!=null?String(valores[k]):''); });
+  return msg;
+}
 function medicoById(id){ return DB.medicos.find(m=>String(m.id)===String(id)); }
 function conveniosActivosParaMedico(medicoId){
   if(!medicoId) return [];
@@ -2479,10 +2504,16 @@ function sendCotizacionWhatsApp(id){
   let digits = String(telefono).replace(/\D/g,'');
   if(digits.length===10) digits = '52'+digits;
   const nombreCorto = (m?m.nombre:'').replace(/^DRA?\.?\s+/i,'');
-  let msg = `Dr(a). ${nombreCorto}. 🫂 Le comparto su cotización *${c.id}* para *${c.procedimiento||'el procedimiento solicitado'}*, con un total de ${fmtMoney(c.costo_propuesta)} (IVA incluido)${c.fecha_vigencia?(', vigente hasta el '+fmtDate(c.fecha_vigencia)):''}.`;
-  msg += '\nLe adjunto el PDF con el desglose completo. Quedo al pendiente por si desea programar, o si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌';
-  msg += '\nVisite el portal de médicos para conocer más beneficios y poder credencializarse en caso de que aún no haya concluido ese proceso 👉 https://quorbitintelligence.github.io/deck/noor/medicos/';
-  msg += '\nSaludos. 😊';
+  const beneficios = (c.convenios_aplicados||[]).map(cv=>cv.nombre).join(', ');
+  const msg = aplicarPlantillaWhatsApp(getPlantillaWhatsApp('cotizacion'), {
+    nombre: nombreCorto,
+    folio: c.id,
+    procedimiento: c.procedimiento||'el procedimiento solicitado',
+    monto: fmtMoney(c.costo_propuesta),
+    vigencia: c.fecha_vigencia ? (', vigente hasta el '+fmtDate(c.fecha_vigencia)) : '',
+    beneficio: beneficios ? (' Recuerde que cuenta con el beneficio: *'+beneficios+'*.') : '',
+    portal: 'https://quorbitintelligence.github.io/deck/noor/medicos/'
+  });
   const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
   try{ generateCotizacionPDF(id); }catch(e){}
   window.open(link, '_blank');
@@ -3151,8 +3182,28 @@ function openAsgDrawer(id){
         ${Object.keys(ESTADOS_COT).map(s=>`<button class="btn btn-sm ${a.estatus===s?'btn-primary':''}" onclick="setAsgEstatus('${a.id}','${s}')">${s}</button>`).join('')}
       </div>
       <button class="btn" style="width:100%; margin-top:14px;" onclick="closeDrawer();editAseguradoraWizard('${a.id}')">${icon('config')} Editar</button>
-      <button class="btn btn-guinda" style="width:100%; margin-top:8px;" onclick="generateAseguradoraPDF('${a.id}')">${icon('download')} Descargar reporte PDF</button>
+      <button class="btn btn-guinda" style="width:100%; margin-top:8px;" onclick="sendAseguradoraWhatsApp('${a.id}')">${icon('whatsapp')} Enviar por WhatsApp</button>
+      <button class="btn" style="width:100%; margin-top:8px;" onclick="generateAseguradoraPDF('${a.id}')">${icon('download')} Descargar reporte PDF</button>
     </div>`);
+}
+function sendAseguradoraWhatsApp(id){
+  const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); if(!a) return;
+  const m = medicoById(a.id_medico);
+  const telefono = m ? m.telefono : null;
+  if(!telefono){ toast('Este médico no tiene teléfono registrado'); return; }
+  let digits = String(telefono).replace(/\D/g,'');
+  if(digits.length===10) digits = '52'+digits;
+  const nombreCorto = (m?m.nombre:'').replace(/^DRA?\.?\s+/i,'');
+  const msg = aplicarPlantillaWhatsApp(getPlantillaWhatsApp('cotizacion_aseguradora'), {
+    nombre: nombreCorto, folio: a.id, procedimiento: a.procedimiento, aseguradora: a.aseguradora, monto: fmtMoney(a.total_general)
+  });
+  const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+  try{ generateAseguradoraPDF(id); }catch(e){}
+  window.open(link, '_blank');
+  if(a.estatus==='Borrador'){ a.estatus='Nuevo'; }
+  logAudit('Cotización Aseguradora', id, 'Enviada por WhatsApp', 'Mensaje + PDF preparado para '+(m?m.nombre:''));
+  persistExtra(); toast('Descargando PDF y abriendo WhatsApp — adjunta el PDF manualmente en el chat');
+  openAsgDrawer(id);
 }
 function setAsgEstatus(id, estatus){
   const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); if(!a) return;
@@ -4707,11 +4758,12 @@ function whatsappSeguimientoLink(cs){
   const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
   const procedimiento = cot ? cot.procedimiento : cs.titulo;
   const nombreCorto = (m.nombre||'').replace(/^DRA?\.?\s+/i,'');
-  let msg = `Hola Dr(a). ${nombreCorto}, buen día 👋. Le escribimos de Hospital Noor para darle seguimiento a su presupuesto de *${procedimiento}*`;
-  if(cs.id_cotizacion) msg += ` (folio ${cs.id_cotizacion})`;
-  msg += '.';
-  if(cs.proxima_accion_nota) msg += `\n\nNota: ${cs.proxima_accion_nota}`;
-  msg += '\n\n¿Le gustaría confirmar la programación o tiene alguna duda al respecto? Quedamos atentos.';
+  const msg = aplicarPlantillaWhatsApp(getPlantillaWhatsApp('seguimiento'), {
+    nombre: nombreCorto,
+    procedimiento: procedimiento,
+    folio_texto: cs.id_cotizacion ? (' (folio '+cs.id_cotizacion+')') : '',
+    nota: cs.proxima_accion_nota ? ('Nota: '+cs.proxima_accion_nota) : ''
+  });
   return 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
 }
 function whatsappButtonHtml(casoId, size){
@@ -4727,9 +4779,9 @@ function whatsappRecordatorioVencidaLink(cs){
   const procedimiento = cot ? cot.procedimiento : cs.titulo;
   const nombreCorto = (m.nombre||'').replace(/^DRA?\.?\s+/i,'');
   const fechaVig = cot && cot.fecha_vigencia ? fmtDate(cot.fecha_vigencia) : 'hace unos días';
-  let msg = `Dr(a). ${nombreCorto}. 👋 Le escribo para darle seguimiento a su cotización *${cs.id_cotizacion||''}* para *${procedimiento}*, la cual venció el ${fechaVig}.`;
-  msg += '\nSi aún está interesado(a), con gusto la actualizamos — ya sea el monto, la fecha para programar, o cualquier ajuste que necesite. Quedo atento(a) para resolver cualquier duda o agendar en cuanto usted me indique. 🙌';
-  msg += '\nSaludos. 😊';
+  const msg = aplicarPlantillaWhatsApp(getPlantillaWhatsApp('vencida'), {
+    nombre: nombreCorto, folio: cs.id_cotizacion||'', procedimiento: procedimiento, fecha_venc: fechaVig
+  });
   return 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
 }
 function recordatorioVencidaButtonHtml(casoId, size){
@@ -5808,6 +5860,21 @@ function renderConfig(){
         <button class="btn btn-danger" id="reset-btn">${icon('trash')} Reiniciar datos de la sesión</button>
       </div>
     </div>
+    <div class="section-title">Mensajes de WhatsApp <span style="font-size:11px; color:var(--text-faint); font-weight:500;">Edita el texto que se usa al enviar cada tipo de mensaje</span></div>
+    <div class="card" style="margin-bottom:20px;">
+      <div id="msg-tabs" class="chip-filter" style="margin-bottom:14px;">
+        <button class="chip active" data-k="cotizacion">Cotización a médico</button>
+        <button class="chip" data-k="seguimiento">Seguimiento</button>
+        <button class="chip" data-k="vencida">Recordatorio de vencida</button>
+        <button class="chip" data-k="cotizacion_aseguradora">Cotización a aseguradora</button>
+      </div>
+      <div id="msg-placeholders" style="font-size:11px; color:var(--text-faint); margin-bottom:8px;"></div>
+      <textarea class="input" id="msg-textarea" style="width:100%; min-height:150px; font-family:var(--font-mono,monospace); font-size:12px;"></textarea>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="btn btn-primary" id="msg-save">${icon('check')} Guardar mensaje</button>
+        <button class="btn" id="msg-restore">${icon('history')} Restaurar predeterminado</button>
+      </div>
+    </div>
     <div class="section-title">Estado del sistema</div>
     <div class="grid kpi-grid">
       ${kpiCard('Médicos', DB.medicos.length, 'doctor', 'primary')}
@@ -5848,6 +5915,39 @@ function renderConfig(){
   };
   drawStorageUsage();
   drawHistTable();
+  wireMsgEditor();
+}
+const MSG_PLACEHOLDERS = {
+  cotizacion: '{nombre} {folio} {procedimiento} {monto} {vigencia} {beneficio} {portal}',
+  seguimiento: '{nombre} {procedimiento} {folio_texto} {nota}',
+  vencida: '{nombre} {folio} {procedimiento} {fecha_venc}',
+  cotizacion_aseguradora: '{nombre} {folio} {procedimiento} {aseguradora} {monto}'
+};
+function wireMsgEditor(){
+  let msgActual = 'cotizacion';
+  const ta = document.getElementById('msg-textarea');
+  const ph = document.getElementById('msg-placeholders');
+  function cargar(){
+    ta.value = getPlantillaWhatsApp(msgActual);
+    ph.innerHTML = 'Variables disponibles: <span class="mono">'+MSG_PLACEHOLDERS[msgActual]+'</span>';
+  }
+  document.getElementById('msg-tabs').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
+    msgActual = b.dataset.k;
+    document.getElementById('msg-tabs').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active', x===b));
+    cargar();
+  });
+  document.getElementById('msg-save').onclick = ()=>{
+    DB.mensajes_whatsapp = DB.mensajes_whatsapp || {};
+    DB.mensajes_whatsapp[msgActual] = ta.value;
+    logAudit('Configuración', '-', 'Mensaje de WhatsApp editado', msgActual);
+    persistExtra(); toast('Mensaje guardado');
+  };
+  document.getElementById('msg-restore').onclick = ()=>{
+    if(!confirm('¿Restaurar este mensaje a su versión predeterminada?')) return;
+    if(DB.mensajes_whatsapp) delete DB.mensajes_whatsapp[msgActual];
+    persistExtra(); cargar(); toast('Mensaje restaurado');
+  };
+  cargar();
 }
 function drawStorageUsage(){
   const el = document.getElementById('storage-usage-card'); if(!el) return;
