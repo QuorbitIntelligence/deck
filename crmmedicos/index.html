@@ -533,6 +533,7 @@ let DB = {
   campanas_difusion: RAW.campanas_difusion || [],
   analisis_cuentas: RAW.analisis_cuentas || [],
   mensajes_whatsapp: RAW.mensajes_whatsapp || {},
+  acuerdo_responsables: RAW.acuerdo_responsables || [],
   auditoria: []
 };
 const ESTADOS_COT = {
@@ -567,7 +568,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.20';
+const APP_VERSION = 'v2.0.21';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -599,6 +600,7 @@ async function loadSession(){
       if(extra.campanas_difusion) DB.campanas_difusion = extra.campanas_difusion;
       if(extra.analisis_cuentas) DB.analisis_cuentas = extra.analisis_cuentas;
       if(extra.mensajes_whatsapp) DB.mensajes_whatsapp = extra.mensajes_whatsapp;
+      if(extra.acuerdo_responsables) DB.acuerdo_responsables = extra.acuerdo_responsables;
       if(extra.medicos_overrides){
         Object.entries(extra.medicos_overrides).forEach(([id,ov])=>{
           const md = DB.medicos.find(m=>String(m.id)===id);
@@ -651,6 +653,7 @@ function persistExtra(){
         campanas_difusion: DB.campanas_difusion,
         analisis_cuentas: DB.analisis_cuentas,
         mensajes_whatsapp: DB.mensajes_whatsapp,
+        acuerdo_responsables: DB.acuerdo_responsables,
         medicos_custom: DB.medicos.filter(m=>m.__new),
         medicos_overrides: Object.fromEntries(
           DB.medicos.filter(m=>!m.__new && m.__edited).map(m=>[String(m.id),{
@@ -4124,6 +4127,7 @@ function openTareaEditModal(id){
   const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
   const hoyStr = ymd(new Date());
   const esPasada = t.fecha < hoyStr;
+  let acuerdosState = (t.acuerdos||[]).map(a=>({...a}));
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Editar tarea</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
@@ -4135,10 +4139,51 @@ function openTareaEditModal(id){
         <div class="form-field"><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
         <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
         <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px;">${t.notas||''}</textarea></div>
+        <div class="form-field full">
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Acuerdos de esta tarea <span style="font-weight:400; color:var(--text-faint);">— con fecha límite se envían solos al calendario</span></span>
+            <button type="button" class="btn btn-sm" id="tk-acuerdos-expand">${icon('config')} Agrandar</button>
+          </label>
+          <div id="tk-acuerdos-box" style="border:1px solid var(--border); border-radius:10px; padding:10px; min-height:130px; max-height:220px; overflow-y:auto; resize:vertical;">
+            <div id="tk-acuerdos-list"></div>
+            <button type="button" class="btn btn-sm" id="tk-acuerdo-add" style="margin-top:6px;">${icon('plus')} Agregar acuerdo</button>
+          </div>
+          <datalist id="tk-responsables-datalist">${(DB.acuerdo_responsables||[]).map(r=>`<option value="${r}">`).join('')}</datalist>
+        </div>
+        <div class="form-field full" style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+          <div style="flex:1; min-width:160px;"><label style="font-size:11px;">Teléfono para enviar la minuta</label><input class="input" id="tk-whatsapp-tel" style="width:100%;" value="5576576669"></div>
+          <button type="button" class="btn btn-sm" id="tk-minuta-pdf">${icon('download')} Minuta PDF</button>
+          <button type="button" class="btn btn-sm btn-guinda" id="tk-minuta-wa">${icon('whatsapp')} Enviar minuta por WhatsApp</button>
+        </div>
         <div class="form-field full"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tk-completada" ${t.completada?'checked':''}> Tarea cerrada / completada</label></div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="tk-save">Guardar</button></div>`);
+
+  function drawAcuerdosList(){
+    const list = document.getElementById('tk-acuerdos-list');
+    list.innerHTML = acuerdosState.map((ac,i)=>`
+      <div style="display:grid; grid-template-columns:1fr 2fr 1fr auto; gap:6px; margin-bottom:6px; align-items:center;">
+        <input class="input" list="tk-responsables-datalist" placeholder="Responsable" data-field="responsable" data-i="${i}" value="${ac.responsable||''}" style="font-size:11.5px; padding:6px 8px;">
+        <input class="input" placeholder="Descripción del acuerdo" data-field="descripcion" data-i="${i}" value="${ac.descripcion||''}" style="font-size:11.5px; padding:6px 8px;">
+        <input class="input" type="date" data-field="fecha_limite" data-i="${i}" value="${ac.fecha_limite||''}" style="font-size:11.5px; padding:6px 8px;">
+        <button type="button" class="plan-task-icon-btn" data-del-acuerdo="${i}" title="Quitar">${icon('trash')}</button>
+      </div>`).join('') || `<div style="font-size:11px; color:var(--text-faint); font-style:italic;">Sin acuerdos capturados todavía.</div>`;
+    list.querySelectorAll('input').forEach(inp=> inp.oninput = ()=>{ acuerdosState[inp.dataset.i][inp.dataset.field] = inp.value; });
+    list.querySelectorAll('[data-del-acuerdo]').forEach(btn=> btn.onclick = ()=>{ acuerdosState.splice(+btn.dataset.delAcuerdo,1); drawAcuerdosList(); });
+  }
+  document.getElementById('tk-acuerdo-add').onclick = ()=>{ acuerdosState.push({id:uid('ac'), responsable:'', descripcion:'', fecha_limite:''}); drawAcuerdosList(); };
+  document.getElementById('tk-acuerdos-expand').onclick = (e)=>{
+    const box = document.getElementById('tk-acuerdos-box');
+    const grande = box.style.maxHeight==='480px';
+    box.style.maxHeight = grande ? '220px' : '480px';
+    e.target.innerHTML = grande ? (icon('config')+' Agrandar') : (icon('config')+' Reducir');
+  };
+  drawAcuerdosList();
+
+  document.getElementById('tk-minuta-pdf').onclick = ()=> generateTareaMinutaPDF(id, acuerdosState);
+  document.getElementById('tk-minuta-wa').onclick = ()=> sendTareaMinutaWhatsApp(id, acuerdosState, document.getElementById('tk-whatsapp-tel').value);
+
   document.getElementById('tk-save').onclick = ()=>{
     const titulo = document.getElementById('tk-titulo').value.trim();
     if(!titulo){ toast('Escribe la tarea'); return; }
@@ -4148,10 +4193,103 @@ function openTareaEditModal(id){
     const nowCompletada = document.getElementById('tk-completada').checked;
     if(nowCompletada && !t.completada){ t.completada = true; t.fecha_completada = new Date().toISOString(); }
     else if(!nowCompletada && t.completada){ t.completada = false; t.fecha_completada = null; }
+
+    // Quitar tareas dispersadas cuyos acuerdos se eliminaron en esta edición
+    const idsAntes = (t.acuerdos||[]).map(a=>a.id);
+    const idsDespues = acuerdosState.filter(a=>a.id).map(a=>a.id);
+    idsAntes.forEach(idAntes=>{
+      if(!idsDespues.includes(idAntes)){
+        const original = (t.acuerdos||[]).find(a=>a.id===idAntes);
+        if(original && original.tarea_creada_id) DB.plan_tareas = DB.plan_tareas.filter(x=>x.id!==original.tarea_creada_id);
+      }
+    });
+
+    // Dispersar acuerdos con fecha límite al calendario (crea o actualiza, nunca duplica)
+    DB.acuerdo_responsables = DB.acuerdo_responsables || [];
+    acuerdosState.forEach(ac=>{
+      if(!ac.id) ac.id = uid('ac');
+      if(ac.responsable && ac.responsable.trim() && !DB.acuerdo_responsables.includes(ac.responsable.trim())) DB.acuerdo_responsables.push(ac.responsable.trim());
+      if(!ac.descripcion || !ac.descripcion.trim() || !ac.fecha_limite) return;
+      const tituloAcuerdo = (ac.responsable&&ac.responsable.trim() ? ac.responsable.trim()+': ' : '') + ac.descripcion.trim();
+      if(ac.tarea_creada_id){
+        const existente = DB.plan_tareas.find(x=>x.id===ac.tarea_creada_id);
+        if(existente){ existente.titulo = tituloAcuerdo; existente.fecha = ac.fecha_limite; existente.categoria = t.categoria; return; }
+      }
+      const nueva = { id: uid('tk'), titulo: tituloAcuerdo, categoria: t.categoria, prioridad:'Media', fecha: ac.fecha_limite, hora:null,
+        completada:false, fecha_completada:null, notas: 'Acuerdo de la tarea "'+titulo+'" ('+fmtDate(t.fecha)+')',
+        fecha_creacion: new Date().toISOString(), acuerdo_de: t.id, __new:true };
+      DB.plan_tareas.push(nueva);
+      ac.tarea_creada_id = nueva.id;
+    });
+    t.acuerdos = acuerdosState.filter(ac=>ac.descripcion && ac.descripcion.trim());
+
     if(!t.__new) t.__edited = true;
-    logAudit('Plan de Trabajo', id, 'Tarea editada', titulo);
-    persistExtra(); closeModal(); toast('Tarea actualizada'); renderPlanTrabajo();
+    logAudit('Plan de Trabajo', id, 'Tarea editada', titulo+(t.acuerdos.length?' · '+t.acuerdos.length+' acuerdo(s)':''));
+    persistExtra(); closeModal(); toast('Tarea actualizada'+(t.acuerdos.filter(a=>a.fecha_limite).length?' — acuerdos enviados al calendario':'')); renderPlanTrabajo();
   };
+}
+function generateTareaMinutaPDF(id, acuerdosState){
+  const t = DB.plan_tareas.find(x=>x.id===id); if(!t || !window.jspdf){ toast('No se pudo generar el PDF'); return; }
+  const acuerdos = (acuerdosState||t.acuerdos||[]).filter(a=>a.descripcion && a.descripcion.trim());
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'letter'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 14.17; // 0.5 cm
+  const FS = 8; // Arial (Helvetica) 8pt
+  const NAVY=[27,62,115], PALEBLUE=[237,243,255];
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...NAVY);
+  doc.text('MINUTA DE TRABAJO', M, M+10);
+  doc.setDrawColor(...NAVY); doc.setLineWidth(1); doc.line(M, M+18, pageW-M, M+18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(FS); doc.setTextColor(90,90,90);
+  doc.text(t.titulo+' · '+t.categoria+' · '+fmtDate(t.fecha)+(t.hora?(' '+t.hora):''), M, M+29);
+
+  let y = M+42;
+  if(t.notas && t.notas.trim()){
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+    doc.text('NOTAS', M, y); y += 10;
+    doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    const lines = doc.splitTextToSize(t.notas, pageW-2*M);
+    doc.text(lines, M, y); y += lines.length*10 + 12;
+  }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(FS); doc.setTextColor(...NAVY);
+  doc.text('ACUERDOS', M, y); y += 4;
+  doc.autoTable({ startY:y+4, head:[['Responsable','Acuerdo','Fecha límite']], body: acuerdos.length ? acuerdos.map(ac=>[ac.responsable||'—', ac.descripcion, ac.fecha_limite?fmtDate(ac.fecha_limite):'—']) : [['—','Sin acuerdos capturados','—']],
+    theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:3, lineColor:[200,210,230], lineWidth:0.4},
+    headStyles:{fillColor:PALEBLUE, textColor:NAVY, fontStyle:'bold', fontSize:FS},
+    columnStyles:{0:{cellWidth:110}, 2:{cellWidth:80}},
+    margin:{left:M, right:M} });
+
+  const n = doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(FS-1); doc.setTextColor(150,150,150);
+    doc.text('Hospital Noor Clinic', M, pageH-M+8);
+    doc.text('Página '+i+' de '+n, pageW-M, pageH-M+8, {align:'right'});
+  }
+  doc.save('Minuta_'+slugify(t.titulo)+'_'+t.fecha+'.pdf');
+  logAudit('Plan de Trabajo', id, 'Minuta PDF generada', t.titulo);
+  toast('PDF generado');
+  return doc;
+}
+function sendTareaMinutaWhatsApp(id, acuerdosState, telefono){
+  const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
+  let digits = String(telefono||'').replace(/\D/g,'');
+  if(!digits){ toast('Escribe un número de teléfono válido'); return; }
+  if(digits.length===10) digits = '52'+digits;
+  const acuerdos = (acuerdosState||t.acuerdos||[]).filter(a=>a.descripcion && a.descripcion.trim());
+  let msg = `📋 Minuta: *${t.titulo}* (${t.categoria} · ${fmtDate(t.fecha)})`;
+  if(acuerdos.length){
+    msg += '\n\nAcuerdos:';
+    acuerdos.forEach(ac=>{ msg += '\n• '+(ac.responsable?('*'+ac.responsable+'*: '):'')+ac.descripcion+(ac.fecha_limite?(' — vence '+fmtDate(ac.fecha_limite)):''); });
+  }
+  msg += '\n\nAdjunto el PDF con el detalle completo.';
+  const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+  generateTareaMinutaPDF(id, acuerdosState);
+  window.open(link, '_blank');
+  toast('Descargando PDF y abriendo WhatsApp — adjunta el PDF manualmente en el chat');
 }
 function eliminarTarea(id){
   const t = DB.plan_tareas.find(x=>x.id===id); if(!t) return;
