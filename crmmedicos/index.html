@@ -473,6 +473,8 @@ window.CRM_ICON_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAI
 /* ============ ICONS ============ */
 if(window.pdfjsLib){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
 const ICON = {
+  maximize:'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+  minimize:'<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>',
   analytics:'<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   megaphone:'<path d="M3 11v3a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 8a4 4 0 0 1 0 7"/><path d="M18.5 5.5a8 8 0 0 1 0 12"/>',
@@ -568,7 +570,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.21';
+const APP_VERSION = 'v2.0.23';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4129,7 +4131,12 @@ function openTareaEditModal(id){
   const esPasada = t.fecha < hoyStr;
   let acuerdosState = (t.acuerdos||[]).map(a=>({...a}));
   openModal(`
-    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Editar tarea</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Editar tarea</div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button class="drawer-close" id="tk-maximize-btn" title="Maximizar">${icon('maximize')}</button>
+        <button class="drawer-close" onclick="closeModal()">${icon('x')}</button>
+      </div>
+    </div>
     <div class="modal-body">
       ${esPasada ? `<div style="font-size:11.5px; color:var(--text-faint); margin-bottom:12px;">Esta tarea ya pasó — puedes editarla o cerrarla, pero ya no se puede eliminar.</div>` : ''}
       <div class="form-grid">
@@ -4138,13 +4145,13 @@ function openTareaEditModal(id){
         <div class="form-field"><label>Prioridad</label><select class="select" id="tk-prio" style="width:100%;"><option ${t.prioridad==='Media'?'selected':''}>Media</option><option ${t.prioridad==='Alta'?'selected':''}>Alta</option><option ${t.prioridad==='Baja'?'selected':''}>Baja</option></select></div>
         <div class="form-field"><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
         <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
-        <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px;">${t.notas||''}</textarea></div>
+        <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px; resize:vertical;">${t.notas||''}</textarea></div>
         <div class="form-field full">
           <label style="display:flex; justify-content:space-between; align-items:center;">
             <span>Acuerdos de esta tarea <span style="font-weight:400; color:var(--text-faint);">— con fecha límite se envían solos al calendario</span></span>
             <button type="button" class="btn btn-sm" id="tk-acuerdos-expand">${icon('config')} Agrandar</button>
           </label>
-          <div id="tk-acuerdos-box" style="border:1px solid var(--border); border-radius:10px; padding:10px; min-height:130px; max-height:220px; overflow-y:auto; resize:vertical;">
+          <div id="tk-acuerdos-box" style="border:1px solid var(--border); border-radius:10px; padding:10px; min-height:160px; max-height:300px; overflow-y:auto; resize:vertical;">
             <div id="tk-acuerdos-list"></div>
             <button type="button" class="btn btn-sm" id="tk-acuerdo-add" style="margin-top:6px;">${icon('plus')} Agregar acuerdo</button>
           </div>
@@ -4159,6 +4166,38 @@ function openTareaEditModal(id){
       </div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="tk-save">Guardar</button></div>`);
+  const tkModalEl = document.querySelector('.modal');
+  tkModalEl.style.width = '820px';
+  tkModalEl.style.maxWidth = '95vw';
+  tkModalEl.style.maxHeight = '94vh';
+  tkModalEl.style.minWidth = '520px';
+  tkModalEl.style.minHeight = '420px';
+  tkModalEl.style.resize = 'both'; // esquina inferior derecha arrastrable con el mouse
+
+  let tkMaximizado = false;
+  document.getElementById('tk-maximize-btn').onclick = ()=>{
+    tkMaximizado = !tkMaximizado;
+    const notas = document.getElementById('tk-notas');
+    const acuerdosBox = document.getElementById('tk-acuerdos-box');
+    if(tkMaximizado){
+      tkModalEl.style.width = '95vw';
+      tkModalEl.style.height = '94vh';
+      tkModalEl.style.maxWidth = '95vw';
+      tkModalEl.style.maxHeight = '94vh';
+      notas.style.minHeight = Math.round(window.innerHeight*0.22)+'px';
+      acuerdosBox.style.maxHeight = Math.round(window.innerHeight*0.42)+'px';
+      document.getElementById('tk-maximize-btn').innerHTML = icon('minimize');
+      document.getElementById('tk-maximize-btn').title = 'Restaurar tamaño';
+    } else {
+      tkModalEl.style.width = '820px';
+      tkModalEl.style.height = 'auto';
+      tkModalEl.style.maxHeight = '94vh';
+      notas.style.minHeight = '80px';
+      acuerdosBox.style.maxHeight = '300px';
+      document.getElementById('tk-maximize-btn').innerHTML = icon('maximize');
+      document.getElementById('tk-maximize-btn').title = 'Maximizar';
+    }
+  };
 
   function drawAcuerdosList(){
     const list = document.getElementById('tk-acuerdos-list');
@@ -4175,8 +4214,8 @@ function openTareaEditModal(id){
   document.getElementById('tk-acuerdo-add').onclick = ()=>{ acuerdosState.push({id:uid('ac'), responsable:'', descripcion:'', fecha_limite:''}); drawAcuerdosList(); };
   document.getElementById('tk-acuerdos-expand').onclick = (e)=>{
     const box = document.getElementById('tk-acuerdos-box');
-    const grande = box.style.maxHeight==='480px';
-    box.style.maxHeight = grande ? '220px' : '480px';
+    const grande = box.style.maxHeight==='560px';
+    box.style.maxHeight = grande ? '300px' : '560px';
     e.target.innerHTML = grande ? (icon('config')+' Agrandar') : (icon('config')+' Reducir');
   };
   drawAcuerdosList();
