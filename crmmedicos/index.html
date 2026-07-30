@@ -570,7 +570,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.0.23';
+const APP_VERSION = 'v2.0.24';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -4141,11 +4141,13 @@ function openTareaEditModal(id){
       ${esPasada ? `<div style="font-size:11.5px; color:var(--text-faint); margin-bottom:12px;">Esta tarea ya pasó — puedes editarla o cerrarla, pero ya no se puede eliminar.</div>` : ''}
       <div class="form-grid">
         <div class="form-field full"><label>Tarea</label><input class="input" id="tk-titulo" style="width:100%;" value="${t.titulo}"></div>
-        <div class="form-field"><label>Categoría</label><select class="select" id="tk-cat" style="width:100%;">${PLAN_CATEGORIAS.map(c=>`<option ${t.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
-        <div class="form-field"><label>Prioridad</label><select class="select" id="tk-prio" style="width:100%;"><option ${t.prioridad==='Media'?'selected':''}>Media</option><option ${t.prioridad==='Alta'?'selected':''}>Alta</option><option ${t.prioridad==='Baja'?'selected':''}>Baja</option></select></div>
-        <div class="form-field"><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
-        <div class="form-field"><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
-        <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; min-height:80px; resize:vertical;">${t.notas||''}</textarea></div>
+        <div class="form-field full" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+          <div><label>Categoría</label><select class="select" id="tk-cat" style="width:100%;">${PLAN_CATEGORIAS.map(c=>`<option ${t.categoria===c?'selected':''}>${c}</option>`).join('')}</select></div>
+          <div><label>Prioridad</label><select class="select" id="tk-prio" style="width:100%;"><option ${t.prioridad==='Media'?'selected':''}>Media</option><option ${t.prioridad==='Alta'?'selected':''}>Alta</option><option ${t.prioridad==='Baja'?'selected':''}>Baja</option></select></div>
+          <div><label>Fecha</label><input class="input" type="date" id="tk-fecha" style="width:100%;" value="${t.fecha}"></div>
+          <div><label>Hora (opcional)</label><input class="input" type="time" id="tk-hora" style="width:100%;" value="${t.hora||''}"></div>
+        </div>
+        <div class="form-field full"><label>Notas</label><textarea class="input" id="tk-notas" style="width:100%; height:55px; min-height:40px; resize:vertical;">${t.notas||''}</textarea></div>
         <div class="form-field full">
           <label style="display:flex; justify-content:space-between; align-items:center;">
             <span>Acuerdos de esta tarea <span style="font-weight:400; color:var(--text-faint);">— con fecha límite se envían solos al calendario</span></span>
@@ -4184,15 +4186,15 @@ function openTareaEditModal(id){
       tkModalEl.style.height = '94vh';
       tkModalEl.style.maxWidth = '95vw';
       tkModalEl.style.maxHeight = '94vh';
-      notas.style.minHeight = Math.round(window.innerHeight*0.22)+'px';
-      acuerdosBox.style.maxHeight = Math.round(window.innerHeight*0.42)+'px';
+      notas.style.minHeight = '40px'; // Notas se queda compacta — el espacio extra va para Acuerdos
+      acuerdosBox.style.maxHeight = Math.round(window.innerHeight*0.55)+'px';
       document.getElementById('tk-maximize-btn').innerHTML = icon('minimize');
       document.getElementById('tk-maximize-btn').title = 'Restaurar tamaño';
     } else {
       tkModalEl.style.width = '820px';
       tkModalEl.style.height = 'auto';
       tkModalEl.style.maxHeight = '94vh';
-      notas.style.minHeight = '80px';
+      notas.style.minHeight = '40px';
       acuerdosBox.style.maxHeight = '300px';
       document.getElementById('tk-maximize-btn').innerHTML = icon('maximize');
       document.getElementById('tk-maximize-btn').title = 'Maximizar';
