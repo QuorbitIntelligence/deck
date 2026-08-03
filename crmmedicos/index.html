@@ -572,7 +572,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.1.0';
+const APP_VERSION = 'v2.1.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -760,7 +760,11 @@ Si aún está interesado(a), con gusto la actualizamos — ya sea el monto, la f
 Saludos. 😊`,
   cotizacion_aseguradora: `Dr(a). {nombre}. 🫂 Le comparto la cotización *{folio}* para *{procedimiento}* con {aseguradora}, con un total aproximado de {monto} (IVA incluido).
 Le adjunto el PDF con el desglose completo (hospital y proveedor). Quedo al pendiente por si necesita algún ajuste o tiene dudas — con gusto le apoyo. 🙌
-Saludos. 😊`
+Saludos. 😊`,
+  primer_acercamiento: `Dr(a). {nombre}. 👋 Mi nombre es Juan Carlos y le escribo de parte de *Hospital Noor de Bosque Real* — es un gusto saludarle.
+Nos encantaría presentarle nuestras instalaciones y platicarle sobre las condiciones y beneficios que tenemos disponibles para médicos de su especialidad. Le comparto un video con el recorrido virtual del hospital, para que lo conozca a detalle.
+Quedo a sus órdenes por si tiene alguna duda, o si le gustaría que coordinemos una visita presencial cuando usted guste. 🙌
+Saludos cordiales.`
 };
 function getPlantillaWhatsApp(clave){ return (DB.mensajes_whatsapp && DB.mensajes_whatsapp[clave]) || PLANTILLAS_WHATSAPP_DEFAULT[clave]; }
 function aplicarPlantillaWhatsApp(plantilla, valores){
@@ -837,6 +841,8 @@ function navBadgeCount(routeId){
       case 'convenios': return DB.convenios.length;
       case 'difusion': return DB.grupos_difusion.length;
       case 'condiciones': return DB.clausulas.length;
+      case 'analisis': return DB.analisis_cuentas.length;
+      case 'prospectos': return DB.prospectos.length;
       default: return null;
     }
   }catch(e){ return null; }
@@ -1010,6 +1016,8 @@ function wireClausulaPicker(searchEl, listEl, selMap, onToggle, contexto){
    DASHBOARD
 ============================================================ */
 let dashCasoChartMode = 'monto';
+let dashMesEstatusModo = 'monto';
+let dashEstatusMesFiltro = ['Realizado'];
 let dashMesFiltro = 'todos';
 function renderDashboard(){
   const mesesDisponibles = [...new Set([
@@ -1156,10 +1164,31 @@ function renderDashboard(){
     <div class="card"><div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Suma del monto de las cotizaciones cuyo caso vinculado está en cada estatus — para comparar de un vistazo cuánto llevas cotizado vs. lo ya confirmado, agendado o realizado. En modo porcentaje, el 100% es la suma de todo lo cotizado.</div>
       <div class="chart-wrap" style="height:280px;"><canvas id="chart-caso-monto"></canvas></div>
     </div>
+    <div class="section-title" style="margin:20px 0 12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <span>Comparativo de estatus por mes</span>
+      <div class="chip-filter" id="mes-estatus-toggle" style="margin:0;">
+        <button class="chip ${dashMesEstatusModo==='monto'?'active':''}" data-mode="monto">Monto ($)</button>
+        <button class="chip ${dashMesEstatusModo==='porcentaje'?'active':''}" data-mode="porcentaje">Porcentaje (%)</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Compara, mes a mes, cómo se mueve el monto de los estatus que elijas. Marca uno o varios para no saturar la gráfica.</div>
+      <div class="chip-filter" id="mes-estatus-filtro" style="margin-bottom:14px;">
+        ${Object.keys(ESTADOS_CASO).map(s=>{
+          const color = ESTADOS_CASO[s].color==='muted' ? 'var(--text-faint)' : 'var(--'+ESTADOS_CASO[s].color+')';
+          return `<button class="chip estatus-glow ${dashEstatusMesFiltro.includes(s)?'active':''}" data-s="${s}" style="--glow-color:${color};">${s}</button>`;
+        }).join('')}
+      </div>
+      <div class="chart-wrap" style="height:300px;"><canvas id="chart-mes-estatus"></canvas></div>
+    </div>
   `;
 
-  document.getElementById('caso-monto-toggle').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
-    dashCasoChartMode = b.dataset.mode;
+  document.getElementById('mes-estatus-toggle').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{ dashMesEstatusModo = b.dataset.mode; renderDashboard(); });
+  document.getElementById('caso-monto-toggle').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{ dashCasoChartMode = b.dataset.mode; renderDashboard(); });
+  document.getElementById('mes-estatus-filtro').querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
+    const s = b.dataset.s;
+    if(dashEstatusMesFiltro.includes(s)) dashEstatusMesFiltro = dashEstatusMesFiltro.filter(x=>x!==s);
+    else dashEstatusMesFiltro.push(s);
     renderDashboard();
   });
 
@@ -1225,10 +1254,69 @@ function renderDashboard(){
           return fmtMoney(monto)+' · '+pct+'% del total cotizado';
         }}}}, scales:{ y:{suggestedMax: Math.max(...casoValues)*1.18 || 10, ticks:{callback:v=> esPorcentaje ? (v+'%') : fmtMoney(v), font:{size:10}}, grid:{color:cssVar('--border')}}, x:{ticks:{font:{size:10}, autoSkip:false, maxRotation:35, minRotation:0}, grid:{display:false}} } } });
     }catch(e){ chartFallback(document.getElementById('chart-caso-monto')?.closest('.chart-wrap'), 'No se pudo dibujar esta gráfica.'); }
+    try{
+      const porMesEstatus = {};
+      DB.casos.forEach(cs=>{
+        if(!cs.fecha_apertura) return;
+        const d = new Date(cs.fecha_apertura);
+        const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+        porMesEstatus[key] = porMesEstatus[key] || {};
+        let monto = 0;
+        if(cs.id_cotizacion){ const cot = DB.cotizaciones.find(c=>String(c.id)===String(cs.id_cotizacion)); if(cot) monto = cot.costo_propuesta||0; }
+        porMesEstatus[key][cs.estatus] = (porMesEstatus[key][cs.estatus]||0) + monto;
+      });
+      const mesesEst = Object.keys(porMesEstatus).sort();
+      const mesesEstLabels = mesesEst.map(fmtMesLabel);
+      const totalesPorMes = mesesEst.map(k => Object.values(porMesEstatus[k]).reduce((a,b)=>a+b,0));
+      const esPct2 = dashMesEstatusModo==='porcentaje';
+      const datasetsMontos = dashEstatusMesFiltro.map(s=> mesesEst.map(k=> (porMesEstatus[k]&&porMesEstatus[k][s])||0));
+      const datasets = dashEstatusMesFiltro.map((s,si)=>{
+        const color = cssVar('--'+(ESTADOS_CASO[s].color==='muted'?'text-faint':ESTADOS_CASO[s].color));
+        const montos = datasetsMontos[si];
+        const values = esPct2 ? montos.map((v,mi)=> totalesPorMes[mi] ? Math.round(v/totalesPorMes[mi]*1000)/10 : 0) : montos;
+        return { label: s, data: values, backgroundColor: color, borderRadius:5 };
+      });
+      const mesEstatusLabelPlugin = {
+        id:'mesEstatusBubbles',
+        afterDatasetsDraw(chart){
+          const ctx = chart.ctx; ctx.save();
+          chart.data.datasets.forEach((ds, dsi)=>{
+            const meta = chart.getDatasetMeta(dsi);
+            meta.data.forEach((bar,i)=>{
+              const monto = datasetsMontos[dsi][i]; if(!monto) return;
+              const pct = totalesPorMes[i] ? (monto/totalesPorMes[i]*100).toFixed(1) : '0.0';
+              const label = fmtMoney(monto)+' · '+pct+'%';
+              const pos = bar.getProps(['x','y'], true);
+              ctx.font = '700 9px Inter, Helvetica, Arial, sans-serif';
+              const textW = ctx.measureText(label).width;
+              const padX=6, boxH=15, boxW=textW+padX*2;
+              const boxX = pos.x-boxW/2, boxY = pos.y-boxH-5;
+              ctx.fillStyle = ds.backgroundColor;
+              ctx.beginPath();
+              if(ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 7); else ctx.rect(boxX, boxY, boxW, boxH);
+              ctx.fill();
+              ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+              ctx.fillText(label, pos.x, boxY+boxH/2+0.5);
+            });
+          });
+          ctx.restore();
+        }
+      };
+      if(mesesEst.length && dashEstatusMesFiltro.length){
+        const maxVal = Math.max(1, ...datasets.flatMap(d=>d.data));
+        new Chart(document.getElementById('chart-mes-estatus'), { type:'bar', data:{ labels: mesesEstLabels, datasets },
+          plugins:[mesEstatusLabelPlugin],
+          options:{ maintainAspectRatio:false, layout:{padding:{top:22}}, plugins:{legend:{display: dashEstatusMesFiltro.length>1, position:'bottom', labels:{font:{size:10}}}},
+            scales:{ y:{suggestedMax:maxVal*1.25, ticks:{callback:v=> esPct2?(v+'%'):fmtMoney(v), font:{size:10}}, grid:{color:cssVar('--border')}}, x:{ticks:{font:{size:10}}, grid:{display:false}} } } });
+      } else {
+        chartFallback(document.getElementById('chart-mes-estatus')?.closest('.chart-wrap'), dashEstatusMesFiltro.length ? 'Sin datos de Seguimiento CRM con fecha aún.' : 'Elige al menos un estatus arriba para ver la gráfica.');
+      }
+    }catch(e){ chartFallback(document.getElementById('chart-mes-estatus')?.closest('.chart-wrap'), 'No se pudo dibujar esta gráfica.'); }
   } else {
     chartFallback(document.getElementById('chart-mes')?.closest('.chart-wrap'), 'Sin datos aún');
     chartFallback(document.getElementById('chart-esp')?.closest('.chart-wrap'), 'Sin datos aún');
     chartFallback(document.getElementById('chart-caso-monto')?.closest('.chart-wrap'), 'Sin datos aún');
+    chartFallback(document.getElementById('chart-mes-estatus')?.closest('.chart-wrap'), 'Sin datos aún');
   }
   if(chartsOk){
     ['cots','meds','paq','conv','casos'].forEach(key=>{
@@ -5629,27 +5717,40 @@ function cotizacionesDeMedico(medId){
 /* ============================================================
    PROSPECTOS — base de médicos candidatos, sin duplicar Leads
 ============================================================ */
-let prospectosState = { page:1, perPage:50, search:'', selected:{} };
+let prospectosState = { page:1, perPage:50, search:'', especialidad:'todas', selected:{} };
 function getProspectosFiltrados(){
   return DB.prospectos.filter(p=>{
     if(prospectosState.search && !fuzzyMatch(p.nombre+' '+p.especialidad+' '+(p.hospital||''), prospectosState.search)) return false;
+    if(prospectosState.especialidad!=='todas' && !(p.especialidad||'').split(',').map(e=>e.trim()).includes(prospectosState.especialidad)) return false;
     return true;
   }).sort((a,b)=> (a.especialidad||'').localeCompare(b.especialidad||'','es') || a.nombre.localeCompare(b.nombre,'es'));
 }
+function conteoPorEspecialidadProspectos(){
+  const counts = {};
+  DB.prospectos.forEach(p=> (p.especialidad||'').split(',').forEach(e=>{ const t=e.trim(); if(t) counts[t]=(counts[t]||0)+1; }));
+  return counts;
+}
 function renderProspectos(){
+  const counts = conteoPorEspecialidadProspectos();
+  const especialidades = Object.keys(counts).sort((a,b)=>a.localeCompare(b,'es'));
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:280px;">${icon('search')}<input id="pr-search" placeholder="Buscar por nombre, especialidad u hospital…"></div>
+      <select class="select" id="pr-especialidad" style="min-width:260px;">
+        <option value="todas">Todas las especialidades (${DB.prospectos.length})</option>
+        ${especialidades.map(e=>`<option value="${e}" ${prospectosState.especialidad===e?'selected':''}>${e} (${counts[e]})</option>`).join('')}
+      </select>
       <span id="pr-count" style="font-size:11.5px; color:var(--text-faint);"></span>
       <button class="btn btn-guinda" style="margin-left:auto;" onclick="openProspectosMassEdit()">${icon('config')} Edición masiva</button>
       <button class="btn" onclick="openProspectosReporteModal()">${icon('download')} Generar reporte</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th></th></tr></thead>
+      <table><thead><tr><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th></th><th></th></tr></thead>
       <tbody id="pr-tbody"></tbody></table>
       <div class="pagination" id="pr-pg"></div>
     </div>`;
   document.getElementById('pr-search').oninput = (e)=>{ prospectosState.search=e.target.value; prospectosState.page=1; drawProspectosTable(); };
+  document.getElementById('pr-especialidad').onchange = (e)=>{ prospectosState.especialidad=e.target.value; prospectosState.page=1; drawProspectosTable(); };
   drawProspectosTable();
 }
 function drawProspectosTable(){
@@ -5662,9 +5763,24 @@ function drawProspectosTable(){
     <td style="font-size:11.5px; color:var(--text-muted);">${p.hospital||'—'}</td>
     <td>${p.telefono||'<span style="color:var(--text-faint);">Sin teléfono</span>'}</td>
     <td style="font-size:11.5px;">${p.correo||'—'}</td>
+    <td>${p.telefono ? `<button class="btn-whatsapp" onclick="enviarProspectoWhatsApp('${p.id}')" title="Enviar primer acercamiento por WhatsApp" style="position:relative;">${icon('whatsapp')}${p.envios_whatsapp?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_whatsapp}</span>`:''}</button>` : ''}</td>
     <td><button class="btn btn-sm btn-primary" onclick="convertirProspectoALead('${p.id}')">${icon('plus')} Convertir a Lead</button></td>
-  </tr>`).join('') || `<tr><td colspan="6"><div class="empty-state">${icon('doctor')}<div>Sin prospectos con esa búsqueda.</div></div></td></tr>`;
+  </tr>`).join('') || `<tr><td colspan="7"><div class="empty-state">${icon('doctor')}<div>Sin prospectos con esa búsqueda.</div></div></td></tr>`;
   paginationControls('pr-pg', all.length, prospectosState.page, prospectosState.perPage, (p)=>{ prospectosState.page=p; drawProspectosTable(); });
+}
+function enviarProspectoWhatsApp(id){
+  const p = DB.prospectos.find(x=>x.id===id); if(!p) return;
+  if(!p.telefono){ toast('Este prospecto no tiene teléfono registrado'); return; }
+  let digits = String(p.telefono).replace(/\D/g,'');
+  if(digits.length===10) digits = '52'+digits;
+  const nombreCorto = p.nombre.replace(/^DRA?\.?\s+/i,'');
+  const msg = aplicarPlantillaWhatsApp(getPlantillaWhatsApp('primer_acercamiento'), { nombre: nombreCorto });
+  const link = 'https://wa.me/'+digits+'?text='+encodeURIComponent(msg);
+  window.open(link, '_blank');
+  p.envios_whatsapp = (p.envios_whatsapp||0) + 1;
+  p.ultimo_envio_whatsapp = new Date().toISOString();
+  logAudit('Prospectos', id, 'Primer acercamiento enviado', p.nombre+' · envío #'+p.envios_whatsapp);
+  persistExtra(); toast('Abriendo WhatsApp…'); if(CURRENT_ROUTE==='prospectos') drawProspectosTable();
 }
 function convertirProspectoALead(id){
   const p = DB.prospectos.find(x=>x.id===id); if(!p) return;
@@ -5678,7 +5794,7 @@ function convertirProspectoALead(id){
   DB.medicos.push(nuevo);
   DB.prospectos = DB.prospectos.filter(x=>x.id!==id);
   logAudit('Prospectos', id, 'Convertido a Lead', p.nombre);
-  persistExtra(); toast(p.nombre+' ahora es un Lead'); drawProspectosTable();
+  persistExtra(); toast(p.nombre+' ahora es un Lead'); if(CURRENT_ROUTE==='prospectos') drawProspectosTable();
 }
 function openProspectosMassEdit(){
   const pass = prompt('Esta pantalla permite editar datos de varios prospectos a la vez.\n\nEscribe la clave de acceso para continuar:');
@@ -6313,6 +6429,7 @@ function renderConfig(){
         <button class="chip" data-k="seguimiento">Seguimiento</button>
         <button class="chip" data-k="vencida">Recordatorio de vencida</button>
         <button class="chip" data-k="cotizacion_aseguradora">Cotización a aseguradora</button>
+        <button class="chip" data-k="primer_acercamiento">Primer acercamiento (Prospectos)</button>
       </div>
       <div id="msg-placeholders" style="font-size:11px; color:var(--text-faint); margin-bottom:8px;"></div>
       <textarea class="input" id="msg-textarea" style="width:100%; min-height:150px; font-family:var(--font-mono,monospace); font-size:12px;"></textarea>
@@ -6367,7 +6484,8 @@ const MSG_PLACEHOLDERS = {
   cotizacion: '{nombre} {folio} {procedimiento} {monto} {vigencia} {beneficio} {portal}',
   seguimiento: '{nombre} {procedimiento} {folio_texto} {nota}',
   vencida: '{nombre} {folio} {procedimiento} {fecha_venc}',
-  cotizacion_aseguradora: '{nombre} {folio} {procedimiento} {aseguradora} {monto}'
+  cotizacion_aseguradora: '{nombre} {folio} {procedimiento} {aseguradora} {monto}',
+  primer_acercamiento: '{nombre}'
 };
 function wireMsgEditor(){
   let msgActual = 'cotizacion';
