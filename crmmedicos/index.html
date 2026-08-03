@@ -538,6 +538,7 @@ let DB = {
   mensajes_whatsapp: RAW.mensajes_whatsapp || {},
   acuerdo_responsables: RAW.acuerdo_responsables || [],
   prospectos: RAW.prospectos || [],
+  config_general: RAW.config_general || { enlace_drive: '' },
   auditoria: []
 };
 const ESTADOS_COT = {
@@ -572,7 +573,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.1.1';
+const APP_VERSION = 'v2.1.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -606,6 +607,7 @@ async function loadSession(){
       if(extra.mensajes_whatsapp) DB.mensajes_whatsapp = extra.mensajes_whatsapp;
       if(extra.acuerdo_responsables) DB.acuerdo_responsables = extra.acuerdo_responsables;
       if(extra.prospectos) DB.prospectos = extra.prospectos;
+      if(extra.config_general) DB.config_general = extra.config_general;
       if(extra.medicos_overrides){
         Object.entries(extra.medicos_overrides).forEach(([id,ov])=>{
           const md = DB.medicos.find(m=>String(m.id)===id);
@@ -660,6 +662,7 @@ function persistExtra(){
         mensajes_whatsapp: DB.mensajes_whatsapp,
         acuerdo_responsables: DB.acuerdo_responsables,
         prospectos: DB.prospectos,
+        config_general: DB.config_general,
         medicos_custom: DB.medicos.filter(m=>m.__new),
         medicos_overrides: Object.fromEntries(
           DB.medicos.filter(m=>!m.__new && m.__edited).map(m=>[String(m.id),{
@@ -764,7 +767,20 @@ Saludos. 😊`,
   primer_acercamiento: `Dr(a). {nombre}. 👋 Mi nombre es Juan Carlos y le escribo de parte de *Hospital Noor de Bosque Real* — es un gusto saludarle.
 Nos encantaría presentarle nuestras instalaciones y platicarle sobre las condiciones y beneficios que tenemos disponibles para médicos de su especialidad. Le comparto un video con el recorrido virtual del hospital, para que lo conozca a detalle.
 Quedo a sus órdenes por si tiene alguna duda, o si le gustaría que coordinemos una visita presencial cuando usted guste. 🙌
-Saludos cordiales.`
+Saludos cordiales.`,
+  email_asunto: `Hospital Noor de Bosque Real — Le escribimos para presentarnos`,
+  email_cuerpo: `Dr(a). {nombre}:
+
+Mi nombre es Juan Carlos y le escribo de parte de Hospital Noor de Bosque Real — es un gusto saludarle por este medio.
+
+Nos encantaría presentarle nuestras instalaciones y platicarle sobre las condiciones y beneficios que tenemos disponibles para médicos de su especialidad. Puede conocer más sobre el hospital en el siguiente enlace:
+{enlace_drive}
+
+Quedo a sus órdenes por si tiene alguna duda, o si le gustaría que coordinemos una visita presencial cuando usted guste.
+
+Saludos cordiales,
+Juan Carlos
+Hospital Noor de Bosque Real`
 };
 function getPlantillaWhatsApp(clave){ return (DB.mensajes_whatsapp && DB.mensajes_whatsapp[clave]) || PLANTILLAS_WHATSAPP_DEFAULT[clave]; }
 function aplicarPlantillaWhatsApp(plantilla, valores){
@@ -1570,7 +1586,9 @@ function meSortBy(field){
   drawMassEditTable();
 }
 function drawMassEdit(){
-  const especialidades = [...new Set(DB.medicos.map(m=>m.especialidad).filter(Boolean))].sort();
+  const espCounts = {};
+  DB.medicos.forEach(m=>{ if(m.especialidad) espCounts[m.especialidad] = (espCounts[m.especialidad]||0)+1; });
+  const especialidadesConCount = Object.entries(espCounts).sort((a,b)=>a[0].localeCompare(b[0],'es'));
   const el = document.getElementById('mass-edit-overlay');
   el.innerHTML = `
     <div style="padding:22px 30px; max-width:1500px; margin:0 auto;">
@@ -1580,10 +1598,10 @@ function drawMassEdit(){
         <button class="btn" onclick="closeMassEdit()">${icon('x')} Cerrar</button>
       </div>
       <div class="toolbar" style="margin-bottom:14px;">
-        <select class="select" id="me-especialidad" style="min-width:220px;">
-          <option value="todas">Todas las especialidades</option>
-          ${especialidades.map(e=>`<option value="${e}" ${massEditState.especialidad===e?'selected':''}>${e}</option>`).join('')}
-        </select>
+        <div class="picker-wrap" style="position:relative;">
+          <div class="searchbox" style="width:260px;">${icon('search')}<input id="me-especialidad" placeholder="Buscar especialidad…" value="${massEditState.especialidad!=='todas'?massEditState.especialidad:''}" autocomplete="off"></div>
+          <div id="me-especialidad-results" class="picker-results" style="display:none;"></div>
+        </div>
         <div class="searchbox" style="width:240px;">${icon('search')}<input id="me-search" placeholder="Buscar por nombre…" value="${massEditState.search}"></div>
         <span id="me-selected-count" style="font-size:11.5px; color:var(--text-muted);"></span>
         <button class="btn btn-sm btn-guinda" style="margin-left:auto;" id="me-pdf">${icon('download')} Generar reporte PDF</button>
@@ -1606,7 +1624,7 @@ function drawMassEdit(){
         <tbody id="me-tbody"></tbody></table>
       </div>
     </div>`;
-  document.getElementById('me-especialidad').onchange = (e)=>{ massEditState.especialidad = e.target.value; drawMassEditTable(); };
+  wireEspecialidadPicker('me-especialidad', 'me-especialidad-results', especialidadesConCount, (val)=>{ massEditState.especialidad = val; drawMassEditTable(); });
   document.getElementById('me-search').oninput = (e)=>{ massEditState.search = e.target.value; drawMassEditTable(); };
   document.getElementById('me-pdf').onclick = generateLeadsEspecialidadPDF;
   document.getElementById('me-select-all').onchange = (e)=>{
@@ -1803,6 +1821,31 @@ function reactivarMedico(id){
   m.activo = true; if(!m.__new) m.__edited = true;
   logAudit('Médico', id, 'Reactivación', m.nombre);
   persistExtra(); toast('Registro reactivado'); openMedicoDrawer(id); renderMedicos();
+}
+function wireEspecialidadPicker(searchElId, resultsElId, especialidadesConCount, onSelect){
+  const searchEl = document.getElementById(searchElId);
+  const resultsEl = document.getElementById(resultsElId);
+  function rowsHtml(list){
+    return `<div class="result-row" data-val="todas"><div class="result-main"><div class="result-title">Todas las especialidades</div></div></div>` +
+      (list.length ? list.map(([e,c])=>`<div class="result-row" data-val="${e.replace(/"/g,'&quot;')}"><div class="result-main"><div class="result-title">${e}</div><div class="result-sub">${c} médico(s)</div></div></div>`).join('') : `<div class="picker-empty">Sin coincidencias</div>`);
+  }
+  function wireRows(){
+    resultsEl.querySelectorAll('[data-val]').forEach(row=> row.onclick = ()=>{
+      const val = row.dataset.val;
+      searchEl.value = val==='todas' ? '' : val;
+      resultsEl.style.display='none';
+      onSelect(val);
+    });
+  }
+  searchEl.onfocus = ()=>{ resultsEl.innerHTML = rowsHtml(especialidadesConCount); resultsEl.style.display='block'; wireRows(); };
+  searchEl.oninput = ()=>{
+    const q = searchEl.value;
+    const filtered = q.trim() ? especialidadesConCount.filter(([e])=>fuzzyMatch(e,q)) : especialidadesConCount;
+    resultsEl.innerHTML = rowsHtml(filtered);
+    resultsEl.style.display='block';
+    wireRows();
+  };
+  document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')) resultsEl.style.display='none'; });
 }
 function wireStringSearch(searchEl, resultsEl, items, onPick){
   searchEl.oninput = ()=>{
@@ -5732,14 +5775,14 @@ function conteoPorEspecialidadProspectos(){
 }
 function renderProspectos(){
   const counts = conteoPorEspecialidadProspectos();
-  const especialidades = Object.keys(counts).sort((a,b)=>a.localeCompare(b,'es'));
+  const especialidadesConCount = Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0],'es'));
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:280px;">${icon('search')}<input id="pr-search" placeholder="Buscar por nombre, especialidad u hospital…"></div>
-      <select class="select" id="pr-especialidad" style="min-width:260px;">
-        <option value="todas">Todas las especialidades (${DB.prospectos.length})</option>
-        ${especialidades.map(e=>`<option value="${e}" ${prospectosState.especialidad===e?'selected':''}>${e} (${counts[e]})</option>`).join('')}
-      </select>
+      <div class="picker-wrap" style="position:relative;">
+        <div class="searchbox" style="width:260px;">${icon('search')}<input id="pr-especialidad" placeholder="Buscar especialidad…" value="${prospectosState.especialidad!=='todas'?prospectosState.especialidad:''}" autocomplete="off"></div>
+        <div id="pr-especialidad-results" class="picker-results" style="display:none;"></div>
+      </div>
       <span id="pr-count" style="font-size:11.5px; color:var(--text-faint);"></span>
       <button class="btn btn-guinda" style="margin-left:auto;" onclick="openProspectosMassEdit()">${icon('config')} Edición masiva</button>
       <button class="btn" onclick="openProspectosReporteModal()">${icon('download')} Generar reporte</button>
@@ -5750,7 +5793,7 @@ function renderProspectos(){
       <div class="pagination" id="pr-pg"></div>
     </div>`;
   document.getElementById('pr-search').oninput = (e)=>{ prospectosState.search=e.target.value; prospectosState.page=1; drawProspectosTable(); };
-  document.getElementById('pr-especialidad').onchange = (e)=>{ prospectosState.especialidad=e.target.value; prospectosState.page=1; drawProspectosTable(); };
+  wireEspecialidadPicker('pr-especialidad', 'pr-especialidad-results', especialidadesConCount, (val)=>{ prospectosState.especialidad=val; prospectosState.page=1; drawProspectosTable(); });
   drawProspectosTable();
 }
 function drawProspectosTable(){
@@ -5763,10 +5806,26 @@ function drawProspectosTable(){
     <td style="font-size:11.5px; color:var(--text-muted);">${p.hospital||'—'}</td>
     <td>${p.telefono||'<span style="color:var(--text-faint);">Sin teléfono</span>'}</td>
     <td style="font-size:11.5px;">${p.correo||'—'}</td>
-    <td>${p.telefono ? `<button class="btn-whatsapp" onclick="enviarProspectoWhatsApp('${p.id}')" title="Enviar primer acercamiento por WhatsApp" style="position:relative;">${icon('whatsapp')}${p.envios_whatsapp?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_whatsapp}</span>`:''}</button>` : ''}</td>
+    <td>${p.telefono ? `<button class="btn-whatsapp" onclick="enviarProspectoWhatsApp('${p.id}')" title="Enviar primer acercamiento por WhatsApp" style="position:relative;">${icon('whatsapp')}${p.envios_whatsapp?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_whatsapp}</span>`:''}</button>` : ''}
+      ${p.correo ? `<button class="btn-whatsapp" onclick="enviarProspectoEmail('${p.id}')" title="Enviar primer acercamiento por correo" style="position:relative; background:var(--primary-light); color:var(--primary); margin-left:4px;">${icon('quote')}${p.envios_email?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_email}</span>`:''}</button>` : ''}</td>
     <td><button class="btn btn-sm btn-primary" onclick="convertirProspectoALead('${p.id}')">${icon('plus')} Convertir a Lead</button></td>
   </tr>`).join('') || `<tr><td colspan="7"><div class="empty-state">${icon('doctor')}<div>Sin prospectos con esa búsqueda.</div></div></td></tr>`;
   paginationControls('pr-pg', all.length, prospectosState.page, prospectosState.perPage, (p)=>{ prospectosState.page=p; drawProspectosTable(); });
+}
+function enviarProspectoEmail(id){
+  const p = DB.prospectos.find(x=>x.id===id); if(!p) return;
+  if(!p.correo){ toast('Este prospecto no tiene correo registrado'); return; }
+  const nombreCorto = p.nombre.replace(/^DRA?\.?\s+/i,'');
+  const enlaceDrive = (DB.config_general && DB.config_general.enlace_drive) || '';
+  const asunto = getPlantillaWhatsApp('email_asunto');
+  const cuerpo = aplicarPlantillaWhatsApp(getPlantillaWhatsApp('email_cuerpo'), { nombre: nombreCorto, enlace_drive: enlaceDrive });
+  const cc = 'jcarlos.cruzestrada@gmail.com';
+  const link = 'mailto:'+encodeURIComponent(p.correo)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
+  window.open(link, '_blank');
+  p.envios_email = (p.envios_email||0) + 1;
+  p.ultimo_envio_email = new Date().toISOString();
+  logAudit('Prospectos', id, 'Correo de primer acercamiento enviado', p.nombre+' · envío #'+p.envios_email);
+  persistExtra(); toast('Abriendo tu editor de correo (Outlook)…'); if(CURRENT_ROUTE==='prospectos') drawProspectosTable();
 }
 function enviarProspectoWhatsApp(id){
   const p = DB.prospectos.find(x=>x.id===id); if(!p) return;
@@ -6422,20 +6481,29 @@ function renderConfig(){
         <button class="btn btn-danger" id="reset-btn">${icon('trash')} Reiniciar datos de la sesión</button>
       </div>
     </div>
-    <div class="section-title">Mensajes de WhatsApp <span style="font-size:11px; color:var(--text-faint); font-weight:500;">Edita el texto que se usa al enviar cada tipo de mensaje</span></div>
+    <div class="section-title">Mensajes de WhatsApp y Correo <span style="font-size:11px; color:var(--text-faint); font-weight:500;">Edita el texto que se usa al enviar cada tipo de mensaje</span></div>
     <div class="card" style="margin-bottom:20px;">
       <div id="msg-tabs" class="chip-filter" style="margin-bottom:14px;">
         <button class="chip active" data-k="cotizacion">Cotización a médico</button>
         <button class="chip" data-k="seguimiento">Seguimiento</button>
         <button class="chip" data-k="vencida">Recordatorio de vencida</button>
         <button class="chip" data-k="cotizacion_aseguradora">Cotización a aseguradora</button>
-        <button class="chip" data-k="primer_acercamiento">Primer acercamiento (Prospectos)</button>
+        <button class="chip" data-k="primer_acercamiento">Primer acercamiento — WhatsApp (Prospectos)</button>
+        <button class="chip" data-k="email_asunto">Primer acercamiento — Correo (Asunto)</button>
+        <button class="chip" data-k="email_cuerpo">Primer acercamiento — Correo (Cuerpo)</button>
       </div>
       <div id="msg-placeholders" style="font-size:11px; color:var(--text-faint); margin-bottom:8px;"></div>
       <textarea class="input" id="msg-textarea" style="width:100%; min-height:150px; font-family:var(--font-mono,monospace); font-size:12px;"></textarea>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button class="btn btn-primary" id="msg-save">${icon('check')} Guardar mensaje</button>
         <button class="btn" id="msg-restore">${icon('history')} Restaurar predeterminado</button>
+      </div>
+      <div style="border-top:1px solid var(--border); margin-top:16px; padding-top:14px;">
+        <label style="font-size:11.5px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Enlace de Drive (recorrido del hospital, para el correo de Prospectos)</label>
+        <div style="display:flex; gap:8px;">
+          <input class="input" id="cfg-enlace-drive" style="flex:1;" placeholder="https://drive.google.com/…" value="${(DB.config_general&&DB.config_general.enlace_drive)||''}">
+          <button class="btn btn-sm" id="cfg-enlace-drive-save">${icon('check')} Guardar enlace</button>
+        </div>
       </div>
     </div>
     <div class="section-title">Estado del sistema</div>
@@ -6485,7 +6553,9 @@ const MSG_PLACEHOLDERS = {
   seguimiento: '{nombre} {procedimiento} {folio_texto} {nota}',
   vencida: '{nombre} {folio} {procedimiento} {fecha_venc}',
   cotizacion_aseguradora: '{nombre} {folio} {procedimiento} {aseguradora} {monto}',
-  primer_acercamiento: '{nombre}'
+  primer_acercamiento: '{nombre}',
+  email_asunto: '(este mensaje no usa variables, es el asunto fijo del correo)',
+  email_cuerpo: '{nombre} {enlace_drive}'
 };
 function wireMsgEditor(){
   let msgActual = 'cotizacion';
@@ -6510,6 +6580,12 @@ function wireMsgEditor(){
     if(!confirm('¿Restaurar este mensaje a su versión predeterminada?')) return;
     if(DB.mensajes_whatsapp) delete DB.mensajes_whatsapp[msgActual];
     persistExtra(); cargar(); toast('Mensaje restaurado');
+  };
+  document.getElementById('cfg-enlace-drive-save').onclick = ()=>{
+    DB.config_general = DB.config_general || {};
+    DB.config_general.enlace_drive = document.getElementById('cfg-enlace-drive').value.trim();
+    logAudit('Configuración', '-', 'Enlace de Drive actualizado', DB.config_general.enlace_drive);
+    persistExtra(); toast('Enlace guardado');
   };
   cargar();
 }
