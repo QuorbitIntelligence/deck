@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Médicos — Hospital Noor | v1.3.0</title>
+<title>Portal Médicos — Hospital Noor | v1.3.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='18'%20fill='%23f4f6fb'/%3E%3Cpath%20d='M50%208%20L83%2020%20V55%20C83%2077%2068%2090%2050%2096%20C32%2090%2017%2077%2017%2055%20V20%20Z'%20fill='%230a2d6e'/%3E%3Cpath%20d='M50%2014%20L77%2024%20V55%20C77%2073%2065%2084%2050%2090%20C35%2084%2023%2073%2023%2055%20V24%20Z'%20fill='none'%20stroke='%23c9a96e'%20stroke-width='2.5'/%3E%3Crect%20x='44.5'%20y='32'%20width='11'%20height='39'%20rx='3'%20fill='%23fff'/%3E%3Crect%20x='30.5'%20y='46'%20width='39'%20height='11'%20rx='3'%20fill='%23fff'/%3E%3Ccircle%20cx='50'%20cy='51.5'%20r='4'%20fill='%23c9a96e'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -19,10 +19,72 @@
 body {font-family:'DM Sans',sans-serif; background:var(--hielo); color:var(--texto); overflow-x:hidden}
 
 /* ═══════════════════════════════════════
-   PÁGINA DE INICIO (HOME)
+   UBICACIÓN Y CONTACTO
    ═══════════════════════════════════════ */
+.location-section {
+  max-width:1100px; margin:40px auto 0; padding:0 20px;
+}
+.location-title {
+  font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600;
+  color:var(--azul-noor); text-align:center; margin-bottom:8px;
+}
+.location-subtitle {
+  text-align:center; color:var(--gris); font-size:.95rem; margin-bottom:28px;
+}
+.location-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:28px; align-items:stretch;
+}
+@media (max-width:840px){ .location-grid{ grid-template-columns:1fr } }
 
-#homepage {display:block}
+.map-card, .contact-card {
+  background:#fff; border:1px solid var(--borde); border-radius:16px;
+  overflow:hidden; box-shadow:0 6px 24px rgba(10,45,110,.08);
+}
+.map-card iframe { display:block; width:100%; height:100%; min-height:360px; border:0 }
+.map-address {
+  padding:16px 20px; background:linear-gradient(135deg,var(--azul-noor) 0%,var(--azul-m) 100%);
+  color:#fff; font-size:.9rem; line-height:1.5;
+}
+.map-address strong { color:var(--dorado) }
+.map-address a { color:#fff; text-decoration:underline }
+
+.contact-card { padding:28px }
+.contact-card h3 {
+  color:var(--azul-noor); font-size:1.25rem; margin-bottom:6px; font-weight:700;
+}
+.contact-card .contact-lead { color:var(--gris); font-size:.88rem; margin-bottom:20px }
+.field { margin-bottom:16px }
+.field label {
+  display:block; font-size:.8rem; font-weight:600; color:var(--azul-noor);
+  margin-bottom:6px;
+}
+.field input, .field select, .field textarea {
+  width:100%; padding:11px 14px; border:1.5px solid var(--borde); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:.9rem; color:var(--texto);
+  background:var(--hielo); transition:border-color .2s, box-shadow .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline:none; border-color:var(--azul-c); box-shadow:0 0 0 3px rgba(45,125,210,.15);
+  background:#fff;
+}
+.field textarea { resize:vertical; min-height:96px }
+.contact-submit {
+  width:100%; padding:14px; border:none; border-radius:10px; cursor:pointer;
+  background:linear-gradient(135deg,var(--azul-noor) 0%,var(--azul-c) 100%);
+  color:#fff; font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:600;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:transform .15s, box-shadow .2s;
+}
+.contact-submit:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(10,45,110,.25) }
+.contact-submit:disabled { opacity:.6; cursor:not-allowed; transform:none }
+.form-status {
+  margin-top:16px; padding:14px 16px; border-radius:10px; font-size:.9rem;
+  text-align:center; font-weight:600; display:none;
+}
+.form-status.ok { display:block; background:#e6f6ee; color:var(--exito); border:1px solid #b6e2ca }
+.form-status.err { display:block; background:#fdecea; color:var(--error); border:1px solid #f5c6c0 }
+
+
 #homepage.hidden {display:none}
 
 /* Header con menús desplegables */
@@ -1347,10 +1409,74 @@ footer strong{color:var(--azul-noor)}
 
   </div>
 
+  <!-- Ubicación y Contacto -->
+  <section class="location-section" id="ubicacion">
+    <h2 class="location-title">Ubicación y Contacto</h2>
+    <p class="location-subtitle">Visítanos o solicita información. Estamos para atenderte.</p>
+    <div class="location-grid">
+
+      <!-- Mapa -->
+      <div class="map-card">
+        <iframe
+          src="https://www.google.com/maps?q=19.4309234,-99.2819076&z=16&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Ubicación Hospital Noor Clinic"></iframe>
+        <div class="map-address">
+          <strong>Hospital Noor Clinic</strong><br>
+          Blvrd Bosque Real 85, Huixquilucan, 52774, Edomex, MX<br>
+          <a href="https://www.google.com/maps/search/?api=1&query=19.4309234,-99.2819076" target="_blank">Cómo llegar →</a>
+        </div>
+      </div>
+
+      <!-- Formulario de contacto -->
+      <div class="contact-card">
+        <h3>Solicita Información</h3>
+        <p class="contact-lead">Completa el formulario y nuestro equipo te contactará a la brevedad.</p>
+
+        <form id="contactForm" onsubmit="enviarContacto(event)">
+          <div class="field">
+            <label for="cf-nombre">Nombre del médico</label>
+            <input type="text" id="cf-nombre" name="Nombre del médico" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="cf-telefono">Teléfono de contacto</label>
+            <input type="tel" id="cf-telefono" name="Teléfono" required autocomplete="tel" placeholder="55 1234 5678">
+          </div>
+          <div class="field">
+            <label for="cf-email">Email</label>
+            <input type="email" id="cf-email" name="Email" required autocomplete="email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="field">
+            <label for="cf-especialidad">Especialidad</label>
+            <input type="text" id="cf-especialidad" name="Especialidad" required placeholder="Ej. Cirugía General">
+          </div>
+          <div class="field">
+            <label for="cf-mensaje">Mensaje</label>
+            <textarea id="cf-mensaje" name="Mensaje" required placeholder="¿En qué podemos ayudarte?"></textarea>
+          </div>
+
+          <!-- Configuración FormSubmit -->
+          <input type="hidden" name="_subject" value="Nuevo contacto — Portal Médicos Hospital Noor">
+          <input type="hidden" name="_template" value="table">
+          <input type="text" name="_honey" style="display:none">
+
+          <button type="submit" class="contact-submit" id="cf-submit">
+            <span>Enviar</span>
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/></svg>
+          </button>
+
+          <div class="form-status" id="cf-status"></div>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
   <!-- Footer -->
   <div class="home-footer">
     <p>
-      <strong>Hospital Noor</strong> · Portal Web Médicos v1.3.0 · 2025<br>
+      <strong>Hospital Noor</strong> · Portal Web Médicos v1.3.1 · 2025<br>
       Sistema de Credencialización y Servicios · Todos los derechos reservados
     </p>
   </div>
@@ -1436,7 +1562,7 @@ footer strong{color:var(--azul-noor)}
     </div>
     <div class="header-pill">
       <span>Expediente Digital</span>
-      <strong>v1.3.0</strong>
+      <strong>v1.3.1</strong>
     </div>
   </div>
 </header>
@@ -1718,13 +1844,57 @@ footer strong{color:var(--azul-noor)}
 </main>
 
 <footer>
-  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.3.0<br>
+  <strong>Noor Clinic</strong> · Sistema de Credencialización · v1.3.1<br>
   Documentos resguardados en Google Drive · Datos protegidos conforme a la LFPDPPP
 </footer>
 
 </div>
 
 <script>
+// ══════════════════════════════════════════════════════
+//  FORMULARIO DE CONTACTO (FormSubmit AJAX)
+// ══════════════════════════════════════════════════════
+async function enviarContacto(e) {
+  e.preventDefault();
+  var form = document.getElementById('contactForm');
+  var btn = document.getElementById('cf-submit');
+  var status = document.getElementById('cf-status');
+  var label = btn.querySelector('span');
+
+  // Honeypot anti-spam
+  if (form.querySelector('[name="_honey"]').value) return;
+
+  btn.disabled = true;
+  label.textContent = 'Enviando...';
+  status.className = 'form-status';
+  status.textContent = '';
+
+  try {
+    var data = new FormData(form);
+    var resp = await fetch('https://formsubmit.co/ajax/Jcarlos.cruzestrada@gmail.com', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: data
+    });
+    var result = await resp.json();
+
+    if (resp.ok && (result.success === true || result.success === 'true')) {
+      form.reset();
+      status.className = 'form-status ok';
+      status.textContent = '✅ ¡Enviado! Gracias por contactarnos, te responderemos pronto.';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      throw new Error('respuesta no exitosa');
+    }
+  } catch (err) {
+    status.className = 'form-status err';
+    status.textContent = '⚠️ No se pudo enviar. Inténtalo de nuevo o escríbenos por WhatsApp al 55 7657 6669.';
+  } finally {
+    btn.disabled = false;
+    label.textContent = 'Enviar';
+  }
+}
+
 // ══════════════════════════════════════════════════════
 //  NAVEGACIÓN ENTRE HOMEPAGE Y FORMULARIO
 // ══════════════════════════════════════════════════════
