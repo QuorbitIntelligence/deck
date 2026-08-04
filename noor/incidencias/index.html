@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Incidencias Web Noor v1.7.0</title>
+<title>Incidencias Web Noor v1.7.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#0c3a6b;--blue:#185fa5;--mid:#378add;--light:#b5d4f4;--pale:#e6f1fb;--sky:#2b9fd8;--g900:#1a1d23;--g700:#3a3f4a;--g500:#6b7280;--g300:#d1d5db;--g200:#e5e7eb;--g100:#f3f5f8;--g50:#f8fafc;--w:#fff;--ok:#059669;--warn:#d97706;--err:#dc2626;--purple:#7c3aed;--cook:#0d9488;--rh:#b45309;--rsm:6px;--rmd:10px;--rlg:16px;--rxl:20px;--s1:0 1px 3px rgba(12,58,107,.08);--s2:0 4px 16px rgba(12,58,107,.10);--s3:0 12px 40px rgba(12,58,107,.15)}
@@ -305,12 +305,13 @@ td{padding:10px 12px;font-size:13px;color:var(--g700);border-top:1px solid var(-
   <div class="topbar" id="topbar">
     <div class="tb-l">
       <img class="tb-logo" id="tb-logo" src="" alt="Noor">
-      <div><div class="tb-nm">Hospital Noor <span class="ver">v1.7.0</span></div><div class="tb-ar" id="tb-ar">—</div></div>
+      <div><div class="tb-nm">Hospital Noor <span class="ver">v1.7.1</span></div><div class="tb-ar" id="tb-ar">—</div></div>
       <span class="badge adm" id="adm-badge" style="display:none">ADMIN GLOBAL</span>
       <span class="badge cook" id="cook-badge" style="display:none">COCINA</span>
       <span class="badge rh" id="rh-badge" style="display:none">RH</span>
     </div>
     <div class="tb-r">
+      <span id="db-indicator" style="font-size:11px;color:rgba(255,255,255,.5);margin-right:4px">⚪ Sin conexión</span>
       <!-- BOTÓN NUEVA INCIDENCIA — siempre en topbar, visible para todos excepto cocina -->
       <button class="btn-nueva-inc" id="btn-topbar-inc" onclick="openIncModal()" style="display:none">+ Nueva incidencia</button>
       <span style="font-size:11px;color:rgba(255,255,255,.4)" id="tb-date"></span>
@@ -667,6 +668,12 @@ function launch(label){
 
   if(timerInterval)clearInterval(timerInterval);
   timerInterval=setInterval(()=>{renderDashboard();updateStats();},60000);
+  // Conectar a Google Sheets (no bloquea el UI si falla)
+  if(APPS_SCRIPT_URL && !APPS_SCRIPT_URL.includes('TU_ID_AQUI')){
+    setTimeout(connectToSheets, 500);
+  } else {
+    setDbStatus('offline');
+  }
 
   setTimeout(()=>{const w=document.getElementById('wab');if(w){w.classList.add('on');setTimeout(()=>w.classList.remove('on'),5000);}},2000);
 }
@@ -851,7 +858,13 @@ function initSig(){
   c.ontouchend=()=>sigDraw=false;
 }
 function clrSig(){if(sigCtx){const c=document.getElementById('sig-c');sigCtx.clearRect(0,0,c.width,c.height);}}
-function subFirma(){cM('m-firma');toast('Firma registrada — notificación enviada al jefe vía WhatsApp','tok');}
+function subFirma(){
+  const folio = document.getElementById('fm-folio').textContent.replace('Folio: ','');
+  const nombre = ftMode === 'auth' ? document.getElementById('fa-nom').value : 'Firma dibujada';
+  cM('m-firma');
+  toast('Firma registrada — notificación enviada al jefe vía WhatsApp','tok');
+  syncFirma(folio, { nombre, modo: ftMode, ts: Date.now() });
+}
 
 // ── INCIDENCIAS MODAL — FIX COMPLETO ──
 const FOOD_TRIGGERS=['Tiempo Extra','Turno Adicional','Guardia Extra','Descanso Laborado'];
@@ -995,6 +1008,8 @@ function subInc(){
   renderDashboard();renderIncTbody();updateStats();
   cM('m-inc');
   toast('Solicitud registrada — Folio '+nuevoInc.folio+' — visible en Dashboard','tok');
+  // Sincronizar con Sheets
+  syncIncidencia(nuevoInc);
 }
 
 // ── INCIDENCIAS TABLA ──
@@ -1024,7 +1039,9 @@ function renderIncTbody(){
 
 function delInc(i){
   if(!confirm('¿Eliminar esta incidencia?'))return;
+  const folioEliminado = incidencias[i].folio;
   incidencias.splice(i,1);renderIncTbody();renderDashboard();updateStats();toast('Incidencia eliminada');
+  syncDeleteIncidencia(folioEliminado);
 }
 
 // ── EMPLEADOS ──
@@ -1107,13 +1124,18 @@ function saveEmp(){
   if(!nom||!area||!puesto){alert('Completa los campos obligatorios.');return;}
   const idx=document.getElementById('em-idx').value;
   const data={nom,area,puesto,jefeDir,jefe,tel,areas2};
-  if(idx!=='')empleados[parseInt(idx)]=data;else empleados.push(data);
+  const isEmpUpdate = idx !== '';
+  const oldEmpNombre = isEmpUpdate ? empleados[parseInt(idx)].nom : null;
+  if(isEmpUpdate)empleados[parseInt(idx)]=data;else empleados.push(data);
   renderEmps();populateSelects();populateEmpSel();
   cM('m-emp');toast(idx!==''?'Empleado actualizado':'Empleado registrado','tok');
+  syncEmpleado(data, isEmpUpdate, oldEmpNombre);
 }
 function delEmp(i){
   if(!confirm('¿Eliminar a '+empleados[i].nom+'?'))return;
+  const nombreEliminado = empleados[i].nom;
   empleados.splice(i,1);renderEmps();populateSelects();populateEmpSel();toast('Empleado eliminado');
+  syncDeleteEmpleado(nombreEliminado);
 }
 
 // ── ÁREAS ──
@@ -1149,10 +1171,15 @@ function saveArea(){
   const clave=document.getElementById('ar-clave').value.trim()||cod+AÑO;const jefe=document.getElementById('ar-jefe').value;const desc=document.getElementById('ar-desc').value.trim();
   if(!nom||!cod){alert('Nombre y código son obligatorios.');return;}
   const idx=document.getElementById('ar-idx').value;const data={nom,cod,clave,jefe,desc};
-  if(idx!=='')areas[parseInt(idx)]=data;else areas.push(data);
+  const isAreaUpdate = idx !== '';
+  const oldAreaCod = isAreaUpdate ? areas[parseInt(idx)].cod : null;
+  if(isAreaUpdate)areas[parseInt(idx)]=data;else areas.push(data);
   renderAreas();populateSelects();populateLoginAreas();cM('m-area');toast(idx!==''?'Área actualizada':'Área creada','tok');
+  syncArea(data, isAreaUpdate, oldAreaCod);
 }
-function delArea(i){if(!confirm('¿Eliminar área '+areas[i].nom+'?'))return;areas.splice(i,1);renderAreas();populateSelects();populateLoginAreas();toast('Área eliminada');}
+function delArea(i){if(!confirm('¿Eliminar área '+areas[i].nom+'?'))return;const codEliminado = areas[i].cod;
+  areas.splice(i,1);renderAreas();populateSelects();populateLoginAreas();toast('Área eliminada');
+  syncDeleteArea(codEliminado);}
 
 // ── CATÁLOGO ──
 function renderCatTbody(){
@@ -1181,11 +1208,16 @@ function saveCat(){
   const nom=document.getElementById('ct-nom').value.trim();if(!nom){alert('Escribe el nombre.');return;}
   const food=document.getElementById('ct-food').value==='si';const hora=document.getElementById('ct-hora').value==='si';const activa=document.getElementById('ct-act').value==='si';
   const idx=document.getElementById('ct-idx').value;const data={nom,food,hora,activa};
-  if(idx!=='')catalogoInc[parseInt(idx)]=data;else catalogoInc.push(data);
+  const isCatUpdate = idx !== '';
+  const oldCatNom = isCatUpdate ? catalogoInc[parseInt(idx)].nom : null;
+  if(isCatUpdate)catalogoInc[parseInt(idx)]=data;else catalogoInc.push(data);
   renderCatTbody();renderIncChecks();cM('m-cat');
   toast('Incidencia '+(idx!==''?'actualizada':'creada')+' — disponible en el formulario','tok');
+  syncCatalogo(data, isCatUpdate, oldCatNom);
 }
-function delCat(i){if(!confirm('¿Eliminar "'+catalogoInc[i].nom+'"?'))return;catalogoInc.splice(i,1);renderCatTbody();renderIncChecks();toast('Incidencia eliminada del catálogo');}
+function delCat(i){if(!confirm('¿Eliminar "'+catalogoInc[i].nom+'"?'))return;const catNomEliminado = catalogoInc[i].nom;
+  catalogoInc.splice(i,1);renderCatTbody();renderIncChecks();toast('Incidencia eliminada del catálogo');
+  syncDeleteCatalogo(catNomEliminado);}
 
 // ── MENÚ v1.7 — desayuno y comida separados ──
 function mTab(tab,btn){
@@ -1330,6 +1362,9 @@ function assignDirect(ri){
   if(t==='comida'||t==='ambos'){menuHoy.comida=m;menuHistorial.push({...m,tipo:'comida',date:today});}
   renderMenuHoy();renderHist();updateMenuPrev();
   toast('Publicado: '+m.nom,'tok');
+  // Sincronizar con Sheets
+  if(t==='desayuno'||t==='ambos') syncPublishMenuHoy(m,'desayuno');
+  if(t==='comida'||t==='ambos')   syncPublishMenuHoy(m,'comida');
 }
 
 // ── MODAL NUEVO MENÚ ──
@@ -1375,8 +1410,11 @@ function saveMpreset(){
     img:selMenuImg||FOOD_IMGS.HUEVOS,tags:[]
   };
   const idx=document.getElementById('mpt-idx').value;
-  if(idx!=='')menuPresets[parseInt(idx)]=data;else menuPresets.push(data);
+  const isMenuUpdate = idx !== '';
+  const oldMenuNom = isMenuUpdate ? menuPresets[parseInt(idx)].nom : null;
+  if(isMenuUpdate)menuPresets[parseInt(idx)]=data;else menuPresets.push(data);
   renderCatMenu();cM('m-mpreset');toast(idx!==''?'Menú actualizado':'Menú creado','tok');
+  syncMenu(data, isMenuUpdate, oldMenuNom);
 }
 function delPreset(i){if(!confirm('¿Eliminar "'+menuPresets[i].nom+'"?'))return;menuPresets.splice(i,1);renderCatMenu();toast('Menú eliminado');}
 
@@ -1477,6 +1515,299 @@ console.log('RH → RH / RH'+AÑO+' (acceso directo incidencias)');
 console.log('Cocina → COC / COC'+AÑO+' (acceso directo menú)');
 console.log('Clave módulo incidencias: RH.INC.NOOR'+AÑO);
 console.table(areas.reduce((o,a)=>{o[a.nom]=a.clave;return o;},{}));
+
+
+// ── CONECTOR GOOGLE SHEETS ──
+// ═══════════════════════════════════════════════════════
+// NOOR CLINIC — Módulo de Conexión Google Sheets v1.0
+// Pega este bloque ANTES del cierre </script> en el HTML
+// Y reemplaza la constante APPS_SCRIPT_URL con tu URL real
+// ═══════════════════════════════════════════════════════
+
+// ── CONFIGURACIÓN — REEMPLAZA ESTA URL ──
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRCTPlgVCLBTmOd7E3CgKPGTPjqMNJ58CvfdlDf0E2rgxV8fnIP1YaojLwBkIMoJYd/exec';
+
+let DB_CONNECTED = false;
+let DB_SYNCING   = false;
+
+// ── API WRAPPER ──
+async function apiGet(action, params = {}) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const res = await fetch(`${APPS_SCRIPT_URL}?${qs}`);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'Error en API');
+  return json.data;
+}
+
+async function apiPost(action, payload = {}) {
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'Error en API');
+  return json.data;
+}
+
+// ── INDICADOR DE CONEXIÓN ──
+function setDbStatus(status) {
+  // status: 'connecting' | 'connected' | 'offline' | 'syncing'
+  DB_CONNECTED = status === 'connected';
+  const ind = document.getElementById('db-indicator');
+  if (!ind) return;
+  const config = {
+    connecting: { color: '#d97706', text: '⏳ Conectando...' },
+    connected:  { color: '#059669', text: '🟢 Sheets conectado' },
+    offline:    { color: '#dc2626', text: '🔴 Sin conexión — modo local' },
+    syncing:    { color: '#2b9fd8', text: '🔄 Sincronizando...' },
+  };
+  const c = config[status] || config.offline;
+  ind.style.color = c.color;
+  ind.textContent = c.text;
+}
+
+// ── PING Y CONEXIÓN INICIAL ──
+async function connectToSheets() {
+  setDbStatus('connecting');
+  try {
+    await apiGet('ping');
+    setDbStatus('connected');
+    DB_CONNECTED = true;
+    // Cargar datos desde Sheets
+    await loadAllFromSheets();
+    toast('✅ Conectado a Google Sheets', 'tok');
+  } catch(e) {
+    setDbStatus('offline');
+    DB_CONNECTED = false;
+    toast('⚠ Sin conexión a Sheets — usando datos locales', 'twarn');
+    console.warn('Sheets offline:', e.message);
+  }
+}
+
+// ── CARGAR TODOS LOS DATOS DESDE SHEETS ──
+async function loadAllFromSheets() {
+  setDbStatus('syncing');
+  try {
+    const [
+      sheetsAreas,
+      sheetsEmpleados,
+      sheetsCatalogo,
+      sheetsMenus,
+      sheetsMenuHoy,
+      sheetsInc,
+    ] = await Promise.all([
+      apiGet('getAreas'),
+      apiGet('getEmpleados'),
+      apiGet('getCatalogo'),
+      apiGet('getMenus'),
+      apiGet('getMenuHoy'),
+      apiGet('getIncidencias'),
+    ]);
+
+    // Áreas
+    if (sheetsAreas && sheetsAreas.length) {
+      areas = sheetsAreas.map(r => ({
+        nom: r.Nombre, cod: r.Codigo, clave: r.Clave, jefe: r.Jefe, desc: r.Descripcion
+      }));
+    }
+
+    // Empleados
+    if (sheetsEmpleados && sheetsEmpleados.length) {
+      empleados = sheetsEmpleados.map(r => ({
+        nom: r.Nombre, area: r.Area, puesto: r.Puesto, jefeDir: r.JefeDirecto,
+        jefe: r.EsJefe === 'true' || r.EsJefe === true,
+        areas2: r.AreasAdicionales ? r.AreasAdicionales.split(',').filter(Boolean) : [],
+        tel: r.Telefono,
+      }));
+    }
+
+    // Catálogo
+    if (sheetsCatalogo && sheetsCatalogo.length) {
+      catalogoInc = sheetsCatalogo.map(r => ({
+        nom: r.Nombre,
+        food: r.VinculaAlimentos === 'true' || r.VinculaAlimentos === true,
+        hora: r.RequiereHorario === 'true' || r.RequiereHorario === true,
+        activa: r.Activa === 'true' || r.Activa === true,
+      }));
+    }
+
+    // Menús preset
+    if (sheetsMenus && sheetsMenus.length) {
+      menuPresets = sheetsMenus.map(r => ({
+        nom: r.Nombre, tipo: r.Tipo, desc: r.Descripcion,
+        d1: r.D1, d2: r.D2, d3: r.D3,
+        c1: r.C1, c2: r.C2, c3: r.C3,
+        img: r.Imagen || FOOD_IMGS.HUEVOS,
+        tags: r.Tags ? r.Tags.split(',').filter(Boolean) : [],
+      }));
+    }
+
+    // Menú de hoy
+    if (sheetsMenuHoy) {
+      if (sheetsMenuHoy.desayuno) {
+        const m = sheetsMenuHoy.desayuno;
+        menuHoy.desayuno = { nom: m.MenuNombre, d1: m.D1, d2: m.D2, d3: m.D3, img: m.Imagen || FOOD_IMGS.HUEVOS };
+      }
+      if (sheetsMenuHoy.comida) {
+        const m = sheetsMenuHoy.comida;
+        menuHoy.comida = { nom: m.MenuNombre, c1: m.C1, c2: m.C2, c3: m.C3, img: m.Imagen || FOOD_IMGS.HUEVOS };
+      }
+    }
+
+    // Incidencias
+    if (sheetsInc && sheetsInc.length) {
+      incidencias = sheetsInc.map(r => ({
+        folio: r.Folio, emp: r.Empleado, area: r.Area,
+        tipos: r.Tipos, foods: r.Alimentos,
+        captureTs: parseInt(r.CaptureTs) || new Date(r.FechaCreacion).getTime() || Date.now(),
+        fi: r.FechaInicio, ff: r.FechaFin, horario: r.Horario,
+        status: r.Status, firmas: parseInt(r.Firmas) || 0,
+      }));
+    }
+
+    // Re-renderizar todo
+    populateLoginAreas(); populateSelects();
+    renderCatTbody(); renderIncChecks();
+    renderEmps(); renderAreas(); renderCatMenu();
+    renderMenuHoy(); renderHist();
+    updateStats(); renderDashboard(); renderIncTbody();
+
+    setDbStatus('connected');
+    console.log('✅ Datos cargados desde Sheets');
+  } catch(e) {
+    setDbStatus('offline');
+    console.error('Error cargando desde Sheets:', e);
+  }
+}
+
+// ── GUARDAR INCIDENCIA EN SHEETS ──
+async function syncIncidencia(inc) {
+  if (!DB_CONNECTED) return;
+  try {
+    await apiPost('saveIncidencia', {
+      data: {
+        Folio: inc.folio, Empleado: inc.emp, Area: inc.area,
+        Tipos: inc.tipos, Alimentos: inc.foods,
+        CaptureTs: inc.captureTs,
+        FechaInicio: inc.fi, FechaFin: inc.ff,
+        Horario: inc.horario, Status: inc.status, Firmas: inc.firmas,
+      }
+    });
+    console.log('✅ Incidencia sincronizada:', inc.folio);
+  } catch(e) {
+    console.error('Error sincronizando incidencia:', e);
+    toast('⚠ Guardado localmente — sin conexión a Sheets', 'twarn');
+  }
+}
+
+async function syncDeleteIncidencia(folio) {
+  if (!DB_CONNECTED) return;
+  try { await apiPost('deleteIncidencia', { folio }); } catch(e) { console.error(e); }
+}
+
+// ── GUARDAR EMPLEADO ──
+async function syncEmpleado(emp, isUpdate = false, oldNombre = null) {
+  if (!DB_CONNECTED) return;
+  const data = {
+    Nombre: emp.nom, Area: emp.area, Puesto: emp.puesto,
+    JefeDirecto: emp.jefeDir, EsJefe: emp.jefe ? 'true' : 'false',
+    AreasAdicionales: (emp.areas2 || []).join(','), Telefono: emp.tel || '',
+  };
+  try {
+    if (isUpdate) await apiPost('updateEmpleado', { nombre: oldNombre || emp.nom, data });
+    else          await apiPost('saveEmpleado', { data });
+  } catch(e) { console.error('Error sync empleado:', e); }
+}
+
+async function syncDeleteEmpleado(nombre) {
+  if (!DB_CONNECTED) return;
+  try { await apiPost('deleteEmpleado', { nombre }); } catch(e) { console.error(e); }
+}
+
+// ── GUARDAR ÁREA ──
+async function syncArea(area, isUpdate = false, oldCodigo = null) {
+  if (!DB_CONNECTED) return;
+  const data = { Nombre: area.nom, Codigo: area.cod, Clave: area.clave, Jefe: area.jefe, Descripcion: area.desc || '' };
+  try {
+    if (isUpdate) await apiPost('updateArea', { codigo: oldCodigo || area.cod, data });
+    else          await apiPost('saveArea', { data });
+  } catch(e) { console.error('Error sync área:', e); }
+}
+
+async function syncDeleteArea(codigo) {
+  if (!DB_CONNECTED) return;
+  try { await apiPost('deleteArea', { codigo }); } catch(e) { console.error(e); }
+}
+
+// ── GUARDAR MENÚ PRESET ──
+async function syncMenu(menu, isUpdate = false, oldNombre = null) {
+  if (!DB_CONNECTED) return;
+  const data = {
+    Nombre: menu.nom, Tipo: menu.tipo, Descripcion: menu.desc,
+    D1: menu.d1 || '', D2: menu.d2 || '', D3: menu.d3 || '',
+    C1: menu.c1 || '', C2: menu.c2 || '', C3: menu.c3 || '',
+    Imagen: (menu.img && menu.img.length < 500) ? menu.img : '',
+    Tags: (menu.tags || []).join(','),
+  };
+  try {
+    if (isUpdate) await apiPost('updateMenu', { nombre: oldNombre || menu.nom, data });
+    else          await apiPost('saveMenu', { data });
+  } catch(e) { console.error('Error sync menú:', e); }
+}
+
+// ── PUBLICAR MENÚ DEL DÍA ──
+async function syncPublishMenuHoy(menu, tipoServicio) {
+  if (!DB_CONNECTED) return;
+  try {
+    await apiPost('publishMenuHoy', {
+      data: {
+        TipoServicio: tipoServicio,
+        MenuNombre: menu.nom, Descripcion: menu.desc || '',
+        D1: menu.d1 || '', D2: menu.d2 || '', D3: menu.d3 || '',
+        C1: menu.c1 || '', C2: menu.c2 || '', C3: menu.c3 || '',
+        Imagen: (menu.img && menu.img.length < 500) ? menu.img : '',
+        PublicadoPor: isAdmin ? 'Admin' : isCook ? 'Cocina' : 'Sistema',
+      }
+    });
+    console.log('✅ Menú publicado en Sheets:', tipoServicio);
+  } catch(e) { console.error('Error publicando menú:', e); }
+}
+
+// ── FIRMAR INCIDENCIA ──
+async function syncFirma(folio, firmaData) {
+  if (!DB_CONNECTED) return;
+  try {
+    const result = await apiPost('firmarIncidencia', { folio, firmaData });
+    // Actualizar estado local
+    const inc = incidencias.find(i => i.folio === folio);
+    if (inc && result.firmas) {
+      inc.firmas = result.firmas;
+      inc.status = result.status;
+      renderIncTbody(); renderDashboard(); updateStats();
+    }
+  } catch(e) { console.error('Error sincronizando firma:', e); }
+}
+
+// ── CATÁLOGO ──
+async function syncCatalogo(cat, isUpdate = false, oldNombre = null) {
+  if (!DB_CONNECTED) return;
+  const data = {
+    Nombre: cat.nom,
+    VinculaAlimentos: cat.food ? 'true' : 'false',
+    RequiereHorario: cat.hora ? 'true' : 'false',
+    Activa: cat.activa ? 'true' : 'false',
+  };
+  try {
+    if (isUpdate) await apiPost('updateCatalogo', { nombre: oldNombre || cat.nom, data });
+    else          await apiPost('saveCatalogo', { data });
+  } catch(e) { console.error('Error sync catálogo:', e); }
+}
+
+async function syncDeleteCatalogo(nombre) {
+  if (!DB_CONNECTED) return;
+  try { await apiPost('deleteCatalogo', { nombre }); } catch(e) { console.error(e); }
+}
 
 </script>
 </body>
