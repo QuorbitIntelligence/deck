@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiMwNTk2NjkiLz4KICA8cmVjdCB4PSIxOCIgeT0iMTQiIHdpZHRoPSIyOCIgaGVpZ2h0PSIzNiIgcng9IjQiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjk1Ii8+CiAgPHJlY3QgeD0iMjYiIHk9IjEwIiB3aWR0aD0iMTIiIGhlaWdodD0iOCIgcng9IjMiIGZpbGw9IiMwNDc4NTciLz4KICA8bGluZSB4MT0iMjQiIHkxPSIyNiIgeDI9IjQwIiB5Mj0iMjYiIHN0cm9rZT0iIzA1OTY2OSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSIyNCIgeTE9IjMyIiB4Mj0iNDAiIHkyPSIzMiIgc3Ryb2tlPSIjMDU5NjY5IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjI0IiB5MT0iMzgiIHgyPSIzNCIgeTI9IjM4IiBzdHJva2U9IiMwNTk2NjkiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSI0NCIgY3k9IjQ0IiByPSIxMCIgZmlsbD0iIzA1OTY2OSIvPgogIDxwb2x5bGluZSBwb2ludHM9IjM5LDQ0IDQzLDQ4IDUwLDQwIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+Cjwvc3ZnPg==">
 <title>Incidencias Web Noor v1.7.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -311,7 +312,7 @@ td{padding:10px 12px;font-size:13px;color:var(--g700);border-top:1px solid var(-
       <span class="badge rh" id="rh-badge" style="display:none">RH</span>
     </div>
     <div class="tb-r">
-      <span id="db-indicator" style="font-size:11px;color:rgba(255,255,255,.5);margin-right:4px">⚪ Sin conexión</span>
+      <span id="db-indicator" onclick="connectToSheets()" title="Clic para reconectar" style="font-size:11px;color:rgba(255,255,255,.5);margin-right:4px;cursor:pointer">⚪ Sin conexión</span>
       <!-- BOTÓN NUEVA INCIDENCIA — siempre en topbar, visible para todos excepto cocina -->
       <button class="btn-nueva-inc" id="btn-topbar-inc" onclick="openIncModal()" style="display:none">+ Nueva incidencia</button>
       <span style="font-size:11px;color:rgba(255,255,255,.4)" id="tb-date"></span>
@@ -679,9 +680,19 @@ function launch(label){
 }
 
 function showIncModule(){
-  const lock=document.getElementById('inc-lock'),content=document.getElementById('inc-content');
+  const lock=document.getElementById('inc-lock');
+  const content=document.getElementById('inc-content');
   if(lock)lock.style.display='none';
   if(content)content.style.display='block';
+  // Agregar botón nueva solicitud en header del módulo
+  const hdr=document.getElementById('inc-hdr-btns');
+  if(hdr && !hdr.querySelector('button')){
+    const btn=document.createElement('button');
+    btn.className='ba';btn.textContent='+ Nueva solicitud';
+    btn.onclick=openIncModal;
+    hdr.appendChild(btn);
+  }
+  renderIncTbody();
 }
 
 function unlockMenu(){
@@ -1525,7 +1536,7 @@ console.table(areas.reduce((o,a)=>{o[a.nom]=a.clave;return o;},{}));
 // ═══════════════════════════════════════════════════════
 
 // ── CONFIGURACIÓN — REEMPLAZA ESTA URL ──
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRCTPlgVCLBTmOd7E3CgKPGTPjqMNJ58CvfdlDf0E2rgxV8fnIP1YaojLwBkIMoJYd/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjFYQ1vIittV3mO1mUtaQBuBS1HzF-FK33p0xRgyI5k2Kr-7IJvghK4fo7L0VQcenA/exec';
 
 let DB_CONNECTED = false;
 let DB_SYNCING   = false;
@@ -1533,8 +1544,14 @@ let DB_SYNCING   = false;
 // ── API WRAPPER ──
 async function apiGet(action, params = {}) {
   const qs = new URLSearchParams({ action, ...params }).toString();
-  const res = await fetch(`${APPS_SCRIPT_URL}?${qs}`);
-  const json = await res.json();
+  const res = await fetch(`${APPS_SCRIPT_URL}?${qs}`, {
+    redirect: 'follow',
+    method: 'GET',
+  });
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch(e) { throw new Error('Respuesta no válida del servidor. Verifica que el Apps Script esté publicado como Web App con acceso "Cualquier usuario".'); }
   if (!json.ok) throw new Error(json.error || 'Error en API');
   return json.data;
 }
@@ -1542,10 +1559,14 @@ async function apiGet(action, params = {}) {
 async function apiPost(action, payload = {}) {
   const res = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ action, ...payload }),
   });
-  const json = await res.json();
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch(e) { throw new Error('Respuesta no válida del servidor (POST).'); }
   if (!json.ok) throw new Error(json.error || 'Error en API');
   return json.data;
 }
@@ -1571,17 +1592,18 @@ function setDbStatus(status) {
 async function connectToSheets() {
   setDbStatus('connecting');
   try {
-    await apiGet('ping');
+    const ping = await apiGet('ping');
+    console.log('✅ API Noor respondió:', ping);
     setDbStatus('connected');
     DB_CONNECTED = true;
-    // Cargar datos desde Sheets
     await loadAllFromSheets();
     toast('✅ Conectado a Google Sheets', 'tok');
   } catch(e) {
     setDbStatus('offline');
     DB_CONNECTED = false;
-    toast('⚠ Sin conexión a Sheets — usando datos locales', 'twarn');
-    console.warn('Sheets offline:', e.message);
+    console.warn('⚠ Sheets offline:', e.message);
+    console.info('💡 Tip: En Apps Script → Implementar → Administrar implementaciones → verifica que el acceso sea "Cualquier usuario"');
+    toast('⚠ Sin conexión a Sheets — modo local activo', 'twarn');
   }
 }
 
@@ -1683,21 +1705,27 @@ async function loadAllFromSheets() {
 
 // ── GUARDAR INCIDENCIA EN SHEETS ──
 async function syncIncidencia(inc) {
-  if (!DB_CONNECTED) return;
+  if (!DB_CONNECTED) { console.warn('Sheets offline — incidencia guardada solo localmente'); return; }
+  const dbInd = document.getElementById('db-indicator');
+  if(dbInd) { dbInd.textContent = '🔄 Guardando en Sheets...'; dbInd.style.color = '#2b9fd8'; }
   try {
-    await apiPost('saveIncidencia', {
+    const result = await apiPost('saveIncidencia', {
       data: {
         Folio: inc.folio, Empleado: inc.emp, Area: inc.area,
         Tipos: inc.tipos, Alimentos: inc.foods,
-        CaptureTs: inc.captureTs,
+        CaptureTs: String(inc.captureTs),
         FechaInicio: inc.fi, FechaFin: inc.ff,
-        Horario: inc.horario, Status: inc.status, Firmas: inc.firmas,
+        Horario: inc.horario, Status: inc.status, Firmas: String(inc.firmas),
+        Observaciones: inc.obs || '',
       }
     });
-    console.log('✅ Incidencia sincronizada:', inc.folio);
+    console.log('✅ Incidencia guardada en Sheets:', inc.folio, result);
+    if(dbInd) { dbInd.textContent = '🟢 Sheets conectado'; dbInd.style.color = '#059669'; }
+    toast('✅ Folio ' + inc.folio + ' guardado en Google Sheets', 'tok');
   } catch(e) {
-    console.error('Error sincronizando incidencia:', e);
-    toast('⚠ Guardado localmente — sin conexión a Sheets', 'twarn');
+    console.error('Error guardando incidencia en Sheets:', e.message);
+    if(dbInd) { dbInd.textContent = '🔴 Sin conexión — modo local'; dbInd.style.color = '#dc2626'; }
+    toast('⚠ Sin conexión a Sheets — incidencia guardada localmente', 'twarn');
   }
 }
 
