@@ -573,7 +573,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.1.2';
+const APP_VERSION = 'v2.1.3';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5788,7 +5788,7 @@ function renderProspectos(){
       <button class="btn" onclick="openProspectosReporteModal()">${icon('download')} Generar reporte</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th></th><th></th></tr></thead>
+      <table><thead><tr><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th>Estatus de contacto</th><th></th><th></th></tr></thead>
       <tbody id="pr-tbody"></tbody></table>
       <div class="pagination" id="pr-pg"></div>
     </div>`;
@@ -5800,16 +5800,33 @@ function drawProspectosTable(){
   const all = getProspectosFiltrados();
   document.getElementById('pr-count').textContent = all.length+' prospecto(s)';
   const rows = paginate(all, prospectosState.page, prospectosState.perPage);
-  document.getElementById('pr-tbody').innerHTML = rows.map(p=>`<tr>
+  document.getElementById('pr-tbody').innerHTML = rows.map(p=>{
+    const sinDatos = !p.telefono && !p.correo;
+    const ocultarContador = p.estatus_contacto==='Sin contacto establecido';
+    return `<tr>
     <td style="font-weight:600;">${p.nombre}</td>
     <td>${p.especialidad||'—'}</td>
     <td style="font-size:11.5px; color:var(--text-muted);">${p.hospital||'—'}</td>
     <td>${p.telefono||'<span style="color:var(--text-faint);">Sin teléfono</span>'}</td>
     <td style="font-size:11.5px;">${p.correo||'—'}</td>
-    <td>${p.telefono ? `<button class="btn-whatsapp" onclick="enviarProspectoWhatsApp('${p.id}')" title="Enviar primer acercamiento por WhatsApp" style="position:relative;">${icon('whatsapp')}${p.envios_whatsapp?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_whatsapp}</span>`:''}</button>` : ''}
-      ${p.correo ? `<button class="btn-whatsapp" onclick="enviarProspectoEmail('${p.id}')" title="Enviar primer acercamiento por correo" style="position:relative; background:var(--primary-light); color:var(--primary); margin-left:4px;">${icon('quote')}${p.envios_email?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_email}</span>`:''}</button>` : ''}</td>
+    <td>${sinDatos
+        ? `<span class="pill pill-small" style="background:var(--guinda); color:#fff; font-weight:700;">${icon('x')} Sin datos de contacto</span>`
+        : `<select class="select pr-estatus-contacto" data-pid="${p.id}" style="font-size:11px; padding:4px 8px; min-width:170px; ${p.estatus_contacto==='Contacto establecido'?'background:var(--green-light); color:var(--green); font-weight:700; border-color:var(--green);':''} ${p.estatus_contacto==='Sin contacto establecido'?'background:var(--amber-light); color:var(--amber); font-weight:700; border-color:var(--amber);':''}">
+            <option value="" ${!p.estatus_contacto?'selected':''}>Sin gestionar</option>
+            <option value="Contacto establecido" ${p.estatus_contacto==='Contacto establecido'?'selected':''}>Contacto establecido</option>
+            <option value="Sin contacto establecido" ${p.estatus_contacto==='Sin contacto establecido'?'selected':''}>Sin contacto establecido</option>
+          </select>`}</td>
+    <td>${p.telefono ? `<button class="btn-whatsapp" onclick="enviarProspectoWhatsApp('${p.id}')" title="Enviar primer acercamiento por WhatsApp" style="position:relative;">${icon('whatsapp')}${(p.envios_whatsapp&&!ocultarContador)?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_whatsapp}</span>`:''}</button>` : ''}
+      ${p.correo ? `<button class="btn-whatsapp" onclick="enviarProspectoEmail('${p.id}')" title="Enviar primer acercamiento por correo" style="position:relative; background:var(--primary-light); color:var(--primary); margin-left:4px;">${icon('quote')}${(p.envios_email&&!ocultarContador)?`<span style="position:absolute; top:-6px; right:-6px; background:var(--guinda); color:#fff; font-size:9px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${p.envios_email}</span>`:''}</button>` : ''}</td>
     <td><button class="btn btn-sm btn-primary" onclick="convertirProspectoALead('${p.id}')">${icon('plus')} Convertir a Lead</button></td>
-  </tr>`).join('') || `<tr><td colspan="7"><div class="empty-state">${icon('doctor')}<div>Sin prospectos con esa búsqueda.</div></div></td></tr>`;
+  </tr>`;
+  }).join('') || `<tr><td colspan="8"><div class="empty-state">${icon('doctor')}<div>Sin prospectos con esa búsqueda.</div></div></td></tr>`;
+  document.querySelectorAll('.pr-estatus-contacto').forEach(sel=> sel.onchange = ()=>{
+    const p = DB.prospectos.find(x=>x.id===sel.dataset.pid); if(!p) return;
+    p.estatus_contacto = sel.value || null;
+    logAudit('Prospectos', p.id, 'Estatus de contacto actualizado', p.nombre+' → '+(sel.value||'Sin gestionar'));
+    persistExtra(); drawProspectosTable();
+  });
   paginationControls('pr-pg', all.length, prospectosState.page, prospectosState.perPage, (p)=>{ prospectosState.page=p; drawProspectosTable(); });
 }
 function enviarProspectoEmail(id){
@@ -8344,6 +8361,110 @@ const PROSPECTOS_IMPORTAR_2026_08 = [
 ["DRA. ÉRANDENI ITZEL FERNÁNDEZ SILVA","CIRUGÍA BARIÁTRICA, CIRUGÍA GENERAL","","","","CMCG Edo. Méx."]
 ];
 
+const PROSPECTOS_COMPLEMENTO_2026_08 = [
+["DR. ADRIÁN ALFARO FLORES","7221666232","PELUSNA2000@GMAIL.COM"],
+["DR. ALBERTO JAIME KALACH MUSSALI","","INFO@MULTIESTETICA.MX"],
+["DR. ALBERTO ROSALES AYALA","5536196036","DRROSALES@RINNOVARE.MX"],
+["DR. ALEJANDRO GARCÍA HURTADO","5556623520","CIRUPLES@HOTMAIL.COM"],
+["DR. ANDRÉS CRUZ Y CRUZ","5546151835","CRUZVERA-@HOTMAIL.COM"],
+["DR. ANTONIO FUENTE DEL CAMPO","5546469818",""],
+["DR. ANTONIO GEORGE OTERO NUNES","5552474112",""],
+["DR. ARIE DOREMBAUM FASTLICHT","5552462613","DORPLAST@ME.COM"],
+["DR. ARIE DORENBAUM FASTLICHT","5552462613",""],
+["DR. ARTURO MÉNDEZ ESCUDERO","5553740073",""],
+["DR. AURELIO ÁNGEL ALONSO BAUTISTA","7222320450",""],
+["DR. CARLOS OSNAYA IZQUIERDO","5527098043","CARLOSOSNAYAIZQUIERDO@HOTMAIL.COM"],
+["DR. CÉSAR CRUZ CERÓN","5552465000",""],
+["DR. CHRISTIAN ROBERTO CAMACHO JIMÉNEZ","7222325535",""],
+["DR. DANIEL COLIN CASTAÑEDA","527291061396",""],
+["DR. DANIEL REYES CUREÑO","5521316931",""],
+["DR. DIEGO ALEJANDRO MORENO IBARRA","","DIEGOAMI_MD@YAHOO.COM"],
+["DR. DIEGO RAUL GONZÁLEZ CHAPA","50376028064","PLASTICA503@GNAUIL.COM"],
+["DR. EDGAR HELMUTH PUÑO ATAHUALPA","5513539907","EDGARPUNOA@HOTMAIL.COM"],
+["DR. EDUARDO MARTÍN AYUSO RODRÍGUEZ","","CONSEJO@CMCPER.ORG.MX"],
+["DR. ERIC ALEJANDRO SANTAMARÍA LINARES","5552469632",""],
+["DR. ERIK NEFTALÍ MELO SÁNCHEZ","5519234532",""],
+["DR. ERNESTO ALONSO RAMÍREZ LOZANO","5554032143",""],
+["DR. ERNESTO GADSDEN RUÍZ ESPARZA","5555948737",""],
+["DR. FELIPE ALEJANDRO LÓPEZ SILVA","5511063036",""],
+["DR. FERNANDO ARTURO PUENTE COMPEÁN","5552469551","CLINICAPUENTE@GMAIL.COM"],
+["DR. FERNANDO FRANCO CRAVIOTO","5573603353","DR.FRANCO.CRAVIOTO@GMAIL.COM"],
+["DR. FERNANDO SERGIO LUJAN OLIVAR","5538535840","LIPOAD58@GMAIL.COM"],
+["DR. GAMALIEL AVENDAÑO VALENZUELA","525549490556","GAMMALIEL@HOTMAIL.COM"],
+["DR. GERARDO ÁNGEL GARCÍA CUERVO DE COBO","5552540346",""],
+["DR. GERARDO FERNÁNDEZ SOBRINO","5552717621",""],
+["DR. GERARDO LARRINÚA REGALADO","5553082231","DRLARRINUA@OUTLOOK.COM"],
+["DR. GILBERTO PIÑA VELASCO","5553732011","D_R.GILBERTOPV@HOTMAIL.COM"],
+["DR. GUILLERMO NAVARRO AMIEVA","015552308000",""],
+["DR. HÉCTOR ADOLFO MORALES YÉPEZ","5551106303",""],
+["DR. HÉCTOR OMAR MALAGÓN HIDALGO","5552465000",""],
+["DR. ISAAC BALEY SPINDEL","43173581",""],
+["DR. ISAAC ROZEN FULLER","5246955",""],
+["DR. ISRAEL SALAZAR VIZUET","5549941788",""],
+["DR. IVÁN SÁNCHEZ SÁNCHEZ","5518540808",""],
+["DR. JADIM ABEL ORDAZ CORTÉS","7222350561",""],
+["DR. JONATHAN ZAGA GALANTE","5613199200",""],
+["DR. JOSÉ ABEL DE LA PEÑA SALCEDO","5552469639",""],
+["DR. JOSÉ ACHAR ZAVALZA","5550126549","RECEPCION@CORPUSANDROSTRUCTURE.COM"],
+["DR. JOSÉ ANTONIO ALEJANDRE SUÁREZ","5552465000",""],
+["DR. JOSÉ CARLOS MARTÍNEZ LÓPEZ","5551005216",""],
+["DR. JOSÉ FERNANDO ROGEL RODRÍGUEZ","7225691004",""],
+["DR. JOSÉ GUILLERMO SEGURA MEDINA","5553932330",""],
+["DR. JOSÉ LUIS ALVARADO GUTIÉRREZ","5555575981",""],
+["DR. JUAN ANTONIO DOMÍNGUEZ ZAMBRANO","5510009507",""],
+["DR. JUAN ARTURO FRAGOSO SÁNCHEZ","5545563267",""],
+["DR. JUAN CARLOS SAAVEDRA SOTO","","JUANSAAVEDRA@YAHOO.COM"],
+["DR. JULIO CÉSAR SELAYA ROJAS","7222136116",""],
+["DR. JULIO SÁNCHEZ CORDERO","7225195844","RUIZGONZALEZ_V@YAHOO.COM"],
+["DR. LUIS ÁNGEL AURIOLES SÁNCHEZ","5552472136",""],
+["DR. LUIS FRANCISCO RAMOS VALDELAMAR","5585343133",""],
+["DR. MANUEL GARCÍA VELASCO","5552469551",""],
+["DR. MARCO ANTONIO BARREDA GAXIOLA","","DR_BARREDA@HOTMAIL.COM"],
+["DR. MARCO ANTONIO LAVEREDA SANTANA","5552474342",""],
+["DR. MARCO ANTONIO LOZANO GUTIÉRREZ","","DRMARCOLOZANO@HOTMAIL.COM"],
+["DR. MARCO ANTONIO MARÍN RAMÍREZ","27556692","DRMARIN_CIRUGIAPLASTICA@PRODIGY.NET.MX"],
+["DR. MARIO BARRIOS RIVERÓN","5552469674",""],
+["DR. MAURO ALONSO LOZADA SALGADO","712122378","DRMAUROLOZADA@GMAIL.COM"],
+["DR. NAIN ABELARDO MALDONADO GUZMAN","5552469718",""],
+["DR. OSCAR EMMANUEL ADÁN RIVAS","","ADANOSCAR@PRODIGY.NET.MX"],
+["DR. PABLO ARIZTI GALNARES","5552469570",""],
+["DR. RAMÓN LUCERO DÁVALOS","5555725858",""],
+["DR. RAÚL LÓPEZ INFANTE","5552469495","CONTACTO@LOPEZINFANTE.MX"],
+["DR. RAÚL LÓPEZ INFANTE Y SALDAÑA","5552472657","CONTACTO@LOPEZINFANTE.MX"],
+["DR. ROBERTO REYES MÁRQUEZ","5555620634",""],
+["DR. RODRIGO ANTONIO MENÉNDEZ ARZAC","","RODRIGOMENENDEZ@HOTMAIL.COM"],
+["DR. SALVADOR DE LA FUENTE SEDANO","5543866613","CITAS@EVOLUZZIONE.COM"],
+["DR. SERGIO ABRAHAM MEJÍA VALERO","7224216903",""],
+["DR. SERGIO GUILLERMO RAMÍREZ LEDESMA","","DRRAMIREZLEDESMA@MSN.COM"],
+["DR. ULISES CABALLERO DE LA PEÑA","5551995101","DRULISESCABALLERO@GMAIL.COM"],
+["DR. VICENTE JORGE ALAYA SANTOS","5553931909","CIRUGIADRALAYA@YAHOO.COM.MX"],
+["DR. VÍCTOR ADOLFO ESQUIVEL CHÁVEZ","5534215400","DR_V_ESQUIVEL@YAHOO.COM.MX"],
+["DR. VÍCTOR MANUEL LUNA AYALA","5532641717",""],
+["DRA. ADRIANA PATRICIA ROJO BLANCO","7725207480",""],
+["DRA. ALEJANDRA HAY GÓMEZ","5552473545",""],
+["DRA. CLAUDIA EUGENIA MILLA BELLO","5545957309","CLAUDIAMILLA@PRODIGY.NET.MX"],
+["DRA. CRISTIANS XITLALI BARÓN RAMOS","5545912916","DRAXITLALIBARON@GMAIL.COM"],
+["DRA. CYNTHIA IDALI LEGORRETA CHEW","5553936215","CYNTHIAIDALHY@HOTMAIL.COM"],
+["DRA. LIVIA CONTRERAS BULNES","","LIVIACBULNES@GMAIL.COM"],
+["DRA. LUISA MARÍA ALVARADO FERNÁNDEZ","5552474840",""],
+["DRA. MARI MAR ÁLVAREZ SÁNCHEZ","","DRAMARIMAR@NOVA-HOUSE.MX"],
+["DRA. MARÍA TERESA AGUILAR IBARRA","5554535677","MARIATERESA_AGUILAR@HOTMAIL.COM"],
+["DRA. MARISOL GÓNGORA SADA","5552471226",""],
+["DRA. MARTHA LILIANA AGUIRRE CÁZARES","5521324860",""],
+["DRA. MAYRA SELENE MERCADO BRAVO","5555622326","MAYRASELENNE007@HOTMAIL.COM"],
+["DRA. ROCÍO RAMÍREZ CRUZ","5635555541","ROCIORAMIREZCRUZ7@GMAIL.COM"],
+["DRA. ROSA MARÍA ARTEAGA SUÁREZ","5514513251",""],
+["DRA. ROSA MARÍA GUERRERO CAMPOS","5518490918",""],
+["DRA. VERÓNICA ZAVALA FRANCO","5526254001",""],
+["DR. ABRAHAM HERNÁNDEZ CASTILLO","",""],
+["DR. ABRAHAM ISACC AMAYA ALVARADO","",""],
+["DR. ADOLFO POZOS VALDEZ","7222803737",""],
+["DR. ADRIÁN CARBAJAL RAMOS","",""],
+["DR. ADRIAN DERSU PLIEGO OCHOA","9991290385","ANDERSU.PO@GMAIL.COM"],
+["DR. ADRIÁN TREJO RODRÍGUEZ","5599903137",""],
+["DR. AGUSTÍN JOSUÉ ELIZALDE OROZCO","7222647075",""]
+];
+
 const TELEFONOS_IMPORTAR_2026_07 = [
   ['ADOLFO ALEJANDRO YAÑEZ ACEVEDO','5513426416'],['DR. ALEJANDRO ALVAREZ IGLESIAS','5522424548'],
   ['DR. ALEJANDRO MIRAVETE GALVEZ','5513394331'],['DRA. ANA LILIA RENDON CASTILLO','5533230775'],
@@ -8407,6 +8528,20 @@ function importarProspectos(){
   });
   if(creados){ logAudit('Prospectos', '-', 'Importación inicial', creados+' prospecto(s) importados (excluyendo médicos ya existentes en Leads)'); persistExtra(); }
 }
+function complementarProspectosTelefonosCorreos(){
+  let actualizados = 0;
+  PROSPECTOS_COMPLEMENTO_2026_08.forEach(([nombre, telefono, correo])=>{
+    const key = normalizarNombreMedico(nombre);
+    if(!key) return;
+    const pr = DB.prospectos.find(p=>normalizarNombreMedico(p.nombre)===key);
+    if(!pr) return;
+    let cambio = false;
+    if(telefono && !pr.telefono){ pr.telefono = telefono; cambio = true; }
+    if(correo && !pr.correo){ pr.correo = correo; cambio = true; }
+    if(cambio){ pr.__edited = true; actualizados++; }
+  });
+  if(actualizados){ logAudit('Prospectos', '-', 'Complemento de teléfonos y correos', actualizados+' registro(s) actualizados sin sobreescribir datos existentes'); persistExtra(); }
+}
 function importarTelefonosMedicos(){
   let actualizados = 0;
   TELEFONOS_IMPORTAR_2026_07.forEach(([nombreRaw, telefono])=>{
@@ -8460,6 +8595,7 @@ function showApp(){
   limpiarDocumentosPlanTrabajo();
   importarTelefonosMedicos();
   importarProspectos();
+  complementarProspectosTelefonosCorreos();
   sincronizarEstatusCasoCotizacion();
   checkCotizacionesVencidas();
   checkVencidasAPerdido();
