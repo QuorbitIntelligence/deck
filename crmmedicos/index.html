@@ -169,7 +169,7 @@ a{color:inherit;}
 .pill-blue{background:var(--blue-bg); color:var(--blue);}
 .pill-muted{background:var(--surface-2); color:var(--text-muted);}
 
-.table-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; box-shadow:var(--shadow);}
+.table-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:auto; box-shadow:var(--shadow); max-width:100%;}
 table{width:100%; border-collapse:collapse; font-size:13px;}
 thead th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint); font-weight:700; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--surface-2); white-space:nowrap;}
 tbody td{padding:12px 16px; border-bottom:1px solid var(--border); vertical-align:middle;}
@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.1.7';
+const APP_VERSION = 'v2.1.8';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5779,19 +5779,8 @@ function conteoPorEspecialidadProspectos(){
 function renderProspectos(){
   const counts = conteoPorEspecialidadProspectos();
   const especialidadesConCount = Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0],'es'));
-  const total = DB.prospectos.length;
-  const gestionados = DB.prospectos.filter(p=>p.estatus_contacto || (p.envios_whatsapp>0) || (p.envios_email>0)).length;
-  const pct = total ? Math.round(gestionados/total*100) : 0;
   document.getElementById('content').innerHTML = `
-    <div class="card" style="margin-bottom:14px; padding:14px 18px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Avance de gestión</span>
-        <span style="font-size:12px; font-weight:700;">${gestionados} / ${total} gestionados · ${pct}%</span>
-      </div>
-      <div style="background:var(--surface-2); border-radius:999px; height:9px; overflow:hidden;">
-        <div style="width:${pct}%; height:100%; background:linear-gradient(90deg,var(--primary),var(--green)); border-radius:999px; transition:width .3s;"></div>
-      </div>
-    </div>
+    <div id="pr-bar-wrap"></div>
     <div class="toolbar">
       <div class="searchbox" style="width:280px;">${icon('search')}<input id="pr-search" placeholder="Buscar por nombre, especialidad u hospital…"></div>
       <div class="picker-wrap" style="position:relative;">
@@ -5810,8 +5799,9 @@ function renderProspectos(){
       <table><thead><tr><th style="width:32px;"><input type="checkbox" id="pr-select-all"></th><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th>Estatus de contacto</th><th>Acciones</th></tr></thead>
       <tbody id="pr-tbody"></tbody></table>
     </div>`;
+  drawProspectosBar();
   document.getElementById('pr-search').oninput = (e)=>{ prospectosState.search=e.target.value; drawProspectosTable(); };
-  wireEspecialidadPicker('pr-especialidad', 'pr-especialidad-results', especialidadesConCount, (val)=>{ prospectosState.especialidad=val; drawProspectosTable(); });
+  wireEspecialidadPicker('pr-especialidad', 'pr-especialidad-results', especialidadesConCount, (val)=>{ prospectosState.especialidad=val; drawProspectosTable(); drawProspectosBar(); });
   document.getElementById('pr-select-all').onchange = (e)=>{
     getProspectosFiltrados().forEach(p=>{ prospectosState.selected[p.id] = e.target.checked; });
     drawProspectosTable();
@@ -5866,14 +5856,14 @@ function drawProspectosTable(){
     const ocultarContador = p.estatus_contacto==='Sin contacto establecido';
     return `<tr>
     <td><input type="checkbox" class="pr-select" data-pid="${p.id}" ${prospectosState.selected[p.id]?'checked':''}></td>
-    <td style="font-weight:600;">${p.nombre}</td>
-    <td>${p.especialidad||'—'}</td>
-    <td style="font-size:11.5px; color:var(--text-muted);">${p.hospital||'—'}</td>
-    <td>${p.telefono||'<span style="color:var(--text-faint);">Sin teléfono</span>'}</td>
-    <td style="font-size:11.5px;">${p.correo||'—'}</td>
+    <td style="font-weight:600; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.nombre}">${p.nombre}</td>
+    <td style="max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.especialidad||''}">${p.especialidad||'—'}</td>
+    <td style="font-size:11.5px; color:var(--text-muted); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.hospital||''}">${p.hospital||'—'}</td>
+    <td style="white-space:nowrap;">${p.telefono||'<span style="color:var(--text-faint);">Sin teléfono</span>'}</td>
+    <td style="font-size:11.5px; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${p.correo||''}">${p.correo||'—'}</td>
     <td>${sinDatos
         ? `<span class="pill pill-small" style="background:var(--guinda); color:#fff; font-weight:700;">${icon('x')} Sin datos de contacto</span>`
-        : `<select class="select pr-estatus-contacto" data-pid="${p.id}" style="font-size:11px; padding:4px 8px; min-width:170px; ${p.estatus_contacto==='Contacto establecido'?'background:var(--green-light); color:var(--green); font-weight:700; border-color:var(--green);':''} ${p.estatus_contacto==='Sin contacto establecido'?'background:var(--amber-light); color:var(--amber); font-weight:700; border-color:var(--amber);':''}">
+        : `<select class="select pr-estatus-contacto" data-pid="${p.id}" style="font-size:11px; padding:4px 6px; min-width:135px; ${p.estatus_contacto==='Contacto establecido'?'background:var(--green-light); color:var(--green); font-weight:700; border-color:var(--green);':''} ${p.estatus_contacto==='Sin contacto establecido'?'background:var(--amber-light); color:var(--amber); font-weight:700; border-color:var(--amber);':''}">
             <option value="" ${!p.estatus_contacto?'selected':''}>Sin gestionar</option>
             <option value="Contacto establecido" ${p.estatus_contacto==='Contacto establecido'?'selected':''}>Contacto establecido</option>
             <option value="Sin contacto establecido" ${p.estatus_contacto==='Sin contacto establecido'?'selected':''}>Sin contacto establecido</option>
@@ -6058,6 +6048,21 @@ function todasLasEspecialidadesProspectos(){
   return [...set].sort((a,b)=>a.localeCompare(b,'es'));
 }
 let graficasProspectosFiltro = 'todas';
+function drawProspectosBar(){
+  const wrap = document.getElementById('pr-bar-wrap'); if(!wrap) return;
+  const filtro = prospectosState.especialidad;
+  const s = computeProspectosStats(filtro);
+  wrap.innerHTML = `
+    <div class="card" style="margin-bottom:14px; padding:14px 18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Avance de gestión ${filtro!=='todas'?('— '+filtro):'— Global'}</span>
+        <span style="font-size:12px; font-weight:700;">${s.gestionados} / ${s.total} gestionados · ${s.pct}%</span>
+      </div>
+      <div style="background:var(--surface-2); border-radius:999px; height:9px; overflow:hidden;">
+        <div style="width:${s.pct}%; height:100%; background:linear-gradient(90deg,var(--primary),var(--green)); border-radius:999px; transition:width .3s;"></div>
+      </div>
+    </div>`;
+}
 function computeProspectosStats(especialidadFiltro){
   const universo = especialidadFiltro==='todas' ? DB.prospectos : DB.prospectos.filter(p=>(p.especialidad||'').split(',').map(e=>e.trim()).includes(especialidadFiltro));
   const total = universo.length;
@@ -6082,21 +6087,20 @@ function computeProspectosStats(especialidadFiltro){
   return { universo, total, gestionados, pct, estBreak, conTel, conCorreo, conAmbos, contactadosHoy, contactadosSemana, convertidos, tasaConversion, msgWA, msgEmail, msgSeg };
 }
 function abrirGraficasProspectos(){
-  const especialidades = todasLasEspecialidadesProspectos();
+  const counts = conteoPorEspecialidadProspectos();
+  const especialidadesConCount = Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0],'es'));
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Gráficas de avance — Prospectos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
-      <div class="form-field full" style="margin-bottom:14px;"><label>Ver indicadores de</label>
-        <select class="select" id="pr-graf-especialidad" style="width:100%;">
-          <option value="todas">Global (todas las especialidades)</option>
-          ${especialidades.map(e=>`<option value="${e}" ${graficasProspectosFiltro===e?'selected':''}>${e}</option>`).join('')}
-        </select>
+      <div class="form-field full picker-wrap" style="position:relative; margin-bottom:14px;"><label>Ver indicadores de</label>
+        <div class="searchbox" style="width:100%;">${icon('search')}<input id="pr-graf-especialidad" placeholder="Buscar especialidad, o deja vacío para ver Global…" value="${graficasProspectosFiltro!=='todas'?graficasProspectosFiltro:''}" autocomplete="off"></div>
+        <div id="pr-graf-especialidad-results" class="picker-results" style="display:none;"></div>
       </div>
       <div id="pr-graf-contenido"></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
   document.querySelector('.modal').style.width = '780px';
-  document.getElementById('pr-graf-especialidad').onchange = (e)=>{ graficasProspectosFiltro = e.target.value; dibujarGraficasProspectosContenido(); };
+  wireEspecialidadPicker('pr-graf-especialidad', 'pr-graf-especialidad-results', especialidadesConCount, (val)=>{ graficasProspectosFiltro = val; dibujarGraficasProspectosContenido(); });
   dibujarGraficasProspectosContenido();
 }
 function dibujarGraficasProspectosContenido(){
