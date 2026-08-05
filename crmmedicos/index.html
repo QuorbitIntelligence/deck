@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.1.5';
+const APP_VERSION = 'v2.1.7';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -5782,41 +5782,14 @@ function renderProspectos(){
   const total = DB.prospectos.length;
   const gestionados = DB.prospectos.filter(p=>p.estatus_contacto || (p.envios_whatsapp>0) || (p.envios_email>0)).length;
   const pct = total ? Math.round(gestionados/total*100) : 0;
-
-  const estBreak = { 'Sin datos de contacto':0, 'Sin gestionar':0, 'Contacto establecido':0, 'Sin contacto establecido':0 };
-  let conTel=0, conCorreo=0, conAmbos=0, sinNinguno=0;
-  DB.prospectos.forEach(p=>{
-    if(!p.telefono && !p.correo){ estBreak['Sin datos de contacto']++; sinNinguno++; }
-    else { estBreak[p.estatus_contacto||'Sin gestionar']++; if(p.telefono&&p.correo) conAmbos++; else if(p.telefono) conTel++; else conCorreo++; }
-  });
-  const hoyStr = ymd(new Date());
-  const inicioSemana = getMonday(new Date());
-  const contactadosHoy = DB.prospectos.filter(p=>p.fecha_ultimo_contacto && ymd(new Date(p.fecha_ultimo_contacto))===hoyStr).length;
-  const contactadosSemana = DB.prospectos.filter(p=>p.fecha_ultimo_contacto && new Date(p.fecha_ultimo_contacto)>=inicioSemana).length;
-  const convertidos = DB.medicos.filter(m=>(m.origen_lead||'').includes('Prospectos')).length;
-  const tasaConversion = gestionados ? Math.round(convertidos/gestionados*100) : 0;
-
   document.getElementById('content').innerHTML = `
     <div class="card" style="margin-bottom:14px; padding:14px 18px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <span style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Avance de gestión</span>
         <span style="font-size:12px; font-weight:700;">${gestionados} / ${total} gestionados · ${pct}%</span>
       </div>
-      <div style="background:var(--surface-2); border-radius:999px; height:9px; overflow:hidden; margin-bottom:14px;">
+      <div style="background:var(--surface-2); border-radius:999px; height:9px; overflow:hidden;">
         <div style="width:${pct}%; height:100%; background:linear-gradient(90deg,var(--primary),var(--green)); border-radius:999px; transition:width .3s;"></div>
-      </div>
-      <div class="grid kpi-grid">
-        ${miniKpi('Sin datos de contacto', estBreak['Sin datos de contacto'], 'x', 'guinda')}
-        ${miniKpi('Sin gestionar', estBreak['Sin gestionar'], 'followup', 'blue')}
-        ${miniKpi('Contacto establecido', estBreak['Contacto establecido'], 'check', 'green')}
-        ${miniKpi('Sin contacto establecido', estBreak['Sin contacto establecido'], 'x', 'amber')}
-        ${miniKpi('Con teléfono', conTel+conAmbos, 'whatsapp', 'green')}
-        ${miniKpi('Con correo', conCorreo+conAmbos, 'quote', 'primary')}
-        ${miniKpi('Con ambos datos', conAmbos, 'check', 'primary')}
-        ${miniKpi('Contactados hoy', contactadosHoy, 'calendar', 'violet')}
-        ${miniKpi('Contactados esta semana', contactadosSemana, 'calendar', 'violet')}
-        ${miniKpi('Convertidos a Lead', convertidos, 'plus', 'green')}
-        ${miniKpi('Tasa de conversión', tasaConversion+'%', 'analytics', 'green')}
       </div>
     </div>
     <div class="toolbar">
@@ -5836,10 +5809,9 @@ function renderProspectos(){
     <div class="table-wrap">
       <table><thead><tr><th style="width:32px;"><input type="checkbox" id="pr-select-all"></th><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th>Estatus de contacto</th><th>Acciones</th></tr></thead>
       <tbody id="pr-tbody"></tbody></table>
-      <div class="pagination" id="pr-pg"></div>
     </div>`;
-  document.getElementById('pr-search').oninput = (e)=>{ prospectosState.search=e.target.value; prospectosState.page=1; drawProspectosTable(); };
-  wireEspecialidadPicker('pr-especialidad', 'pr-especialidad-results', especialidadesConCount, (val)=>{ prospectosState.especialidad=val; prospectosState.page=1; drawProspectosTable(); });
+  document.getElementById('pr-search').oninput = (e)=>{ prospectosState.search=e.target.value; drawProspectosTable(); };
+  wireEspecialidadPicker('pr-especialidad', 'pr-especialidad-results', especialidadesConCount, (val)=>{ prospectosState.especialidad=val; drawProspectosTable(); });
   document.getElementById('pr-select-all').onchange = (e)=>{
     getProspectosFiltrados().forEach(p=>{ prospectosState.selected[p.id] = e.target.checked; });
     drawProspectosTable();
@@ -5888,7 +5860,7 @@ function abrirNotasProspecto(id){
 function drawProspectosTable(){
   const all = getProspectosFiltrados();
   document.getElementById('pr-count').textContent = all.length+' prospecto(s)';
-  const rows = paginate(all, prospectosState.page, prospectosState.perPage);
+  const rows = all;
   document.getElementById('pr-tbody').innerHTML = rows.map(p=>{
     const sinDatos = !p.telefono && !p.correo;
     const ocultarContador = p.estatus_contacto==='Sin contacto establecido';
@@ -5933,7 +5905,6 @@ function drawProspectosTable(){
     persistExtra(); drawProspectosTable();
   });
   updatePrSelectedCount();
-  paginationControls('pr-pg', all.length, prospectosState.page, prospectosState.perPage, (p)=>{ prospectosState.page=p; drawProspectosTable(); });
 }
 function updatePrSelectedCount(){
   const n = Object.values(prospectosState.selected).filter(Boolean).length;
@@ -6086,35 +6057,89 @@ function todasLasEspecialidadesProspectos(){
   DB.prospectos.forEach(p=> (p.especialidad||'').split(',').forEach(e=>{ const t=e.trim(); if(t) set.add(t); }));
   return [...set].sort((a,b)=>a.localeCompare(b,'es'));
 }
+let graficasProspectosFiltro = 'todas';
+function computeProspectosStats(especialidadFiltro){
+  const universo = especialidadFiltro==='todas' ? DB.prospectos : DB.prospectos.filter(p=>(p.especialidad||'').split(',').map(e=>e.trim()).includes(especialidadFiltro));
+  const total = universo.length;
+  const gestionados = universo.filter(p=>p.estatus_contacto || (p.envios_whatsapp>0) || (p.envios_email>0)).length;
+  const pct = total ? Math.round(gestionados/total*100) : 0;
+  const estBreak = { 'Sin datos de contacto':0, 'Sin gestionar':0, 'Contacto establecido':0, 'Sin contacto establecido':0 };
+  let conTel=0, conCorreo=0, conAmbos=0;
+  universo.forEach(p=>{
+    if(!p.telefono && !p.correo) estBreak['Sin datos de contacto']++;
+    else { estBreak[p.estatus_contacto||'Sin gestionar']++; if(p.telefono&&p.correo) conAmbos++; else if(p.telefono) conTel++; else conCorreo++; }
+  });
+  const hoyStr = ymd(new Date());
+  const inicioSemana = getMonday(new Date());
+  const contactadosHoy = universo.filter(p=>p.fecha_ultimo_contacto && ymd(new Date(p.fecha_ultimo_contacto))===hoyStr).length;
+  const contactadosSemana = universo.filter(p=>p.fecha_ultimo_contacto && new Date(p.fecha_ultimo_contacto)>=inicioSemana).length;
+  const nombresUniverso = new Set(universo.map(p=>normalizarNombreMedico(p.nombre)));
+  const convertidos = DB.medicos.filter(m=>(m.origen_lead||'').includes('Prospectos') && (especialidadFiltro==='todas' || nombresUniverso.has(normalizarNombreMedico(m.nombre)))).length;
+  const tasaConversion = gestionados ? Math.round(convertidos/gestionados*100) : 0;
+  const msgWA = universo.reduce((s,p)=>s+(p.envios_whatsapp||0),0);
+  const msgEmail = universo.reduce((s,p)=>s+(p.envios_email||0),0);
+  const msgSeg = universo.reduce((s,p)=>s+(p.envios_seguimiento||0),0);
+  return { universo, total, gestionados, pct, estBreak, conTel, conCorreo, conAmbos, contactadosHoy, contactadosSemana, convertidos, tasaConversion, msgWA, msgEmail, msgSeg };
+}
 function abrirGraficasProspectos(){
+  const especialidades = todasLasEspecialidadesProspectos();
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Gráficas de avance — Prospectos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
-      <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
-        <div><div style="font-weight:700; font-size:12px; margin-bottom:8px;">Por estatus de contacto</div><div class="chart-wrap" style="height:240px;"><canvas id="chart-pr-estatus"></canvas></div></div>
-        <div><div style="font-weight:700; font-size:12px; margin-bottom:8px;">Top 8 especialidades</div><div class="chart-wrap" style="height:240px;"><canvas id="chart-pr-especialidad"></canvas></div></div>
+      <div class="form-field full" style="margin-bottom:14px;"><label>Ver indicadores de</label>
+        <select class="select" id="pr-graf-especialidad" style="width:100%;">
+          <option value="todas">Global (todas las especialidades)</option>
+          ${especialidades.map(e=>`<option value="${e}" ${graficasProspectosFiltro===e?'selected':''}>${e}</option>`).join('')}
+        </select>
       </div>
-      <div class="grid kpi-grid" style="margin-top:16px;">
-        ${miniKpi('Mensajes WhatsApp enviados', DB.prospectos.reduce((s,p)=>s+(p.envios_whatsapp||0),0), 'whatsapp', 'green')}
-        ${miniKpi('Correos enviados', DB.prospectos.reduce((s,p)=>s+(p.envios_email||0),0), 'quote', 'primary')}
-        ${miniKpi('Mensajes de seguimiento', DB.prospectos.reduce((s,p)=>s+(p.envios_seguimiento||0),0), 'history', 'violet')}
-        ${miniKpi('Convertidos a Lead', DB.medicos.filter(m=>(m.origen_lead||'').includes('Prospectos')).length, 'plus', 'green')}
-      </div>
+      <div id="pr-graf-contenido"></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
+  document.querySelector('.modal').style.width = '780px';
+  document.getElementById('pr-graf-especialidad').onchange = (e)=>{ graficasProspectosFiltro = e.target.value; dibujarGraficasProspectosContenido(); };
+  dibujarGraficasProspectosContenido();
+}
+function dibujarGraficasProspectosContenido(){
+  const s = computeProspectosStats(graficasProspectosFiltro);
+  const cont = document.getElementById('pr-graf-contenido'); if(!cont) return;
+  cont.innerHTML = `
+    <div class="card" style="padding:14px 18px; margin-bottom:16px;">
+      <div style="font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:12px;">${s.gestionados} / ${s.total} gestionados · ${s.pct}%</div>
+      <div class="grid kpi-grid">
+        ${miniKpi('Sin datos de contacto', s.estBreak['Sin datos de contacto'], 'x', 'guinda')}
+        ${miniKpi('Sin gestionar', s.estBreak['Sin gestionar'], 'followup', 'blue')}
+        ${miniKpi('Contacto establecido', s.estBreak['Contacto establecido'], 'check', 'green')}
+        ${miniKpi('Sin contacto establecido', s.estBreak['Sin contacto establecido'], 'x', 'amber')}
+        ${miniKpi('Con teléfono', s.conTel+s.conAmbos, 'whatsapp', 'green')}
+        ${miniKpi('Con correo', s.conCorreo+s.conAmbos, 'quote', 'primary')}
+        ${miniKpi('Con ambos datos', s.conAmbos, 'check', 'primary')}
+        ${miniKpi('Contactados hoy', s.contactadosHoy, 'calendar', 'violet')}
+        ${miniKpi('Contactados esta semana', s.contactadosSemana, 'calendar', 'violet')}
+        ${miniKpi('Convertidos a Lead', s.convertidos, 'plus', 'green')}
+        ${miniKpi('Tasa de conversión', s.tasaConversion+'%', 'analytics', 'green')}
+        ${miniKpi('Mensajes WhatsApp', s.msgWA, 'whatsapp', 'green')}
+        ${miniKpi('Correos enviados', s.msgEmail, 'quote', 'primary')}
+        ${miniKpi('Mensajes de seguimiento', s.msgSeg, 'history', 'violet')}
+      </div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:16px;">
+      <div><div style="font-weight:700; font-size:12px; margin-bottom:8px;">Por estatus de contacto</div><div class="chart-wrap" style="height:220px;"><canvas id="chart-pr-estatus"></canvas></div></div>
+      <div><div style="font-weight:700; font-size:12px; margin-bottom:8px;">${graficasProspectosFiltro==='todas'?'Top 8 especialidades':'Detalle de '+graficasProspectosFiltro}</div><div class="chart-wrap" style="height:220px;"><canvas id="chart-pr-especialidad"></canvas></div></div>
+    </div>`;
   setTimeout(()=>{
     try{
-      const estCounts = { 'Sin datos':0, 'Sin gestionar':0, 'Contacto establecido':0, 'Sin contacto establecido':0 };
-      DB.prospectos.forEach(p=>{
-        if(!p.telefono && !p.correo) estCounts['Sin datos']++;
-        else estCounts[p.estatus_contacto||'Sin gestionar']++;
-      });
-      new Chart(document.getElementById('chart-pr-estatus'), { type:'bar', data:{ labels:Object.keys(estCounts), datasets:[{ data:Object.values(estCounts), backgroundColor:['#8E1B3C','#9CA3AF','#22C55E','#D69A1F'], borderRadius:6 }]},
+      new Chart(document.getElementById('chart-pr-estatus'), { type:'bar', data:{ labels:Object.keys(s.estBreak), datasets:[{ data:Object.values(s.estBreak), backgroundColor:['#8E1B3C','#9CA3AF','#22C55E','#D69A1F'], borderRadius:6 }]},
         options:{ maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{font:{size:10}}}, x:{ticks:{font:{size:9}}}} } });
-      const espCounts = conteoPorEspecialidadProspectos();
-      const topEsp = Object.entries(espCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
-      new Chart(document.getElementById('chart-pr-especialidad'), { type:'bar', data:{ labels:topEsp.map(e=>e[0]), datasets:[{ data:topEsp.map(e=>e[1]), backgroundColor:'#1B3E73', borderRadius:6 }]},
-        options:{ indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{font:{size:10}}}, y:{ticks:{font:{size:9}}}} } });
+      if(graficasProspectosFiltro==='todas'){
+        const espCounts = conteoPorEspecialidadProspectos();
+        const topEsp = Object.entries(espCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        new Chart(document.getElementById('chart-pr-especialidad'), { type:'bar', data:{ labels:topEsp.map(e=>e[0]), datasets:[{ data:topEsp.map(e=>e[1]), backgroundColor:'#1B3E73', borderRadius:6 }]},
+          options:{ indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{font:{size:10}}}, y:{ticks:{font:{size:9}}}} } });
+      } else {
+        const data = { 'Con teléfono':s.conTel+s.conAmbos, 'Con correo':s.conCorreo+s.conAmbos, 'Contactados hoy':s.contactadosHoy, 'Convertidos':s.convertidos };
+        new Chart(document.getElementById('chart-pr-especialidad'), { type:'bar', data:{ labels:Object.keys(data), datasets:[{ data:Object.values(data), backgroundColor:'#1B3E73', borderRadius:6 }]},
+          options:{ indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, ticks:{font:{size:10}}}, y:{ticks:{font:{size:9}}}} } });
+      }
     }catch(e){}
   }, 80);
 }
@@ -6150,6 +6175,17 @@ function generateProspectosAvancePDF(){
   doc.autoTable({ startY:y+4, head:[['Especialidad','Registros']], body:bodyEsp,
     theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[210,215,225], lineWidth:0.4},
     headStyles:{fillColor:AZUL_CLARO, textColor:AZUL, fontStyle:'bold', fontSize:FS}, margin:{left:M, right:M, bottom:M+12} });
+
+  const trabajados = DB.prospectos.filter(p=>p.fecha_primer_contacto).sort((a,b)=> new Date(a.fecha_primer_contacto)-new Date(b.fecha_primer_contacto));
+  if(trabajados.length){
+    doc.addPage();
+    doc.setFont('helvetica','bold'); doc.setFontSize(FS+1); doc.setTextColor(...AZUL);
+    doc.text('MÉDICOS CON LOS QUE SE HA TRABAJADO ('+trabajados.length+')', M, M+14);
+    const bodyTrab = trabajados.map(p=>[p.nombre, p.especialidad||'—', fmtDateTime(p.fecha_primer_contacto), fmtDateTime(p.fecha_ultimo_contacto), p.estatus_contacto||'Sin gestionar']);
+    doc.autoTable({ startY:M+22, head:[['Médico','Especialidad','Primer contacto','Último contacto','Estatus']], body:bodyTrab,
+      theme:'grid', styles:{font:'helvetica', fontSize:FS, cellPadding:2.5, lineColor:[210,215,225], lineWidth:0.4},
+      headStyles:{fillColor:AZUL_CLARO, textColor:AZUL, fontStyle:'bold', fontSize:FS}, margin:{left:M, right:M, bottom:M+12} });
+  }
 
   const n = doc.internal.getNumberOfPages();
   for(let i=1;i<=n;i++){
@@ -8755,6 +8791,18 @@ function importarProspectos(){
   });
   if(creados){ logAudit('Prospectos', '-', 'Importación inicial', creados+' prospecto(s) importados (excluyendo médicos ya existentes en Leads)'); persistExtra(); }
 }
+function backfillFechaPrimerContacto(){
+  let actualizados = 0;
+  DB.prospectos.forEach(p=>{
+    const yaContactado = p.estatus_contacto || (p.envios_whatsapp>0) || (p.envios_email>0) || (p.envios_seguimiento>0);
+    if(yaContactado && !p.fecha_primer_contacto){
+      p.fecha_primer_contacto = p.ultimo_envio_whatsapp || p.ultimo_envio_email || p.fecha_ultimo_contacto || new Date().toISOString();
+      if(!p.fecha_ultimo_contacto) p.fecha_ultimo_contacto = p.fecha_primer_contacto;
+      actualizados++;
+    }
+  });
+  if(actualizados){ logAudit('Prospectos', '-', 'Fecha de primer contacto completada', actualizados+' registro(s)'); persistExtra(); }
+}
 function complementarProspectosTelefonosCorreos(){
   let actualizados = 0;
   PROSPECTOS_COMPLEMENTO_2026_08.forEach(([nombre, telefono, correo])=>{
@@ -8823,6 +8871,7 @@ function showApp(){
   importarTelefonosMedicos();
   importarProspectos();
   complementarProspectosTelefonosCorreos();
+  backfillFechaPrimerContacto();
   if(DB.auditoria && DB.auditoria.length){ DB.auditoria = []; persistExtra(); }
   sincronizarEstatusCasoCotizacion();
   checkCotizacionesVencidas();
