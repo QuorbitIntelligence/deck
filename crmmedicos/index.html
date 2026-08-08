@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.1.9';
+const APP_VERSION = 'v2.3.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1038,20 +1038,27 @@ let dashCasoChartMode = 'monto';
 let dashMesEstatusModo = 'monto';
 let dashEstatusMesFiltro = ['Realizado'];
 let dashMesFiltro = 'todos';
+let dashIncluirAsg = true;
 function renderDashboard(){
   const mesesDisponibles = [...new Set([
     ...DB.cotizaciones.filter(c=>c.fecha_creacion).map(c=>c.fecha_creacion.slice(0,7)),
-    ...DB.casos.filter(cs=>cs.fecha_apertura).map(cs=>cs.fecha_apertura.slice(0,7))
+    ...DB.casos.filter(cs=>cs.fecha_apertura).map(cs=>cs.fecha_apertura.slice(0,7)),
+    ...DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion).map(a=>a.fecha_creacion.slice(0,7))
   ])].sort().reverse();
   const MESES_NOMBRE = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   function labelMes(key){ const [y,m] = key.split('-'); return MESES_NOMBRE[+m-1]+' '+y; }
 
   const cots = dashMesFiltro==='todos' ? DB.cotizaciones : DB.cotizaciones.filter(c=>c.fecha_creacion && c.fecha_creacion.slice(0,7)===dashMesFiltro);
   const casosF = dashMesFiltro==='todos' ? DB.casos : DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,7)===dashMesFiltro);
-  const totalMonto = cots.reduce((s,c)=>s+(c.costo_propuesta||0),0);
+  const asgTodas = dashMesFiltro==='todos' ? DB.cotizaciones_aseguradora : DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && a.fecha_creacion.slice(0,7)===dashMesFiltro);
+  const asgF = dashIncluirAsg ? asgTodas : [];
+  const totalMonto = cots.reduce((s,c)=>s+(c.costo_propuesta||0),0) + asgF.reduce((s,a)=>s+(a.costo_propuesta||0),0);
+  const totalCotizacionesCount = cots.length + asgF.length;
   const APROBADAS_O_MAS = ['Aprobada','Confirmado','Realizado'];
-  const aprobadas = casosF.filter(cs=>APROBADAS_O_MAS.includes(cs.estatus)).length;
-  const tasaAprob = casosF.length ? Math.round(aprobadas/casosF.length*100) : 0;
+  const aprobadasCasos = casosF.filter(cs=>APROBADAS_O_MAS.includes(cs.estatus)).length;
+  const aprobadasAsg = asgF.filter(a=>APROBADAS_O_MAS.includes(a.estatus)).length;
+  const baseEfectividad = casosF.length + asgF.length;
+  const tasaAprob = baseEfectividad ? Math.round((aprobadasCasos+aprobadasAsg)/baseEfectividad*100) : 0;
   const medicosActivos = DB.medicos.filter(m=>['TRABAJANDO','CON CONVENIO'].includes(m.estatus_relacion)).length;
   const paquetesActivos = DB.paquetes.filter(p=>p.activo!==false).length;
   const procActivos = DB.procedimientos.filter(p=>p.activo!==false).length;
@@ -1065,6 +1072,8 @@ function renderDashboard(){
   const porMedEstatus = {}; DB.medicos.forEach(m=>{ porMedEstatus[m.estatus_relacion] = (porMedEstatus[m.estatus_relacion]||0)+1; });
   const porConvEstatus = {}; DB.convenios.forEach(cv=>{ const e=computeConvenioEstatus(cv); porConvEstatus[e]=(porConvEstatus[e]||0)+1; });
   const porCasoEstatus = {}; casosF.forEach(cs=>{ porCasoEstatus[cs.estatus]=(porCasoEstatus[cs.estatus]||0)+1; });
+  asgF.forEach(a=>{ porCasoEstatus[a.estatus]=(porCasoEstatus[a.estatus]||0)+1; });
+  const totalEstatusBase = casosF.length + asgF.length;
   const montoPorCasoEstatus = {};
   Object.keys(ESTADOS_CASO).forEach(s=> montoPorCasoEstatus[s]=0);
   casosF.forEach(cs=>{
@@ -1073,6 +1082,7 @@ function renderDashboard(){
     if(!cot) return;
     montoPorCasoEstatus[cs.estatus] = (montoPorCasoEstatus[cs.estatus]||0) + (cot.costo_propuesta||0);
   });
+  asgF.forEach(a=>{ montoPorCasoEstatus[a.estatus] = (montoPorCasoEstatus[a.estatus]||0) + (a.costo_propuesta||0); });
   const porPaqEstatus = { 'Activo': paquetesActivos, 'Inactivo': DB.paquetes.length-paquetesActivos };
 
   const espMonto = {};
@@ -1130,8 +1140,11 @@ function renderDashboard(){
         : `<div class="empty-state">${icon('followup')}<div>Sin acciones pendientes por atender.</div></div>`}
     </div>
 
+    <div class="toolbar" style="margin:0 0 10px;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-muted); cursor:pointer;"><input type="checkbox" id="dash-incluir-asg" ${dashIncluirAsg?'checked':''}> Incluir cotizaciones a aseguradoras en los indicadores</label>
+    </div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:10px;">
-      ${miniKpi('Cotizaciones', cots.length, 'quote', 'primary')}
+      ${miniKpi('Cotizaciones', totalCotizacionesCount+(dashIncluirAsg&&asgF.length?` (${cots.length}+${asgF.length})`:''), 'quote', 'primary')}
       ${miniKpi('Monto cotizado', fmtMoney(totalMonto), 'bolt', 'accent')}
       ${miniKpi('Efectividad realizada', tasaAprob+'%', 'check', 'green')}
       ${miniKpi('Médicos activos', medicosActivos+'/'+DB.medicos.length, 'doctor', 'violet')}
@@ -1142,15 +1155,15 @@ function renderDashboard(){
       ${miniKpi('Convenios vigentes', conveniosActivos+'/'+DB.convenios.length, 'deals', 'green')}
       ${miniKpi('Casos CRM abiertos', casosAbiertos+'/'+DB.casos.length, 'followup', 'guinda')}
       ${miniKpi('Cirugías programadas', cirugiasProgramadas, 'bolt', 'violet')}
-      ${miniKpi('En seguimiento', kpiCountPct(porCasoEstatus['En seguimiento'], casosF.length), 'followup', 'amber', "irACasosConEstatus('En seguimiento')")}
-      ${miniKpi('En negociación', kpiCountPct(porCasoEstatus['En negociación'], casosF.length), 'deals', 'amber', "irACasosConEstatus('En negociación')")}
-      ${miniKpi('Aprobada', kpiCountPct(porCasoEstatus['Aprobada'], casosF.length), 'check', 'green', "irACasosConEstatus('Aprobada')")}
-      ${miniKpi('Confirmado', kpiCountPct(porCasoEstatus['Confirmado'], casosF.length), 'check', 'green', "irACasosConEstatus('Confirmado')")}
-      ${miniKpi('Realizado', kpiCountPct(porCasoEstatus['Realizado'], casosF.length), 'check', 'green', "irACasosConEstatus('Realizado')")}
-      ${miniKpi('Vencida', kpiCountPct(porCasoEstatus['Vencida'], casosF.length), 'calendar', 'red', "irACasosConEstatus('Vencida')")}
-      ${miniKpi('Cancelado', kpiCountPct(porCasoEstatus['Cancelado'], casosF.length), 'x', 'red', "irACasosConEstatus('Cancelado')")}
-      ${miniKpi('Perdido', kpiCountPct(porCasoEstatus['Perdido'], casosF.length), 'x', 'red', "irACasosConEstatus('Perdido')")}
-      ${miniKpi('Archivado', kpiCountPct(porCasoEstatus['Archivado'], casosF.length), 'catalog', 'blue', "irACasosConEstatus('Archivado')")}
+      ${miniKpi('En seguimiento', kpiCountPct(porCasoEstatus['En seguimiento'], totalEstatusBase), 'followup', 'amber', "irACasosConEstatus('En seguimiento')")}
+      ${miniKpi('En negociación', kpiCountPct(porCasoEstatus['En negociación'], totalEstatusBase), 'deals', 'amber', "irACasosConEstatus('En negociación')")}
+      ${miniKpi('Aprobada', kpiCountPct(porCasoEstatus['Aprobada'], totalEstatusBase), 'check', 'green', "irACasosConEstatus('Aprobada')")}
+      ${miniKpi('Confirmado', kpiCountPct(porCasoEstatus['Confirmado'], totalEstatusBase), 'check', 'green', "irACasosConEstatus('Confirmado')")}
+      ${miniKpi('Realizado', kpiCountPct(porCasoEstatus['Realizado'], totalEstatusBase), 'check', 'green', "irACasosConEstatus('Realizado')")}
+      ${miniKpi('Vencida', kpiCountPct(porCasoEstatus['Vencida'], totalEstatusBase), 'calendar', 'red', "irACasosConEstatus('Vencida')")}
+      ${miniKpi('Cancelado', kpiCountPct(porCasoEstatus['Cancelado'], totalEstatusBase), 'x', 'red', "irACasosConEstatus('Cancelado')")}
+      ${miniKpi('Perdido', kpiCountPct(porCasoEstatus['Perdido'], totalEstatusBase), 'x', 'red', "irACasosConEstatus('Perdido')")}
+      ${miniKpi('Archivado', kpiCountPct(porCasoEstatus['Archivado'], totalEstatusBase), 'catalog', 'blue', "irACasosConEstatus('Archivado')")}
     </div>
 
     ${!cots.length ? `<div class="card" style="margin-top:14px; text-align:center; padding:20px 20px;">
@@ -1284,6 +1297,15 @@ function renderDashboard(){
         if(cs.id_cotizacion){ const cot = DB.cotizaciones.find(c=>String(c.id)===String(cs.id_cotizacion)); if(cot) monto = cot.costo_propuesta||0; }
         porMesEstatus[key][cs.estatus] = (porMesEstatus[key][cs.estatus]||0) + monto;
       });
+      if(dashIncluirAsg){
+        DB.cotizaciones_aseguradora.forEach(a=>{
+          if(!a.fecha_creacion) return;
+          const d = new Date(a.fecha_creacion);
+          const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+          porMesEstatus[key] = porMesEstatus[key] || {};
+          porMesEstatus[key][a.estatus] = (porMesEstatus[key][a.estatus]||0) + (a.costo_propuesta||0);
+        });
+      }
       const mesesEst = Object.keys(porMesEstatus).sort();
       const mesesEstLabels = mesesEst.map(fmtMesLabel);
       const totalesPorMes = mesesEst.map(k => Object.values(porMesEstatus[k]).reduce((a,b)=>a+b,0));
@@ -1354,6 +1376,7 @@ function renderDashboard(){
     });
   }
   document.getElementById('dash-mes-filtro').onchange = (e)=>{ dashMesFiltro = e.target.value; renderDashboard(); };
+  document.getElementById('dash-incluir-asg').onchange = (e)=>{ dashIncluirAsg = e.target.checked; renderDashboard(); };
 }
 function miniKpi(label,value,ic,tone,onclickJs){ return `<div class="card kpi-card" style="padding:12px 14px;${onclickJs?' cursor:pointer;':''}" ${onclickJs?`onclick="${onclickJs}"`:''}>
   <div class="kpi-top"><span class="kpi-label" style="font-size:10.5px;">${label}</span>
@@ -2151,21 +2174,26 @@ function wireListaPicker(searchEl, resultsEl, onPick){
 /* ============================================================
    PROCEDIMIENTOS PREDEFINIDOS
 ============================================================ */
+let procState = { search:'' };
 function renderProcedimientos(){
   document.getElementById('content').innerHTML = `
-    <div class="toolbar"><span style="font-size:12.5px; color:var(--text-muted); max-width:560px;">Plantillas completas por cirugía: conceptos incluidos + condiciones requeridas, listas para llamar al iniciar una cotización.</span>
+    <div class="toolbar">
+      <div class="searchbox" style="width:280px;">${icon('search')}<input id="proc-search" placeholder="Buscar por nombre o especialidad…"></div>
+      <span style="font-size:12.5px; color:var(--text-muted); max-width:420px;">Plantillas completas por cirugía: conceptos incluidos + condiciones requeridas, listas para llamar al iniciar una cotización.</span>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openProcedimientoModal()">${icon('plus')} Nuevo procedimiento</button></div>
     <div class="table-wrap"><table><thead><tr><th>Procedimiento</th><th>Especialidad</th><th>Conceptos</th><th>Condiciones</th><th>Estatus</th><th></th></tr></thead>
     <tbody id="proc-tbody"></tbody></table></div>`;
+  document.getElementById('proc-search').oninput = (e)=>{ procState.search = e.target.value; drawProcTable(); };
   drawProcTable();
 }
 function drawProcTable(){
-  document.getElementById('proc-tbody').innerHTML = DB.procedimientos.length ? DB.procedimientos.map(p=>`
+  const filtered = DB.procedimientos.filter(p=> !procState.search || fuzzyMatch(p.nombre+' '+(p.especialidad||''), procState.search));
+  document.getElementById('proc-tbody').innerHTML = filtered.length ? filtered.map(p=>`
     <tr><td style="font-weight:600;">${p.nombre}</td><td>${p.especialidad||'—'}</td>
       <td>${(p.conceptos||[]).length}</td><td>${(p.condiciones||[]).length}</td>
       <td><span class="pill ${p.activo!==false?'pill-green':'pill-red'}">${p.activo!==false?'Activo':'Inactivo'}</span></td>
       <td><button class="btn btn-sm" onclick="openProcedimientoModal('${p.id}')">${icon('config')}</button></td></tr>`).join('')
-    : `<tr><td colspan="6"><div class="empty-state">${icon('bolt')}<div>Aún no hay procedimientos predefinidos.</div></div></td></tr>`;
+    : `<tr><td colspan="6"><div class="empty-state">${icon('bolt')}<div>${procState.search ? 'Sin procedimientos que coincidan con la búsqueda.' : 'Aún no hay procedimientos predefinidos.'}</div></div></td></tr>`;
 }
 function openProcedimientoModal(id){
   const p = id ? DB.procedimientos.find(x=>x.id===id) : null;
@@ -2659,8 +2687,30 @@ function openCotizacionDrawer(id){
       </div>
       <button class="btn btn-accent" style="width:100%; margin-top:10px;" onclick="generateCotizacionPDF('${c.id}')">${icon('download')} Descargar reporte PDF</button>
       <button class="btn" style="width:100%; margin-top:8px; background:#25D366; border-color:#25D366; color:#fff;" onclick="sendCotizacionWhatsApp('${c.id}')">${icon('whatsapp')} Enviar cotización por WhatsApp</button>
+      <button class="btn" style="width:100%; margin-top:8px;" onclick="convertirCotizacionAProcedimiento('${c.id}')">${icon('bolt')} Convertir en procedimiento base</button>
       ${c.regenerado_de ? `<div style="font-size:11px; color:var(--text-faint); margin-top:10px;">Regenerada a partir de ${c.regenerado_de}</div>`:''}
     </div>`);
+}
+function convertirCotizacionAProcedimiento(id){
+  const c = DB.cotizaciones.find(x=>String(x.id)===String(id)); if(!c) return;
+  const lines = getConceptosRows(c);
+  if(!lines.length || !lines.every(l=>l.id)){ toast('Esta cotización no tiene conceptos con referencia al catálogo, no se puede convertir automáticamente'); return; }
+  const nombre = prompt('Nombre para este procedimiento base (podrás editarlo después):', c.procedimiento||'');
+  if(nombre===null) return;
+  if(!nombre.trim()){ toast('Escribe un nombre para el procedimiento'); return; }
+  const m = medicoById(c.id_medico);
+  const nuevo = {
+    id: uid('proc'),
+    nombre: nombre.trim().toUpperCase(),
+    especialidad: m ? m.especialidad : (c.especialidad||''),
+    conceptos: lines.map(l=>({id:l.id, cantidad:l.cantidad})),
+    condiciones: Array.isArray(c.condiciones) ? c.condiciones.map(x=>x.id).filter(Boolean) : [],
+    lista_asignada_id: c.lista_asignada ? c.lista_asignada.id : null,
+    activo: true, __new:true
+  };
+  DB.procedimientos.push(nuevo);
+  logAudit('Procedimientos', nuevo.id, 'Creado desde cotización', c.id);
+  persistExtra(); toast('Procedimiento base creado: '+nuevo.nombre+' — ya puedes usarlo con cualquier médico');
 }
 function sendCotizacionWhatsApp(id){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id)); if(!c) return;
@@ -2806,7 +2856,14 @@ function drawWizardPane(){
         <div class="result-main"><div class="result-title">${m.nombre}</div><div class="result-sub">${m.especialidad}</div></div></div>`).join('') : `<div class="picker-empty">Sin coincidencias para "${q}"</div>`;
       medResults.style.display='block';
       medResults.querySelectorAll('[data-pick]').forEach(row=> row.onclick=()=>{
-        wizardState.medico = row.dataset.pick; medResults.style.display='none'; medSearch.value='';
+        const medicoAnterior = wizardState.medico ? medicoById(wizardState.medico) : null;
+        wizardState.medico = row.dataset.pick;
+        // Si el teléfono capturado seguía siendo el del médico anterior (o no se había tocado), lo dejamos vacío
+        // para que se recalcule con el del médico recién elegido; si ya lo habían editado a mano, se respeta.
+        if(!wizardState.telefonoContacto || (medicoAnterior && wizardState.telefonoContacto===medicoAnterior.telefono)){
+          wizardState.telefonoContacto = null;
+        }
+        medResults.style.display='none'; medSearch.value='';
         document.getElementById('wz-medico-chip').innerHTML = medicoChipHtml(medicoById(wizardState.medico));
         document.getElementById('wz-medico-chip').querySelector('button').onclick = ()=>{ wizardState.medico=''; document.getElementById('wz-medico-chip').innerHTML=''; };
       });
@@ -3121,9 +3178,11 @@ function generateCotizacionPDF(id){
   doc.setTextColor(...NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(9);
   doc.text('COTIZACIÓN MÉDICA · CIRUGÍAS Y PROCEDIMIENTOS', 124, 42);
   if(c.tipo_procedimiento){
-    doc.setFillColor(...BLUE); doc.roundedRect(124, 50, doc.getTextWidth(c.tipo_procedimiento)*0.72+16, 16, 8, 8, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.2); doc.setTextColor(255,255,255);
-    doc.text(c.tipo_procedimiento, 132, 61);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.2);
+    const pillW = doc.getTextWidth(c.tipo_procedimiento) + 18;
+    doc.setFillColor(...BLUE); doc.roundedRect(124, 50, pillW, 16, 8, 8, 'F');
+    doc.setTextColor(255,255,255);
+    doc.text(c.tipo_procedimiento, 133, 61);
   }
   doc.setDrawColor(...BLUE); doc.setLineWidth(2); doc.line(48,96,pageW-48,96);
   doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...BLUE);
