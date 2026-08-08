@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.3.0';
+const APP_VERSION = 'v2.4.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1049,16 +1049,17 @@ function renderDashboard(){
   function labelMes(key){ const [y,m] = key.split('-'); return MESES_NOMBRE[+m-1]+' '+y; }
 
   const cots = dashMesFiltro==='todos' ? DB.cotizaciones : DB.cotizaciones.filter(c=>c.fecha_creacion && c.fecha_creacion.slice(0,7)===dashMesFiltro);
-  const casosF = dashMesFiltro==='todos' ? DB.casos : DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,7)===dashMesFiltro);
+  const casosFTodos = dashMesFiltro==='todos' ? DB.casos : DB.casos.filter(cs=>cs.fecha_apertura && cs.fecha_apertura.slice(0,7)===dashMesFiltro);
+  // Los casos ligados a una cotización de aseguradora (id_cotizacion_asg) ya viven en Seguimiento CRM y se mantienen
+  // sincronizados con su estatus; el interruptor "Incluir aseguradoras" simplemente los incluye o excluye aquí.
+  const casosF = dashIncluirAsg ? casosFTodos : casosFTodos.filter(cs=>!cs.id_cotizacion_asg);
   const asgTodas = dashMesFiltro==='todos' ? DB.cotizaciones_aseguradora : DB.cotizaciones_aseguradora.filter(a=>a.fecha_creacion && a.fecha_creacion.slice(0,7)===dashMesFiltro);
   const asgF = dashIncluirAsg ? asgTodas : [];
-  const totalMonto = cots.reduce((s,c)=>s+(c.costo_propuesta||0),0) + asgF.reduce((s,a)=>s+(a.costo_propuesta||0),0);
+  const totalMonto = cots.reduce((s,c)=>s+(c.costo_propuesta||0),0) + asgF.reduce((s,a)=>s+(a.total_general||0),0);
   const totalCotizacionesCount = cots.length + asgF.length;
   const APROBADAS_O_MAS = ['Aprobada','Confirmado','Realizado'];
   const aprobadasCasos = casosF.filter(cs=>APROBADAS_O_MAS.includes(cs.estatus)).length;
-  const aprobadasAsg = asgF.filter(a=>APROBADAS_O_MAS.includes(a.estatus)).length;
-  const baseEfectividad = casosF.length + asgF.length;
-  const tasaAprob = baseEfectividad ? Math.round((aprobadasCasos+aprobadasAsg)/baseEfectividad*100) : 0;
+  const tasaAprob = casosF.length ? Math.round(aprobadasCasos/casosF.length*100) : 0;
   const medicosActivos = DB.medicos.filter(m=>['TRABAJANDO','CON CONVENIO'].includes(m.estatus_relacion)).length;
   const paquetesActivos = DB.paquetes.filter(p=>p.activo!==false).length;
   const procActivos = DB.procedimientos.filter(p=>p.activo!==false).length;
@@ -1072,17 +1073,16 @@ function renderDashboard(){
   const porMedEstatus = {}; DB.medicos.forEach(m=>{ porMedEstatus[m.estatus_relacion] = (porMedEstatus[m.estatus_relacion]||0)+1; });
   const porConvEstatus = {}; DB.convenios.forEach(cv=>{ const e=computeConvenioEstatus(cv); porConvEstatus[e]=(porConvEstatus[e]||0)+1; });
   const porCasoEstatus = {}; casosF.forEach(cs=>{ porCasoEstatus[cs.estatus]=(porCasoEstatus[cs.estatus]||0)+1; });
-  asgF.forEach(a=>{ porCasoEstatus[a.estatus]=(porCasoEstatus[a.estatus]||0)+1; });
-  const totalEstatusBase = casosF.length + asgF.length;
+  const totalEstatusBase = casosF.length;
   const montoPorCasoEstatus = {};
   Object.keys(ESTADOS_CASO).forEach(s=> montoPorCasoEstatus[s]=0);
   casosF.forEach(cs=>{
-    if(!cs.id_cotizacion) return;
-    const cot = DB.cotizaciones.find(c=>String(c.id)===String(cs.id_cotizacion));
-    if(!cot) return;
-    montoPorCasoEstatus[cs.estatus] = (montoPorCasoEstatus[cs.estatus]||0) + (cot.costo_propuesta||0);
+    let monto = 0;
+    if(cs.id_cotizacion){ const cot = DB.cotizaciones.find(c=>String(c.id)===String(cs.id_cotizacion)); if(cot) monto = cot.costo_propuesta||0; }
+    else if(cs.id_cotizacion_asg){ const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(cs.id_cotizacion_asg)); if(a) monto = a.total_general||0; }
+    montoPorCasoEstatus[cs.estatus] = (montoPorCasoEstatus[cs.estatus]||0) + monto;
   });
-  asgF.forEach(a=>{ montoPorCasoEstatus[a.estatus] = (montoPorCasoEstatus[a.estatus]||0) + (a.costo_propuesta||0); });
+  asgF.forEach(a=>{ montoPorCasoEstatus[a.estatus] = (montoPorCasoEstatus[a.estatus]||0) + (a.total_general||0); });
   const porPaqEstatus = { 'Activo': paquetesActivos, 'Inactivo': DB.paquetes.length-paquetesActivos };
 
   const espMonto = {};
@@ -1289,23 +1289,16 @@ function renderDashboard(){
     try{
       const porMesEstatus = {};
       DB.casos.forEach(cs=>{
-        if(!cs.fecha_apertura) return;
-        const d = new Date(cs.fecha_apertura);
+        const fechaBase = (cs.estatus==='Realizado' && cs.fecha_realizado) ? cs.fecha_realizado : cs.fecha_apertura;
+        if(!fechaBase) return;
+        const d = new Date(fechaBase);
         const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
         porMesEstatus[key] = porMesEstatus[key] || {};
         let monto = 0;
         if(cs.id_cotizacion){ const cot = DB.cotizaciones.find(c=>String(c.id)===String(cs.id_cotizacion)); if(cot) monto = cot.costo_propuesta||0; }
+        else if(cs.id_cotizacion_asg && dashIncluirAsg){ const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(cs.id_cotizacion_asg)); if(a) monto = a.total_general||0; }
         porMesEstatus[key][cs.estatus] = (porMesEstatus[key][cs.estatus]||0) + monto;
       });
-      if(dashIncluirAsg){
-        DB.cotizaciones_aseguradora.forEach(a=>{
-          if(!a.fecha_creacion) return;
-          const d = new Date(a.fecha_creacion);
-          const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-          porMesEstatus[key] = porMesEstatus[key] || {};
-          porMesEstatus[key][a.estatus] = (porMesEstatus[key][a.estatus]||0) + (a.costo_propuesta||0);
-        });
-      }
       const mesesEst = Object.keys(porMesEstatus).sort();
       const mesesEstLabels = mesesEst.map(fmtMesLabel);
       const totalesPorMes = mesesEst.map(k => Object.values(porMesEstatus[k]).reduce((a,b)=>a+b,0));
@@ -3447,8 +3440,27 @@ function sendAseguradoraWhatsApp(id){
 }
 function setAsgEstatus(id, estatus){
   const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); if(!a) return;
+  if(estatus==='Realizado' && a.estatus!=='Realizado'){
+    const cs = DB.casos.find(x=>x.id_cotizacion_asg===id);
+    const fechaSugerida = cs && cs.fecha_programacion ? ymd(new Date(cs.fecha_programacion)) : ymd(new Date());
+    abrirConfirmarFechaRealizado(fechaSugerida, (fecha)=> aplicarAsgEstatus(id, estatus, fecha));
+    return;
+  }
+  aplicarAsgEstatus(id, estatus, null);
+}
+function aplicarAsgEstatus(id, estatus, fechaRealizado){
+  const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); if(!a) return;
   const prev = a.estatus; a.estatus = estatus;
+  if(estatus==='Realizado' && fechaRealizado) a.fecha_realizado = new Date(fechaRealizado+'T12:00:00').toISOString();
   logAudit('Cotización Aseguradora', id, 'Cambio de estatus', `${prev} → ${estatus}`);
+  const cs = DB.casos.find(x=>x.id_cotizacion_asg===id);
+  if(cs && cs.estatus!==estatus){
+    const prevCaso = cs.estatus; cs.estatus = estatus;
+    if(a.fecha_realizado) cs.fecha_realizado = a.fecha_realizado;
+    cs.interacciones = cs.interacciones||[];
+    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde cotización a aseguradora)'});
+    logAudit('Caso', cs.id, 'Cambio de estatus', prevCaso+' → '+estatus+' (sincronizado desde aseguradora)');
+  }
   persistExtra(); toast('Estatus actualizado'); openAsgDrawer(id);
 }
 
@@ -3727,6 +3739,8 @@ function saveAsgWizard(){
       total_general: hospitalTotal+provTotal, condiciones: condicionesArr, fecha_vigencia: vigenciaFecha.toISOString()
     });
     logAudit('Cotización Aseguradora', a.id, 'Edición', a.aseguradora+' · '+a.procedimiento);
+    const csLink = DB.casos.find(x=>x.id_cotizacion_asg===a.id);
+    if(csLink) csLink.titulo = 'Aseguradora '+a.id+' — '+a.procedimiento+' ('+a.aseguradora+')';
     persistExtra(); closeModal(); toast('Cotización '+a.id+' actualizada'); navigate('aseguradoras'); setTimeout(()=>openAsgDrawer(a.id),250);
     return;
   }
@@ -3740,6 +3754,18 @@ function saveAsgWizard(){
   };
   DB.cotizaciones_aseguradora.unshift(nueva);
   logAudit('Cotización Aseguradora', folio, 'Creación', asgWizard.aseguradora+' · '+asgWizard.procedimiento+' · '+fmtMoney(nueva.total_general));
+
+  const casoNuevoAsg = {
+    id: uid('cs'), id_medico: asgWizard.medico, id_cotizacion: null, id_cotizacion_asg: folio,
+    titulo: 'Aseguradora '+folio+' — '+asgWizard.procedimiento+' ('+asgWizard.aseguradora+')',
+    estatus: nueva.estatus, prioridad:'Media', fecha_apertura: now.toISOString(),
+    proxima_accion_fecha: null, proxima_accion_nota: '', fecha_programacion: null, convenio_id: null,
+    interacciones: [{id:uid('it'), fecha:now.toISOString(), tipo:'Sistema', nota:'Cotización a aseguradora '+folio+' generada automáticamente por '+fmtMoney(nueva.total_general)+'.'}],
+    __new: true
+  };
+  DB.casos.unshift(casoNuevoAsg);
+  logAudit('Caso', casoNuevoAsg.id, 'Creación automática', 'Vinculado a cotización aseguradora '+folio);
+
   persistExtra(); closeModal(); toast('Cotización '+folio+' guardada'); navigate('aseguradoras'); setTimeout(()=>openAsgDrawer(folio),250);
 }
 
@@ -5284,13 +5310,38 @@ function atenderAccionMonitor(id){
   logAudit('Caso', id, 'Acción atendida', 'Marcada como atendida desde el Dashboard');
   persistExtra(); toast('Acción atendida'); renderDashboard();
 }
+function abrirConfirmarFechaRealizado(fechaSugerida, callback){
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Confirmar fecha de realizado</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">Esta fecha se usa para contabilizar el monto en el mes correspondiente en el Dashboard — no la fecha en que se creó la cotización, sino cuándo realmente se realizó.</div>
+      <div class="form-field full"><label>Fecha en que se realizó</label><input class="input" type="date" id="fr-fecha" style="width:100%;" value="${fechaSugerida}"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="fr-confirmar">${icon('check')} Confirmar</button></div>`);
+  document.getElementById('fr-confirmar').onclick = ()=>{
+    const fecha = document.getElementById('fr-fecha').value;
+    if(!fecha){ toast('Selecciona una fecha'); return; }
+    closeModal();
+    callback(fecha);
+  };
+}
 function setCasoEstatus(id, estatus){
+  const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
+  if(estatus==='Realizado' && cs.estatus!=='Realizado'){
+    const fechaSugerida = cs.fecha_programacion ? ymd(new Date(cs.fecha_programacion)) : ymd(new Date());
+    abrirConfirmarFechaRealizado(fechaSugerida, (fecha)=> aplicarCasoEstatus(id, estatus, fecha));
+    return;
+  }
+  aplicarCasoEstatus(id, estatus, null);
+}
+function aplicarCasoEstatus(id, estatus, fechaRealizado){
   const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
   const prev = cs.estatus; cs.estatus = estatus;
   if(estatus==='Vencida') cs.fecha_vencida = new Date().toISOString();
+  if(estatus==='Realizado' && fechaRealizado) cs.fecha_realizado = new Date(fechaRealizado+'T12:00:00').toISOString();
   if(prev!==estatus){
     cs.interacciones = cs.interacciones||[];
-    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prev+' → '+estatus});
+    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prev+' → '+estatus+(fechaRealizado?(' · fecha de realizado: '+fmtDate(fechaRealizado)):'')});
   }
   logAudit('Caso', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   if(cs.id_cotizacion){
@@ -5298,7 +5349,16 @@ function setCasoEstatus(id, estatus){
     if(c && c.estatus!==estatus){
       const prevCot = c.estatus; c.estatus = estatus;
       if(estatus==='Vencida') c.fecha_vencida = cs.fecha_vencida;
+      if(cs.fecha_realizado) c.fecha_realizado = cs.fecha_realizado;
       logAudit('Cotización', c.id, 'Cambio de estatus', prevCot+' → '+estatus+' (sincronizado desde Seguimiento CRM)');
+    }
+  }
+  if(cs.id_cotizacion_asg){
+    const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(cs.id_cotizacion_asg));
+    if(a && a.estatus!==estatus){
+      const prevAsg = a.estatus; a.estatus = estatus;
+      if(cs.fecha_realizado) a.fecha_realizado = cs.fecha_realizado;
+      logAudit('Cotización Aseguradora', a.id, 'Cambio de estatus', prevAsg+' → '+estatus+' (sincronizado desde Seguimiento CRM)');
     }
   }
   persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
@@ -8870,6 +8930,25 @@ function importarProspectos(){
   });
   if(creados){ logAudit('Prospectos', '-', 'Importación inicial', creados+' prospecto(s) importados (excluyendo médicos ya existentes en Leads)'); persistExtra(); }
 }
+function backfillCasosAseguradora(){
+  let creados = 0;
+  DB.cotizaciones_aseguradora.forEach(a=>{
+    const yaTieneCaso = DB.casos.some(cs=>cs.id_cotizacion_asg===a.id);
+    if(yaTieneCaso) return;
+    const nuevo = {
+      id: uid('cs'), id_medico: a.id_medico, id_cotizacion: null, id_cotizacion_asg: a.id,
+      titulo: 'Aseguradora '+a.id+' — '+(a.procedimiento||'')+' ('+(a.aseguradora||'')+')',
+      estatus: a.estatus||'Nuevo', prioridad:'Media', fecha_apertura: a.fecha_creacion||new Date().toISOString(),
+      proxima_accion_fecha: null, proxima_accion_nota: '', fecha_programacion: null, convenio_id: null,
+      interacciones: [{id:uid('it'), fecha:new Date().toISOString(), tipo:'Sistema', nota:'Caso vinculado retroactivamente a la cotización de aseguradora '+a.id+'.'}],
+      __new: true
+    };
+    if(a.fecha_realizado) nuevo.fecha_realizado = a.fecha_realizado;
+    DB.casos.unshift(nuevo);
+    creados++;
+  });
+  if(creados){ logAudit('Caso', '-', 'Vinculación retroactiva con aseguradoras', creados+' caso(s) creados'); persistExtra(); }
+}
 function backfillFechaPrimerContacto(){
   let actualizados = 0;
   DB.prospectos.forEach(p=>{
@@ -8951,6 +9030,7 @@ function showApp(){
   importarProspectos();
   complementarProspectosTelefonosCorreos();
   backfillFechaPrimerContacto();
+  backfillCasosAseguradora();
   if(DB.auditoria && DB.auditoria.length){ DB.auditoria = []; persistExtra(); }
   sincronizarEstatusCasoCotizacion();
   checkCotizacionesVencidas();
