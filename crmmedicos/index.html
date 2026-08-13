@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.4.0';
+const APP_VERSION = 'v2.5.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2167,6 +2167,193 @@ function wireListaPicker(searchEl, resultsEl, onPick){
 /* ============================================================
    PROCEDIMIENTOS PREDEFINIDOS
 ============================================================ */
+/* ============================================================
+   COTIZACIÓN PROVISIONAL POR PROCEDIMIENTO (sin médico asignado)
+============================================================ */
+let provCotState = {};
+function abrirCotizacionProvisional(procId){
+  const p = DB.procedimientos.find(x=>x.id===procId); if(!p) return;
+  provCotState = {
+    procId,
+    conceptos: Object.fromEntries((p.conceptos||[]).map(l=>[l.id,l.cantidad])),
+    condiciones: Object.fromEntries((p.condiciones||[]).map(cid=>[cid,true])),
+    costoManual: null,
+    incluirLista: !!p.lista_asignada_id
+  };
+  const lm = p.lista_asignada_id ? DB.listas_materiales.find(x=>x.id===p.lista_asignada_id) : null;
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Cotización provisional — ${p.nombre}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:14px;">Se genera con el mismo formato que la cotización a médicos, pero sin médico asignado — pensada para presupuestar el procedimiento por adelantado.</div>
+      <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Conceptos incluidos</div>
+      <div class="picker-wrap" style="margin-bottom:10px;"><div class="searchbox" style="width:100%;">${icon('search')}<input class="uc-input" id="pc-c-search" placeholder="AGREGAR CONCEPTO…"></div><div id="pc-c-results" class="picker-results" style="display:none;"></div></div>
+      <div id="pc-c-list" style="margin-bottom:14px;"></div>
+      <div class="form-field full" style="margin-bottom:16px;"><label>Costo del procedimiento (IVA incluido)</label>
+        <input class="input" id="pc-costo" type="number" step="1" style="width:100%;" placeholder="Se calcula de la suma de conceptos, o captúralo tú mismo">
+        <div style="font-size:11px; color:var(--text-faint); margin-top:4px;">Suma de conceptos: <span id="pc-suma-conceptos">$0</span> — puedes dejar este campo vacío para usar esa suma, o escribir el monto que prefieras.</div>
+      </div>
+      <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Condiciones</div>
+      <div class="searchbox" style="width:100%; margin-bottom:8px;">${icon('search')}<input id="pc-cl-search" placeholder="Buscar condición…"></div>
+      <div id="pc-cl-list" style="max-height:170px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px; margin-bottom:14px;"></div>
+      ${lm ? `<div class="form-field full"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="pc-incluir-lista" ${provCotState.incluirLista?'checked':''}> Incluir la lista de materiales asignada: <b>${lm.nombre}</b></label></div>`
+          : `<div style="font-size:11.5px; color:var(--text-faint);">Este procedimiento no tiene una lista de materiales asignada.</div>`}
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="pc-generar">${icon('download')} Generar PDF</button></div>`);
+  const listEl = document.getElementById('pc-c-list');
+  function redraw(){ renderConceptSelection(listEl, provCotState.conceptos); actualizarSumaProvisional(); }
+  redraw();
+  wireConceptPicker(document.getElementById('pc-c-search'), document.getElementById('pc-c-results'), (cid)=>{ provCotState.conceptos[cid]=(provCotState.conceptos[cid]||0)+1; redraw(); });
+  wireClausulaPicker(document.getElementById('pc-cl-search'), document.getElementById('pc-cl-list'), provCotState.condiciones);
+  document.getElementById('pc-costo').oninput = (e)=>{ provCotState.costoManual = e.target.value===''?null:Number(e.target.value); };
+  const incluirListaCk = document.getElementById('pc-incluir-lista');
+  if(incluirListaCk) incluirListaCk.onchange = (e)=>{ provCotState.incluirLista = e.target.checked; };
+  document.getElementById('pc-generar').onclick = ()=> generateProcedimientoProvisionalPDF();
+  // Observador simple para refrescar la suma cuando se editan cantidades desde renderConceptSelection
+  listEl.addEventListener('input', actualizarSumaProvisional);
+  listEl.addEventListener('click', ()=> setTimeout(actualizarSumaProvisional, 30));
+}
+function actualizarSumaProvisional(){
+  const suma = sumConceptMap(provCotState.conceptos);
+  const el = document.getElementById('pc-suma-conceptos');
+  if(el) el.textContent = fmtMoney(suma);
+}
+function generateProcedimientoProvisionalPDF(){
+  const p = DB.procedimientos.find(x=>x.id===provCotState.procId); if(!p || !window.jspdf) return;
+  const conceptosArr = Object.entries(provCotState.conceptos).map(([id,cantidad])=>{ const c=conceptoById(id); return {id, descripcion:c?c.descripcion:id, cantidad}; });
+  const condicionesArr = DB.clausulas.filter(cl=>provCotState.condiciones[cl.id]).map(cl=>({id:cl.id, titulo:cl.titulo, texto:cl.texto}));
+  const costo = provCotState.costoManual!=null ? provCotState.costoManual : sumConceptMap(provCotState.conceptos);
+  const lm = (provCotState.incluirLista && p.lista_asignada_id) ? DB.listas_materiales.find(x=>x.id===p.lista_asignada_id && x.activo!==false) : null;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'letter'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const FOOTER_TOP = 726;
+  const BLUE = [38,96,171], NAVY=[27,62,115];
+
+  doc.setFillColor(255,255,255); doc.rect(0,0,pageW,96,'F');
+  try{ doc.addImage(window.LOGO_URI, 'JPEG', 48, 16, 64, 64); }catch(e){}
+  doc.setTextColor(...NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('COTIZACIÓN MÉDICA · CIRUGÍAS Y PROCEDIMIENTOS', 124, 42);
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.2);
+  const pillTxt = 'COTIZACIÓN PROVISIONAL — SIN MÉDICO ASIGNADO';
+  const pillW = doc.getTextWidth(pillTxt) + 18;
+  doc.setFillColor(...[178,60,60]); doc.roundedRect(124, 50, pillW, 16, 8, 8, 'F');
+  doc.setTextColor(255,255,255);
+  doc.text(pillTxt, 133, 61);
+  doc.setDrawColor(...BLUE); doc.setLineWidth(2); doc.line(48,96,pageW-48,96);
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...BLUE);
+  doc.text('PROVISIONAL', pageW-48, 36, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90,100,110);
+  doc.text('Fecha de elaboración: '+fmtDate(new Date()), pageW-48, 52, {align:'right'});
+
+  let y = 128;
+  doc.setTextColor(20,30,40); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+  doc.text('PROCEDIMIENTO', 48, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10.5);
+  const procLines = doc.splitTextToSize((p.nombre||'—').toUpperCase(), 470);
+  doc.text(procLines, 48, y+16);
+  if(p.especialidad){ doc.setTextColor(100,110,118); doc.setFontSize(9); doc.text(p.especialidad.toUpperCase(), 48, y+16+procLines.length*13); }
+
+  y += 58;
+  const rows = conceptosArr.map(l=>[l.descripcion, String(l.cantidad||1)]);
+  doc.autoTable({ startY:y, head:[['CONCEPTO INCLUIDO','CANT.']], body: rows.length?rows:[['Sin desglose capturado','—']],
+    theme:'plain', headStyles:{fillColor:BLUE, textColor:255, fontStyle:'bold', fontSize:9}, bodyStyles:{fontSize:9, textColor:[30,40,50]},
+    alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:48,right:48,bottom:pageH-FOOTER_TOP+6}, columnStyles:{1:{halign:'center', cellWidth:60}} });
+
+  let finalY = doc.lastAutoTable.finalY + 22;
+  if(finalY > FOOTER_TOP-100){ doc.addPage(); finalY = 60; }
+  doc.setFillColor(...BLUE); doc.roundedRect(48, finalY, pageW-96, 46, 8, 8, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.text('TOTAL DEL PRESUPUESTO (IVA INCLUIDO)', 62, finalY+19);
+  doc.setFontSize(17);
+  doc.text(fmtMoney(costo), pageW-62, finalY+30, {align:'right'});
+  finalY += 66;
+
+  if(finalY > FOOTER_TOP-140){ doc.addPage(); finalY = 60; }
+  doc.setFillColor(...NAVY); doc.roundedRect(48, finalY, pageW-96, 58, 8, 8, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+  doc.text('COTIZACIÓN PROVISIONAL', 62, finalY+18);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  const msg = 'Este presupuesto es una referencia provisional para el procedimiento, sin médico asignado. Al momento de confirmar el caso con un médico específico, se debe generar la cotización definitiva correspondiente.';
+  doc.text(doc.splitTextToSize(msg, pageW-124), 62, finalY+32);
+  finalY += 76;
+
+  const condTxts = condicionesArr.map(x=>stripEmoji(x.texto));
+  if(condTxts.length){
+    if(finalY > FOOTER_TOP-116){ doc.addPage(); finalY = 60; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...NAVY);
+    doc.text('CONDICIONES DEL PRESUPUESTO', 48, finalY);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.8); doc.setTextColor(100,110,118);
+    let cy = finalY+15;
+    condTxts.forEach(txt=>{
+      const lines = doc.splitTextToSize('•  '+txt, pageW-96);
+      if(cy + lines.length*10 > FOOTER_TOP-16){ doc.addPage(); cy = 50; }
+      doc.text(lines, 48, cy); cy += lines.length*10 + 4;
+    });
+  }
+
+  if(lm){
+    doc.addPage();
+    doc.setFillColor(...BLUE); doc.rect(0,0,pageW,50,'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    doc.text('LISTA DE MATERIALES Y MEDICAMENTOS INCLUIDOS', 26, 24);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    doc.text(lm.nombre.toUpperCase()+'  ·  COTIZACIÓN PROVISIONAL', 26, 38);
+
+    const MX = 26, GAP = 10;
+    const colW = (pageW - MX*2 - GAP)/2;
+    const leftX = MX, rightX = MX + colW + GAP;
+    let startY = 62;
+    if(lm.notas){ startY = drawNotasBox(doc, lm.notas, MX, startY, pageW-MX*2) + 4; }
+    const meds = [...(lm.medicamentos||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
+    const mats = [...(lm.materiales||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
+    const footerReserve = pageH-FOOTER_TOP+6;
+    if(meds.length){
+      doc.autoTable({ startY, head:[['MEDICAMENTOS','CANT.']], body: meds.map(i=>[i.descripcion, String(i.cantidad)]),
+        theme:'plain', headStyles:{fillColor:NAVY, textColor:255, fontStyle:'bold', fontSize:7.6, cellPadding:{top:3,bottom:3,left:4,right:2}},
+        bodyStyles:{fontSize:6.8, textColor:[30,40,50], cellPadding:{top:2,bottom:2,left:4,right:2}},
+        alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:leftX, right:pageW-leftX-colW, bottom:footerReserve},
+        tableWidth:colW, columnStyles:{1:{halign:'center', cellWidth:32}} });
+    }
+    if(mats.length){
+      doc.autoTable({ startY, head:[['MATERIALES E INSUMOS','CANT.']], body: mats.map(i=>[i.descripcion, String(i.cantidad)]),
+        theme:'plain', headStyles:{fillColor:BLUE, textColor:255, fontStyle:'bold', fontSize:7.6, cellPadding:{top:3,bottom:3,left:4,right:2}},
+        bodyStyles:{fontSize:6.8, textColor:[30,40,50], cellPadding:{top:2,bottom:2,left:4,right:2}},
+        alternateRowStyles:{fillColor:[245,247,251]}, margin:{left:rightX, right:MX, bottom:footerReserve},
+        tableWidth:colW, columnStyles:{1:{halign:'center', cellWidth:32}} });
+    }
+  }
+
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    if(i>1){
+      const yaTieneBanner = lm && i===pageCount;
+      if(!yaTieneBanner){
+        doc.setFillColor(...NAVY); doc.rect(0,0,pageW,22,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+        doc.text('COTIZACIÓN PROVISIONAL — '+p.nombre.toUpperCase(), 48, 14);
+      }
+    }
+    doc.setDrawColor(230,233,235); doc.line(48, FOOTER_TOP, pageW-48, FOOTER_TOP);
+    doc.setFontSize(7.3); doc.setTextColor(110,120,130); doc.setFont('helvetica','bold');
+    doc.text('HOSPITAL NOOR', 48, 738);
+    doc.setFont('helvetica','normal');
+    doc.text(HOSP_INFO.direccion+'  ·  Tel. '+HOSP_INFO.telefono, 48, 749);
+    doc.text('Programación de cirugías: '+HOSP_INFO.contactoNombre+' ('+HOSP_INFO.contactoRol+') · '+HOSP_INFO.contactoTel, 48, 760);
+    doc.setTextColor(...BLUE);
+    doc.textWithLink('Portal de médicos — credencialización aquí', 48, 771, {url: HOSP_INFO.portal});
+    doc.setTextColor(150,158,165); doc.setFont('helvetica','normal');
+    doc.text('Página '+i+' de '+pageCount, pageW-48, 760, {align:'right'});
+  }
+
+  const fileName = ['PROVISIONAL', slugify(p.nombre)].filter(Boolean).join('_') + '.pdf';
+  doc.save(fileName);
+  logAudit('Procedimiento', p.id, 'Cotización provisional generada', p.nombre);
+  toast('PDF generado');
+  return doc;
+}
 let procState = { search:'' };
 function renderProcedimientos(){
   document.getElementById('content').innerHTML = `
@@ -2185,7 +2372,8 @@ function drawProcTable(){
     <tr><td style="font-weight:600;">${p.nombre}</td><td>${p.especialidad||'—'}</td>
       <td>${(p.conceptos||[]).length}</td><td>${(p.condiciones||[]).length}</td>
       <td><span class="pill ${p.activo!==false?'pill-green':'pill-red'}">${p.activo!==false?'Activo':'Inactivo'}</span></td>
-      <td><button class="btn btn-sm" onclick="openProcedimientoModal('${p.id}')">${icon('config')}</button></td></tr>`).join('')
+      <td><button class="btn btn-sm" onclick="openProcedimientoModal('${p.id}')">${icon('config')}</button>
+        <button class="btn btn-sm btn-accent" style="margin-left:4px;" onclick="abrirCotizacionProvisional('${p.id}')" title="Generar cotización provisional (sin médico)">${icon('download')}</button></td></tr>`).join('')
     : `<tr><td colspan="6"><div class="empty-state">${icon('bolt')}<div>${procState.search ? 'Sin procedimientos que coincidan con la búsqueda.' : 'Aún no hay procedimientos predefinidos.'}</div></div></td></tr>`;
 }
 function openProcedimientoModal(id){
