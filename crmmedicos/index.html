@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.5.0';
+const APP_VERSION = 'v2.5.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2438,16 +2438,21 @@ function paqueteVigente(pk){
   if(pk.vigencia_fin && new Date(pk.vigencia_fin+'T23:59:59') < new Date()) return false;
   return true;
 }
+let paqState = { search:'' };
 function renderPaquetes(){
   document.getElementById('content').innerHTML = `
-    <div class="toolbar"><span style="font-size:12.5px; color:var(--text-muted); max-width:560px;">Paquetes comerciales o promocionales (ej. hernioplastía bilateral) con conceptos y condiciones ya definidas. Puedes dejarlos abiertos a cualquier médico o asignarlos a uno o varios en particular.</span>
+    <div class="toolbar">
+      <div class="searchbox" style="width:280px;">${icon('search')}<input id="paq-search" placeholder="Buscar por nombre o descripción…"></div>
+      <span style="font-size:12.5px; color:var(--text-muted); max-width:420px;">Paquetes comerciales o promocionales, con conceptos y condiciones ya definidas.</span>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openPaqueteModal()">${icon('plus')} Nuevo paquete</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));" id="paq-grid"></div>`;
+  document.getElementById('paq-search').oninput = (e)=>{ paqState.search = e.target.value; drawPaqGrid(); };
   drawPaqGrid();
 }
 function drawPaqGrid(){
   const grid = document.getElementById('paq-grid');
-  grid.innerHTML = DB.paquetes.length ? DB.paquetes.map(pk=>{
+  const filtrados = DB.paquetes.filter(pk=> !paqState.search || fuzzyMatch(pk.nombre+' '+(pk.descripcion||''), paqState.search));
+  grid.innerHTML = filtrados.length ? filtrados.map(pk=>{
     const meds = (pk.medicos||[]).map(id=>medicoById(id)).filter(Boolean);
     const vigente = paqueteVigente(pk);
     return `<div class="card">
@@ -2466,7 +2471,7 @@ function drawPaqGrid(){
       <div style="font-size:11px; color:var(--text-faint); margin-top:8px;">${(pk.conceptos||[]).length} conceptos · ${(pk.condiciones||[]).length} condiciones</div>
       <div style="font-size:11px; color:var(--text-faint); margin-top:4px;">${meds.length ? '👤 '+meds.map(m=>m.nombre).join(', ') : '👤 Disponible para cualquier médico'}</div>
     </div>`;
-  }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('building')}<div>Aún no hay paquetes registrados.</div></div>`;
+  }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('building')}<div>${paqState.search ? 'Sin paquetes que coincidan con la búsqueda.' : 'Aún no hay paquetes registrados.'}</div></div>`;
 }
 function duplicarPaquete(id){
   const original = DB.paquetes.find(x=>x.id===id); if(!original) return;
@@ -3450,10 +3455,12 @@ function generateCotizacionPDF(id){
     });
   }
 
+  let listaBannerPage = null;
   if(c.lista_asignada){
     const lm = DB.listas_materiales.find(x=>x.id===c.lista_asignada.id && x.activo!==false);
     if(lm){
       doc.addPage();
+      listaBannerPage = doc.internal.getNumberOfPages();
       doc.setFillColor(...BLUE); doc.rect(0,0,pageW,50,'F');
       doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
       doc.text('LISTA DE MATERIALES Y MEDICAMENTOS INCLUIDOS', 26, 24);
@@ -3490,9 +3497,9 @@ function generateCotizacionPDF(id){
   for(let i=1;i<=pageCount;i++){
     doc.setPage(i);
     if(i>1){
-      // La página de "LISTA DE MATERIALES" ya trae su propio banner con el folio; para las demás páginas
-      // agregamos una franja delgada arriba con el folio y tipo de procedimiento, para relacionar todas las hojas.
-      const yaTieneBanner = c.lista_asignada && i===pageCount && (DB.listas_materiales.find(x=>x.id===c.lista_asignada.id && x.activo!==false));
+      // La página exacta donde se dibujó el banner de "LISTA DE MATERIALES" ya trae su propio encabezado con el folio;
+      // el resto de las páginas (incluyendo las que la lista desborda por sí sola) llevan la franja delgada de abajo.
+      const yaTieneBanner = i===listaBannerPage;
       if(!yaTieneBanner){
         doc.setFillColor(...NAVY); doc.rect(0,0,pageW,22,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
@@ -5905,16 +5912,25 @@ function drawCampanaLista(campanaId){
     drawCampanaDrawer(campana.id);
   });
 }
+let convState = { search:'' };
 function renderConvenios(){
   document.getElementById('content').innerHTML = `
-    <div class="toolbar"><span style="font-size:12.5px; color:var(--text-muted); max-width:520px;">Asigna descuentos, promociones o beneficios a médicos específicos, con condiciones y vigencia.</span>
+    <div class="toolbar">
+      <div class="searchbox" style="width:280px;">${icon('search')}<input id="conv-search" placeholder="Buscar por nombre, tipo o médico…"></div>
+      <span style="font-size:12.5px; color:var(--text-muted); max-width:400px;">Asigna descuentos, promociones o beneficios a médicos específicos.</span>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openConvenioModal()">${icon('plus')} Nuevo convenio</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(310px,1fr));" id="conv-grid"></div>`;
+  document.getElementById('conv-search').oninput = (e)=>{ convState.search = e.target.value; drawConvGrid(); };
   drawConvGrid();
 }
 function drawConvGrid(){
   const grid = document.getElementById('conv-grid');
-  grid.innerHTML = DB.convenios.length ? DB.convenios.map(cv=>{
+  const filtrados = DB.convenios.filter(cv=>{
+    if(!convState.search) return true;
+    const meds = (cv.medicos||[]).map(id=>medicoById(id)).filter(Boolean).map(m=>m.nombre).join(' ');
+    return fuzzyMatch(cv.nombre+' '+(cv.tipo||'')+' '+meds, convState.search);
+  });
+  grid.innerHTML = filtrados.length ? filtrados.map(cv=>{
     const estatus = computeConvenioEstatus(cv);
     const meds = (cv.medicos||[]).map(id=>medicoById(id)).filter(Boolean);
     return `<div class="card">
@@ -5927,7 +5943,7 @@ function drawConvGrid(){
         ${estatusPillGeneric(estatus, ESTADOS_CONVENIO)}<span style="font-size:11px; color:var(--text-faint);">${fmtDate(cv.vigencia_inicio)} — ${fmtDate(cv.vigencia_fin)}</span>
       </div>
     </div>`;
-  }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('deals')}<div>Aún no hay convenios registrados.</div></div>`;
+  }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('deals')}<div>${convState.search ? 'Sin convenios que coincidan con la búsqueda.' : 'Aún no hay convenios registrados.'}</div></div>`;
 }
 function openConvenioModal(id, medicoPreset){
   const cv = id ? DB.convenios.find(x=>x.id===id) : null;
