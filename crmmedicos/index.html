@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.5.2';
+const APP_VERSION = 'v2.5.3';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2936,15 +2936,28 @@ function sendCotizacionWhatsApp(id){
 function setCotEstatus(id, estatus){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
   if(!c) return;
+  if(estatus==='Realizado' && c.estatus!=='Realizado'){
+    const cs = DB.casos.find(x=>x.id_cotizacion===id);
+    const fechaSugerida = cs && cs.fecha_programacion ? ymd(new Date(cs.fecha_programacion)) : ymd(new Date());
+    abrirConfirmarFechaRealizado(fechaSugerida, (fecha)=> aplicarCotEstatus(id, estatus, fecha));
+    return;
+  }
+  aplicarCotEstatus(id, estatus, null);
+}
+function aplicarCotEstatus(id, estatus, fechaRealizado){
+  const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
+  if(!c) return;
   const prev = c.estatus; c.estatus = estatus;
   if(estatus==='Vencida') c.fecha_vencida = new Date().toISOString();
+  if(estatus==='Realizado' && fechaRealizado) c.fecha_realizado = new Date(fechaRealizado+'T12:00:00').toISOString();
   logAudit('Cotización', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   const cs = DB.casos.find(x=>x.id_cotizacion===id);
   if(cs && cs.estatus!==estatus){
     const prevCaso = cs.estatus; cs.estatus = estatus;
     if(estatus==='Vencida') cs.fecha_vencida = c.fecha_vencida;
+    if(c.fecha_realizado) cs.fecha_realizado = c.fecha_realizado;
     cs.interacciones = cs.interacciones||[];
-    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde la cotización)'});
+    cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde la cotización)'+(fechaRealizado?(' · fecha de realizado: '+fmtDate(fechaRealizado)):'')});
     logAudit('Caso', cs.id, 'Cambio de estatus', prevCaso+' → '+estatus+' (sincronizado desde cotización)');
   }
   persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCotizacionDrawer(id); renderFollowUpBubble();
