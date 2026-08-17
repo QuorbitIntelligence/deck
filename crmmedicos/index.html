@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.5.3';
+const APP_VERSION = 'v2.6.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2099,16 +2099,25 @@ function openConceptoModal(id){
 /* ============================================================
    BLOQUES RÁPIDOS DE CONCEPTOS
 ============================================================ */
+let bqState = { search:'' };
 function renderBloques(){
   document.getElementById('content').innerHTML = `
-    <div class="toolbar"><span style="font-size:12.5px; color:var(--text-muted); max-width:520px;">Agrupa conceptos que siempre usas juntos (horas de quirófano, estancia, lista base) para llamarlos con un clic al capturar una cotización.</span>
+    <div class="toolbar">
+      <div class="searchbox" style="width:280px;">${icon('search')}<input id="bq-modul-search" placeholder="Buscar por nombre o concepto…"></div>
+      <span style="font-size:12.5px; color:var(--text-muted); max-width:420px;">Agrupa conceptos que siempre usas juntos, para llamarlos con un clic al cotizar.</span>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openBloqueModal()">${icon('plus')} Nuevo bloque</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));" id="bloques-grid"></div>`;
+  document.getElementById('bq-modul-search').oninput = (e)=>{ bqState.search = e.target.value; drawBloquesGrid(); };
   drawBloquesGrid();
 }
 function drawBloquesGrid(){
   const grid = document.getElementById('bloques-grid');
-  grid.innerHTML = DB.bloques.length ? DB.bloques.map(bq=>{
+  const filtrados = DB.bloques.filter(bq=>{
+    if(!bqState.search) return true;
+    const nombresConceptos = (bq.conceptos||[]).map(l=>{ const c=conceptoById(l.id); return c?c.descripcion:''; }).join(' ');
+    return fuzzyMatch(bq.nombre+' '+nombresConceptos, bqState.search);
+  });
+  grid.innerHTML = filtrados.length ? filtrados.map(bq=>{
     const total = (bq.conceptos||[]).reduce((s,l)=>{ const c=conceptoById(l.id); return s+(c?c.costo_sin_iva*l.cantidad:0); },0);
     return `<div class="card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;"><div style="font-weight:700; font-size:14px;">${bq.nombre}</div>
@@ -2117,7 +2126,7 @@ function drawBloquesGrid(){
       ${(bq.conceptos||[]).slice(0,4).map(l=>{ const c=conceptoById(l.id); return `<div style="font-size:11.5px; color:var(--text-muted); padding:3px 0;">• ${c?c.descripcion:l.id} (${l.cantidad}×)</div>`; }).join('')}
       ${(bq.conceptos||[]).length>4?`<div style="font-size:11px; color:var(--text-faint);">+${bq.conceptos.length-4} más…</div>`:''}
     </div>`;
-  }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('quote')}<div>Aún no hay bloques rápidos. Crea el primero para agilizar tus cotizaciones.</div></div>`;
+  }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('quote')}<div>${bqState.search ? 'Sin bloques que coincidan con la búsqueda.' : 'Aún no hay bloques rápidos. Crea el primero para agilizar tus cotizaciones.'}</div></div>`;
 }
 function openBloqueModal(id){
   const bq = id ? DB.bloques.find(x=>x.id===id) : null;
@@ -2874,8 +2883,26 @@ function openCotizacionDrawer(id){
       <button class="btn btn-accent" style="width:100%; margin-top:10px;" onclick="generateCotizacionPDF('${c.id}')">${icon('download')} Descargar reporte PDF</button>
       <button class="btn" style="width:100%; margin-top:8px; background:#25D366; border-color:#25D366; color:#fff;" onclick="sendCotizacionWhatsApp('${c.id}')">${icon('whatsapp')} Enviar cotización por WhatsApp</button>
       <button class="btn" style="width:100%; margin-top:8px;" onclick="convertirCotizacionAProcedimiento('${c.id}')">${icon('bolt')} Convertir en procedimiento base</button>
+      ${esUltimoFolioCotizacion(c.id) ? `<button class="btn btn-danger" style="width:100%; margin-top:8px;" onclick="eliminarCotizacion('${c.id}')">${icon('trash')} Eliminar cotización</button>` : ''}
       ${c.regenerado_de ? `<div style="font-size:11px; color:var(--text-faint); margin-top:10px;">Regenerada a partir de ${c.regenerado_de}</div>`:''}
     </div>`);
+}
+function esUltimoFolioCotizacion(id){
+  const nums = DB.cotizaciones.map(c=>parseInt(String(c.id).replace(/\D/g,''),10)).filter(n=>!isNaN(n));
+  if(!nums.length) return false;
+  const maxNum = Math.max(...nums);
+  const num = parseInt(String(id).replace(/\D/g,''),10);
+  return num===maxNum;
+}
+function eliminarCotizacion(id){
+  const c = DB.cotizaciones.find(x=>String(x.id)===String(id)); if(!c) return;
+  if(!esUltimoFolioCotizacion(id)){ toast('Solo se puede eliminar el folio más reciente; los folios anteriores no se pueden borrar'); return; }
+  const cs = DB.casos.find(x=>x.id_cotizacion===id);
+  if(!confirm('¿Eliminar la cotización '+id+'? '+(cs?'También se eliminará su caso ligado en Seguimiento CRM. ':'')+'Esta acción no se puede deshacer.')) return;
+  DB.cotizaciones = DB.cotizaciones.filter(x=>String(x.id)!==String(id));
+  if(cs) DB.casos = DB.casos.filter(x=>x.id!==cs.id);
+  logAudit('Cotización', id, 'Eliminada', cs?'Junto con su caso ligado en Seguimiento CRM':'');
+  persistExtra(); closeDrawer(); toast('Cotización '+id+' eliminada'); if(CURRENT_ROUTE==='cotizaciones'){ drawCotChips(); drawCotTable(); } renderFollowUpBubble();
 }
 function convertirCotizacionAProcedimiento(id){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id)); if(!c) return;
@@ -2966,18 +2993,23 @@ function aplicarCotEstatus(id, estatus, fechaRealizado){
 /* ---- Wizard nueva cotización / edición / regeneración (4 pasos) ---- */
 let wizardState = {};
 function openCotizacionWizard(medicoIdPreset){
-  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, tipoProcedimiento:null, _defaultsApplied:false, _conveniosChecked:false, conveniosIncluidos:{} };
+  wizardState = { mode:'new', originalId:null, medico:medicoIdPreset||'', procedimiento:'', conceptos:{}, clausulas:{}, step:1, costoManual:null, _costoEsManual:false, vigenciaManual:null, listaAsignada:null, listaAsignadaActiva:true, tipoProcedimiento:null, _defaultsApplied:false, _conveniosChecked:false, conveniosIncluidos:{} };
   drawWizard();
 }
 function editCotizacionWizard(id, regenerar){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
   if(!c) return;
+  const conceptosOriginales = Object.fromEntries((c.conceptos||[]).map(l=>[l.id,l.cantidad]));
+  const sumaOriginal = Math.round(Object.entries(conceptosOriginales).reduce((s,[cid,qty])=>{ const co=conceptoById(cid); return s+(co?co.costo_sin_iva*qty:0); },0));
+  // Si el monto guardado coincide con la suma de sus conceptos originales, no fue una edición manual —
+  // lo dejamos en modo automático para que se recalcule solo al tocar los conceptos.
+  const eraManual = Math.round(c.costo_propuesta||0) !== sumaOriginal;
   wizardState = {
     mode: regenerar ? 'regenerate' : 'edit', originalId: c.id,
     medico: c.id_medico, procedimiento: c.procedimiento,
-    conceptos: Object.fromEntries((c.conceptos||[]).map(l=>[l.id,l.cantidad])),
+    conceptos: conceptosOriginales,
     clausulas: Object.fromEntries((c.condiciones||[]).map(cl=>[cl.id,true])),
-    step:1, costoManual: c.costo_propuesta, vigenciaManual: regenerar ? null : (c.fecha_vigencia ? c.fecha_vigencia.slice(0,10) : null),
+    step:1, costoManual: eraManual ? c.costo_propuesta : null, _costoEsManual: eraManual, vigenciaManual: regenerar ? null : (c.fecha_vigencia ? c.fecha_vigencia.slice(0,10) : null),
     listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, tipoProcedimiento: c.tipo_procedimiento||null, telefonoContacto: c.telefono_contacto||null, _defaultsApplied:true, _conveniosChecked:false, conveniosIncluidos: Object.fromEntries((c.convenios_aplicados||[]).map(cv=>[cv.id,true]))
   };
   drawWizard();
@@ -3098,6 +3130,7 @@ function drawWizardPane(){
       wizardState.procedimiento = item.nombre; document.getElementById('wz-proc').value = item.nombre.toUpperCase();
       (item.conceptos||[]).forEach(l=>{ wizardState.conceptos[l.id] = (wizardState.conceptos[l.id]||0)+l.cantidad; });
       (item.condiciones||[]).forEach(cid=>{ wizardState.clausulas[cid]=true; });
+      wizardState._costoEsManual = false;
       if(item.lista_asignada_id && !wizardState.listaAsignada){
         const lm = DB.listas_materiales.find(x=>x.id===item.lista_asignada_id);
         if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); }
@@ -3108,7 +3141,7 @@ function drawWizardPane(){
       if(!wizardState.procedimiento){ wizardState.procedimiento = item.nombre; document.getElementById('wz-proc').value = item.nombre.toUpperCase(); }
       (item.conceptos||[]).forEach(l=>{ wizardState.conceptos[l.id] = (wizardState.conceptos[l.id]||0)+l.cantidad; });
       (item.condiciones||[]).forEach(cid=>{ wizardState.clausulas[cid]=true; });
-      if(item.precio_paquete) wizardState.costoManual = item.precio_paquete;
+      if(item.precio_paquete){ wizardState.costoManual = item.precio_paquete; wizardState._costoEsManual = true; }
       if(item.lista_asignada_id && !wizardState.listaAsignada){
         const lm = DB.listas_materiales.find(x=>x.id===item.lista_asignada_id);
         if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); }
@@ -3151,6 +3184,7 @@ function drawWizardPane(){
       panel.querySelectorAll('[data-bq]').forEach(row=> row.onclick=()=>{
         const bq = DB.bloques.find(b=>b.id===row.dataset.bq);
         (bq.conceptos||[]).forEach(l=>{ wizardState.conceptos[l.id] = (wizardState.conceptos[l.id]||0)+l.cantidad; });
+        wizardState._costoEsManual = false;
         drawWizardConceptos(); toast('Bloque "'+bq.nombre+'" agregado');
       });
     };
@@ -3196,9 +3230,9 @@ function drawWizardPane(){
         <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; opacity:.85; margin-bottom:6px;">Costo total de la propuesta · IVA incluido</div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-family:var(--font-display); font-size:24px; font-weight:700;">$</span>
-          <input id="wz-costo" type="number" value="${wizardState.costoManual!=null?wizardState.costoManual:Math.round(conceptTotal)}" style="flex:1; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); border-radius:10px; padding:10px 12px; font-family:var(--font-display); font-size:24px; font-weight:700; color:#fff; outline:none;">
+          <input id="wz-costo" type="number" value="${wizardState._costoEsManual && wizardState.costoManual!=null ? wizardState.costoManual : Math.round(conceptTotal)}" style="flex:1; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); border-radius:10px; padding:10px 12px; font-family:var(--font-display); font-size:24px; font-weight:700; color:#fff; outline:none;">
         </div>
-        <div style="font-size:11px; opacity:.8; margin-top:8px;">Sugerido según conceptos agregados: ${fmtMoney(conceptTotal)}</div>
+        <div style="font-size:11px; opacity:.8; margin-top:8px;">Sugerido según conceptos agregados: ${fmtMoney(conceptTotal)}${wizardState._costoEsManual?` · <a href="#" id="wz-costo-reset" style="color:#fff; text-decoration:underline;">usar este monto</a>`:''}</div>
       </div>
       <div class="form-field full" style="margin-top:14px;">
         <label>Vigencia de la cotización</label>
@@ -3224,6 +3258,9 @@ function drawWizardPane(){
       };
     });
     const drawClList = wireClausulaPicker(document.getElementById('wz-cl-search'), document.getElementById('wz-cl-list'), wizardState.clausulas, null, 'medico');
+    document.getElementById('wz-costo').oninput = (e)=>{ wizardState.costoManual = e.target.value===''?null:Number(e.target.value); wizardState._costoEsManual = true; };
+    const costoResetLink = document.getElementById('wz-costo-reset');
+    if(costoResetLink) costoResetLink.onclick = (e)=>{ e.preventDefault(); wizardState._costoEsManual = false; wizardState.costoManual = null; drawWizardPane(); };
     document.getElementById('wz-cl-add').onclick = ()=>{
       const input = document.getElementById('wz-cl-new'); const txt = input.value.trim();
       if(!txt){ toast('Escribe el texto de la condición'); return; }
@@ -3236,7 +3273,8 @@ function drawWizardPane(){
     document.getElementById('wz-next').onclick = ()=>{ wizardState.vigenciaManual = document.getElementById('wz-vigencia').value; wizardState.step=4; drawWizardPane(); };
   } else {
     const m = medicoById(wizardState.medico);
-    const costo = parseFloat(document.getElementById('wz-costo')?.value) || wizardState.costoManual || 0;
+    const conceptTotalStep4 = Object.entries(wizardState.conceptos).reduce((s,[id,qty])=>{ const c=conceptoById(id); return s+(c?c.costo_sin_iva*qty:0); },0);
+    const costo = (wizardState._costoEsManual && wizardState.costoManual!=null) ? wizardState.costoManual : Math.round(conceptTotalStep4);
     wizardState.costoManual = costo;
     const conceptosArr = Object.entries(wizardState.conceptos).map(([id,qty])=>{ const c=conceptoById(id); return {id, descripcion:c?c.descripcion:id, cantidad:qty}; });
     const condicionesArr = DB.clausulas.filter(cl=>wizardState.clausulas[cl.id]);
@@ -3273,11 +3311,11 @@ function drawWizardPane(){
     document.getElementById('wz-save').onclick = saveWizardCotizacion;
   }
 }
-function wzAddConcepto(id){ wizardState.conceptos[id] = (wizardState.conceptos[id]||0)+1; drawWizardConceptos(); }
+function wzAddConcepto(id){ wizardState.conceptos[id] = (wizardState.conceptos[id]||0)+1; wizardState._costoEsManual = false; drawWizardConceptos(); }
 function drawWizardConceptos(){
   const listEl = document.getElementById('wz-concepto-list');
   if(!listEl) return;
-  renderConceptSelection(listEl, wizardState.conceptos);
+  renderConceptSelection(listEl, wizardState.conceptos, ()=>{ wizardState._costoEsManual = false; });
   const total = Object.entries(wizardState.conceptos).reduce((s,[id,qty])=>{ const c=conceptoById(id); return s+(c?c.costo_sin_iva*qty:0); },0);
   const totalEl = document.getElementById('wz-total'); if(totalEl) totalEl.textContent = 'Subtotal: '+fmtMoney(total);
 }
@@ -9084,6 +9122,72 @@ const PROSPECTOS_COMPLEMENTO_2026_08 = [
 ["DR. AGUSTÍN JOSUÉ ELIZALDE OROZCO","7222647075",""]
 ];
 
+const PROSPECTOS_COMPLEMENTO_2026_08_CXGEN = [
+["DR. ADOLFO POZOS VALDEZ","7222803737",""],
+["DR. ADRIAN DERSU PLIEGO OCHOA","9991290385","ANDERSU.PO@GMAIL.COM"],
+["DR. ADRIÁN TREJO RODRÍGUEZ","5599903137",""],
+["DR. AGUSTÍN JOSUÉ ELIZALDE OROZCO","7222647075",""],
+["DR. ALAN JASQUI BUCAY","5575715011",""],
+["DR. ALBERTO AZNAR JEAN","5555865053","AAZNAR@PRODIGY.NET.COM"],
+["DR. ALBERTO BACILIO GUZMÁN","5557477560",""],
+["DR. ALBERTO CHOUSLEB KALACH","5552722875",""],
+["DR. ALBERTO GARCIA RODRIGUEZ","8991058229",""],
+["DR. ALBERTO HOLM CORZO","5552469576",""],
+["DR. ALBERTO RIVERA NERI","5544405590",""],
+["DR. ALEJANDRO GONZÁLEZ ARAUJO","5547630236","ALEX.GA06@YAHOO.COM"],
+["DR. ALFRED PAUL BURGESS VALDÉS","5552469500",""],
+["DR. ALFREDO DELGADO CUENCA","5516795189",""],
+["DR. ALFREDO OSIEL BUCIO HERNÁNDEZ","7227116791",""],
+["DR. ALFREDO RUIZ VEGA","5557245900",""],
+["DR. ALVARO ALONZO ANGULO FRANCO","5534766801",""],
+["DR. ALVARO TOMÁS RUZ CONCHA","5552467502",""],
+["DR. ANDONI VICENTE EGUIA","5552469751",""],
+["DR. ANDRÉS ARMENDARIZ RODRIGUEZ","5519587357",""],
+["DR. ANTONIO CASTILLO MAGAÑA","5588694748",""],
+["DR. BRANDON DURAN SUAREZ","5519283905",""],
+["DR. CARLOS ARTURO HINOJOSA BECERRIL","5556532991","CARLOS.A.HINOJOSA@GMAIL.COM"],
+["DR. CÉSAR GUSTAVO ROJAS BENÍTEZ","5599631066",""],
+["DR. CÉSAR JAVIER VILLALPANDO MENDOZA","5555744697",""],
+["DR. CESAREO ALEJO MARTINEZ","5538594110","DR.ALEJOCIRUJIA@HOTMAIL.COM"],
+["DR. DANIEL ORTÍZ DE LA PEÑA SALAZAR ILARREGUI","5557522288",""],
+["DR. DANIEL RAMÍREZ LEÓN","5588972850",""],
+["DR. DANIEL SALTIEL MECHULAN","5599908622",""],
+["DR. DAVID ESTRADA HERNÁNDEZ","5553447924",""],
+["DR. DAVID LASKY MARCOVICH","5555153989",""],
+["DR. EDGAR ENRIQUE RAMOS DÍAZ","5552465000",""],
+["DR. EDUARDO HERNÁNDEZ MAZZOCO","5565640588","CONTACTO@DRMAZZOCO.COM"],
+["DR. EDUARDO MORALES ESPINO","5544405590",""],
+["DR. ENRIQUE RICARDO JEAN SILVER","5252722222",""],
+["DR. ERICK GIOVANNY JARDINEZ GONZALEZ","5599631619",""],
+["DR. ERIK DAMIÁN LÓPEZ","5553305319","DAMIAN.LOPEZ.ERIK@GMAIL.COM"],
+["DR. ERIK ISMAEL QUIROZ ORTEGA","5527603150",""],
+["DR. ERIKC GONZÁLEZ AZÚA","9997716468",""],
+["DR. ERNESTO CASTELLANOS FLORES","5534341129",""],
+["DR. FABIÁN ÁLVAREZ MORALES","5525025990",""],
+["DR. FABIO JOSE LUIS RICO MORLAN","7228688376",""],
+["DR. FERNANDO AARÓN ELIZARRARÁS ESCOTO","5599900168",""],
+["DR. FERNANDO FUENTES MARTÍNEZ","7211430694",""],
+["DR. FERNANDO PÉREZ GALAZ","5519496233","FERNANDO@DRPEREZGALAZ.COM"],
+["DR. FRANCISCO ALEJANDRO MUÑOZ SANCHEZ","5516647292",""],
+["DR. FRANCISCO ANGEL VEGA ROMERO","5556236400",""],
+["DR. FRANCISCO BOJÓRQUEZ CHÁVEZ","5599630669",""],
+["DR. FRANCISCO DONATO TREJO","5511055900",""],
+["DR. FRANCISCO JAVIER RAMIREZ BRITO","4422293487",""],
+["DR. FRANCISCO XAVIER HERNANDEZ VERA","5538086574",""],
+["DR. GABRIEL GUTIÉRREZ GARCÍA","6693297038",""],
+["DR. GABRIEL ORLANDO SÁNCHEZ JUREIDINI","5552465000",""],
+["DR. GERARDO LOPEZ MIRANDA","7228688932",""],
+["DR. GILBERTO GERARDO ORTÍZ CANTÚ","5552643530",""],
+["DR. GUILLERMO HERNÁNDEZ HERNÁNDEZ","7221940829","WINSPANG_@HOTMAIL.COM"],
+["DR. GUILLERMO REA FIELD","5552642470",""],
+["DR. GUSTAVO SERRANO RUEDA","5511343961",""],
+["DR. HÉCTOR HERRERA MEILLON","5552470554",""],
+["DR. HÉCTOR HUGO SÁNCHEZ OSNAYA","5527374852",""],
+["DR. HECTOR JOSE LUNA ORTIZ","5556165112",""],
+["DR. HÉCTOR ROGELIO ESQUIVEL MERCADO","5557547000",""],
+["DR. HOMERO ONESIMO SOSA MURILLO","5552652800",""]
+];
+
 const TELEFONOS_IMPORTAR_2026_07 = [
   ['ADOLFO ALEJANDRO YAÑEZ ACEVEDO','5513426416'],['DR. ALEJANDRO ALVAREZ IGLESIAS','5522424548'],
   ['DR. ALEJANDRO MIRAVETE GALVEZ','5513394331'],['DRA. ANA LILIA RENDON CASTILLO','5533230775'],
@@ -9180,7 +9284,7 @@ function backfillFechaPrimerContacto(){
 }
 function complementarProspectosTelefonosCorreos(){
   let actualizados = 0;
-  PROSPECTOS_COMPLEMENTO_2026_08.forEach(([nombre, telefono, correo])=>{
+  [...PROSPECTOS_COMPLEMENTO_2026_08, ...PROSPECTOS_COMPLEMENTO_2026_08_CXGEN].forEach(([nombre, telefono, correo])=>{
     const key = normalizarNombreMedico(nombre);
     if(!key) return;
     const pr = DB.prospectos.find(p=>normalizarNombreMedico(p.nombre)===key);
