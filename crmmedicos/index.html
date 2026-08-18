@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.6.1';
+const APP_VERSION = 'v2.7.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2207,7 +2207,7 @@ function abrirCotizacionProvisional(procId){
       ${lm ? `<div class="form-field full"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="pc-incluir-lista" ${provCotState.incluirLista?'checked':''}> Incluir la lista de materiales asignada: <b>${lm.nombre}</b></label></div>`
           : `<div style="font-size:11.5px; color:var(--text-faint);">Este procedimiento no tiene una lista de materiales asignada.</div>`}
     </div>
-    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="pc-generar">${icon('download')} Generar PDF</button></div>`);
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn" id="pc-preview">${icon('quote')} Vista previa</button><button class="btn btn-primary" id="pc-generar">${icon('download')} Generar PDF</button></div>`);
   const listEl = document.getElementById('pc-c-list');
   function redraw(){ renderConceptSelection(listEl, provCotState.conceptos); actualizarSumaProvisional(); }
   redraw();
@@ -2217,6 +2217,7 @@ function abrirCotizacionProvisional(procId){
   const incluirListaCk = document.getElementById('pc-incluir-lista');
   if(incluirListaCk) incluirListaCk.onchange = (e)=>{ provCotState.incluirLista = e.target.checked; };
   document.getElementById('pc-generar').onclick = ()=> generateProcedimientoProvisionalPDF();
+  document.getElementById('pc-preview').onclick = ()=> previsualizarProcedimientoProvisionalPDF();
   // Observador simple para refrescar la suma cuando se editan cantidades desde renderConceptSelection
   listEl.addEventListener('input', actualizarSumaProvisional);
   listEl.addEventListener('click', ()=> setTimeout(actualizarSumaProvisional, 30));
@@ -2226,8 +2227,8 @@ function actualizarSumaProvisional(){
   const el = document.getElementById('pc-suma-conceptos');
   if(el) el.textContent = fmtMoney(suma);
 }
-function generateProcedimientoProvisionalPDF(){
-  const p = DB.procedimientos.find(x=>x.id===provCotState.procId); if(!p || !window.jspdf) return;
+function buildProcedimientoProvisionalPDFDoc(){
+  const p = DB.procedimientos.find(x=>x.id===provCotState.procId); if(!p || !window.jspdf) return null;
   const conceptosArr = Object.entries(provCotState.conceptos).map(([id,cantidad])=>{ const c=conceptoById(id); return {id, descripcion:c?c.descripcion:id, cantidad}; });
   const condicionesArr = DB.clausulas.filter(cl=>provCotState.condiciones[cl.id]).map(cl=>({id:cl.id, titulo:cl.titulo, texto:cl.texto}));
   const costo = provCotState.costoManual!=null ? provCotState.costoManual : sumConceptMap(provCotState.conceptos);
@@ -2357,11 +2358,23 @@ function generateProcedimientoProvisionalPDF(){
     doc.text('Página '+i+' de '+pageCount, pageW-48, 760, {align:'right'});
   }
 
+  return { doc, p };
+}
+function generateProcedimientoProvisionalPDF(){
+  const built = buildProcedimientoProvisionalPDFDoc(); if(!built) return;
+  const { doc, p } = built;
   const fileName = ['PROVISIONAL', slugify(p.nombre)].filter(Boolean).join('_') + '.pdf';
   doc.save(fileName);
   logAudit('Procedimiento', p.id, 'Cotización provisional generada', p.nombre);
   toast('PDF generado');
   return doc;
+}
+function previsualizarProcedimientoProvisionalPDF(){
+  const built = buildProcedimientoProvisionalPDFDoc(); if(!built) return;
+  const { doc, p } = built;
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl, '_blank');
+  logAudit('Procedimiento', p.id, 'Vista previa de cotización provisional', 'Abierta para revisión');
 }
 let procState = { search:'' };
 function renderProcedimientos(){
@@ -2880,7 +2893,8 @@ function openCotizacionDrawer(id){
         <button class="btn" style="flex:1;" onclick="closeDrawer();editCotizacionWizard('${c.id}', false)">${icon('config')} Editar</button>
         <button class="btn" style="flex:1;" onclick="closeDrawer();editCotizacionWizard('${c.id}', true)">${icon('plus')} Regenerar / reenviar</button>
       </div>
-      <button class="btn btn-accent" style="width:100%; margin-top:10px;" onclick="generateCotizacionPDF('${c.id}')">${icon('download')} Descargar reporte PDF</button>
+      <button class="btn" style="width:100%; margin-top:10px;" onclick="previsualizarCotizacionPDF('${c.id}')">${icon('quote')} Vista previa</button>
+      <button class="btn btn-accent" style="width:100%; margin-top:8px;" onclick="generateCotizacionPDF('${c.id}')">${icon('download')} Descargar reporte PDF</button>
       <button class="btn" style="width:100%; margin-top:8px; background:#25D366; border-color:#25D366; color:#fff;" onclick="sendCotizacionWhatsApp('${c.id}')">${icon('whatsapp')} Enviar cotización por WhatsApp</button>
       <button class="btn" style="width:100%; margin-top:8px;" onclick="convertirCotizacionAProcedimiento('${c.id}')">${icon('bolt')} Convertir en procedimiento base</button>
       ${esUltimoFolioCotizacion(c.id) ? `<button class="btn btn-danger" style="width:100%; margin-top:8px;" onclick="eliminarCotizacion('${c.id}')">${icon('trash')} Eliminar cotización</button>` : ''}
@@ -3399,9 +3413,9 @@ function slugify(text){
     .replace(/^_+|_+$/g,'')
     .toUpperCase();
 }
-function generateCotizacionPDF(id){
+function buildCotizacionPDFDoc(id){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
-  if(!c || !window.jspdf){ toast('No se pudo generar el PDF'); return; }
+  if(!c || !window.jspdf){ toast('No se pudo generar el PDF'); return null; }
   const m = medicoById(c.id_medico) || {nombre:c.medico_nombre, especialidad:c.especialidad};
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'pt', format:'letter'});
@@ -3573,10 +3587,23 @@ function generateCotizacionPDF(id){
     doc.text('Página '+i+' de '+pageCount, pageW-48, 760, {align:'right'});
   }
 
+  return { doc, c, m };
+}
+function generateCotizacionPDF(id){
+  const built = buildCotizacionPDFDoc(id); if(!built) return;
+  const { doc, c, m } = built;
   const fileName = [c.id, slugify(m.nombre), slugify(c.procedimiento)].filter(Boolean).join('_') + '.pdf';
   doc.save(fileName);
   logAudit('Cotización', c.id, 'PDF generado', 'Reporte descargado');
   persistExtra(); toast('PDF generado');
+  return doc;
+}
+function previsualizarCotizacionPDF(id){
+  const built = buildCotizacionPDFDoc(id); if(!built) return;
+  const { doc, c } = built;
+  const blobUrl = doc.output('bloburl');
+  window.open(blobUrl, '_blank');
+  logAudit('Cotización', c.id, 'Vista previa de PDF', 'Abierta para revisión');
 }
 
 /* ============================================================
