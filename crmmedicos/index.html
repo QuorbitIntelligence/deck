@@ -465,6 +465,8 @@ tbody tr.clickable.row-selected:hover{background:var(--primary-light) !important
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <div class="drawer" id="drawer"></div>
 <div class="modal" id="modal"></div>
+<div class="overlay" id="overlay2" style="z-index:150;"></div>
+<div class="modal" id="modal2" style="z-index:151;"></div>
 <div class="toast-wrap" id="toast-wrap"></div>
 <div id="mass-edit-overlay" style="display:none; position:fixed; inset:0; z-index:600; background:var(--bg); overflow-y:auto;"></div>
 
@@ -576,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.7.1';
+const APP_VERSION = 'v2.8.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -939,7 +941,19 @@ function closeModal(){
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('modal').classList.remove('show');
 }
+function openModal2(html){
+  const modalEl = document.getElementById('modal2');
+  modalEl.removeAttribute('style'); modalEl.style.zIndex = '151';
+  modalEl.innerHTML = html;
+  document.getElementById('overlay2').classList.add('show');
+  modalEl.classList.add('show');
+}
+function closeModal2(){
+  document.getElementById('overlay2').classList.remove('show');
+  document.getElementById('modal2').classList.remove('show');
+}
 document.getElementById('overlay').onclick = ()=>{ closeDrawer(); closeModal(); };
+document.getElementById('overlay2').onclick = ()=>{ closeModal2(); };
 
 /* ============ PAGINATION HELPER ============ */
 function paginate(arr, page, perPage){ const start=(page-1)*perPage; return arr.slice(start,start+perPage); }
@@ -988,15 +1002,24 @@ function wireConceptPicker(searchEl, resultsEl, onPick, opts){
     const q = searchEl.value;
     if(q.trim().length<1){ resultsEl.style.display='none'; resultsEl.innerHTML=''; return; }
     const res = DB.conceptos.filter(c=>c.activo!==false && (fuzzyMatch(c.descripcion,q)||fuzzyMatch(c.id,q))).slice(0, opts.limit||10);
-    resultsEl.innerHTML = res.length ? res.map(c=>`
+    resultsEl.innerHTML = (res.length ? res.map(c=>`
       <div class="result-row" data-pick="${c.id}">
         <div class="result-main"><div class="result-title">${c.descripcion}</div>
           <div class="result-sub"><span class="pill pill-blue pill-small">${c.categoria}</span>${c.grupo_eleccion?`<span class="pill pill-violet pill-small">Grupo: ${c.grupo_eleccion}</span>`:''}</div></div>
         <div class="result-price">${fmtMoney(c.costo_sin_iva)}</div>
         <button class="add-circle" type="button">+</button>
-      </div>`).join('') : `<div class="picker-empty">Sin coincidencias para "${q}"</div>`;
+      </div>`).join('') : `<div class="picker-empty">Sin coincidencias para "${q}"</div>`)
+      + `<div class="result-row" id="cp-dar-alta" style="cursor:pointer; background:var(--primary-light);">
+          <div class="result-main"><div class="result-title" style="color:var(--primary);">${icon('plus')} No lo encuentro — dar de alta "${q}" en el catálogo</div></div>
+        </div>`;
     resultsEl.style.display='block';
     resultsEl.querySelectorAll('[data-pick]').forEach(row=> row.onclick = ()=>{ onPick(row.dataset.pick); resultsEl.style.display='none'; searchEl.value=''; });
+    document.getElementById('cp-dar-alta').onclick = ()=>{
+      resultsEl.style.display='none';
+      openConceptoModal(null, (nuevo)=>{ if(nuevo){ onPick(nuevo.id); } });
+      setTimeout(()=>{ const descEl=document.getElementById('cc-desc'); if(descEl && !descEl.value) descEl.value = q.toUpperCase(); }, 30);
+      searchEl.value='';
+    };
   };
   document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')){ resultsEl.style.display='none'; } });
 }
@@ -1944,12 +1967,12 @@ function drawCatTable(){
     paginationControls('cat-pg', list.length, catState.page, catState.perPage, p=>{ catState.page=p; drawCatTable(); });
   }
 }
-function openConceptoModal(id){
+function openConceptoModal(id, onSaved){
   const c = id ? DB.conceptos.find(x=>String(x.id)===String(id)) : null;
   const groups = [...new Set(DB.conceptos.map(x=>x.grupo_eleccion).filter(Boolean))];
   const tipoCosto = c ? (c.tipo_costo||'interno') : 'interno';
-  openModal(`
-    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${c?'Editar concepto':'Nuevo concepto'}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+  openModal2(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${c?'Editar concepto':'Nuevo concepto'}</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-field full"><label>Descripción</label><input class="input uc-input" id="cc-desc" style="width:100%;" value="${c?c.descripcion:''}" placeholder="EJ. SALA DE CIRUGÍA POR HORA"></div>
@@ -1999,7 +2022,7 @@ function openConceptoModal(id){
     </div>
     <div class="modal-foot">
       ${c?`<button class="btn btn-danger" id="cc-del">${icon('trash')} Eliminar</button>`:''}
-      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="closeModal2()">Cancelar</button>
       <button class="btn btn-primary" id="cc-save">Guardar</button>
     </div>`);
 
@@ -2088,12 +2111,14 @@ function openConceptoModal(id){
       notas: document.getElementById('cc-notas').value,
       activo: document.getElementById('cc-activo').checked
     };
+    let nuevo = null;
     if(c){ Object.assign(c, payload); logAudit('Concepto', c.id, 'Edición', desc); }
-    else { const nuevo = Object.assign({id: uid('CC').toUpperCase(), veces_usado:0, __new:true}, payload); DB.conceptos.push(nuevo); logAudit('Concepto', nuevo.id, 'Creación', desc); }
-    persistExtra(); closeModal(); toast('Concepto guardado'); renderCatalogo();
+    else { nuevo = Object.assign({id: uid('CC').toUpperCase(), veces_usado:0, __new:true}, payload); DB.conceptos.push(nuevo); logAudit('Concepto', nuevo.id, 'Creación', desc); }
+    persistExtra(); closeModal2(); toast('Concepto guardado');
+    if(onSaved) onSaved(nuevo||c); else renderCatalogo();
   };
   const delBtn = document.getElementById('cc-del');
-  if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Desactivar este concepto del catálogo?')){ c.activo=false; logAudit('Concepto', c.id, 'Desactivado', c.descripcion); persistExtra(); closeModal(); renderCatalogo(); } };
+  if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Desactivar este concepto del catálogo?')){ c.activo=false; logAudit('Concepto', c.id, 'Desactivado', c.descripcion); persistExtra(); closeModal2(); if(onSaved) onSaved(null); else renderCatalogo(); } };
 }
 
 /* ============================================================
