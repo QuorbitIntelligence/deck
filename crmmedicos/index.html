@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.8.2';
+const APP_VERSION = 'v2.8.3';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3559,15 +3559,17 @@ function buildCotizacionPDFDoc(id){
     });
   }
 
-  let listaBannerPage = null;
+  let listaBannerPage = null, listaBannerHeight = null;
   if(c.lista_asignada){
     const lm = DB.listas_materiales.find(x=>x.id===c.lista_asignada.id && x.activo!==false);
     if(lm){
       doc.addPage();
       listaBannerPage = doc.internal.getNumberOfPages();
       doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-      const subtitleLines = doc.splitTextToSize(lm.nombre.toUpperCase()+'  ·  FOLIO '+c.id, pageW-52);
+      const subtituloTexto = lm.nombre.toUpperCase()+'  ·  FOLIO '+c.id+(c.tipo_procedimiento?('  ·  '+c.tipo_procedimiento):'');
+      const subtitleLines = doc.splitTextToSize(subtituloTexto, pageW-52);
       const bannerH = Math.max(50, 28 + subtitleLines.length*11);
+      listaBannerHeight = bannerH;
       doc.setFillColor(...BLUE); doc.rect(0,0,pageW,bannerH,'F');
       doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
       doc.text('LISTA DE MATERIALES Y MEDICAMENTOS INCLUIDOS', 26, 24);
@@ -3613,8 +3615,7 @@ function buildCotizacionPDFDoc(id){
         doc.text('FOLIO '+c.id, 48, 14);
         if(c.tipo_procedimiento){ doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.text(c.tipo_procedimiento, pageW-48, 14, {align:'right'}); }
       } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(255,255,255);
-        if(c.tipo_procedimiento) doc.text(c.tipo_procedimiento, pageW-26, 38, {align:'right'});
+        // El tipo de procedimiento ya va incluido en el bloque de texto envuelto del banner de arriba, no hace falta repetirlo aquí.
       }
     }
     doc.setDrawColor(230,233,235); doc.line(48, FOOTER_TOP, pageW-48, FOOTER_TOP);
