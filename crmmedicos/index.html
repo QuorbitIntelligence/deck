@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.8.0';
+const APP_VERSION = 'v2.8.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1970,14 +1970,19 @@ function drawCatTable(){
 function openConceptoModal(id, onSaved){
   const c = id ? DB.conceptos.find(x=>String(x.id)===String(id)) : null;
   const groups = [...new Set(DB.conceptos.map(x=>x.grupo_eleccion).filter(Boolean))];
+  const CATEGORIAS_BASE = ['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'];
+  const categorias = [...new Set([...CATEGORIAS_BASE, ...DB.conceptos.map(x=>x.categoria).filter(Boolean)])];
   const tipoCosto = c ? (c.tipo_costo||'interno') : 'interno';
   openModal2(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${c?'Editar concepto':'Nuevo concepto'}</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-field full"><label>Descripción</label><input class="input uc-input" id="cc-desc" style="width:100%;" value="${c?c.descripcion:''}" placeholder="EJ. SALA DE CIRUGÍA POR HORA"></div>
-        <div class="form-field"><label>Categoría</label><select class="select" id="cc-cat" style="width:100%;">
-          ${['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'].map(x=>`<option ${c&&c.categoria===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div class="form-field"><label>Categoría</label>
+          <input class="input uc-input" id="cc-cat" style="width:100%;" list="cc-cat-list" value="${c&&c.categoria?c.categoria:'Medicamento'}" placeholder="EJ. PATOLOGÍA">
+          <datalist id="cc-cat-list">${categorias.map(x=>`<option value="${x}">`).join('')}</datalist>
+          <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">Elige una existente o escribe una nueva — quedará disponible para los siguientes conceptos.</div>
+        </div>
         <div class="form-field"><label>Grupo de elección (opcional)</label>
           <input class="input uc-input" id="cc-grupo" style="width:100%;" list="cc-grupo-list" value="${c&&c.grupo_eleccion?c.grupo_eleccion:''}" placeholder="EJ. SALA QUIRÓFANO">
           <datalist id="cc-grupo-list">${groups.map(g=>`<option value="${g}">`).join('')}</datalist>
