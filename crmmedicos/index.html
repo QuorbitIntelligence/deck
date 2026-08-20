@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.8.1';
+const APP_VERSION = 'v2.8.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2337,18 +2337,23 @@ function buildProcedimientoProvisionalPDFDoc(){
     });
   }
 
+  let listaBannerPage = null;
   if(lm){
     doc.addPage();
-    doc.setFillColor(...BLUE); doc.rect(0,0,pageW,50,'F');
+    listaBannerPage = doc.internal.getNumberOfPages();
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    const subtitleLines = doc.splitTextToSize(lm.nombre.toUpperCase()+'  ·  COTIZACIÓN PROVISIONAL', pageW-52);
+    const bannerH = Math.max(50, 28 + subtitleLines.length*11);
+    doc.setFillColor(...BLUE); doc.rect(0,0,pageW,bannerH,'F');
     doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
     doc.text('LISTA DE MATERIALES Y MEDICAMENTOS INCLUIDOS', 26, 24);
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-    doc.text(lm.nombre.toUpperCase()+'  ·  COTIZACIÓN PROVISIONAL', 26, 38);
+    doc.text(subtitleLines, 26, 38);
 
     const MX = 26, GAP = 10;
     const colW = (pageW - MX*2 - GAP)/2;
     const leftX = MX, rightX = MX + colW + GAP;
-    let startY = 62;
+    let startY = bannerH + 12;
     if(lm.notas){ startY = drawNotasBox(doc, lm.notas, MX, startY, pageW-MX*2) + 4; }
     const meds = [...(lm.medicamentos||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
     const mats = [...(lm.materiales||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
@@ -2373,7 +2378,7 @@ function buildProcedimientoProvisionalPDFDoc(){
   for(let i=1;i<=pageCount;i++){
     doc.setPage(i);
     if(i>1){
-      const yaTieneBanner = lm && i===pageCount;
+      const yaTieneBanner = i===listaBannerPage;
       if(!yaTieneBanner){
         doc.setFillColor(...NAVY); doc.rect(0,0,pageW,22,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
@@ -3560,16 +3565,19 @@ function buildCotizacionPDFDoc(id){
     if(lm){
       doc.addPage();
       listaBannerPage = doc.internal.getNumberOfPages();
-      doc.setFillColor(...BLUE); doc.rect(0,0,pageW,50,'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      const subtitleLines = doc.splitTextToSize(lm.nombre.toUpperCase()+'  ·  FOLIO '+c.id, pageW-52);
+      const bannerH = Math.max(50, 28 + subtitleLines.length*11);
+      doc.setFillColor(...BLUE); doc.rect(0,0,pageW,bannerH,'F');
       doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
       doc.text('LISTA DE MATERIALES Y MEDICAMENTOS INCLUIDOS', 26, 24);
       doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-      doc.text(lm.nombre.toUpperCase()+'  ·  FOLIO '+c.id, 26, 38);
+      doc.text(subtitleLines, 26, 38);
 
       const MX = 26, GAP = 10;
       const colW = (pageW - MX*2 - GAP)/2;
       const leftX = MX, rightX = MX + colW + GAP;
-      let startY = 62;
+      let startY = bannerH + 12;
       if(lm.notas){ startY = drawNotasBox(doc, lm.notas, MX, startY, pageW-MX*2) + 4; }
       const meds = [...(lm.medicamentos||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
       const mats = [...(lm.materiales||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
