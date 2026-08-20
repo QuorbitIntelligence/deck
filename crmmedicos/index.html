@@ -576,7 +576,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.7.0';
+const APP_VERSION = 'v2.7.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2182,10 +2182,14 @@ function wireListaPicker(searchEl, resultsEl, onPick){
 let provCotState = {};
 function abrirCotizacionProvisional(procId){
   const p = DB.procedimientos.find(x=>x.id===procId); if(!p) return;
+  const condicionesIniciales = Object.fromEntries((p.condiciones||[]).map(cid=>[cid,true]));
+  // Igual que en la cotización normal a médicos: las condiciones marcadas como "predeterminada" (contexto médico/ambos)
+  // se agregan automáticamente, además de las específicas que ya traiga el procedimiento.
+  DB.clausulas.filter(cl=>cl.default && cl.activa!==false && (!cl.contexto || cl.contexto==='medico' || cl.contexto==='ambos')).forEach(cl=>{ condicionesIniciales[cl.id]=true; });
   provCotState = {
     procId,
     conceptos: Object.fromEntries((p.conceptos||[]).map(l=>[l.id,l.cantidad])),
-    condiciones: Object.fromEntries((p.condiciones||[]).map(cid=>[cid,true])),
+    condiciones: condicionesIniciales,
     costoManual: null,
     incluirLista: !!p.lista_asignada_id
   };
