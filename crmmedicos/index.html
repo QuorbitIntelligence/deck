@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.8.3';
+const APP_VERSION = 'v2.8.4';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2392,7 +2392,14 @@ function buildProcedimientoProvisionalPDFDoc(){
     doc.text(HOSP_INFO.direccion+'  ·  Tel. '+HOSP_INFO.telefono, 48, 749);
     doc.text('Programación de cirugías: '+HOSP_INFO.contactoNombre+' ('+HOSP_INFO.contactoRol+') · '+HOSP_INFO.contactoTel, 48, 760);
     doc.setTextColor(...BLUE);
-    doc.textWithLink('Portal de médicos — credencialización aquí', 48, 771, {url: HOSP_INFO.portal});
+    const portalTxtP = 'Portal de médicos — credencialización aquí';
+    doc.setFontSize(7.3); doc.setFont('helvetica','normal');
+    doc.textWithLink(portalTxtP, 48, 771, {url: HOSP_INFO.portal});
+    const portalWP = doc.getTextWidth(portalTxtP);
+    doc.setTextColor(150,158,165); doc.text('  ·  ', 48+portalWP, 771);
+    const sepWP = doc.getTextWidth('  ·  ');
+    doc.setTextColor(...BLUE);
+    doc.textWithLink('Encuéntranos en Google Maps', 48+portalWP+sepWP, 771, {url: HOSP_INFO.mapsUrl});
     doc.setTextColor(150,158,165); doc.setFont('helvetica','normal');
     doc.text('Página '+i+' de '+pageCount, pageW-48, 760, {align:'right'});
   }
@@ -3424,7 +3431,8 @@ function saveWizardCotizacion(){
 /* ---- Reporte PDF profesional (sin costos por concepto) ---- */
 const HOSP_INFO = {
   telefono: '55 7657 6669',
-  direccion: 'Blvd. 85, Huixquilucan, Estado de México · Bosque Real, C.P. 52774',
+  direccion: 'Blvd. 85 Bosque Real, Huixquilucan, Estado de México, C.P. 52774',
+  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('Hospital Noor Bosque Real, Blvd. 85 Bosque Real, Huixquilucan, Estado de México, C.P. 52774'),
   portal: 'https://quorbitintelligence.github.io/deck/noor/medicos/',
   contactoNombre: 'Óscar Ramírez',
   contactoRol: 'Programación de cirugías',
@@ -3625,7 +3633,14 @@ function buildCotizacionPDFDoc(id){
     doc.text(HOSP_INFO.direccion+'  ·  Tel. '+HOSP_INFO.telefono, 48, 749);
     doc.text('Programación de cirugías: '+HOSP_INFO.contactoNombre+' ('+HOSP_INFO.contactoRol+') · '+HOSP_INFO.contactoTel, 48, 760);
     doc.setTextColor(...BLUE);
-    doc.textWithLink('Portal de médicos — credencialización aquí', 48, 771, {url: HOSP_INFO.portal});
+    const portalTxt = 'Portal de médicos — credencialización aquí';
+    doc.setFontSize(7.3); doc.setFont('helvetica','normal');
+    doc.textWithLink(portalTxt, 48, 771, {url: HOSP_INFO.portal});
+    const portalW = doc.getTextWidth(portalTxt);
+    doc.setTextColor(150,158,165); doc.text('  ·  ', 48+portalW, 771);
+    const sepW = doc.getTextWidth('  ·  ');
+    doc.setTextColor(...BLUE);
+    doc.textWithLink('Encuéntranos en Google Maps', 48+portalW+sepW, 771, {url: HOSP_INFO.mapsUrl});
     doc.setTextColor(150,158,165); doc.setFont('helvetica','normal');
     doc.text('Página '+i+' de '+pageCount, pageW-48, 760, {align:'right'});
   }
