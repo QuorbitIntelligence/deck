@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.11.0';
+const APP_VERSION = 'v2.12.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -6805,9 +6805,9 @@ function renderAnalisisListas(){
             <td>${fmtMoney(s.iva)}</td>
             <td style="font-weight:700;">${fmtMoney(s.total)}</td>
             <td style="font-size:11.5px; color:var(--text-muted);">${fmtDate(l.fecha_edicion||l.fecha_creacion)}</td>
-            <td onclick="event.stopPropagation();">
-              <button class="btn btn-sm" onclick="abrirAnalisisListaDetalle('${l.id}')" title="Editar">${icon('config')}</button>
-              <button class="plan-task-icon-btn" onclick="eliminarAnalisisLista('${l.id}')" title="Eliminar" style="margin-left:4px;">${icon('trash')}</button>
+            <td onclick="event.stopPropagation();" style="white-space:nowrap;">
+              <button class="btn-whatsapp pr-icon-btn" onclick="abrirAnalisisListaDetalle('${l.id}')" title="Editar" style="background:var(--surface-2); color:var(--text-muted);">${icon('config')}</button>
+              <button class="btn-whatsapp pr-icon-btn" onclick="eliminarAnalisisLista('${l.id}')" title="Eliminar" style="background:var(--guinda-light); color:var(--guinda); margin-left:4px;">${icon('trash')}</button>
             </td>
           </tr>`).join('')
         : `<tr><td colspan="7"><div class="empty-state">${icon('catalog')}<div>${alState.search?'Sin listas que coincidan.':'Aún no has creado ninguna lista.'}</div></div></td></tr>`}
@@ -6841,7 +6841,23 @@ function sumaAnalisisLista(l){
   const iva = subtotal*0.16;
   return { subtotal, iva, total: subtotal+iva };
 }
-function abrirAnalisisListaDetalle(id){ alState.detalleId = id; alState.detalleSearch=''; renderAnalisisListas(); }
+function abrirAnalisisListaDetalle(id){ alState.detalleId = id; alState.detalleSearch=''; alBloquesAbiertos = {}; renderAnalisisListas(); }
+function agruparConceptosPorBloque(l){
+  const grupos = {};
+  l.conceptos.forEach(r=>{
+    const co = conceptoById(r.id);
+    const bloque = co ? (co.categoria||'Sin categoría') : 'Concepto ya no existe en catálogo';
+    grupos[bloque] = grupos[bloque] || [];
+    grupos[bloque].push(r);
+  });
+  return grupos;
+}
+function sumaFilas(filas){
+  let subtotal = 0;
+  filas.forEach(r=>{ subtotal += (r.costo_snapshot||0)*(r.cantidad||1); });
+  const iva = subtotal*0.16;
+  return { subtotal, iva, total: subtotal+iva };
+}
 function drawAnalisisListaDetalle(){
   const l = DB.analisis_listas.find(x=>x.id===alState.detalleId);
   if(!l){ alState.detalleId=null; return renderAnalisisListas(); }
@@ -6859,15 +6875,16 @@ function drawAnalisisListaDetalle(){
       <div class="searchbox" style="width:340px;">${icon('search')}<input id="al-add-search" placeholder="Agregar concepto del catálogo…" autocomplete="off"></div>
       <div id="al-add-results" class="picker-results" style="display:none;"></div>
     </div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Concepto</th><th>Descripción</th><th style="width:90px;">Cantidad</th><th style="width:110px;">Costo unitario</th><th style="width:110px;">Subtotal</th><th style="width:100px;">IVA (16%)</th><th style="width:110px;">Total</th><th></th></tr></thead>
-      <tbody id="al-tbody"></tbody>
-      <tfoot><tr style="font-weight:700; background:var(--surface-2);">
-        <td colspan="4" style="text-align:right; padding:10px;">TOTALES</td>
-        <td style="padding:10px;">${fmtMoney(s.subtotal)}</td><td style="padding:10px;">${fmtMoney(s.iva)}</td><td style="padding:10px;">${fmtMoney(s.total)}</td><td></td>
-      </tr></tfoot></table>
+    <div id="al-bloques-wrap"></div>
+    <div class="card" style="margin-top:12px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; background:var(--surface-2);">
+      <div style="font-weight:700; font-size:13px;">TOTAL GENERAL DE LA LISTA</div>
+      <div style="display:flex; gap:22px; font-size:13px;">
+        <div>Subtotal: <b>${fmtMoney(s.subtotal)}</b></div>
+        <div>IVA: <b>${fmtMoney(s.iva)}</b></div>
+        <div style="font-size:15px; color:var(--primary);">Total: <b>${fmtMoney(s.total)}</b></div>
+      </div>
     </div>`;
-  document.getElementById('al-det-search').oninput = (e)=>{ alState.detalleSearch=e.target.value; drawAlTbody(); };
+  document.getElementById('al-det-search').oninput = (e)=>{ alState.detalleSearch=e.target.value; drawAlBloques(); };
   wireConceptPicker(document.getElementById('al-add-search'), document.getElementById('al-add-results'), (cid)=>{
     const co = conceptoById(cid); if(!co) return;
     const existente = l.conceptos.find(r=>r.id===cid);
@@ -6876,39 +6893,64 @@ function drawAnalisisListaDetalle(){
     l.fecha_edicion = new Date().toISOString();
     persistExtra(); drawAnalisisListaDetalle();
   });
-  drawAlTbody();
+  drawAlBloques();
 }
-function drawAlTbody(){
+let alBloquesAbiertos = {};
+function drawAlBloques(){
   const l = DB.analisis_listas.find(x=>x.id===alState.detalleId); if(!l) return;
-  const tbody = document.getElementById('al-tbody'); if(!tbody) return;
-  const filas = l.conceptos.filter(r=>{
-    if(!alState.detalleSearch) return true;
-    const co = conceptoById(r.id);
-    return co && fuzzyMatch(co.descripcion, alState.detalleSearch);
-  });
-  tbody.innerHTML = filas.length ? filas.map(r=>{
-    const co = conceptoById(r.id);
-    const subtotal = (r.costo_snapshot||0)*(r.cantidad||1);
-    const iva = subtotal*0.16;
-    return `<tr>
-      <td style="font-size:11px; color:var(--text-faint);">${r.id}</td>
-      <td>${co?co.descripcion:'<span style="color:var(--guinda);">Concepto ya no existe en catálogo</span>'}</td>
-      <td><input type="number" min="1" class="input al-qty" data-rid="${r.id}" value="${r.cantidad}" style="width:70px; padding:5px 6px;"></td>
-      <td><input type="number" step="0.01" class="input al-costo" data-rid="${r.id}" value="${r.costo_snapshot}" style="width:100px; padding:5px 6px;"></td>
-      <td>${fmtMoney(subtotal)}</td><td>${fmtMoney(iva)}</td><td style="font-weight:700;">${fmtMoney(subtotal+iva)}</td>
-      <td><button class="plan-task-icon-btn" onclick="eliminarRenglonAnalisis('${r.id}')" title="Eliminar renglón">${icon('trash')}</button></td>
-    </tr>`;
-  }).join('') : `<tr><td colspan="8"><div class="empty-state">${icon('catalog')}<div>${alState.detalleSearch?'Sin coincidencias en esta lista.':'Sin conceptos todavía — agrega uno arriba o pega un bloque.'}</div></div></td></tr>`;
-  tbody.querySelectorAll('.al-qty').forEach(inp=> inp.onchange = ()=>{
+  const wrap = document.getElementById('al-bloques-wrap'); if(!wrap) return;
+  const busqueda = alState.detalleSearch;
+  const grupos = agruparConceptosPorBloque(l);
+  const nombresBloque = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,'es'));
+  if(!nombresBloque.length){
+    wrap.innerHTML = `<div class="table-wrap"><div class="empty-state">${icon('catalog')}<div>Sin conceptos todavía — agrega uno arriba o pega un bloque.</div></div></div>`;
+    return;
+  }
+  wrap.innerHTML = nombresBloque.map(bloque=>{
+    let filas = grupos[bloque];
+    if(busqueda) filas = filas.filter(r=>{ const co=conceptoById(r.id); return co && fuzzyMatch(co.descripcion, busqueda); });
+    if(busqueda && !filas.length) return ''; // el bloque no tiene coincidencias, se oculta
+    const estaAbierto = busqueda ? true : !!alBloquesAbiertos[bloque];
+    const bs = sumaFilas(grupos[bloque]); // subtotal del bloque completo, sin filtrar por búsqueda
+    return `<div class="card" style="margin-bottom:10px; padding:0; overflow:hidden;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; cursor:pointer; background:var(--surface-2);" onclick="alToggleBloque('${bloque.replace(/'/g,"\\'")}')">
+        <div style="font-weight:700; font-size:13px;">${estaAbierto?'▾':'▸'} ${bloque} <span style="font-weight:400; color:var(--text-faint);">(${grupos[bloque].length})</span></div>
+        <div style="display:flex; gap:16px; font-size:12px; color:var(--text-muted);">
+          <div>Subtotal: ${fmtMoney(bs.subtotal)}</div><div>IVA: ${fmtMoney(bs.iva)}</div><div style="font-weight:700; color:var(--text);">Total: ${fmtMoney(bs.total)}</div>
+        </div>
+      </div>
+      ${estaAbierto ? `<table style="width:100%;"><thead><tr style="font-size:11px; color:var(--text-faint);">
+          <th style="text-align:left; padding:6px 16px;">Descripción</th><th style="width:80px;">Cantidad</th><th style="width:110px;">Costo unitario</th><th style="width:100px;">Subtotal</th><th style="width:90px;">IVA</th><th style="width:100px;">Total</th><th style="width:36px;"></th>
+        </tr></thead><tbody>
+        ${filas.map(r=>{
+          const co = conceptoById(r.id);
+          const subtotal = (r.costo_snapshot||0)*(r.cantidad||1);
+          const iva = subtotal*0.16;
+          return `<tr>
+            <td style="padding:6px 16px;">${co?co.descripcion:'<span style="color:var(--guinda);">Concepto ya no existe en catálogo</span>'}</td>
+            <td><input type="number" min="1" class="input al-qty" data-rid="${r.id}" value="${r.cantidad}" style="width:65px; padding:4px 6px;"></td>
+            <td><input type="number" step="0.01" class="input al-costo" data-rid="${r.id}" value="${r.costo_snapshot}" style="width:95px; padding:4px 6px;"></td>
+            <td style="text-align:center;">${fmtMoney(subtotal)}</td><td style="text-align:center;">${fmtMoney(iva)}</td><td style="text-align:center; font-weight:700;">${fmtMoney(subtotal+iva)}</td>
+            <td style="text-align:center;"><button class="plan-task-icon-btn" onclick="eliminarRenglonAnalisis('${r.id}')" title="Eliminar renglón">${icon('trash')}</button></td>
+          </tr>`;
+        }).join('')}
+        </tbody></table>` : ''}
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.al-qty').forEach(inp=> inp.onchange = ()=>{
     const r = l.conceptos.find(x=>x.id===inp.dataset.rid); if(!r) return;
     r.cantidad = Math.max(1, Number(inp.value)||1); l.fecha_edicion = new Date().toISOString();
     persistExtra(); drawAnalisisListaDetalle();
   });
-  tbody.querySelectorAll('.al-costo').forEach(inp=> inp.onchange = ()=>{
+  wrap.querySelectorAll('.al-costo').forEach(inp=> inp.onchange = ()=>{
     const r = l.conceptos.find(x=>x.id===inp.dataset.rid); if(!r) return;
     r.costo_snapshot = Number(inp.value)||0; l.fecha_edicion = new Date().toISOString();
     persistExtra(); drawAnalisisListaDetalle();
   });
+}
+function alToggleBloque(bloque){
+  alBloquesAbiertos[bloque] = !alBloquesAbiertos[bloque];
+  drawAlBloques();
 }
 function eliminarRenglonAnalisis(rid){
   const l = DB.analisis_listas.find(x=>x.id===alState.detalleId); if(!l) return;
