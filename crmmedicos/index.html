@@ -544,6 +544,7 @@ let DB = {
   acuerdo_responsables: RAW.acuerdo_responsables || [],
   prospectos: RAW.prospectos || [],
   config_general: RAW.config_general || { enlace_drive: 'https://drive.google.com/file/d/15O0RWtYxvkr_kpdNWQHjghijENugEHoZ/view?usp=sharing' },
+  analisis_listas: RAW.analisis_listas || [],
   auditoria: []
 };
 const ESTADOS_COT = {
@@ -578,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.8.4';
+const APP_VERSION = 'v2.9.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -613,6 +614,7 @@ async function loadSession(){
       if(extra.acuerdo_responsables) DB.acuerdo_responsables = extra.acuerdo_responsables;
       if(extra.prospectos) DB.prospectos = extra.prospectos;
       if(extra.config_general) DB.config_general = extra.config_general;
+      if(extra.analisis_listas) DB.analisis_listas = extra.analisis_listas;
       if(extra.medicos_overrides){
         Object.entries(extra.medicos_overrides).forEach(([id,ov])=>{
           const md = DB.medicos.find(m=>String(m.id)===id);
@@ -668,6 +670,7 @@ function persistExtra(){
         acuerdo_responsables: DB.acuerdo_responsables,
         prospectos: DB.prospectos,
         config_general: DB.config_general,
+        analisis_listas: DB.analisis_listas,
         medicos_custom: DB.medicos.filter(m=>m.__new),
         medicos_overrides: Object.fromEntries(
           DB.medicos.filter(m=>!m.__new && m.__edited).map(m=>[String(m.id),{
@@ -834,6 +837,7 @@ const ROUTES = [
   {id:'difusion', label:'Grupos de Difusión', icon:'megaphone', group:'Relación', tone:'guinda'},
   {id:'condiciones', label:'Condiciones', icon:'history', group:'Relación', tone:'blue'},
   {id:'analisis', label:'Análisis de Cuentas', icon:'analytics', group:'Relación', tone:'green'},
+  {id:'analisis_listas', label:'Análisis de Listas', icon:'catalog', group:'Catálogo', tone:'primary'},
   {id:'prospectos', label:'Prospectos', icon:'doctor', group:'General', tone:'violet'},
   {id:'config', label:'Configuración', icon:'config', group:'Sistema', tone:'muted'},
 ];
@@ -905,13 +909,14 @@ function navigate(route){
     difusion:['Grupos de Difusión','Envío de promociones por WhatsApp a grupos de médicos'],
     condiciones:['Condiciones predefinidas','Cláusulas reutilizables para cotizaciones y convenios'],
     analisis:['Análisis de Cuentas','Desglose real de costos por médico, para cotizar más exacto la próxima vez'],
+    analisis_listas:['Análisis de Listas','Arma y revisa listas de costos libremente — sin conectarse a tus cotizaciones'],
     prospectos:['Prospectos','Base de médicos candidatos a convertirse en Leads, sin duplicar a los que ya tienes'],
     config:['Configuración','Preferencias, respaldos e histórico de auditoría']};
   document.getElementById('page-title').textContent = titles[route][0];
   document.getElementById('page-crumb').textContent = titles[route][1];
   const renderers = {dashboard:renderDashboard, medicos:renderMedicos, catalogo:renderCatalogo,
     procedimientos:renderProcedimientos, paquetes:renderPaquetes, listas_materiales:renderListasMateriales, bloques:renderBloques,
-    cotizaciones:renderCotizaciones, aseguradoras:renderAseguradoras, casos:renderCasos, calendario:renderCalendario, plan_trabajo:renderPlanTrabajo, convenios:renderConvenios, difusion:renderDifusion, condiciones:renderCondiciones, analisis:renderAnalisis, prospectos:renderProspectos, config:renderConfig};
+    cotizaciones:renderCotizaciones, aseguradoras:renderAseguradoras, casos:renderCasos, calendario:renderCalendario, plan_trabajo:renderPlanTrabajo, convenios:renderConvenios, difusion:renderDifusion, condiciones:renderCondiciones, analisis:renderAnalisis, analisis_listas:renderAnalisisListas, prospectos:renderProspectos, config:renderConfig};
   renderers[route]();
   document.getElementById('content').scrollTo?.(0,0);
   window.scrollTo(0,0);
@@ -6755,6 +6760,224 @@ function generateProspectosXLS(especialidadFiltro){
   XLSX.writeFile(wb, 'Prospectos'+sufijo+'.xlsx');
   logAudit('Prospectos', '-', 'Reporte XLS generado', especialidadFiltro||'todas');
   toast('Reporte XLS generado');
+}
+/* ============================================================
+   ANÁLISIS DE LISTAS — armar y revisar listas de costos libremente
+============================================================ */
+let alState = { search:'', detalleId:null, detalleSearch:'' };
+let alSortState = { campo:'fecha', dir:'desc' };
+function renderAnalisisListas(){
+  if(alState.detalleId) return drawAnalisisListaDetalle();
+  let listas = [...DB.analisis_listas].map(l=>({ l, s: sumaAnalisisLista(l) }));
+  listas = listas.filter(x=> !alState.search || fuzzyMatch(x.l.nombre, alState.search));
+  const campo = alSortState.campo, dir = alSortState.dir==='asc'?1:-1;
+  listas.sort((a,b)=>{
+    let va, vb;
+    if(campo==='nombre'){ va=a.l.nombre.toLowerCase(); vb=b.l.nombre.toLowerCase(); return va.localeCompare(vb,'es')*dir; }
+    if(campo==='conceptos'){ va=(a.l.conceptos||[]).length; vb=(b.l.conceptos||[]).length; }
+    else if(campo==='subtotal'){ va=a.s.subtotal; vb=b.s.subtotal; }
+    else if(campo==='iva'){ va=a.s.iva; vb=b.s.iva; }
+    else if(campo==='total'){ va=a.s.total; vb=b.s.total; }
+    else { va=new Date(a.l.fecha_edicion||a.l.fecha_creacion).getTime(); vb=new Date(b.l.fecha_edicion||b.l.fecha_creacion).getTime(); }
+    return (va-vb)*dir;
+  });
+  function th(label, campoKey){
+    const activo = alSortState.campo===campoKey;
+    const arrow = activo ? (alSortState.dir==='asc'?' ▲':' ▼') : '';
+    return `<th style="cursor:pointer; user-select:none;" onclick="alOrdenarPor('${campoKey}')">${label}${arrow}</th>`;
+  }
+  document.getElementById('content').innerHTML = `
+    <div class="toolbar">
+      <div class="searchbox" style="width:280px;">${icon('search')}<input id="al-search" placeholder="Buscar lista por nombre…" value="${alState.search}"></div>
+      <span style="font-size:12.5px; color:var(--text-muted);">${listas.length} lista(s)</span>
+      <button class="btn btn-primary" style="margin-left:auto;" onclick="crearAnalisisLista()">${icon('plus')} Nueva lista</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        ${th('Nombre','nombre')}${th('Conceptos','conceptos')}${th('Subtotal','subtotal')}${th('IVA','iva')}${th('Total','total')}${th('Última edición','fecha')}<th></th>
+      </tr></thead>
+      <tbody>
+        ${listas.length ? listas.map(({l,s})=>`
+          <tr style="cursor:pointer;" onclick="abrirAnalisisListaDetalle('${l.id}')">
+            <td style="font-weight:600;">${l.nombre}</td>
+            <td>${(l.conceptos||[]).length}</td>
+            <td>${fmtMoney(s.subtotal)}</td>
+            <td>${fmtMoney(s.iva)}</td>
+            <td style="font-weight:700;">${fmtMoney(s.total)}</td>
+            <td style="font-size:11.5px; color:var(--text-muted);">${fmtDate(l.fecha_edicion||l.fecha_creacion)}</td>
+            <td onclick="event.stopPropagation();">
+              <button class="btn btn-sm" onclick="abrirAnalisisListaDetalle('${l.id}')" title="Editar">${icon('config')}</button>
+              <button class="plan-task-icon-btn" onclick="eliminarAnalisisLista('${l.id}')" title="Eliminar" style="margin-left:4px;">${icon('trash')}</button>
+            </td>
+          </tr>`).join('')
+        : `<tr><td colspan="7"><div class="empty-state">${icon('catalog')}<div>${alState.search?'Sin listas que coincidan.':'Aún no has creado ninguna lista.'}</div></div></td></tr>`}
+      </tbody></table>
+    </div>`;
+  document.getElementById('al-search').oninput = (e)=>{ alState.search = e.target.value; renderAnalisisListas(); };
+}
+function alOrdenarPor(campo){
+  if(alSortState.campo===campo) alSortState.dir = alSortState.dir==='asc'?'desc':'asc';
+  else { alSortState.campo = campo; alSortState.dir = campo==='nombre'?'asc':'desc'; }
+  renderAnalisisListas();
+}
+function crearAnalisisLista(){
+  const nombre = prompt('Nombre para esta lista (ej. "Cirugía de rodilla — costos base"):');
+  if(!nombre || !nombre.trim()) return;
+  const nueva = { id: uid('al'), nombre: nombre.trim(), conceptos: [], fecha_creacion: new Date().toISOString(), fecha_edicion: new Date().toISOString(), __new:true };
+  DB.analisis_listas.push(nueva);
+  logAudit('Análisis de Listas', nueva.id, 'Creación', nueva.nombre);
+  persistExtra(); alState.detalleId = nueva.id; renderAnalisisListas();
+}
+function eliminarAnalisisLista(id){
+  const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
+  if(!confirm('¿Eliminar la lista "'+l.nombre+'"? Esta acción no se puede deshacer.')) return;
+  DB.analisis_listas = DB.analisis_listas.filter(x=>x.id!==id);
+  logAudit('Análisis de Listas', id, 'Eliminada', l.nombre);
+  persistExtra(); alState.detalleId = null; renderAnalisisListas();
+}
+function sumaAnalisisLista(l){
+  let subtotal = 0;
+  (l.conceptos||[]).forEach(r=>{ subtotal += (r.costo_snapshot||0) * (r.cantidad||1); });
+  const iva = subtotal*0.16;
+  return { subtotal, iva, total: subtotal+iva };
+}
+function abrirAnalisisListaDetalle(id){ alState.detalleId = id; alState.detalleSearch=''; renderAnalisisListas(); }
+function drawAnalisisListaDetalle(){
+  const l = DB.analisis_listas.find(x=>x.id===alState.detalleId);
+  if(!l){ alState.detalleId=null; return renderAnalisisListas(); }
+  const s = sumaAnalisisLista(l);
+  document.getElementById('content').innerHTML = `
+    <div class="toolbar">
+      <button class="btn btn-sm" onclick="alState.detalleId=null; renderAnalisisListas();">${icon('chevron')} Volver a mis listas</button>
+      <div style="font-weight:700; font-size:15px; margin-left:8px;">${l.nombre}</div>
+      <div class="searchbox" style="width:220px; margin-left:auto;">${icon('search')}<input id="al-det-search" placeholder="Buscar en esta lista…" value="${alState.detalleSearch}"></div>
+      <button class="btn btn-sm" onclick="abrirPegarBloqueAnalisis('${l.id}')">${icon('quote')} Pegar bloque</button>
+      <button class="btn btn-sm" onclick="actualizarPreciosAnalisisLista('${l.id}')">${icon('history')} Actualizar precios</button>
+      <button class="btn btn-sm btn-danger" onclick="eliminarAnalisisLista('${l.id}')">${icon('trash')} Eliminar lista</button>
+    </div>
+    <div class="picker-wrap" style="position:relative; margin-bottom:12px;">
+      <div class="searchbox" style="width:340px;">${icon('search')}<input id="al-add-search" placeholder="Agregar concepto del catálogo…" autocomplete="off"></div>
+      <div id="al-add-results" class="picker-results" style="display:none;"></div>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Concepto</th><th>Descripción</th><th style="width:90px;">Cantidad</th><th style="width:110px;">Costo unitario</th><th style="width:110px;">Subtotal</th><th style="width:100px;">IVA (16%)</th><th style="width:110px;">Total</th><th></th></tr></thead>
+      <tbody id="al-tbody"></tbody>
+      <tfoot><tr style="font-weight:700; background:var(--surface-2);">
+        <td colspan="4" style="text-align:right; padding:10px;">TOTALES</td>
+        <td style="padding:10px;">${fmtMoney(s.subtotal)}</td><td style="padding:10px;">${fmtMoney(s.iva)}</td><td style="padding:10px;">${fmtMoney(s.total)}</td><td></td>
+      </tr></tfoot></table>
+    </div>`;
+  document.getElementById('al-det-search').oninput = (e)=>{ alState.detalleSearch=e.target.value; drawAlTbody(); };
+  wireConceptPicker(document.getElementById('al-add-search'), document.getElementById('al-add-results'), (cid)=>{
+    const co = conceptoById(cid); if(!co) return;
+    const existente = l.conceptos.find(r=>r.id===cid);
+    if(existente) existente.cantidad = (existente.cantidad||1)+1;
+    else l.conceptos.push({id:cid, cantidad:1, costo_snapshot:co.costo_sin_iva});
+    l.fecha_edicion = new Date().toISOString();
+    persistExtra(); drawAnalisisListaDetalle();
+  });
+  drawAlTbody();
+}
+function drawAlTbody(){
+  const l = DB.analisis_listas.find(x=>x.id===alState.detalleId); if(!l) return;
+  const tbody = document.getElementById('al-tbody'); if(!tbody) return;
+  const filas = l.conceptos.filter(r=>{
+    if(!alState.detalleSearch) return true;
+    const co = conceptoById(r.id);
+    return co && fuzzyMatch(co.descripcion, alState.detalleSearch);
+  });
+  tbody.innerHTML = filas.length ? filas.map(r=>{
+    const co = conceptoById(r.id);
+    const subtotal = (r.costo_snapshot||0)*(r.cantidad||1);
+    const iva = subtotal*0.16;
+    return `<tr>
+      <td style="font-size:11px; color:var(--text-faint);">${r.id}</td>
+      <td>${co?co.descripcion:'<span style="color:var(--guinda);">Concepto ya no existe en catálogo</span>'}</td>
+      <td><input type="number" min="1" class="input al-qty" data-rid="${r.id}" value="${r.cantidad}" style="width:70px; padding:5px 6px;"></td>
+      <td><input type="number" step="0.01" class="input al-costo" data-rid="${r.id}" value="${r.costo_snapshot}" style="width:100px; padding:5px 6px;"></td>
+      <td>${fmtMoney(subtotal)}</td><td>${fmtMoney(iva)}</td><td style="font-weight:700;">${fmtMoney(subtotal+iva)}</td>
+      <td><button class="plan-task-icon-btn" onclick="eliminarRenglonAnalisis('${r.id}')" title="Eliminar renglón">${icon('trash')}</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8"><div class="empty-state">${icon('catalog')}<div>${alState.detalleSearch?'Sin coincidencias en esta lista.':'Sin conceptos todavía — agrega uno arriba o pega un bloque.'}</div></div></td></tr>`;
+  tbody.querySelectorAll('.al-qty').forEach(inp=> inp.onchange = ()=>{
+    const r = l.conceptos.find(x=>x.id===inp.dataset.rid); if(!r) return;
+    r.cantidad = Math.max(1, Number(inp.value)||1); l.fecha_edicion = new Date().toISOString();
+    persistExtra(); drawAnalisisListaDetalle();
+  });
+  tbody.querySelectorAll('.al-costo').forEach(inp=> inp.onchange = ()=>{
+    const r = l.conceptos.find(x=>x.id===inp.dataset.rid); if(!r) return;
+    r.costo_snapshot = Number(inp.value)||0; l.fecha_edicion = new Date().toISOString();
+    persistExtra(); drawAnalisisListaDetalle();
+  });
+}
+function eliminarRenglonAnalisis(rid){
+  const l = DB.analisis_listas.find(x=>x.id===alState.detalleId); if(!l) return;
+  l.conceptos = l.conceptos.filter(r=>r.id!==rid);
+  l.fecha_edicion = new Date().toISOString();
+  persistExtra(); drawAnalisisListaDetalle();
+}
+function actualizarPreciosAnalisisLista(id){
+  const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
+  let cambiados = 0;
+  l.conceptos.forEach(r=>{
+    const co = conceptoById(r.id);
+    if(co && co.costo_sin_iva!==r.costo_snapshot){ r.costo_snapshot = co.costo_sin_iva; cambiados++; }
+  });
+  l.fecha_edicion = new Date().toISOString();
+  persistExtra(); drawAnalisisListaDetalle();
+  toast(cambiados ? cambiados+' precio(s) actualizado(s) desde el catálogo' : 'Todos los precios ya estaban al día');
+}
+function abrirPegarBloqueAnalisis(id){
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Pegar bloque de conceptos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto. Puedes anteponer la cantidad (ej. "3 Gasas estériles") o solo el nombre. Cada línea se busca en tu catálogo por coincidencia de palabras.</div>
+      <textarea id="al-paste-ta" class="input" style="width:100%; min-height:160px; font-family:monospace; font-size:12px;" placeholder="3 Gasas estériles&#10;Jeringa 10ml&#10;Guantes de látex talla M"></textarea>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="al-paste-procesar">${icon('check')} Buscar y agregar</button></div>`);
+  document.getElementById('al-paste-procesar').onclick = ()=> procesarPegadoAnalisis(id);
+}
+function parsearBloqueConceptos(texto){
+  const lines = (texto||'').split('\n').map(l=>l.trim()).filter(l=>l.length);
+  return lines.map(line=>{
+    const m = line.match(/^(\d+)\s+(.+)$/);
+    const cantidad = m ? parseInt(m[1],10) : 1;
+    const buscar = m ? m[2] : line;
+    const candidatos = DB.conceptos.filter(c=>c.activo!==false && fuzzyMatch(c.descripcion, buscar));
+    return { original: line, cantidad, buscar, match: candidatos[0]||null };
+  });
+}
+function procesarPegadoAnalisis(id){
+  const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
+  const texto = document.getElementById('al-paste-ta').value;
+  const resultados = parsearBloqueConceptos(texto);
+  let agregados = 0;
+  const sinMatch = [];
+  resultados.forEach(r=>{
+    if(r.match){
+      const existente = l.conceptos.find(x=>x.id===r.match.id);
+      if(existente) existente.cantidad = (existente.cantidad||1) + r.cantidad;
+      else l.conceptos.push({id:r.match.id, cantidad:r.cantidad, costo_snapshot:r.match.costo_sin_iva});
+      agregados++;
+    } else sinMatch.push(r.original);
+  });
+  l.fecha_edicion = new Date().toISOString();
+  persistExtra(); closeModal();
+  if(sinMatch.length){
+    toast(agregados+' agregado(s), '+sinMatch.length+' sin coincidencia');
+    openModal(`
+      <div class="modal-head"><div style="font-weight:700; font-size:16px;">Sin coincidencia en el catálogo</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+      <div class="modal-body">
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Estas líneas no encontraron un concepto parecido. Puedes darlas de alta en el catálogo, o buscarlas manualmente en la lista.</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${sinMatch.map(t=>`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px;"><span style="font-size:12.5px;">${t}</span><button class="btn btn-sm" onclick="closeModal(); openConceptoModal(null, (nuevo)=>{ if(nuevo){ const li=DB.analisis_listas.find(x=>x.id==='${id}'); li.conceptos.push({id:nuevo.id, cantidad:1, costo_snapshot:nuevo.costo_sin_iva}); li.fecha_edicion=new Date().toISOString(); persistExtra(); if(alState.detalleId==='${id}') drawAnalisisListaDetalle(); }});">${icon('plus')} Dar de alta</button></div>`).join('')}
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>`);
+  } else {
+    toast(agregados+' concepto(s) agregado(s) correctamente');
+  }
+  if(alState.detalleId===id) drawAnalisisListaDetalle();
 }
 function renderAnalisis(){
   document.getElementById('content').innerHTML = `
