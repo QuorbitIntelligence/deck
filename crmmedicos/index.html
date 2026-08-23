@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.9.1';
+const APP_VERSION = 'v2.10.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1972,7 +1972,7 @@ function drawCatTable(){
     paginationControls('cat-pg', list.length, catState.page, catState.perPage, p=>{ catState.page=p; drawCatTable(); });
   }
 }
-function openConceptoModal(id, onSaved){
+function openConceptoModal(id, onSaved, prefill){
   const c = id ? DB.conceptos.find(x=>String(x.id)===String(id)) : null;
   const groups = [...new Set(DB.conceptos.map(x=>x.grupo_eleccion).filter(Boolean))];
   const CATEGORIAS_BASE = ['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'];
@@ -1982,7 +1982,7 @@ function openConceptoModal(id, onSaved){
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${c?'Editar concepto':'Nuevo concepto'}</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-field full"><label>Descripción</label><input class="input uc-input" id="cc-desc" style="width:100%;" value="${c?c.descripcion:''}" placeholder="EJ. SALA DE CIRUGÍA POR HORA"></div>
+        <div class="form-field full"><label>Descripción</label><input class="input uc-input" id="cc-desc" style="width:100%;" value="${c?c.descripcion:(prefill&&prefill.descripcion?prefill.descripcion.toUpperCase():'')}" placeholder="EJ. SALA DE CIRUGÍA POR HORA"></div>
         <div class="form-field"><label>Categoría</label>
           <input class="input uc-input" id="cc-cat" style="width:100%;" list="cc-cat-list" value="${c&&c.categoria?c.categoria:'Medicamento'}" placeholder="EJ. PATOLOGÍA">
           <datalist id="cc-cat-list">${categorias.map(x=>`<option value="${x}">`).join('')}</datalist>
@@ -2006,7 +2006,7 @@ function openConceptoModal(id, onSaved){
           <button type="button" class="chip ${(c&&c.captura_modo_noor==='total')?'active':''}" data-modo="total">Voy a capturar el Total (con IVA incluido)</button>
         </div>
         <div class="form-grid">
-          <div class="form-field"><label>Costo Noor (sin IVA)</label><input class="input" type="number" id="cc-costo-noor" style="width:100%;" value="${c&&c.costo_noor!=null?c.costo_noor:''}"></div>
+          <div class="form-field"><label>Costo Noor (sin IVA)</label><input class="input" type="number" id="cc-costo-noor" style="width:100%;" value="${c&&c.costo_noor!=null?c.costo_noor:(prefill&&prefill.costoUnitario!=null?Math.round((prefill.costoUnitario/1.16)*100)/100:'')}"></div>
           <div class="form-field"><label>IVA (16%)</label><input class="input" id="cc-iva-noor" style="width:100%;" disabled></div>
           <div class="form-field"><label>Total (IVA incluido)</label><input class="input" type="number" id="cc-total-noor" style="width:100%; font-weight:700;" value="${c&&c.total_noor!=null?c.total_noor:''}"></div>
           <div class="form-field"><label>Vigencia del costo</label><input class="input" type="date" id="cc-vigencia-noor" style="width:100%;" value="${c&&c.vigencia_costo_noor?c.vigencia_costo_noor:'2026-12-31'}"></div>
@@ -6931,21 +6931,51 @@ function abrirPegarBloqueAnalisis(id){
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Pegar bloque de conceptos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
-      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto. Puedes anteponer la cantidad (ej. "3 Gasas estériles") o solo el nombre. Cada línea se busca en tu catálogo por coincidencia de palabras.</div>
-      <textarea id="al-paste-ta" class="input" style="width:100%; min-height:160px; font-family:monospace; font-size:12px;" placeholder="3 Gasas estériles&#10;Jeringa 10ml&#10;Guantes de látex talla M"></textarea>
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto, en formato <b>CANTIDAD DESCRIPCIÓN PRECIO</b> (el precio es el total de esa línea — si no lo capturas, solo se usa la cantidad y descripción). Cada línea se busca en tu catálogo por coincidencia de palabras; si no la encuentra, te deja darla de alta con la descripción y el precio por unidad ya calculados.</div>
+      <textarea id="al-paste-ta" class="input" style="width:100%; min-height:160px; font-family:monospace; font-size:12px;" placeholder="3 Gasas estériles 300&#10;2 Jeringa 10ml 90&#10;Guantes de látex talla M"></textarea>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="al-paste-procesar">${icon('check')} Buscar y agregar</button></div>`);
   document.getElementById('al-paste-procesar').onclick = ()=> procesarPegadoAnalisis(id);
 }
 function parsearBloqueConceptos(texto){
   const lines = (texto||'').split('\n').map(l=>l.trim()).filter(l=>l.length);
+  function parseNum(s){
+    if(s==null) return null;
+    const cleaned = String(s).replace(/[$,]/g,'').trim();
+    if(!/^-?\d+(\.\d+)?$/.test(cleaned)) return null;
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  }
   return lines.map(line=>{
-    const m = line.match(/^(\d+)\s+(.+)$/);
-    const cantidad = m ? parseInt(m[1],10) : 1;
-    const buscar = m ? m[2] : line;
-    const candidatos = DB.conceptos.filter(c=>c.activo!==false && fuzzyMatch(c.descripcion, buscar));
-    return { original: line, cantidad, buscar, match: candidatos[0]||null };
+    const tokens = line.split(/\s+/);
+    let cantidad = 1, precioTotal = null, buscar = line;
+    if(tokens.length>=3){
+      const cant = parseNum(tokens[0]);
+      const precio = parseNum(tokens[tokens.length-1]);
+      if(cant!=null && cant>0 && precio!=null){
+        cantidad = cant; precioTotal = precio;
+        buscar = tokens.slice(1, tokens.length-1).join(' ');
+      }
+    }
+    if(precioTotal==null){
+      const m = line.match(/^(\d+)\s+(.+)$/);
+      if(m){ cantidad = parseInt(m[1],10); buscar = m[2]; }
+    }
+    const costoUnitario = precioTotal!=null ? Math.round((precioTotal/cantidad)*100)/100 : null;
+    const candidatos = buscar ? DB.conceptos.filter(c=>c.activo!==false && fuzzyMatch(c.descripcion, buscar)) : [];
+    return { original: line, cantidad, buscar, costoUnitario, match: candidatos[0]||null };
   });
+}
+function alDarDeAltaDesdeIndice(i, listaId){
+  const r = (window.__alSinMatchTemp||[])[i]; if(!r) return;
+  openConceptoModal(null, (nuevo)=>{
+    if(nuevo){
+      const li = DB.analisis_listas.find(x=>x.id===listaId);
+      li.conceptos.push({id:nuevo.id, cantidad:1, costo_snapshot:nuevo.costo_sin_iva});
+      li.fecha_edicion = new Date().toISOString();
+      persistExtra(); if(alState.detalleId===listaId) drawAnalisisListaDetalle();
+    }
+  }, { descripcion: r.buscar||r.original, costoUnitario: r.costoUnitario });
 }
 function procesarPegadoAnalisis(id){
   const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
@@ -6959,18 +6989,22 @@ function procesarPegadoAnalisis(id){
       if(existente) existente.cantidad = (existente.cantidad||1) + r.cantidad;
       else l.conceptos.push({id:r.match.id, cantidad:r.cantidad, costo_snapshot:r.match.costo_sin_iva});
       agregados++;
-    } else sinMatch.push(r.original);
+    } else sinMatch.push(r);
   });
   l.fecha_edicion = new Date().toISOString();
   persistExtra(); closeModal();
   if(sinMatch.length){
+    window.__alSinMatchTemp = sinMatch;
     toast(agregados+' agregado(s), '+sinMatch.length+' sin coincidencia');
     openModal(`
       <div class="modal-head"><div style="font-weight:700; font-size:16px;">Sin coincidencia en el catálogo</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
       <div class="modal-body">
-        <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Estas líneas no encontraron un concepto parecido. Puedes darlas de alta en el catálogo, o buscarlas manualmente en la lista.</div>
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Estas líneas no encontraron un concepto parecido. Puedes darlas de alta en el catálogo — la descripción y el precio por unidad ya vienen calculados — o buscarlas manualmente en la lista.</div>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          ${sinMatch.map(t=>`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px;"><span style="font-size:12.5px;">${t}</span><button class="btn btn-sm" onclick="closeModal(); openConceptoModal(null, (nuevo)=>{ if(nuevo){ const li=DB.analisis_listas.find(x=>x.id==='${id}'); li.conceptos.push({id:nuevo.id, cantidad:1, costo_snapshot:nuevo.costo_sin_iva}); li.fecha_edicion=new Date().toISOString(); persistExtra(); if(alState.detalleId==='${id}') drawAnalisisListaDetalle(); }});">${icon('plus')} Dar de alta</button></div>`).join('')}
+          ${sinMatch.map((r,i)=>`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+              <span style="font-size:12.5px;">${r.original}${r.costoUnitario!=null?` <span style="color:var(--text-faint);">(≈ ${fmtMoney(r.costoUnitario)} c/u)</span>`:''}</span>
+              <button class="btn btn-sm" onclick="closeModal(); alDarDeAltaDesdeIndice(${i}, '${id}');">${icon('plus')} Dar de alta</button>
+            </div>`).join('')}
         </div>
       </div>
       <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>`);
