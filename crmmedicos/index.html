@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.10.1';
+const APP_VERSION = 'v2.11.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1984,7 +1984,7 @@ function openConceptoModal(id, onSaved, prefill){
       <div class="form-grid">
         <div class="form-field full"><label>Descripción</label><input class="input uc-input" id="cc-desc" style="width:100%;" value="${c?c.descripcion:(prefill&&prefill.descripcion?prefill.descripcion.toUpperCase():'')}" placeholder="EJ. SALA DE CIRUGÍA POR HORA"></div>
         <div class="form-field"><label>Categoría</label>
-          <input class="input uc-input" id="cc-cat" style="width:100%;" list="cc-cat-list" value="${c&&c.categoria?c.categoria:'Medicamento'}" placeholder="EJ. PATOLOGÍA">
+          <input class="input uc-input" id="cc-cat" style="width:100%;" list="cc-cat-list" value="${c&&c.categoria?c.categoria:(prefill&&prefill.categoria?prefill.categoria:'Medicamento')}" placeholder="EJ. PATOLOGÍA">
           <datalist id="cc-cat-list">${categorias.map(x=>`<option value="${x}">`).join('')}</datalist>
           <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">Elige una existente o escribe una nueva — quedará disponible para los siguientes conceptos.</div>
         </div>
@@ -6975,7 +6975,35 @@ function alDarDeAltaDesdeIndice(i, listaId){
       li.fecha_edicion = new Date().toISOString();
       persistExtra(); if(alState.detalleId===listaId) drawAnalisisListaDetalle();
     }
-  }, { descripcion: r.buscar||r.original, costoUnitario: r.costoUnitario });
+    // Quitamos este renglón de los pendientes y volvemos a mostrar el resumen con los que faltan,
+    // para poder dar de alta uno por uno sin perder el resto de la lista pegada.
+    window.__alSinMatchTemp = (window.__alSinMatchTemp||[]).filter((_,idx)=>idx!==i);
+    if(window.__alSinMatchTemp.length) dibujarModalSinMatch(listaId);
+    else { closeModal(); toast('Todos los conceptos quedaron resueltos'); }
+  }, { descripcion: r.buscar||r.original, costoUnitario: r.costoUnitario, categoria: window.__alCategoriaLote||null });
+}
+function dibujarModalSinMatch(id){
+  const sinMatch = window.__alSinMatchTemp||[];
+  const CATEGORIAS_BASE = ['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'];
+  const categorias = [...new Set([...CATEGORIAS_BASE, ...DB.conceptos.map(x=>x.categoria).filter(Boolean)])];
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Sin coincidencia en el catálogo (${sinMatch.length})</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Estas líneas no encontraron un concepto parecido. Al dar de alta cada una se va quitando de esta lista y puedes seguir con las demás. La descripción y el precio por unidad ya vienen calculados.</div>
+      <div class="form-field full" style="margin-bottom:12px;"><label>Categoría para estos conceptos nuevos</label>
+        <input class="input uc-input" id="al-cat-lote" style="width:100%;" list="al-cat-lote-list" value="${window.__alCategoriaLote||'Medicamento'}" placeholder="EJ. MEDICAMENTOS, MATERIALES, EQUIPO MÉDICO…">
+        <datalist id="al-cat-lote-list">${categorias.map(x=>`<option value="${x}">`).join('')}</datalist>
+        <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">Se pre-llenará en cada uno al darlo de alta — la puedes cambiar por concepto si alguno es distinto.</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        ${sinMatch.map((r,i)=>`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
+            <span style="font-size:12.5px;">${r.original}${r.costoUnitario!=null?` <span style="color:var(--text-faint);">(≈ ${fmtMoney(r.costoUnitario)} c/u)</span>`:''}</span>
+            <button class="btn btn-sm" onclick="alDarDeAltaDesdeIndice(${i}, '${id}');">${icon('plus')} Dar de alta</button>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>`);
+  document.getElementById('al-cat-lote').oninput = (e)=>{ window.__alCategoriaLote = e.target.value; };
 }
 function procesarPegadoAnalisis(id){
   const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
@@ -6995,19 +7023,9 @@ function procesarPegadoAnalisis(id){
   persistExtra(); closeModal();
   if(sinMatch.length){
     window.__alSinMatchTemp = sinMatch;
+    window.__alCategoriaLote = null;
     toast(agregados+' agregado(s), '+sinMatch.length+' sin coincidencia');
-    openModal(`
-      <div class="modal-head"><div style="font-weight:700; font-size:16px;">Sin coincidencia en el catálogo</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
-      <div class="modal-body">
-        <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Estas líneas no encontraron un concepto parecido. Puedes darlas de alta en el catálogo — la descripción y el precio por unidad ya vienen calculados — o buscarlas manualmente en la lista.</div>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          ${sinMatch.map((r,i)=>`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
-              <span style="font-size:12.5px;">${r.original}${r.costoUnitario!=null?` <span style="color:var(--text-faint);">(≈ ${fmtMoney(r.costoUnitario)} c/u)</span>`:''}</span>
-              <button class="btn btn-sm" onclick="closeModal(); alDarDeAltaDesdeIndice(${i}, '${id}');">${icon('plus')} Dar de alta</button>
-            </div>`).join('')}
-        </div>
-      </div>
-      <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">Cerrar</button></div>`);
+    dibujarModalSinMatch(id);
   } else {
     toast(agregados+' concepto(s) agregado(s) correctamente');
   }
