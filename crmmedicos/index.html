@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.16.0';
+const APP_VERSION = 'v2.17.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -6832,6 +6832,31 @@ function crearAnalisisLista(){
   logAudit('Análisis de Listas', nueva.id, 'Creación', nueva.nombre);
   persistExtra(); alState.detalleId = nueva.id; renderAnalisisListas();
 }
+function convertirAnalisisAListaMateriales(id){
+  const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
+  if(!l.conceptos.length){ toast('Esta lista no tiene conceptos todavía'); return; }
+  const medicamentos = [], materiales = [];
+  l.conceptos.forEach(r=>{
+    const co = conceptoById(r.id); if(!co) return;
+    const item = { descripcion: co.descripcion, cantidad: r.cantidad||1 };
+    if((co.categoria||'').trim().toLowerCase()==='medicamento') medicamentos.push(item);
+    else materiales.push(item);
+  });
+  let lm = l.lista_materiales_vinculada_id ? DB.listas_materiales.find(x=>x.id===l.lista_materiales_vinculada_id) : null;
+  if(lm){
+    lm.medicamentos = medicamentos; lm.materiales = materiales; lm.nombre = l.nombre;
+    logAudit('Lista de materiales', lm.id, 'Actualizada desde Análisis de Listas', l.nombre);
+    toast('Lista de materiales "'+l.nombre+'" actualizada');
+  } else {
+    lm = { id: uid('lm'), nombre: l.nombre, medicamentos, materiales, notas:'', activo:true, __new:true };
+    DB.listas_materiales.push(lm);
+    l.lista_materiales_vinculada_id = lm.id;
+    logAudit('Lista de materiales', lm.id, 'Creada desde Análisis de Listas', l.nombre);
+    toast('Lista de materiales "'+l.nombre+'" creada');
+  }
+  persistExtra();
+  if(alState.detalleId===id) drawAnalisisListaDetalle();
+}
 function eliminarAnalisisLista(id){
   const l = DB.analisis_listas.find(x=>x.id===id); if(!l) return;
   if(!confirm('¿Eliminar la lista "'+l.nombre+'"? Esta acción no se puede deshacer.')) return;
@@ -6906,6 +6931,8 @@ function drawAnalisisListaDetalle(){
       <div class="searchbox" style="width:220px; margin-left:auto;">${icon('search')}<input id="al-det-search" placeholder="Buscar en esta lista…" value="${alState.detalleSearch}"></div>
       <button class="btn btn-sm" onclick="abrirPegarBloqueAnalisis('${l.id}')">${icon('quote')} Pegar bloque</button>
       <button class="btn btn-sm" onclick="actualizarPreciosAnalisisLista('${l.id}')">${icon('history')} Actualizar precios</button>
+      <button class="btn btn-sm btn-accent" onclick="convertirAnalisisAListaMateriales('${l.id}')">${icon('bolt')} Traspasar lista a operación</button>
+      ${l.lista_materiales_vinculada_id && DB.listas_materiales.find(x=>x.id===l.lista_materiales_vinculada_id) ? `<button class="btn btn-sm" onclick="generateListaMaterialesPDF('${l.lista_materiales_vinculada_id}')">${icon('download')} Generar PDF</button>` : ''}
       <button class="btn btn-sm btn-danger" onclick="eliminarAnalisisLista('${l.id}')">${icon('trash')} Eliminar lista</button>
     </div>
     <div class="picker-wrap" style="position:relative; margin-bottom:12px;">
