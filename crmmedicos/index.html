@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.12.0';
+const APP_VERSION = 'v2.13.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -6842,8 +6842,15 @@ function sumaAnalisisLista(l){
   return { subtotal, iva, total: subtotal+iva };
 }
 function abrirAnalisisListaDetalle(id){ alState.detalleId = id; alState.detalleSearch=''; alBloquesAbiertos = {}; renderAnalisisListas(); }
+const BLOQUES_ANALISIS_PREDEFINIDOS = ['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'];
+const BLOQUE_ANALISIS_COLOR = {
+  'Medicamento':'#2E6FDB', 'Material/Insumo':'#0EA5A5', 'Equipo':'#8B5CF6', 'Sala/Equipo':'#D69A1F',
+  'Servicio':'#C0175C', 'Lista completa':'#1B3E73', 'Otro':'#6B7280'
+};
+function colorDeBloque(nombre){ return BLOQUE_ANALISIS_COLOR[nombre] || '#9CA3AF'; }
 function agruparConceptosPorBloque(l){
   const grupos = {};
+  BLOQUES_ANALISIS_PREDEFINIDOS.forEach(b=> grupos[b]=[]); // siempre visibles, aunque no tengan conceptos todavía
   l.conceptos.forEach(r=>{
     const co = conceptoById(r.id);
     const bloque = co ? (co.categoria||'Sin categoría') : 'Concepto ya no existe en catálogo';
@@ -6865,6 +6872,7 @@ function drawAnalisisListaDetalle(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <button class="btn btn-sm" onclick="alState.detalleId=null; renderAnalisisListas();">${icon('chevron')} Volver a mis listas</button>
+      <button class="btn btn-sm" onclick="alBloquesAbiertos={}; drawAlBloques();">${icon('chevron')} Volver a bloques</button>
       <div style="font-weight:700; font-size:15px; margin-left:8px;">${l.nombre}</div>
       <div class="searchbox" style="width:220px; margin-left:auto;">${icon('search')}<input id="al-det-search" placeholder="Buscar en esta lista…" value="${alState.detalleSearch}"></div>
       <button class="btn btn-sm" onclick="abrirPegarBloqueAnalisis('${l.id}')">${icon('quote')} Pegar bloque</button>
@@ -6901,25 +6909,23 @@ function drawAlBloques(){
   const wrap = document.getElementById('al-bloques-wrap'); if(!wrap) return;
   const busqueda = alState.detalleSearch;
   const grupos = agruparConceptosPorBloque(l);
-  const nombresBloque = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,'es'));
-  if(!nombresBloque.length){
-    wrap.innerHTML = `<div class="table-wrap"><div class="empty-state">${icon('catalog')}<div>Sin conceptos todavía — agrega uno arriba o pega un bloque.</div></div></div>`;
-    return;
-  }
+  const extras = Object.keys(grupos).filter(b=>!BLOQUES_ANALISIS_PREDEFINIDOS.includes(b)).sort((a,b)=>a.localeCompare(b,'es'));
+  const nombresBloque = [...BLOQUES_ANALISIS_PREDEFINIDOS, ...extras];
   wrap.innerHTML = nombresBloque.map(bloque=>{
-    let filas = grupos[bloque];
+    let filas = grupos[bloque]||[];
     if(busqueda) filas = filas.filter(r=>{ const co=conceptoById(r.id); return co && fuzzyMatch(co.descripcion, busqueda); });
-    if(busqueda && !filas.length) return ''; // el bloque no tiene coincidencias, se oculta
+    if(busqueda && !filas.length) return ''; // el bloque no tiene coincidencias durante la búsqueda, se oculta
     const estaAbierto = busqueda ? true : !!alBloquesAbiertos[bloque];
-    const bs = sumaFilas(grupos[bloque]); // subtotal del bloque completo, sin filtrar por búsqueda
-    return `<div class="card" style="margin-bottom:10px; padding:0; overflow:hidden;">
+    const bs = sumaFilas(grupos[bloque]||[]); // subtotal del bloque completo, sin filtrar por búsqueda
+    const color = colorDeBloque(bloque);
+    return `<div class="card" style="margin-bottom:10px; padding:0; overflow:hidden; border-left:4px solid ${color};">
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; cursor:pointer; background:var(--surface-2);" onclick="alToggleBloque('${bloque.replace(/'/g,"\\'")}')">
-        <div style="font-weight:700; font-size:13px;">${estaAbierto?'▾':'▸'} ${bloque} <span style="font-weight:400; color:var(--text-faint);">(${grupos[bloque].length})</span></div>
+        <div style="font-weight:700; font-size:13px; display:flex; align-items:center; gap:8px;"><span style="width:9px; height:9px; border-radius:50%; background:${color}; display:inline-block;"></span>${estaAbierto?'▾':'▸'} ${bloque} <span style="font-weight:400; color:var(--text-faint);">(${(grupos[bloque]||[]).length})</span></div>
         <div style="display:flex; gap:16px; font-size:12px; color:var(--text-muted);">
           <div>Subtotal: ${fmtMoney(bs.subtotal)}</div><div>IVA: ${fmtMoney(bs.iva)}</div><div style="font-weight:700; color:var(--text);">Total: ${fmtMoney(bs.total)}</div>
         </div>
       </div>
-      ${estaAbierto ? `<table style="width:100%;"><thead><tr style="font-size:11px; color:var(--text-faint);">
+      ${estaAbierto ? (filas.length ? `<table style="width:100%;"><thead><tr style="font-size:11px; color:var(--text-faint);">
           <th style="text-align:left; padding:6px 16px;">Descripción</th><th style="width:80px;">Cantidad</th><th style="width:110px;">Costo unitario</th><th style="width:100px;">Subtotal</th><th style="width:90px;">IVA</th><th style="width:100px;">Total</th><th style="width:36px;"></th>
         </tr></thead><tbody>
         ${filas.map(r=>{
@@ -6934,7 +6940,7 @@ function drawAlBloques(){
             <td style="text-align:center;"><button class="plan-task-icon-btn" onclick="eliminarRenglonAnalisis('${r.id}')" title="Eliminar renglón">${icon('trash')}</button></td>
           </tr>`;
         }).join('')}
-        </tbody></table>` : ''}
+        </tbody></table>` : `<div style="padding:14px 16px; font-size:12px; color:var(--text-faint);">Sin conceptos en este bloque todavía — usa el buscador de arriba para agregar uno; si su categoría es "${bloque}" caerá aquí solo.</div>`) : ''}
     </div>`;
   }).join('');
   wrap.querySelectorAll('.al-qty').forEach(inp=> inp.onchange = ()=>{
@@ -7013,7 +7019,9 @@ function alDarDeAltaDesdeIndice(i, listaId){
   openConceptoModal(null, (nuevo)=>{
     if(nuevo){
       const li = DB.analisis_listas.find(x=>x.id===listaId);
-      li.conceptos.push({id:nuevo.id, cantidad:1, costo_snapshot:nuevo.costo_sin_iva});
+      const existente = li.conceptos.find(x=>x.id===nuevo.id);
+      if(existente) existente.cantidad = (existente.cantidad||1) + (r.cantidad||1);
+      else li.conceptos.push({id:nuevo.id, cantidad:r.cantidad||1, costo_snapshot:nuevo.costo_sin_iva});
       li.fecha_edicion = new Date().toISOString();
       persistExtra(); if(alState.detalleId===listaId) drawAnalisisListaDetalle();
     }
@@ -7021,7 +7029,7 @@ function alDarDeAltaDesdeIndice(i, listaId){
     // para poder dar de alta uno por uno sin perder el resto de la lista pegada.
     window.__alSinMatchTemp = (window.__alSinMatchTemp||[]).filter((_,idx)=>idx!==i);
     if(window.__alSinMatchTemp.length) dibujarModalSinMatch(listaId);
-    else { closeModal(); toast('Todos los conceptos quedaron resueltos'); }
+    else { closeModal(); toast('Todos los conceptos quedaron resueltos'); alMostrarComparacionPrecios(listaId); }
   }, { descripcion: r.buscar||r.original, costoUnitario: r.costoUnitario, categoria: window.__alCategoriaLote||null });
 }
 function dibujarModalSinMatch(id){
@@ -7053,16 +7061,21 @@ function procesarPegadoAnalisis(id){
   const resultados = parsearBloqueConceptos(texto);
   let agregados = 0;
   const sinMatch = [];
+  const preciosDif = [];
   resultados.forEach(r=>{
     if(r.match){
       const existente = l.conceptos.find(x=>x.id===r.match.id);
       if(existente) existente.cantidad = (existente.cantidad||1) + r.cantidad;
       else l.conceptos.push({id:r.match.id, cantidad:r.cantidad, costo_snapshot:r.match.costo_sin_iva});
       agregados++;
+      if(r.costoUnitario!=null && Math.abs(r.costoUnitario - (r.match.costo_sin_iva||0)) > 0.01){
+        if(!preciosDif.some(p=>p.id===r.match.id)) preciosDif.push({ id:r.match.id, descripcion:r.match.descripcion, catalogo:r.match.costo_sin_iva, pegado:r.costoUnitario });
+      }
     } else sinMatch.push(r);
   });
   l.fecha_edicion = new Date().toISOString();
   persistExtra(); closeModal();
+  window.__alPreciosDifTemp = preciosDif;
   if(sinMatch.length){
     window.__alSinMatchTemp = sinMatch;
     window.__alCategoriaLote = null;
@@ -7070,8 +7083,39 @@ function procesarPegadoAnalisis(id){
     dibujarModalSinMatch(id);
   } else {
     toast(agregados+' concepto(s) agregado(s) correctamente');
+    alMostrarComparacionPrecios(id);
   }
   if(alState.detalleId===id) drawAnalisisListaDetalle();
+}
+function alMostrarComparacionPrecios(listaId){
+  const dif = window.__alPreciosDifTemp||[];
+  if(!dif.length) return;
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Precios distintos al catálogo (${dif.length})</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Estos conceptos ya existen en tu catálogo, pero el precio que pegaste es distinto al que tienes guardado. Marca los que quieras actualizar.</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        ${dif.map((d,i)=>`<label style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px; cursor:pointer;">
+            <span style="display:flex; align-items:center; gap:8px; font-size:12.5px;"><input type="checkbox" class="al-precio-check" data-idx="${i}" checked> ${d.descripcion}</span>
+            <span style="font-size:11.5px; color:var(--text-muted);">Catálogo: <s style="color:var(--guinda);">${fmtMoney(d.catalogo)}</s> → Pegado: <b style="color:var(--green);">${fmtMoney(d.pegado)}</b></span>
+          </label>`).join('')}
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Omitir, dejar el catálogo como está</button><button class="btn btn-primary" id="al-precio-actualizar">${icon('check')} Actualizar seleccionados</button></div>`);
+  document.getElementById('al-precio-actualizar').onclick = ()=>{
+    const seleccionados = Array.from(document.querySelectorAll('.al-precio-check:checked')).map(cb=>dif[+cb.dataset.idx]);
+    seleccionados.forEach(item=>{
+      const co = DB.conceptos.find(c=>c.id===item.id); if(!co) return;
+      co.costo_sin_iva = item.pegado;
+      co.total_noor = item.pegado;
+      co.costo_noor = Math.round((item.pegado/1.16)*100)/100;
+      co.iva_noor = Math.round((item.pegado-co.costo_noor)*100)/100;
+    });
+    if(seleccionados.length) actualizarPreciosAnalisisLista(listaId);
+    persistExtra(); closeModal();
+    toast(seleccionados.length+' precio(s) actualizado(s) en el catálogo');
+    if(alState.detalleId===listaId) drawAnalisisListaDetalle();
+  };
 }
 function renderAnalisis(){
   document.getElementById('content').innerHTML = `
