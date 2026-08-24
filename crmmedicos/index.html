@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.15.0';
+const APP_VERSION = 'v2.16.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1999,6 +1999,7 @@ function openConceptoModal(id, onSaved, prefill){
         <button type="button" class="chip ${tipoCosto==='interno'?'active':''}" data-t="interno">Costo interno (Noor) — materiales / medicamentos</button>
         <button type="button" class="chip ${tipoCosto==='proveedor'?'active':''}" data-t="proveedor">Costo de proveedor externo</button>
       </div>
+      <div class="form-field full" style="margin-bottom:10px;"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cc-exento-iva" ${(c?c.exento_iva:prefill&&prefill.exento)?'checked':''}> Este concepto no lleva IVA (ej. medicamentos)</label></div>
 
       <div id="cc-block-interno" style="display:${tipoCosto==='interno'?'block':'none'}; background:var(--primary-light); border-radius:12px; padding:14px 16px; margin-bottom:14px;">
         <div class="chip-filter" id="cc-noor-modo-chips" style="margin-bottom:10px;">
@@ -2006,7 +2007,7 @@ function openConceptoModal(id, onSaved, prefill){
           <button type="button" class="chip ${(c&&c.captura_modo_noor==='total')?'active':''}" data-modo="total">Voy a capturar el Total (con IVA incluido)</button>
         </div>
         <div class="form-grid">
-          <div class="form-field"><label>Costo Noor (sin IVA)</label><input class="input" type="number" id="cc-costo-noor" style="width:100%;" value="${c&&c.costo_noor!=null?c.costo_noor:(prefill&&prefill.costoUnitario!=null?Math.round((prefill.costoUnitario/1.16)*100)/100:'')}"></div>
+          <div class="form-field"><label>Costo Noor (sin IVA)</label><input class="input" type="number" id="cc-costo-noor" style="width:100%;" value="${c&&c.costo_noor!=null?c.costo_noor:(prefill&&prefill.costoUnitario!=null?(prefill.exento?prefill.costoUnitario:Math.round((prefill.costoUnitario/1.16)*100)/100):'')}"></div>
           <div class="form-field"><label>IVA (16%)</label><input class="input" id="cc-iva-noor" style="width:100%;" disabled></div>
           <div class="form-field"><label>Total (IVA incluido)</label><input class="input" type="number" id="cc-total-noor" style="width:100%; font-weight:700;" value="${c&&c.total_noor!=null?c.total_noor:''}"></div>
           <div class="form-field"><label>Vigencia del costo</label><input class="input" type="date" id="cc-vigencia-noor" style="width:100%;" value="${c&&c.vigencia_costo_noor?c.vigencia_costo_noor:'2026-12-31'}"></div>
@@ -2064,14 +2065,15 @@ function openConceptoModal(id, onSaved, prefill){
   });
 
   function recalcNoor(){
+    const exento = document.getElementById('cc-exento-iva').checked;
     if(noorModo==='subtotal'){
       const base = parseFloat(noorSubEl.value)||0;
-      const iva = base*0.16, total = base+iva;
+      const iva = exento ? 0 : base*0.16, total = base+iva;
       document.getElementById('cc-iva-noor').value = fmtMoney(iva);
       noorTotEl.value = Math.round(total*100)/100;
     } else {
       const total = parseFloat(noorTotEl.value)||0;
-      const base = total/1.16, iva = total-base;
+      const base = exento ? total : total/1.16, iva = total-base;
       document.getElementById('cc-iva-noor').value = fmtMoney(iva);
       noorSubEl.value = Math.round(base*100)/100;
     }
@@ -2098,23 +2100,25 @@ function openConceptoModal(id, onSaved, prefill){
   noorSubEl.oninput = recalcNoor; noorTotEl.oninput = recalcNoor;
   provSubEl.oninput = recalcProveedor; provTotEl.oninput = recalcProveedor;
   document.getElementById('cc-ganancia-pct').oninput = recalcProveedor;
+  document.getElementById('cc-exento-iva').onchange = recalcNoor;
   recalcNoor(); recalcProveedor();
 
   document.getElementById('cc-save').onclick = ()=>{
     const desc = document.getElementById('cc-desc').value.trim();
     if(!desc){ toast('Captura la descripción'); return; }
+    const exentoIva = document.getElementById('cc-exento-iva').checked;
     const costoNoor = parseFloat(document.getElementById('cc-costo-noor').value)||0;
-    const ivaNoor = Math.round(costoNoor*0.16*100)/100;
+    const ivaNoor = exentoIva ? 0 : Math.round(costoNoor*0.16*100)/100;
     const totalNoor = Math.round((costoNoor+ivaNoor)*100)/100;
     const costoProv = parseFloat(document.getElementById('cc-costo-prov').value)||0;
     const gananciaPct = parseFloat(document.getElementById('cc-ganancia-pct').value)||0;
     const gananciaMonto = costoProv*(gananciaPct/100);
-    const ivaProv = Math.round((costoProv+gananciaMonto)*0.16*100)/100;
+    const ivaProv = exentoIva ? 0 : Math.round((costoProv+gananciaMonto)*0.16*100)/100;
     const totalProv = Math.round((costoProv+gananciaMonto+ivaProv)*100)/100;
     const payload = {
       descripcion: desc, categoria: document.getElementById('cc-cat').value,
       grupo_eleccion: document.getElementById('cc-grupo').value.trim() || null,
-      tipo_costo: tipoActual,
+      tipo_costo: tipoActual, exento_iva: exentoIva,
       costo_noor: costoNoor, iva_noor: ivaNoor, total_noor: totalNoor, vigencia_costo_noor: document.getElementById('cc-vigencia-noor').value || null, captura_modo_noor: noorModo,
       costo_proveedor: costoProv, ganancia_noor_pct: gananciaPct, iva_proveedor: ivaProv, total_proveedor: totalProv, vigencia_costo_proveedor: document.getElementById('cc-vigencia-prov').value || null, captura_modo_prov: provModo,
       costo_sin_iva: tipoActual==='proveedor' ? totalProv : totalNoor,
@@ -6836,10 +6840,15 @@ function eliminarAnalisisLista(id){
   persistExtra(); alState.detalleId = null; renderAnalisisListas();
 }
 function sumaAnalisisLista(l){
-  let subtotal = 0;
-  (l.conceptos||[]).forEach(r=>{ subtotal += (r.costo_snapshot||0) * (r.cantidad||1); });
-  const iva = subtotal*0.16;
-  return { subtotal, iva, total: subtotal+iva };
+  let total = 0, subtotal = 0;
+  (l.conceptos||[]).forEach(r=>{
+    const co = conceptoById(r.id);
+    const t = (r.costo_snapshot||0) * (r.cantidad||1);
+    total += t;
+    subtotal += (co && co.exento_iva) ? t : t/1.16;
+  });
+  const iva = total - subtotal;
+  return { subtotal, iva, total };
 }
 function abrirAnalisisListaDetalle(id){ alState.detalleId = id; alState.detalleSearch=''; alBloquesAbiertos = {}; renderAnalisisListas(); }
 const BLOQUES_ANALISIS_PREDEFINIDOS = ['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'];
@@ -6875,10 +6884,15 @@ function agruparConceptosPorBloque(l){
   return grupos;
 }
 function sumaFilas(filas){
-  let subtotal = 0;
-  filas.forEach(r=>{ subtotal += (r.costo_snapshot||0)*(r.cantidad||1); });
-  const iva = subtotal*0.16;
-  return { subtotal, iva, total: subtotal+iva };
+  let total = 0, subtotal = 0;
+  filas.forEach(r=>{
+    const co = conceptoById(r.id);
+    const t = (r.costo_snapshot||0)*(r.cantidad||1);
+    total += t;
+    subtotal += (co && co.exento_iva) ? t : t/1.16;
+  });
+  const iva = total - subtotal;
+  return { subtotal, iva, total };
 }
 function drawAnalisisListaDetalle(){
   const l = DB.analisis_listas.find(x=>x.id===alState.detalleId);
@@ -6953,8 +6967,12 @@ function drawAlBloques(){
         if(alFilaSort.campo==='descripcion'){ va=(coA?coA.descripcion:'').toLowerCase(); vb=(coB?coB.descripcion:'').toLowerCase(); return va.localeCompare(vb,'es')*dir; }
         if(alFilaSort.campo==='cantidad'){ va=a.cantidad||0; vb=b.cantidad||0; }
         else if(alFilaSort.campo==='costo'){ va=a.costo_snapshot||0; vb=b.costo_snapshot||0; }
-        else if(alFilaSort.campo==='subtotal'){ va=(a.costo_snapshot||0)*(a.cantidad||1); vb=(b.costo_snapshot||0)*(b.cantidad||1); }
-        else if(alFilaSort.campo==='total'){ va=(a.costo_snapshot||0)*(a.cantidad||1)*1.16; vb=(b.costo_snapshot||0)*(b.cantidad||1)*1.16; }
+        else if(alFilaSort.campo==='subtotal'){
+          const coA=conceptoById(a.id), coB=conceptoById(b.id);
+          const tA=(a.costo_snapshot||0)*(a.cantidad||1), tB=(b.costo_snapshot||0)*(b.cantidad||1);
+          va = (coA&&coA.exento_iva) ? tA : tA/1.16; vb = (coB&&coB.exento_iva) ? tB : tB/1.16;
+        }
+        else if(alFilaSort.campo==='total'){ va=(a.costo_snapshot||0)*(a.cantidad||1); vb=(b.costo_snapshot||0)*(b.cantidad||1); }
         return (va-vb)*dir;
       });
     }
@@ -6974,17 +6992,20 @@ function drawAlBloques(){
         </div>
       </div>
       ${estaAbierto ? (filas.length ? `<table style="width:100%;"><thead><tr style="font-size:11px; color:var(--text-faint);">
-          ${thOrd('Descripción','descripcion')}<th style="width:150px;">Bloque</th>${thOrd('Cantidad','cantidad','80px')}${thOrd('Costo unitario','costo','110px')}${thOrd('Subtotal','subtotal','100px')}<th style="width:90px;">IVA</th>${thOrd('Total','total','100px')}<th style="width:46px;"></th></tr></thead><tbody>
+          ${thOrd('Descripción','descripcion')}<th style="width:150px;">Bloque</th>${thOrd('Cantidad','cantidad','80px')}${thOrd('Costo unitario','costo','110px')}<th style="width:70px;">IVA</th>${thOrd('Subtotal','subtotal','100px')}<th style="width:80px;">Imp.</th>${thOrd('Total','total','100px')}<th style="width:46px;"></th></tr></thead><tbody>
         ${filas.map(r=>{
           const co = conceptoById(r.id);
-          const subtotal = (r.costo_snapshot||0)*(r.cantidad||1);
-          const iva = subtotal*0.16;
+          const total = (r.costo_snapshot||0)*(r.cantidad||1);
+          const exento = !!(co && co.exento_iva);
+          const subtotal = exento ? total : total/1.16;
+          const iva = total - subtotal;
           return `<tr>
             <td style="padding:6px 16px;">${co?co.descripcion:'<span style="color:var(--guinda);">Concepto ya no existe en catálogo</span>'}</td>
             <td>${co?`<input class="input al-bloque" list="al-cat-todas" data-rid="${r.id}" value="${co.categoria||''}" style="width:135px; padding:4px 6px; font-size:11px;">`:'—'}</td>
             <td><input type="number" min="1" class="input al-qty" data-rid="${r.id}" value="${r.cantidad}" style="width:65px; padding:4px 6px;"></td>
             <td><input type="number" step="0.01" class="input al-costo" data-rid="${r.id}" value="${r.costo_snapshot}" style="width:95px; padding:4px 6px;"></td>
-            <td style="text-align:center;">${fmtMoney(subtotal)}</td><td style="text-align:center;">${fmtMoney(iva)}</td><td style="text-align:center; font-weight:700;">${fmtMoney(subtotal+iva)}</td>
+            <td style="text-align:center;">${co?`<button class="al-iva-toggle" data-rid="${r.id}" style="border:none; border-radius:6px; padding:3px 6px; font-size:10px; font-weight:700; cursor:pointer; background:${exento?'var(--guinda-light)':'var(--green-light)'}; color:${exento?'var(--guinda)':'var(--green)'};">${exento?'Exento':'16%'}</button>`:'—'}</td>
+            <td style="text-align:center;">${fmtMoney(subtotal)}</td><td style="text-align:center;">${fmtMoney(iva)}</td><td style="text-align:center; font-weight:700;">${fmtMoney(total)}</td>
             <td style="text-align:right; white-space:nowrap; padding-right:8px;">
               <div style="display:inline-flex; gap:2px;">
                 ${co?`<button class="btn-whatsapp" onclick="alEditarConceptoDesdeFila('${r.id}')" title="Editar concepto completo" style="width:18px; height:18px; box-shadow:none; background:var(--primary-light); color:var(--primary);"><span style="transform:scale(.72); display:flex;">${icon('config')}</span></button>`:''}
@@ -7017,6 +7038,11 @@ function drawAlBloques(){
     const nuevaCat = inp.value.trim(); if(!nuevaCat) return;
     co.categoria = nuevaCat; co.__edited = true;
     persistExtra(); toast('Bloque actualizado — se aplica en todo el catálogo, no solo esta lista'); drawAnalisisListaDetalle();
+  });
+  wrap.querySelectorAll('.al-iva-toggle').forEach(btn=> btn.onclick = ()=>{
+    const co = conceptoById(btn.dataset.rid); if(!co) return;
+    co.exento_iva = !co.exento_iva; co.__edited = true;
+    persistExtra(); toast(co.exento_iva ? 'Marcado como exento de IVA' : 'Marcado con 16% de IVA'); drawAnalisisListaDetalle();
   });
 }
 function alEditarConceptoDesdeFila(cid){
@@ -7061,8 +7087,8 @@ function abrirPegarBloqueAnalisis(id){
         <datalist id="al-cat-previo-list">${categorias.map(x=>`<option value="${x}">`).join('')}</datalist>
         <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">Elige el bloque exacto que ya usas (por ejemplo, si ya tienes "MATERIALEs", elígelo aquí en vez de dejar que se cree "Material/Insumo" por separado).</div>
       </div>
-      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto, en formato <b>CANTIDAD DESCRIPCIÓN PRECIO</b> (el precio es el total de esa línea — si no lo capturas, solo se usa la cantidad y descripción). Cada línea se busca en tu catálogo por coincidencia de palabras; si no la encuentra, te deja darla de alta con la descripción, el bloque y el precio por unidad ya calculados.</div>
-      <textarea id="al-paste-ta" class="input" style="width:100%; min-height:160px; font-family:monospace; font-size:12px;" placeholder="3 Gasas estériles 300&#10;2 Jeringa 10ml 90&#10;Guantes de látex talla M"></textarea>
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto, en formato <b>CANTIDAD DESCRIPCIÓN PRECIO</b> o <b>CANTIDAD DESCRIPCIÓN IMPUESTO TOTAL</b> (se detecta solo según cuántos números traiga al final). Si el impuesto viene en $0.00, el concepto se marca automáticamente como exento de IVA. Cada línea se busca en tu catálogo por coincidencia de palabras; si no la encuentra, te deja darla de alta con la descripción, el bloque, el IVA y el precio por unidad ya calculados.</div>
+      <textarea id="al-paste-ta" class="input" style="width:100%; min-height:160px; font-family:monospace; font-size:12px;" placeholder="1 Tramadol 100mg 0.00 135.38&#10;3 Gasas estériles 48.00 348&#10;Guantes de látex talla M"></textarea>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="al-paste-procesar">${icon('check')} Buscar y agregar</button></div>`);
   document.getElementById('al-cat-previo').oninput = (e)=>{ window.__alCategoriaLote = e.target.value; };
@@ -7079,8 +7105,19 @@ function parsearBloqueConceptos(texto){
   }
   return lines.map(line=>{
     const tokens = line.split(/\s+/);
-    let cantidad = 1, precioTotal = null, buscar = line;
-    if(tokens.length>=3){
+    let cantidad = 1, precioTotal = null, buscar = line, exento = null;
+    // Formato CANTIDAD DESCRIPCIÓN IMPUESTO TOTAL — cuando los últimos DOS valores son numéricos.
+    if(tokens.length>=4){
+      const cant = parseNum(tokens[0]);
+      const impuesto = parseNum(tokens[tokens.length-2]);
+      const total = parseNum(tokens[tokens.length-1]);
+      if(cant!=null && cant>0 && impuesto!=null && total!=null){
+        cantidad = cant; precioTotal = total; exento = impuesto===0;
+        buscar = tokens.slice(1, tokens.length-2).join(' ');
+      }
+    }
+    // Formato CANTIDAD DESCRIPCIÓN TOTAL — solo el último valor es numérico.
+    if(precioTotal==null && tokens.length>=3){
       const cant = parseNum(tokens[0]);
       const precio = parseNum(tokens[tokens.length-1]);
       if(cant!=null && cant>0 && precio!=null){
@@ -7092,9 +7129,11 @@ function parsearBloqueConceptos(texto){
       const m = line.match(/^(\d+)\s+(.+)$/);
       if(m){ cantidad = parseInt(m[1],10); buscar = m[2]; }
     }
+    // El precio por unidad final (costo_sin_iva ya incluye impuesto si aplica) es siempre total÷cantidad,
+    // sea exento o no — lo que cambia es si al dar de alta se le suma o no el 16% automático.
     const costoUnitario = precioTotal!=null ? Math.round((precioTotal/cantidad)*100)/100 : null;
     const candidatos = buscar ? DB.conceptos.filter(c=>c.activo!==false && fuzzyMatch(c.descripcion, buscar)) : [];
-    return { original: line, cantidad, buscar, costoUnitario, match: candidatos[0]||null };
+    return { original: line, cantidad, buscar, costoUnitario, exento, match: candidatos[0]||null };
   });
 }
 function alDarDeAltaDesdeIndice(i, listaId){
@@ -7113,7 +7152,7 @@ function alDarDeAltaDesdeIndice(i, listaId){
     window.__alSinMatchTemp = (window.__alSinMatchTemp||[]).filter((_,idx)=>idx!==i);
     if(window.__alSinMatchTemp.length) dibujarModalSinMatch(listaId);
     else { closeModal(); toast('Todos los conceptos quedaron resueltos'); alMostrarComparacionPrecios(listaId); }
-  }, { descripcion: r.buscar||r.original, costoUnitario: r.costoUnitario, categoria: window.__alCategoriaLote||null });
+  }, { descripcion: r.buscar||r.original, costoUnitario: r.costoUnitario, categoria: window.__alCategoriaLote||null, exento: r.exento===true });
 }
 function dibujarModalSinMatch(id){
   const sinMatch = window.__alSinMatchTemp||[];
@@ -7130,7 +7169,7 @@ function dibujarModalSinMatch(id){
       </div>
       <div style="display:flex; flex-direction:column; gap:6px;">
         ${sinMatch.map((r,i)=>`<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:8px;">
-            <span style="font-size:12.5px;">${r.original}${r.costoUnitario!=null?` <span style="color:var(--text-faint);">(≈ ${fmtMoney(r.costoUnitario)} c/u)</span>`:''}</span>
+            <span style="font-size:12.5px;">${r.original}${r.costoUnitario!=null?` <span style="color:var(--text-faint);">(≈ ${fmtMoney(r.costoUnitario)} c/u)</span>`:''}${r.exento!=null?` <span class="pill pill-small" style="background:${r.exento?'var(--guinda-light)':'var(--green-light)'}; color:${r.exento?'var(--guinda)':'var(--green)'};">${r.exento?'Exento de IVA':'Con IVA'}</span>`:''}</span>
             <button class="btn btn-sm" onclick="alDarDeAltaDesdeIndice(${i}, '${id}');">${icon('plus')} Dar de alta</button>
           </div>`).join('')}
       </div>
