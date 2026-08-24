@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.13.0';
+const APP_VERSION = 'v2.13.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -6847,10 +6847,15 @@ const BLOQUE_ANALISIS_COLOR = {
   'Medicamento':'#2E6FDB', 'Material/Insumo':'#0EA5A5', 'Equipo':'#8B5CF6', 'Sala/Equipo':'#D69A1F',
   'Servicio':'#C0175C', 'Lista completa':'#1B3E73', 'Otro':'#6B7280'
 };
-function colorDeBloque(nombre){ return BLOQUE_ANALISIS_COLOR[nombre] || '#9CA3AF'; }
+const BLOQUE_COLORES_AUTO = ['#2E6FDB','#0EA5A5','#8B5CF6','#D69A1F','#C0175C','#1B3E73','#059669','#DB2777','#EA580C','#4F46E5'];
+function colorDeBloque(nombre){
+  if(BLOQUE_ANALISIS_COLOR[nombre]) return BLOQUE_ANALISIS_COLOR[nombre];
+  // Para categorías personalizadas (ej. "MATERIALEs"), un color estable según el nombre, para que siempre se vea igual.
+  let hash = 0; for(let i=0;i<nombre.length;i++) hash = (hash*31 + nombre.charCodeAt(i)) % BLOQUE_COLORES_AUTO.length;
+  return BLOQUE_COLORES_AUTO[Math.abs(hash)];
+}
 function agruparConceptosPorBloque(l){
   const grupos = {};
-  BLOQUES_ANALISIS_PREDEFINIDOS.forEach(b=> grupos[b]=[]); // siempre visibles, aunque no tengan conceptos todavía
   l.conceptos.forEach(r=>{
     const co = conceptoById(r.id);
     const bloque = co ? (co.categoria||'Sin categoría') : 'Concepto ya no existe en catálogo';
@@ -6909,8 +6914,14 @@ function drawAlBloques(){
   const wrap = document.getElementById('al-bloques-wrap'); if(!wrap) return;
   const busqueda = alState.detalleSearch;
   const grupos = agruparConceptosPorBloque(l);
-  const extras = Object.keys(grupos).filter(b=>!BLOQUES_ANALISIS_PREDEFINIDOS.includes(b)).sort((a,b)=>a.localeCompare(b,'es'));
-  const nombresBloque = [...BLOQUES_ANALISIS_PREDEFINIDOS, ...extras];
+  const presentes = Object.keys(grupos).filter(b=>grupos[b].length>0);
+  const predefinidosPresentes = BLOQUES_ANALISIS_PREDEFINIDOS.filter(b=>presentes.includes(b));
+  const extras = presentes.filter(b=>!BLOQUES_ANALISIS_PREDEFINIDOS.includes(b)).sort((a,b)=>a.localeCompare(b,'es'));
+  const nombresBloque = [...predefinidosPresentes, ...extras];
+  if(!nombresBloque.length){
+    wrap.innerHTML = `<div class="table-wrap"><div class="empty-state">${icon('catalog')}<div>Sin conceptos todavía — agrega uno arriba o pega un bloque.</div></div></div>`;
+    return;
+  }
   wrap.innerHTML = nombresBloque.map(bloque=>{
     let filas = grupos[bloque]||[];
     if(busqueda) filas = filas.filter(r=>{ const co=conceptoById(r.id); return co && fuzzyMatch(co.descripcion, busqueda); });
@@ -6976,13 +6987,21 @@ function actualizarPreciosAnalisisLista(id){
   toast(cambiados ? cambiados+' precio(s) actualizado(s) desde el catálogo' : 'Todos los precios ya estaban al día');
 }
 function abrirPegarBloqueAnalisis(id){
+  const CATEGORIAS_BASE = ['Medicamento','Material/Insumo','Equipo','Sala/Equipo','Servicio','Lista completa','Otro'];
+  const categorias = [...new Set([...CATEGORIAS_BASE, ...DB.conceptos.map(x=>x.categoria).filter(Boolean)])];
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Pegar bloque de conceptos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
-      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto, en formato <b>CANTIDAD DESCRIPCIÓN PRECIO</b> (el precio es el total de esa línea — si no lo capturas, solo se usa la cantidad y descripción). Cada línea se busca en tu catálogo por coincidencia de palabras; si no la encuentra, te deja darla de alta con la descripción y el precio por unidad ya calculados.</div>
+      <div class="form-field full" style="margin-bottom:14px;"><label>Bloque para los conceptos que no existan todavía en catálogo</label>
+        <input class="input uc-input" id="al-cat-previo" style="width:100%;" list="al-cat-previo-list" value="${window.__alCategoriaLote||'Medicamento'}" placeholder="EJ. MATERIALES, MEDICAMENTOS, EQUIPO MÉDICO…">
+        <datalist id="al-cat-previo-list">${categorias.map(x=>`<option value="${x}">`).join('')}</datalist>
+        <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">Elige el bloque exacto que ya usas (por ejemplo, si ya tienes "MATERIALEs", elígelo aquí en vez de dejar que se cree "Material/Insumo" por separado).</div>
+      </div>
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px;">Pega un renglón por concepto, en formato <b>CANTIDAD DESCRIPCIÓN PRECIO</b> (el precio es el total de esa línea — si no lo capturas, solo se usa la cantidad y descripción). Cada línea se busca en tu catálogo por coincidencia de palabras; si no la encuentra, te deja darla de alta con la descripción, el bloque y el precio por unidad ya calculados.</div>
       <textarea id="al-paste-ta" class="input" style="width:100%; min-height:160px; font-family:monospace; font-size:12px;" placeholder="3 Gasas estériles 300&#10;2 Jeringa 10ml 90&#10;Guantes de látex talla M"></textarea>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="al-paste-procesar">${icon('check')} Buscar y agregar</button></div>`);
+  document.getElementById('al-cat-previo').oninput = (e)=>{ window.__alCategoriaLote = e.target.value; };
   document.getElementById('al-paste-procesar').onclick = ()=> procesarPegadoAnalisis(id);
 }
 function parsearBloqueConceptos(texto){
@@ -7078,7 +7097,6 @@ function procesarPegadoAnalisis(id){
   window.__alPreciosDifTemp = preciosDif;
   if(sinMatch.length){
     window.__alSinMatchTemp = sinMatch;
-    window.__alCategoriaLote = null;
     toast(agregados+' agregado(s), '+sinMatch.length+' sin coincidencia');
     dibujarModalSinMatch(id);
   } else {
