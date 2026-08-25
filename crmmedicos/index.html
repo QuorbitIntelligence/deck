@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.18.0';
+const APP_VERSION = 'v2.19.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2638,24 +2638,35 @@ function openPaqueteModal(id){
 /* ============================================================
    LISTAS DE MATERIALES Y MEDICAMENTOS (se imprimen con la cotización)
 ============================================================ */
-let lmState = { search:'' };
+let lmState = { search:'', estatus:'activos' };
 function renderListasMateriales(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:280px;">${icon('search')}<input id="lm-search" placeholder="Buscar lista por cualquier palabra…"></div>
-      <span style="font-size:12.5px; color:var(--text-muted); max-width:420px;">Listas oficiales de medicamentos e insumos (nomenclatura LMyM). Se ligan a cotizaciones, procedimientos o paquetes, y se imprimen como anexo del PDF.</span>
+      <select class="select" id="lm-estatus-filter">
+        <option value="activos" ${lmState.estatus==='activos'?'selected':''}>Activas</option>
+        <option value="inactivos" ${lmState.estatus==='inactivos'?'selected':''}>Inactivas</option>
+        <option value="todos" ${lmState.estatus==='todos'?'selected':''}>Todas</option>
+      </select>
+      <span style="font-size:12.5px; color:var(--text-muted); max-width:360px;">Listas oficiales de medicamentos e insumos (nomenclatura LMyM). Se ligan a cotizaciones, procedimientos o paquetes, y se imprimen como anexo del PDF.</span>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openListaMaterialesModal()">${icon('plus')} Nueva lista</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));" id="lm-grid"></div>`;
   document.getElementById('lm-search').oninput = e=>{ lmState.search=e.target.value; drawListaMaterialesGrid(); };
+  document.getElementById('lm-estatus-filter').onchange = e=>{ lmState.estatus=e.target.value; drawListaMaterialesGrid(); };
   drawListaMaterialesGrid();
 }
 function drawListaMaterialesGrid(){
   const grid = document.getElementById('lm-grid');
-  const activas = DB.listas_materiales.filter(l=>l.activo!==false && fuzzyMatch(l.nombre, lmState.search));
-  grid.innerHTML = activas.length ? activas.map(l=>`
-    <div class="card">
+  const filtradas = DB.listas_materiales.filter(l=>{
+    if(!fuzzyMatch(l.nombre, lmState.search)) return false;
+    if(lmState.estatus==='activos' && l.activo===false) return false;
+    if(lmState.estatus==='inactivos' && l.activo!==false) return false;
+    return true;
+  });
+  grid.innerHTML = filtradas.length ? filtradas.map(l=>`
+    <div class="card" style="${l.activo===false?'opacity:.65;':''}">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div style="font-weight:700; font-size:14px;">${l.nombre}</div>
+        <div style="font-weight:700; font-size:14px;">${l.nombre}${l.activo===false?' <span class="pill pill-muted pill-small">Inactiva</span>':''}</div>
         <button class="btn btn-sm" onclick="openListaMaterialesModal('${l.id}')">${icon('config')}</button>
       </div>
       <div style="display:flex; gap:8px; margin:10px 0; flex-wrap:wrap;">
@@ -2665,7 +2676,23 @@ function drawListaMaterialesGrid(){
       </div>
       ${l.notas ? `<div style="font-size:11px; color:var(--text-faint); line-height:1.5; white-space:pre-wrap; max-height:54px; overflow:hidden;">${l.notas}</div>` : ''}
       <button class="btn btn-sm" style="width:100%; margin-top:10px;" onclick="generateListaMaterialesPDF('${l.id}')">${icon('download')} Ver / descargar PDF</button>
+      ${l.activo===false
+        ? `<button class="btn btn-sm btn-accent" style="width:100%; margin-top:8px;" onclick="reactivarListaMateriales('${l.id}')">${icon('check')} Reactivar</button>`
+        : `<button class="btn btn-sm" style="width:100%; margin-top:8px; color:var(--guinda);" onclick="desactivarListaMateriales('${l.id}')">${icon('x')} Desactivar</button>`}
     </div>`).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('catalog')}<div>Sin listas que coincidan con tu búsqueda.</div></div>`;
+}
+function desactivarListaMateriales(id){
+  const l = DB.listas_materiales.find(x=>x.id===id); if(!l) return;
+  if(!confirm('¿Desactivar "'+l.nombre+'"? Se sigue guardando, solo se deja de mostrar en tu vista de activas — puedes reactivarla cuando quieras.')) return;
+  l.activo = false;
+  logAudit('Lista de materiales', id, 'Desactivada', l.nombre);
+  persistExtra(); drawListaMaterialesGrid(); toast('Lista desactivada — puedes verla desde el filtro "Inactivas"');
+}
+function reactivarListaMateriales(id){
+  const l = DB.listas_materiales.find(x=>x.id===id); if(!l) return;
+  l.activo = true;
+  logAudit('Lista de materiales', id, 'Reactivada', l.nombre);
+  persistExtra(); drawListaMaterialesGrid(); toast('Lista reactivada');
 }
 function itemsToText(arr){ return (arr||[]).map(i=>i.cantidad+' '+i.descripcion).join('\n'); }
 function textToItems(txt){
