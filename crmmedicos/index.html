@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.19.0';
+const APP_VERSION = 'v2.20.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -7304,11 +7304,49 @@ function renderAnalisis(){
   document.getElementById('content').innerHTML = `
     <div class="toolbar">
       <div class="searchbox" style="width:260px;">${icon('search')}<input id="an-search" placeholder="Buscar médico…"></div>
+      <span style="font-size:11.5px; color:var(--text-muted);">${DB.analisis_cuentas.length} análisis guardados</span>
+      ${DB.analisis_cuentas.length ? `<button class="btn btn-sm" onclick="abrirLimpiarAnalisisAntiguos()">${icon('trash')} Eliminar antiguos</button>` : ''}
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openAnalisisForm()">${icon('plus')} Nuevo análisis</button>
     </div>
     <div id="an-tree"></div>`;
   document.getElementById('an-search').oninput = ()=> drawAnalisisTree();
   drawAnalisisTree();
+}
+function abrirLimpiarAnalisisAntiguos(){
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Eliminar análisis antiguos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:14px;">Estos análisis solo sirven para revisar el desglose real de una cirugía al momento de cotizarla — normalmente no hace falta conservarlos mucho tiempo, y liberan espacio de almacenamiento.</div>
+      <div class="form-field full"><label>Eliminar los que tengan más de</label>
+        <select class="select" id="an-dias-limite" style="width:100%;">
+          <option value="30">30 días</option>
+          <option value="60" selected>60 días</option>
+          <option value="90">90 días</option>
+          <option value="180">180 días</option>
+        </select>
+      </div>
+      <div id="an-preview-count" style="font-size:12.5px; color:var(--text-muted); margin-top:10px;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" id="an-confirmar-limpieza">${icon('trash')} Eliminar</button></div>`);
+  function actualizarConteo(){
+    const dias = Number(document.getElementById('an-dias-limite').value);
+    const limite = Date.now() - dias*86400000;
+    const n = DB.analisis_cuentas.filter(a=>new Date(a.fecha_creacion).getTime()<limite).length;
+    document.getElementById('an-preview-count').textContent = n+' análisis se eliminarían con este filtro.';
+  }
+  document.getElementById('an-dias-limite').onchange = actualizarConteo;
+  actualizarConteo();
+  document.getElementById('an-confirmar-limpieza').onclick = ()=>{
+    const dias = Number(document.getElementById('an-dias-limite').value);
+    const limite = Date.now() - dias*86400000;
+    const aEliminar = DB.analisis_cuentas.filter(a=>new Date(a.fecha_creacion).getTime()<limite);
+    if(!aEliminar.length){ toast('No hay análisis que cumplan ese criterio'); return; }
+    if(!confirm('¿Eliminar '+aEliminar.length+' análisis de más de '+dias+' días? Esta acción no se puede deshacer.')) return;
+    const idsEliminar = new Set(aEliminar.map(a=>a.id));
+    DB.analisis_cuentas = DB.analisis_cuentas.filter(a=>!idsEliminar.has(a.id));
+    logAudit('Análisis de cuentas', '-', 'Limpieza masiva', aEliminar.length+' análisis eliminados (más de '+dias+' días)');
+    persistExtra(); closeModal(); toast(aEliminar.length+' análisis eliminados'); renderAnalisis();
+  };
 }
 function drawAnalisisTree(){
   const el = document.getElementById('an-tree'); if(!el) return;
@@ -7342,6 +7380,7 @@ function drawAnalisisTree(){
           ${mismos.length>1 ? `<button class="btn btn-sm" onclick="abrirComparativoAnalisis('${m.id}','${a.procedimiento.replace(/'/g,"\\'")}')">${icon('analytics')} Comparar</button>` : ''}
           ${cot ? `<button class="btn btn-sm btn-guinda" onclick="abrirComparativoVsCotizado('${a.id}')">${icon('quote')} Vs. cotizado</button>` : ''}
           <button class="btn btn-sm" onclick="verAnalisisDetalle('${a.id}')">${icon('quote')} Ver</button>
+          <button class="plan-task-icon-btn" onclick="eliminarAnalisis('${a.id}')" title="Eliminar análisis">${icon('trash')}</button>
         </div>`;
       }).join('')}
     </div>`;
