@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.20.0';
+const APP_VERSION = 'v2.21.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -6282,12 +6282,34 @@ function cotizacionesDeMedico(medId){
    PROSPECTOS — base de médicos candidatos, sin duplicar Leads
 ============================================================ */
 let prospectosState = { page:1, perPage:50, search:'', especialidad:'todas', selected:{} };
+let prSortState = { campo:null, dir:'asc' };
+function prThOrd(label, campo){
+  const activo = prSortState.campo===campo;
+  const arrow = activo ? (prSortState.dir==='asc'?' ▲':' ▼') : '';
+  return `<th style="cursor:pointer; user-select:none;" onclick="prOrdenarPor('${campo}')">${label}${arrow}</th>`;
+}
+function prOrdenarPor(campo){
+  if(prSortState.campo===campo) prSortState.dir = prSortState.dir==='asc'?'desc':'asc';
+  else prSortState = { campo, dir:'asc' };
+  renderProspectos();
+}
 function getProspectosFiltrados(){
-  return DB.prospectos.filter(p=>{
+  const base = DB.prospectos.filter(p=>{
     if(prospectosState.search && !fuzzyMatch(p.nombre+' '+p.especialidad+' '+(p.hospital||''), prospectosState.search)) return false;
     if(prospectosState.especialidad!=='todas' && !(p.especialidad||'').split(',').map(e=>e.trim()).includes(prospectosState.especialidad)) return false;
     return true;
-  }).sort((a,b)=> (a.especialidad||'').localeCompare(b.especialidad||'','es') || a.nombre.localeCompare(b.nombre,'es'));
+  });
+  if(!prSortState.campo){
+    return base.sort((a,b)=> (a.especialidad||'').localeCompare(b.especialidad||'','es') || a.nombre.localeCompare(b.nombre,'es'));
+  }
+  const campo = prSortState.campo, dir = prSortState.dir==='asc'?1:-1;
+  return base.sort((a,b)=>{
+    const va = (a[campo]||'').toString().toLowerCase();
+    const vb = (b[campo]||'').toString().toLowerCase();
+    if(!va && vb) return 1; // vacíos siempre al final, sin importar el sentido
+    if(va && !vb) return -1;
+    return va.localeCompare(vb,'es')*dir;
+  });
 }
 function conteoPorEspecialidadProspectos(){
   const counts = {};
@@ -6300,7 +6322,7 @@ function renderProspectos(){
   document.getElementById('content').innerHTML = `
     <div id="pr-bar-wrap"></div>
     <div class="toolbar">
-      <div class="searchbox" style="width:280px;">${icon('search')}<input id="pr-search" placeholder="Buscar por nombre, especialidad u hospital…"></div>
+      <div class="searchbox" style="width:280px;">${icon('search')}<input id="pr-search" placeholder="Buscar por nombre, especialidad u hospital…" value="${prospectosState.search}"></div>
       <div class="picker-wrap" style="position:relative;">
         <div class="searchbox" style="width:260px;">${icon('search')}<input id="pr-especialidad" placeholder="Buscar especialidad…" value="${prospectosState.especialidad!=='todas'?prospectosState.especialidad:''}" autocomplete="off"></div>
         <div id="pr-especialidad-results" class="picker-results" style="display:none;"></div>
@@ -6314,7 +6336,8 @@ function renderProspectos(){
       <button class="btn btn-primary" onclick="generateProspectosAvancePDF()">${icon('download')} Reporte de avance PDF</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th style="width:32px;"><input type="checkbox" id="pr-select-all"></th><th>Médico</th><th>Especialidad</th><th>Hospital</th><th>Teléfono</th><th>Correo</th><th>Estatus de contacto</th><th>Acciones</th></tr></thead>
+      <table><thead><tr><th style="width:32px;"><input type="checkbox" id="pr-select-all"></th>
+        ${prThOrd('Médico','nombre')}${prThOrd('Especialidad','especialidad')}${prThOrd('Hospital','hospital')}${prThOrd('Teléfono','telefono')}${prThOrd('Correo','correo')}${prThOrd('Estatus de contacto','estatus_contacto')}<th>Acciones</th></tr></thead>
       <tbody id="pr-tbody"></tbody></table>
     </div>`;
   drawProspectosBar();
