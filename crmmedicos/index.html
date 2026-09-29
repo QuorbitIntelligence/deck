@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.21.1';
+const APP_VERSION = 'v2.22.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2142,6 +2142,72 @@ function openConceptoModal(id, onSaved, prefill){
   if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Desactivar este concepto del catálogo?')){ c.activo=false; logAudit('Concepto', c.id, 'Desactivado', c.descripcion); persistExtra(); closeModal2(); if(onSaved) onSaved(null); else renderCatalogo(); } };
 }
 
+/* Catálogo navegable dentro de una ventana secundaria (modal2), pensado para usarse
+   desde dentro de otro flujo (ej. Paso 2 del asistente de cotización) sin perder ese
+   trabajo en curso: al editar un concepto aquí, se corrige en el catálogo real (mismo
+   objeto de DB.conceptos), por lo que cotizaciones ya guardadas no se ven afectadas
+   (guardan su propio precio congelado), pero la cotización que se está armando en ese
+   momento sí toma el precio nuevo la próxima vez que se redibuje. onPriceChanged(), si
+   se pasa, se llama cada vez que se guarda o desactiva un concepto desde aquí. */
+let wzCatBrowserState = { search:'', estatus:'activos', page:1, perPage:8 };
+function openWizardCatalogBrowser(onPriceChanged, keepState){
+  if(!keepState) wzCatBrowserState = { search:'', estatus:'activos', page:1, perPage:8 };
+  openModal2(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Catálogo de conceptos</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Corrige aquí el precio de un concepto sin perder la cotización que estás armando. Al guardar, el cambio se refleja de inmediato en tu lista de conceptos agregados; las cotizaciones ya guardadas conservan su precio original.</div>
+      <div class="toolbar" style="padding:0 0 12px;">
+        <div class="searchbox" style="width:100%; max-width:260px;">${icon('search')}<input id="wzcb-search" placeholder="Buscar concepto…" value="${wzCatBrowserState.search.replace(/"/g,'&quot;')}"></div>
+        <select class="select" id="wzcb-estatus">
+          <option value="activos" ${wzCatBrowserState.estatus==='activos'?'selected':''}>Activos</option>
+          <option value="inactivos" ${wzCatBrowserState.estatus==='inactivos'?'selected':''}>Inactivos</option>
+          <option value="todos" ${wzCatBrowserState.estatus==='todos'?'selected':''}>Todos</option>
+        </select>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;" id="wzcb-nuevo">${icon('plus')} Nuevo concepto</button>
+      </div>
+      <div class="table-wrap"><div id="wzcb-body"></div><div class="pagination" id="wzcb-pg"></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal2()">Listo, regresar a la cotización</button></div>`);
+  document.getElementById('wzcb-search').oninput = e=>{ wzCatBrowserState.search=e.target.value; wzCatBrowserState.page=1; drawWizardCatBrowserTable(onPriceChanged); };
+  document.getElementById('wzcb-estatus').onchange = e=>{ wzCatBrowserState.estatus=e.target.value; wzCatBrowserState.page=1; drawWizardCatBrowserTable(onPriceChanged); };
+  document.getElementById('wzcb-nuevo').onclick = ()=>{
+    // openConceptoModal cierra modal2 al guardar (closeModal2) antes de llamar onSaved,
+    // así que para "regresar" a la lista hay que reabrir la vista completa (con openModal2
+    // adentro de openWizardCatalogBrowser), no solo redibujar la tabla sobre un modal2 ya oculto.
+    openConceptoModal(null, (nuevo)=>{
+      if(nuevo && onPriceChanged) onPriceChanged(nuevo);
+      openWizardCatalogBrowser(onPriceChanged, true);
+    });
+  };
+  drawWizardCatBrowserTable(onPriceChanged);
+}
+function drawWizardCatBrowserTable(onPriceChanged){
+  let list = DB.conceptos.filter(c=>{
+    if(wzCatBrowserState.search && !fuzzyMatch(c.descripcion, wzCatBrowserState.search) && !fuzzyMatch(c.id, wzCatBrowserState.search)) return false;
+    if(wzCatBrowserState.estatus==='activos' && c.activo===false) return false;
+    if(wzCatBrowserState.estatus==='inactivos' && c.activo!==false) return false;
+    return true;
+  });
+  const body = document.getElementById('wzcb-body'); if(!body) return;
+  const head = `<table><thead><tr><th>Concepto</th><th>Categoría</th><th>Costo</th><th>Estatus</th><th></th></tr></thead><tbody>`;
+  const page = paginate(list, wzCatBrowserState.page, wzCatBrowserState.perPage);
+  body.innerHTML = page.length ? head + page.map(c=>`
+    <tr>
+      <td style="font-weight:500;">${c.descripcion}</td>
+      <td><span class="pill pill-blue pill-small">${c.categoria}</span></td>
+      <td style="font-weight:600;">${fmtMoney(c.costo_sin_iva)}</td>
+      <td><span class="pill ${c.activo!==false?'pill-green':'pill-red'} pill-small">${c.activo!==false?'Activo':'Inactivo'}</span></td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-sm" data-edit="${c.id}">${icon('config')} Editar</button></td>
+    </tr>`).join('') + '</tbody></table>' : `<div class="empty-state">${icon('catalog')}<div>Sin conceptos que coincidan.</div></div>`;
+  paginationControls('wzcb-pg', list.length, wzCatBrowserState.page, wzCatBrowserState.perPage, p=>{ wzCatBrowserState.page=p; drawWizardCatBrowserTable(onPriceChanged); });
+  body.querySelectorAll('[data-edit]').forEach(btn=> btn.onclick = ()=>{
+    openConceptoModal(btn.dataset.edit, (actualizado)=>{
+      if(onPriceChanged) onPriceChanged(actualizado);
+      openWizardCatalogBrowser(onPriceChanged, true);
+    });
+  });
+}
+
 /* ============================================================
    BLOQUES RÁPIDOS DE CONCEPTOS
 ============================================================ */
@@ -3266,7 +3332,10 @@ function drawWizardPane(){
   } else if(wizardState.step===2){
     pane.innerHTML = `
       <div class="picker-wrap" style="margin-bottom:12px;">
-        <div class="searchbox" style="width:100%; padding:12px 14px;">${icon('search')}<input class="uc-input" id="wz-concepto-search" placeholder="ESCRIBE PARTE DEL NOMBRE DEL CONCEPTO…" autocomplete="off" style="font-size:14px;"></div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="searchbox" style="flex:1; padding:12px 14px;">${icon('search')}<input class="uc-input" id="wz-concepto-search" placeholder="ESCRIBE PARTE DEL NOMBRE DEL CONCEPTO…" autocomplete="off" style="font-size:14px;"></div>
+          <button class="btn btn-sm" id="wz-abrir-catalogo" type="button" title="¿Ves un precio mal o desactualizado? Corrígelo aquí sin perder esta cotización." style="white-space:nowrap; align-self:stretch;">${icon('catalog')} Ver catálogo</button>
+        </div>
         <div id="wz-concepto-results" class="picker-results" style="display:none;"></div>
       </div>
       <button class="btn btn-sm" id="wz-bloque-btn" type="button" style="margin-bottom:14px;">${icon('plus')} Agregar bloque de conceptos</button>
@@ -3277,6 +3346,9 @@ function drawWizardPane(){
     foot.innerHTML = `<button class="btn" id="wz-back">Atrás</button><button class="btn btn-primary" id="wz-next">Siguiente</button>`;
     document.getElementById('wz-back').onclick = ()=>{ wizardState.step=1; drawWizardPane(); };
     document.getElementById('wz-next').onclick = ()=>{ wizardState.step=3; drawWizardPane(); };
+    document.getElementById('wz-abrir-catalogo').onclick = ()=>{
+      openWizardCatalogBrowser(()=>{ drawWizardConceptos(); });
+    };
     wireConceptPicker(document.getElementById('wz-concepto-search'), document.getElementById('wz-concepto-results'), (cid)=> wzAddConcepto(cid));
     document.getElementById('wz-bloque-btn').onclick = ()=>{
       const panel = document.getElementById('wz-bloque-panel');
