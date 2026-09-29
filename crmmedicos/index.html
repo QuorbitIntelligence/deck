@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.22.0';
+const APP_VERSION = 'v2.23.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1043,10 +1043,17 @@ function renderConceptSelection(containerEl, selMap, onChange){
     return `<div class="line-item"><div class="desc">${c?c.descripcion:id}${c&&c.grupo_eleccion?`<div class="cat">Grupo: ${c.grupo_eleccion}</div>`:''}</div>
       <input type="number" min="1" class="qty-input" value="${qty}" data-qty="${id}">
       <div style="width:80px; text-align:right; font-weight:600; font-size:12.5px;">${fmtMoney(line)}</div>
+      <button class="drawer-close" style="width:24px;height:24px;" data-edit="${id}" title="Editar este concepto en el catálogo">${icon('config')}</button>
       <button class="drawer-close" style="width:24px;height:24px;" data-rm="${id}">${icon('x')}</button></div>`;
   }).join('') : emptyMini('Aún no agregas conceptos.');
   containerEl.querySelectorAll('[data-qty]').forEach(inp=> inp.onchange = ()=>{ selMap[inp.dataset.qty] = Math.max(1, parseInt(inp.value)||1); onChange&&onChange(); renderConceptSelection(containerEl, selMap, onChange); });
   containerEl.querySelectorAll('[data-rm]').forEach(b=> b.onclick = ()=>{ delete selMap[b.dataset.rm]; onChange&&onChange(); renderConceptSelection(containerEl, selMap, onChange); });
+  // Acceso directo al catálogo para ESTE concepto puntual: abre su ficha de edición en modal2
+  // (sin perder el formulario/asistente que está abierto detrás) y al guardar refresca esta
+  // misma lista con el precio nuevo, igual que el botón general "Ver catálogo".
+  containerEl.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=>{
+    openConceptoModal(b.dataset.edit, ()=>{ onChange&&onChange(); renderConceptSelection(containerEl, selMap, onChange); });
+  });
 }
 /* Buscador + checklist de condiciones, reutilizable */
 function wireClausulaPicker(searchEl, listEl, selMap, onToggle, contexto){
@@ -2325,7 +2332,7 @@ function abrirCotizacionProvisional(procId){
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn" id="pc-preview">${icon('quote')} Vista previa</button><button class="btn btn-primary" id="pc-generar">${icon('download')} Generar PDF</button></div>`);
   const listEl = document.getElementById('pc-c-list');
-  function redraw(){ renderConceptSelection(listEl, provCotState.conceptos); actualizarSumaProvisional(); }
+  function redraw(){ renderConceptSelection(listEl, provCotState.conceptos, actualizarSumaProvisional); actualizarSumaProvisional(); }
   redraw();
   wireConceptPicker(document.getElementById('pc-c-search'), document.getElementById('pc-c-results'), (cid)=>{ provCotState.conceptos[cid]=(provCotState.conceptos[cid]||0)+1; redraw(); });
   wireClausulaPicker(document.getElementById('pc-cl-search'), document.getElementById('pc-cl-list'), provCotState.condiciones);
@@ -3490,7 +3497,10 @@ function wzAddConcepto(id){ wizardState.conceptos[id] = (wizardState.conceptos[i
 function drawWizardConceptos(){
   const listEl = document.getElementById('wz-concepto-list');
   if(!listEl) return;
-  renderConceptSelection(listEl, wizardState.conceptos, ()=>{ wizardState._costoEsManual = false; });
+  // El callback vuelve a llamar drawWizardConceptos (no solo a redibujar la lista) para que el
+  // Subtotal de arriba también se actualice al cambiar cantidades, quitar un concepto, o editar
+  // su precio desde el botón de catálogo de la propia fila.
+  renderConceptSelection(listEl, wizardState.conceptos, ()=>{ wizardState._costoEsManual = false; drawWizardConceptos(); });
   const total = Object.entries(wizardState.conceptos).reduce((s,[id,qty])=>{ const c=conceptoById(id); return s+(c?c.costo_sin_iva*qty:0); },0);
   const totalEl = document.getElementById('wz-total'); if(totalEl) totalEl.textContent = 'Subtotal: '+fmtMoney(total);
 }
