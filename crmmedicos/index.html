@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.23.0';
+const APP_VERSION = 'v2.24.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1811,10 +1811,10 @@ function generateLeadsEspecialidadPDF(){
   logAudit('Médico', '-', 'Reporte generado', tipoReporte);
   toast('Reporte generado');
 }
-function openMedicoModal(id){
+function openMedicoModal(id, onSaved){
   const m = id ? medicoById(id) : null;
-  openModal(`
-    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${m?'Editar registro':'Nuevo registro'}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+  openModal2(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${m?'Editar registro':'Nuevo registro'}</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-field full"><label>Nombre completo</label><input class="input uc-input" id="md-nombre" style="width:100%;" value="${m?m.nombre:''}" placeholder="DR. NOMBRE APELLIDO APELLIDO"></div>
@@ -1836,7 +1836,7 @@ function openMedicoModal(id){
         <div class="form-field full"><label>Comentarios o notas</label><textarea class="input" id="md-notas" style="width:100%; min-height:90px;" placeholder="Escribe aquí comentarios o notas sobre este lead…">${m&&m.notas?m.notas:''}</textarea></div>
       </div>
     </div>
-    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="md-save">Guardar registro</button></div>`);
+    <div class="modal-foot"><button class="btn" onclick="closeModal2()">Cancelar</button><button class="btn btn-primary" id="md-save">Guardar registro</button></div>`);
   document.getElementById('md-save').onclick = ()=>{
     const nombre = document.getElementById('md-nombre').value.trim();
     const especialidad = document.getElementById('md-especialidad').value.trim();
@@ -1852,15 +1852,17 @@ function openMedicoModal(id){
       notas: document.getElementById('md-notas').value,
       activo: true
     };
+    let nuevo = null;
     if(m){
       Object.assign(m, payload); m.__edited = true;
       logAudit('Médico', m.id, 'Edición', nombre);
     } else {
-      const nuevo = Object.assign({ id: uid('MED').toUpperCase(), revisado:false, fecha_alta:new Date().toISOString(), __new:true }, payload);
+      nuevo = Object.assign({ id: uid('MED').toUpperCase(), revisado:false, fecha_alta:new Date().toISOString(), __new:true }, payload);
       DB.medicos.unshift(nuevo);
       logAudit('Médico', nuevo.id, 'Alta', nombre+' — '+especialidad);
     }
-    persistExtra(); closeModal(); toast('Registro guardado'); renderMedicos();
+    persistExtra(); closeModal2(); toast('Registro guardado');
+    if(onSaved) onSaved(nuevo||m); else renderMedicos();
   };
 }
 function setMedicoEstatus(id, estatus){
@@ -3220,7 +3222,10 @@ function drawWizardPane(){
     pane.innerHTML = `
       <div class="form-field full picker-wrap" style="margin-bottom:18px;">
         <label style="font-size:13px;">Médico</label>
-        <div class="searchbox" style="width:100%; padding:12px 14px;">${icon('search')}<input class="uc-input" id="wz-medico-search" placeholder="ESCRIBE CUALQUIER PARTE DEL NOMBRE…" autocomplete="off" style="font-size:14px;"></div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="searchbox" style="flex:1; padding:12px 14px;">${icon('search')}<input class="uc-input" id="wz-medico-search" placeholder="ESCRIBE CUALQUIER PARTE DEL NOMBRE…" autocomplete="off" style="font-size:14px;"></div>
+          <button class="btn btn-sm" id="wz-medico-alta" type="button" title="¿No está dado de alta? Regístralo aquí sin perder esta cotización." style="white-space:nowrap; align-self:stretch;">${icon('plus')} Nuevo médico</button>
+        </div>
         <div id="wz-medico-results" class="picker-results" style="display:none;"></div>
         <div id="wz-medico-chip">${selMed ? medicoChipHtml(selMed) : ''}</div>
       </div>
@@ -3277,6 +3282,23 @@ function drawWizardPane(){
     };
     if(selMed){ const chipBtn = document.querySelector('#wz-medico-chip button'); if(chipBtn) chipBtn.onclick = ()=>{ wizardState.medico=''; document.getElementById('wz-medico-chip').innerHTML=''; }; }
     document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')){ medResults.style.display='none'; } });
+    document.getElementById('wz-medico-alta').onclick = ()=>{
+      // openMedicoModal se abre en la ventana secundaria (modal2) para no perder esta cotización en
+      // curso. Al guardar, seleccionamos al médico recién dado de alta en el propio picker (sin
+      // redibujar todo el Paso 1, para no perder lo que ya se haya escrito en Procedimiento).
+      openMedicoModal(null, (nuevo)=>{
+        if(!nuevo) return;
+        const medicoAnterior = wizardState.medico ? medicoById(wizardState.medico) : null;
+        wizardState.medico = nuevo.id;
+        if(!wizardState.telefonoContacto || (medicoAnterior && wizardState.telefonoContacto===medicoAnterior.telefono)){
+          wizardState.telefonoContacto = null;
+        }
+        medSearch.value=''; medResults.style.display='none';
+        document.getElementById('wz-medico-chip').innerHTML = medicoChipHtml(medicoById(wizardState.medico));
+        document.getElementById('wz-medico-chip').querySelector('button').onclick = ()=>{ wizardState.medico=''; document.getElementById('wz-medico-chip').innerHTML=''; };
+        toast('Médico dado de alta y seleccionado para esta cotización');
+      });
+    };
 
     const refreshListaChip = ()=>{
       const el = document.getElementById('wz-lista-chip'); if(!el) return;
