@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.26.0';
+const APP_VERSION = 'v2.26.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -845,7 +845,7 @@ const ROUTES = [
 /* Prospectos ahora vive en un HTML aparte (herramienta independiente, "Prospectos Médicos v1.1"),
    para aligerar el peso de esta plataforma. Este botón lo abre en pestaña nueva.
    ⚠️ EDITA ESTA URL cuando subas el archivo a GitHub Pages (placeholder por ahora). */
-const PROSPECTOS_URL = 'https://TU-USUARIO.github.io/prospectos-medicos/';
+const PROSPECTOS_URL = 'https://quorbitintelligence.github.io/deck/prospectosmedicos/';
 let CURRENT_ROUTE = 'dashboard';
 function navToneVars(tone){
   if(tone==='muted') return {bg:'var(--surface-3)', fg:'var(--text-faint)'};
