@@ -634,6 +634,10 @@ async function loadSession(){
           if(cl){ cl.default = !!ov.default; cl.activa = ov.activa!==false; }
         });
       }
+      // Prospectos ya no vive en esta plataforma (se movió a la herramienta independiente).
+      // Si el navegador aún guarda ese bloque de una versión anterior, lo purgamos de inmediato
+      // para liberar el espacio de almacenamiento, sin esperar a que el usuario haga otro cambio.
+      if(extra.prospectos && extra.prospectos.length){ setTimeout(persistExtra, 50); }
     }
   }catch(e){}
   DB.cotizaciones.forEach(migrarEstatusCot);
