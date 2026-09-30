@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.26.1';
+const APP_VERSION = 'v2.27.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -840,6 +840,7 @@ const ROUTES = [
   {id:'analisis', label:'Análisis de Cuentas', icon:'analytics', group:'Relación', tone:'green'},
   {id:'analisis_listas', label:'Análisis de Listas', icon:'catalog', group:'Catálogo', tone:'primary'},
   {id:'prospectos', label:'Prospectos', icon:'doctor', group:'General', tone:'violet'},
+  {id:'informativo', label:'Informativo', icon:'checklist', group:'Sistema', tone:'blue'},
   {id:'config', label:'Configuración', icon:'config', group:'Sistema', tone:'muted'},
 ];
 /* Prospectos ahora vive en un HTML aparte (herramienta independiente, "Prospectos Médicos v1.1"),
@@ -916,12 +917,13 @@ function navigate(route){
     analisis:['Análisis de Cuentas','Desglose real de costos por médico, para cotizar más exacto la próxima vez'],
     analisis_listas:['Análisis de Listas','Arma y revisa listas de costos libremente — sin conectarse a tus cotizaciones'],
     prospectos:['Prospectos','Base de médicos candidatos a convertirse en Leads, sin duplicar a los que ya tienes'],
+    informativo:['Informativo','Directorio de correos y tabuladores de referencia'],
     config:['Configuración','Preferencias, respaldos e histórico de auditoría']};
   document.getElementById('page-title').textContent = titles[route][0];
   document.getElementById('page-crumb').textContent = titles[route][1];
   const renderers = {dashboard:renderDashboard, medicos:renderMedicos, catalogo:renderCatalogo,
     procedimientos:renderProcedimientos, paquetes:renderPaquetes, listas_materiales:renderListasMateriales, bloques:renderBloques,
-    cotizaciones:renderCotizaciones, aseguradoras:renderAseguradoras, casos:renderCasos, calendario:renderCalendario, plan_trabajo:renderPlanTrabajo, convenios:renderConvenios, difusion:renderDifusion, condiciones:renderCondiciones, analisis:renderAnalisis, analisis_listas:renderAnalisisListas, config:renderConfig};
+    cotizaciones:renderCotizaciones, aseguradoras:renderAseguradoras, casos:renderCasos, calendario:renderCalendario, plan_trabajo:renderPlanTrabajo, convenios:renderConvenios, difusion:renderDifusion, condiciones:renderCondiciones, analisis:renderAnalisis, analisis_listas:renderAnalisisListas, informativo:renderInformativo, config:renderConfig};
   renderers[route]();
   document.getElementById('content').scrollTo?.(0,0);
   window.scrollTo(0,0);
@@ -7427,6 +7429,90 @@ function drawCondList(){
     const cl = DB.clausulas.find(c=>String(c.id)===String(b.dataset.del));
     if(cl && confirm('¿Quitar esta condición del catálogo activo?')){ cl.activa=false; logAudit('Condición', cl.id, 'Desactivada', (cl.titulo||cl.texto).slice(0,50)); persistExtra(); drawCondList(); renderCondiciones(); }
   });
+}
+
+/* ============================================================
+   INFORMATIVO — bloques de referencia de solo lectura
+============================================================ */
+const DIRECTORIO_CORREOS_NOOR = [
+  ['noorclinicsadecv@gmail.com', 'Admisión'],
+  ['analisisdecuentasnoor@gmail.com', 'Mayra Cedillo'],
+  ['comprasnoorclinic@gmail.com', 'Lourdes Cruz'],
+  ['enfermerianoor@gmail.com', 'Nancy Perez'],
+  ['vigilancianoorclinic@gmail.com', 'Vigilancia'],
+  ['quirofanonoorclinic@gmail.com', 'Oscar'],
+  ['cocinanoor@gmail.com', 'cocina'],
+  ['noorclinicrh@gmail.com', 'Yadira Ordaz'],
+  ['calidadnoorclinic@gmail.com', 'Cristina'],
+  ['farmacianoor@gmail.com', 'Nancy'],
+  ['contabilidadnoo@gmail.com', 'Antonio Gonzalez'],
+  ['nutricionnoor@gmail.com', 'Alma Hernandez'],
+  ['rpnoorclinic@gmail.com', 'Relaciones'],
+  ['imgenologianoorclinic@gmail.com', 'Elizabeth'],
+];
+const TABULADOR_PAQUETES_QUIRURGICOS = {
+  costoBase: 5059.17,
+  columnas: ['30%', '40%', '50%'],
+  filas: [
+    ['COSTO', [5059.17, 5059.17, 5059.17]],
+    ['PORCENTAJE', [6576.92, 7082.84, 7588.76]],
+    ['COSTO CON IVA', [7629.23, 8216.09, 8802.96]],
+    ['COMISIÓN', [305.17, 328.64, 352.12]],
+    ['TOTAL', [7934.40, 8544.74, 9155.07]],
+  ]
+};
+function copiarTexto(text){
+  const ok = ()=> toast('Copiado al portapapeles');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok).catch(()=>copiarTextoFallback(text, ok));
+  } else {
+    copiarTextoFallback(text, ok);
+  }
+}
+function copiarTextoFallback(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); if(cb) cb(); }catch(e){}
+  document.body.removeChild(ta);
+}
+function renderInformativo(){
+  document.getElementById('content').innerHTML = `
+    <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:20px; align-items:start;">
+      <div class="card">
+        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${icon('mail')} Directorio de correos institucionales</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Cuentas de correo por área — Hospital Noor de Bosque Real. Solo de referencia.</div>
+        <div class="table-wrap">
+          <table style="width:100%;">
+            <thead><tr><th>Correo</th><th>Usuario</th><th style="width:40px;"></th></tr></thead>
+            <tbody>
+              ${DIRECTORIO_CORREOS_NOOR.map(([correo,usuario])=>`
+                <tr>
+                  <td class="mono" style="font-size:12px;">${correo}</td>
+                  <td style="font-weight:600;">${usuario}</td>
+                  <td><button class="btn btn-sm" title="Copiar correo" onclick="copiarTexto('${correo}')">${icon('quote')}</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${icon('analytics')} Tabulador de paquetes quirúrgicos</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Ejemplo de cálculo por porcentaje de comisión, sobre un costo base de ${TABULADOR_PAQUETES_QUIRURGICOS.costoBase.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}. Solo de referencia.</div>
+        <div class="table-wrap">
+          <table style="width:100%; font-size:12.5px;">
+            <thead><tr><th></th>${TABULADOR_PAQUETES_QUIRURGICOS.columnas.map(c=>`<th style="text-align:right;">${c}</th>`).join('')}</tr></thead>
+            <tbody>
+              ${TABULADOR_PAQUETES_QUIRURGICOS.filas.map(([label,valores])=>`
+                <tr ${label==='TOTAL'?'style="font-weight:700; color:var(--primary);"':''}>
+                  <td style="font-weight:600;">${label}</td>
+                  ${valores.map(v=>`<td class="mono" style="text-align:right;">${v.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</td>`).join('')}
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
 }
 
 /* ============================================================
