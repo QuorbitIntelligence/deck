@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.28.1';
+const APP_VERSION = 'v2.28.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2015,30 +2015,30 @@ function fmtMoneyRango(n){
   // centavos solo para valores menores a $1 y dejamos el resto igual de limpio que en el resto de la app.
   return n.toLocaleString('es-MX', { style:'currency', currency:'MXN', minimumFractionDigits: n<1?2:0, maximumFractionDigits: n<1?2:0 });
 }
-function tablaComisionesRowsHtml(rangos){
-  return rangos.map(([ini,fin,pct])=>`
-    <tr>
+function tablaComisionesRowsHtml(){
+  // Una sola tabla de 4 columnas (Inicio, Final, % Medicamento, % Material) en vez de dos
+  // tablas lado a lado — así cabe sin recortarse ni necesitar scroll horizontal dentro de
+  // un modal angosto (como el formulario de Nuevo/Editar concepto).
+  return TABLA_COMISIONES_REFERENCIA.medicamento.map(([ini,fin,pctMed], i)=>{
+    const pctMat = TABLA_COMISIONES_REFERENCIA.material[i][2];
+    return `<tr>
       <td class="mono">${fmtMoneyRango(ini)}</td>
       <td class="mono">${fmtMoneyRango(fin)}</td>
-      <td style="text-align:right; font-weight:700; color:var(--primary);">${pct}%</td>
-    </tr>`).join('');
+      <td style="text-align:right; font-weight:700; color:var(--primary);">${pctMed}%</td>
+      <td style="text-align:right; font-weight:700; color:var(--guinda);">${pctMat}%</td>
+    </tr>`;
+  }).join('');
 }
 function tablaComisionesContentHtml(){
   return `
-    <div style="font-size:12.5px; color:var(--text-muted); background:var(--primary-light); border-radius:10px; padding:10px 14px; margin-bottom:18px;">
+    <div style="font-size:12.5px; color:var(--text-muted); background:var(--primary-light); border-radius:10px; padding:10px 14px; margin-bottom:14px;">
       Solo de referencia — úsala para decidir cuánto aumentar (comisión) al costo de un medicamento o material según su rango de precio, al momento de darlo de alta o actualizarlo en el catálogo. No modifica ningún concepto automáticamente.
     </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
-      <div>
-        <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">${icon('catalog')} Medicamento</div>
-        <table style="width:100%; font-size:12.5px;"><thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right;">Porcentaje</th></tr></thead>
-          <tbody>${tablaComisionesRowsHtml(TABLA_COMISIONES_REFERENCIA.medicamento)}</tbody></table>
-      </div>
-      <div>
-        <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">${icon('catalog')} Material</div>
-        <table style="width:100%; font-size:12.5px;"><thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right;">Porcentaje</th></tr></thead>
-          <tbody>${tablaComisionesRowsHtml(TABLA_COMISIONES_REFERENCIA.material)}</tbody></table>
-      </div>
+    <div class="table-wrap">
+      <table style="width:100%; font-size:12.5px;">
+        <thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right; color:var(--primary);">% Medicamento</th><th style="text-align:right; color:var(--guinda);">% Material</th></tr></thead>
+        <tbody>${tablaComisionesRowsHtml()}</tbody>
+      </table>
     </div>`;
 }
 function openTablaComisionesModal(){
