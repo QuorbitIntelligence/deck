@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.28.2';
+const APP_VERSION = 'v2.29.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2365,6 +2365,57 @@ function wireListaPicker(searchEl, resultsEl, onPick){
   document.addEventListener('click', e=>{ if(!e.target.closest('.picker-wrap')){ resultsEl.style.display='none'; } });
 }
 
+/* Consulta rápida de una lista de materiales desde el paso 2 del wizard de cotización.
+   Se abre en modal2 (encima del wizard, que vive en modal) para no perder la captura en curso;
+   al cerrar, regresa exactamente al mismo paso sin tocar wizardState. */
+function openWizardListaPreview(){
+  const asignada = wizardState.listaAsignada ? DB.listas_materiales.find(x=>x.id===wizardState.listaAsignada.id) : null;
+  openModal2(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('checklist')} Consultar lista de materiales</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Consulta rápida — por ejemplo, para verificar si una lista lleva el sensor BIS — mientras capturas los conceptos. No modifica esta cotización.</div>
+      ${asignada ? `<div style="font-size:11.5px; color:var(--text-faint); margin-bottom:8px;">Mostrando la lista asignada a esta cotización en el paso 1 — busca abajo si quieres consultar otra.</div>` : ''}
+      <div class="picker-wrap">
+        <div class="searchbox" style="width:100%;">${icon('search')}<input id="wzlp-search" placeholder="Buscar lista por nombre…" autocomplete="off" value="${asignada?asignada.nombre.replace(/"/g,'&quot;'):''}"></div>
+        <div id="wzlp-results" class="picker-results" style="display:none;"></div>
+      </div>
+      <div id="wzlp-detail" style="margin-top:14px;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal2()">Listo, regresar a la cotización</button></div>`);
+  wireListaPicker(document.getElementById('wzlp-search'), document.getElementById('wzlp-results'), (l)=>{
+    document.getElementById('wzlp-search').value = l.nombre;
+    drawWizardListaPreviewDetail(l);
+  });
+  if(asignada) drawWizardListaPreviewDetail(asignada);
+}
+function drawWizardListaPreviewDetail(l){
+  const det = document.getElementById('wzlp-detail'); if(!det) return;
+  const meds = [...(l.medicamentos||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
+  const mats = [...(l.materiales||[])].sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
+  det.innerHTML = `
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+      <span class="pill ${l.activo!==false?'pill-green':'pill-red'} pill-small">${l.activo!==false?'Activa':'Inactiva'}</span>
+      ${l.autorizada ? `<span class="pill pill-green pill-small">${icon('check')} Autorizada</span>` : `<span class="pill pill-muted pill-small">Sin autorizar</span>`}
+      ${l.costo_sihowin ? `<span class="pill pill-blue pill-small">SIHOWIN: ${fmtMoney(l.costo_sihowin)}</span>` : ''}
+      ${l.costo_paciente ? `<span class="pill pill-blue pill-small">Paciente: ${fmtMoney(l.costo_paciente)}</span>` : ''}
+    </div>
+    ${l.notas ? `<div style="font-size:11.5px; color:var(--text-faint); white-space:pre-wrap; margin-bottom:12px; background:var(--surface); border-radius:8px; padding:8px 10px;">${l.notas}</div>` : ''}
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div>
+        <div style="font-weight:700; font-size:11.5px; color:var(--primary); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em;">Medicamentos (${meds.length})</div>
+        <div class="table-wrap" style="max-height:280px; overflow-y:auto;">
+          ${meds.length ? `<table style="width:100%; font-size:12px;"><tbody>${meds.map(i=>`<tr><td>${i.descripcion}</td><td style="text-align:right; white-space:nowrap; font-weight:600;">${i.cantidad}×</td></tr>`).join('')}</tbody></table>` : `<div class="picker-empty">Sin medicamentos en esta lista.</div>`}
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:11.5px; color:var(--guinda); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em;">Materiales e insumos (${mats.length})</div>
+        <div class="table-wrap" style="max-height:280px; overflow-y:auto;">
+          ${mats.length ? `<table style="width:100%; font-size:12px;"><tbody>${mats.map(i=>`<tr><td>${i.descripcion}</td><td style="text-align:right; white-space:nowrap; font-weight:600;">${i.cantidad}×</td></tr>`).join('')}</tbody></table>` : `<div class="picker-empty">Sin materiales en esta lista.</div>`}
+        </div>
+      </div>
+    </div>`;
+}
+
 /* ============================================================
    PROCEDIMIENTOS PREDEFINIDOS
 ============================================================ */
@@ -3435,6 +3486,7 @@ function drawWizardPane(){
         <div style="display:flex; gap:8px; align-items:center;">
           <div class="searchbox" style="flex:1; padding:12px 14px;">${icon('search')}<input class="uc-input" id="wz-concepto-search" placeholder="ESCRIBE PARTE DEL NOMBRE DEL CONCEPTO…" autocomplete="off" style="font-size:14px;"></div>
           <button class="btn btn-sm" id="wz-abrir-catalogo" type="button" title="¿Ves un precio mal o desactualizado? Corrígelo aquí sin perder esta cotización." style="white-space:nowrap; align-self:stretch;">${icon('catalog')} Ver catálogo</button>
+          <button class="btn btn-sm" id="wz-ver-lista" type="button" title="Consulta rápida: verifica qué incluye una lista de materiales (p. ej. si lleva sensor BIS) sin perder tu captura." style="white-space:nowrap; align-self:stretch;">${icon('checklist')} Consultar lista</button>
         </div>
         <div id="wz-concepto-results" class="picker-results" style="display:none;"></div>
       </div>
@@ -3449,6 +3501,7 @@ function drawWizardPane(){
     document.getElementById('wz-abrir-catalogo').onclick = ()=>{
       openWizardCatalogBrowser(()=>{ drawWizardConceptos(); });
     };
+    document.getElementById('wz-ver-lista').onclick = ()=>{ openWizardListaPreview(); };
     wireConceptPicker(document.getElementById('wz-concepto-search'), document.getElementById('wz-concepto-results'), (cid)=> wzAddConcepto(cid));
     document.getElementById('wz-bloque-btn').onclick = ()=>{
       const panel = document.getElementById('wz-bloque-panel');
