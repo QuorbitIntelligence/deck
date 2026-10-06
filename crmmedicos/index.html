@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.28.0';
+const APP_VERSION = 'v2.28.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2023,26 +2023,28 @@ function tablaComisionesRowsHtml(rangos){
       <td style="text-align:right; font-weight:700; color:var(--primary);">${pct}%</td>
     </tr>`).join('');
 }
+function tablaComisionesContentHtml(){
+  return `
+    <div style="font-size:12.5px; color:var(--text-muted); background:var(--primary-light); border-radius:10px; padding:10px 14px; margin-bottom:18px;">
+      Solo de referencia — úsala para decidir cuánto aumentar (comisión) al costo de un medicamento o material según su rango de precio, al momento de darlo de alta o actualizarlo en el catálogo. No modifica ningún concepto automáticamente.
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+      <div>
+        <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">${icon('catalog')} Medicamento</div>
+        <table style="width:100%; font-size:12.5px;"><thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right;">Porcentaje</th></tr></thead>
+          <tbody>${tablaComisionesRowsHtml(TABLA_COMISIONES_REFERENCIA.medicamento)}</tbody></table>
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">${icon('catalog')} Material</div>
+        <table style="width:100%; font-size:12.5px;"><thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right;">Porcentaje</th></tr></thead>
+          <tbody>${tablaComisionesRowsHtml(TABLA_COMISIONES_REFERENCIA.material)}</tbody></table>
+      </div>
+    </div>`;
+}
 function openTablaComisionesModal(){
   openModal2(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('quote')} Tabla de comisiones por rango de costo</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
-    <div class="modal-body">
-      <div style="font-size:12.5px; color:var(--text-muted); background:var(--primary-light); border-radius:10px; padding:10px 14px; margin-bottom:18px;">
-        Solo de referencia — úsala para decidir cuánto aumentar (comisión) al costo de un medicamento o material según su rango de precio, al momento de darlo de alta o actualizarlo en el catálogo. No modifica ningún concepto automáticamente.
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
-        <div>
-          <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">${icon('catalog')} Medicamento</div>
-          <table style="width:100%; font-size:12.5px;"><thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right;">Porcentaje</th></tr></thead>
-            <tbody>${tablaComisionesRowsHtml(TABLA_COMISIONES_REFERENCIA.medicamento)}</tbody></table>
-        </div>
-        <div>
-          <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">${icon('catalog')} Material</div>
-          <table style="width:100%; font-size:12.5px;"><thead><tr><th>Inicio</th><th>Final</th><th style="text-align:right;">Porcentaje</th></tr></thead>
-            <tbody>${tablaComisionesRowsHtml(TABLA_COMISIONES_REFERENCIA.material)}</tbody></table>
-        </div>
-      </div>
-    </div>
+    <div class="modal-body">${tablaComisionesContentHtml()}</div>
     <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal2()">Cerrar</button></div>`);
 }
 function openConceptoModal(id, onSaved, prefill){
@@ -2093,11 +2095,10 @@ function openConceptoModal(id, onSaved, prefill){
             <button type="button" class="chip ${(!c||c.captura_modo_prov!=='total')?'active':''}" data-modo="subtotal">Voy a capturar el costo base del proveedor (sin IVA)</button>
             <button type="button" class="chip ${(c&&c.captura_modo_prov==='total')?'active':''}" data-modo="total">Voy a capturar el Total final (con IVA incluido)</button>
           </div>
-          <button type="button" class="btn btn-sm" id="cc-ver-tabulador" style="margin-left:auto; white-space:nowrap;">${icon('analytics')} Ver tabulador de paquetes quirúrgicos</button>
+          <button type="button" class="btn btn-sm" id="cc-ver-tabulador" style="margin-left:auto; white-space:nowrap;">${icon('analytics')} Ver tabla de comisiones</button>
         </div>
         <div id="cc-tabulador-panel" style="display:none; background:var(--surface); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
-          <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">Ejemplo de referencia para decidir cuánta ganancia (%) aplicar sobre el costo de proveedor — no se conecta con los campos de este formulario.</div>
-          ${tabuladorPaquetesTableHtml()}
+          ${tablaComisionesContentHtml()}
         </div>
         <div class="form-grid">
           <div class="form-field"><label>Costo de proveedor</label><input class="input" type="number" id="cc-costo-prov" style="width:100%;" value="${c&&c.costo_proveedor!=null?c.costo_proveedor:''}"></div>
@@ -2147,7 +2148,7 @@ function openConceptoModal(id, onSaved, prefill){
     const panel = document.getElementById('cc-tabulador-panel');
     const abierto = panel.style.display !== 'none';
     panel.style.display = abierto ? 'none' : 'block';
-    document.getElementById('cc-ver-tabulador').innerHTML = abierto ? `${icon('analytics')} Ver tabulador de paquetes quirúrgicos` : `${icon('x')} Ocultar tabulador`;
+    document.getElementById('cc-ver-tabulador').innerHTML = abierto ? `${icon('analytics')} Ver tabla de comisiones` : `${icon('x')} Ocultar tabla de comisiones`;
   };
 
   function recalcNoor(){
