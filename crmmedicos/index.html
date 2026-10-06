@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.27.0';
+const APP_VERSION = 'v2.28.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2088,9 +2088,16 @@ function openConceptoModal(id, onSaved, prefill){
       </div>
 
       <div id="cc-block-proveedor" style="display:${tipoCosto==='proveedor'?'block':'none'}; background:var(--guinda-light); border-radius:12px; padding:14px 16px; margin-bottom:14px;">
-        <div class="chip-filter" id="cc-prov-modo-chips" style="margin-bottom:10px;">
-          <button type="button" class="chip ${(!c||c.captura_modo_prov!=='total')?'active':''}" data-modo="subtotal">Voy a capturar el costo base del proveedor (sin IVA)</button>
-          <button type="button" class="chip ${(c&&c.captura_modo_prov==='total')?'active':''}" data-modo="total">Voy a capturar el Total final (con IVA incluido)</button>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div class="chip-filter" id="cc-prov-modo-chips" style="margin-bottom:0;">
+            <button type="button" class="chip ${(!c||c.captura_modo_prov!=='total')?'active':''}" data-modo="subtotal">Voy a capturar el costo base del proveedor (sin IVA)</button>
+            <button type="button" class="chip ${(c&&c.captura_modo_prov==='total')?'active':''}" data-modo="total">Voy a capturar el Total final (con IVA incluido)</button>
+          </div>
+          <button type="button" class="btn btn-sm" id="cc-ver-tabulador" style="margin-left:auto; white-space:nowrap;">${icon('analytics')} Ver tabulador de paquetes quirúrgicos</button>
+        </div>
+        <div id="cc-tabulador-panel" style="display:none; background:var(--surface); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+          <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">Ejemplo de referencia para decidir cuánta ganancia (%) aplicar sobre el costo de proveedor — no se conecta con los campos de este formulario.</div>
+          ${tabuladorPaquetesTableHtml()}
         </div>
         <div class="form-grid">
           <div class="form-field"><label>Costo de proveedor</label><input class="input" type="number" id="cc-costo-prov" style="width:100%;" value="${c&&c.costo_proveedor!=null?c.costo_proveedor:''}"></div>
@@ -2136,6 +2143,12 @@ function openConceptoModal(id, onSaved, prefill){
     document.getElementById('cc-prov-modo-chips').querySelectorAll('.chip').forEach(x=>x.classList.toggle('active', x===b));
     applyProvModoUI(); recalcProveedor();
   });
+  document.getElementById('cc-ver-tabulador').onclick = ()=>{
+    const panel = document.getElementById('cc-tabulador-panel');
+    const abierto = panel.style.display !== 'none';
+    panel.style.display = abierto ? 'none' : 'block';
+    document.getElementById('cc-ver-tabulador').innerHTML = abierto ? `${icon('analytics')} Ver tabulador de paquetes quirúrgicos` : `${icon('x')} Ocultar tabulador`;
+  };
 
   function recalcNoor(){
     const exento = document.getElementById('cc-exento-iva').checked;
@@ -7461,6 +7474,18 @@ const TABULADOR_PAQUETES_QUIRURGICOS = {
     ['TOTAL', [7934.40, 8544.74, 9155.07]],
   ]
 };
+function tabuladorPaquetesTableHtml(){
+  return `<table style="width:100%; font-size:12.5px;">
+    <thead><tr><th></th>${TABULADOR_PAQUETES_QUIRURGICOS.columnas.map(c=>`<th style="text-align:right;">${c}</th>`).join('')}</tr></thead>
+    <tbody>
+      ${TABULADOR_PAQUETES_QUIRURGICOS.filas.map(([label,valores])=>`
+        <tr ${label==='TOTAL'?'style="font-weight:700; color:var(--primary);"':''}>
+          <td style="font-weight:600;">${label}</td>
+          ${valores.map(v=>`<td class="mono" style="text-align:right;">${v.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</td>`).join('')}
+        </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
 function copiarTexto(text){
   const ok = ()=> toast('Copiado al portapapeles');
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -7498,19 +7523,8 @@ function renderInformativo(){
       </div>
       <div class="card">
         <div style="font-weight:700; font-size:14px; margin-bottom:4px;">${icon('analytics')} Tabulador de paquetes quirúrgicos</div>
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Ejemplo de cálculo por porcentaje de comisión, sobre un costo base de ${TABULADOR_PAQUETES_QUIRURGICOS.costoBase.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}. Solo de referencia.</div>
-        <div class="table-wrap">
-          <table style="width:100%; font-size:12.5px;">
-            <thead><tr><th></th>${TABULADOR_PAQUETES_QUIRURGICOS.columnas.map(c=>`<th style="text-align:right;">${c}</th>`).join('')}</tr></thead>
-            <tbody>
-              ${TABULADOR_PAQUETES_QUIRURGICOS.filas.map(([label,valores])=>`
-                <tr ${label==='TOTAL'?'style="font-weight:700; color:var(--primary);"':''}>
-                  <td style="font-weight:600;">${label}</td>
-                  ${valores.map(v=>`<td class="mono" style="text-align:right;">${v.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</td>`).join('')}
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Ejemplo de cálculo por porcentaje de comisión, sobre un costo base de ${TABULADOR_PAQUETES_QUIRURGICOS.costoBase.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}. Solo de referencia. También puedes consultarlo al dar de alta un material o insumo de proveedor, desde el botón "Ver tabulador" de ese formulario.</div>
+        <div class="table-wrap">${tabuladorPaquetesTableHtml()}</div>
       </div>
     </div>`;
 }
