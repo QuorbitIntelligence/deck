@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.30.2';
+const APP_VERSION = 'v2.31.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -627,6 +627,11 @@ async function loadSession(){
         });
       }
       if(extra.conceptos_custom) DB.conceptos = DB.conceptos.concat(extra.conceptos_custom);
+      if(extra.conceptos_unificados && Object.keys(extra.conceptos_unificados).length){
+        CONCEPTOS_UNIFICADOS = extra.conceptos_unificados;
+        DB.conceptos = DB.conceptos.filter(c=> !(String(c.id).toUpperCase() in CONCEPTOS_UNIFICADOS));
+        remapConceptoRefs(CONCEPTOS_UNIFICADOS);
+      }
       if(extra.clausulas_custom) DB.clausulas = DB.clausulas.concat(extra.clausulas_custom);
       if(extra.clausulas_overrides){
         Object.entries(extra.clausulas_overrides).forEach(([id,ov])=>{
@@ -682,8 +687,13 @@ function persistExtra(){
         ),
         conceptos_custom: DB.conceptos.filter(c=>c.__new),
         conceptos_overrides: Object.fromEntries(
-          DB.conceptos.filter(c=>!c.__new && (c.activo===false || c.grupo_eleccion)).map(c=>[String(c.id),{activo:c.activo!==false, grupo_eleccion:c.grupo_eleccion||null, descripcion:c.descripcion, categoria:c.categoria, costo_sin_iva:c.costo_sin_iva}])
+          DB.conceptos.filter(c=>!c.__new && (c.activo===false || c.grupo_eleccion || c.__edited)).map(c=>{
+            const o = {activo:c.activo!==false, grupo_eleccion:c.grupo_eleccion||null, descripcion:c.descripcion, categoria:c.categoria, costo_sin_iva:c.costo_sin_iva};
+            if(c.__edited){ CONCEPTO_CAMPOS_EDITABLES.forEach(k=>{ if(c[k]!==undefined) o[k]=c[k]; }); o.__edited = true; }
+            return [String(c.id),o];
+          })
         ),
+        conceptos_unificados: CONCEPTOS_UNIFICADOS,
         clausulas_custom: DB.clausulas.filter(c=>c.__new),
         clausulas_overrides: Object.fromEntries(
           DB.clausulas.filter(c=>!c.__new && (c.default || c.activa===false)).map(c=>[String(c.id),{default:!!c.default, activa:c.activa!==false}])
@@ -809,7 +819,35 @@ function conveniosActivosParaMedico(medicoId){
   if(!medicoId) return [];
   return DB.convenios.filter(cv => (cv.medicos||[]).some(x=>String(x)===String(medicoId)) && convenioUsableEnCotizacion(cv));
 }
-function conceptoById(id){ return DB.conceptos.find(c=>String(c.id).toUpperCase()===String(id).toUpperCase()); }
+/* Conceptos unificados: { ID_DUPLICADO(mayúsculas) : ID_QUE_SE_CONSERVÓ }. Los duplicados del catálogo base no se pueden
+   borrar del archivo, así que se recuerdan aquí y se quitan al cargar. conceptoById los resuelve por si algo viejo los cita. */
+let CONCEPTOS_UNIFICADOS = {};
+const CONCEPTO_CAMPOS_EDITABLES = ['descripcion','categoria','grupo_eleccion','tipo_costo','exento_iva','costo_sin_iva','costo_noor','iva_noor','total_noor','vigencia_costo_noor','captura_modo_noor','costo_proveedor','ganancia_noor_pct','iva_proveedor','total_proveedor','vigencia_costo_proveedor','captura_modo_prov','notas','veces_usado'];
+function conceptoById(id){
+  const u = String(id).toUpperCase();
+  return DB.conceptos.find(c=>String(c.id).toUpperCase()===u) || (CONCEPTOS_UNIFICADOS[u] ? DB.conceptos.find(c=>String(c.id).toUpperCase()===String(CONCEPTOS_UNIFICADOS[u]).toUpperCase()) : undefined);
+}
+/* Cambia en cotizaciones, bloques, procedimientos, paquetes, aseguradoras y análisis de listas los ids de conceptos
+   unificados por el que se conservó (sumando cantidades si quedan repetidos en la misma lista). */
+function remapConceptoRefs(map){
+  const nuevoId = id => map[String(id).toUpperCase()];
+  const fix = arr=>{
+    if(!Array.isArray(arr)) return;
+    const vistos = new Map(), salida = [];
+    arr.forEach(r=>{
+      if(!r || r.id==null){ salida.push(r); return; }
+      const n = nuevoId(r.id); if(n) r.id = n;
+      const prev = vistos.get(String(r.id).toUpperCase());
+      if(prev){
+        if(typeof prev.cantidad==='number' && typeof r.cantidad==='number') prev.cantidad += r.cantidad;
+        if(typeof prev.total==='number' && typeof r.total==='number') prev.total += r.total;
+      } else { vistos.set(String(r.id).toUpperCase(), r); salida.push(r); }
+    });
+    arr.length = 0; salida.forEach(x=>arr.push(x));
+  };
+  [DB.cotizaciones, DB.cotizaciones_aseguradora, DB.bloques, DB.procedimientos, DB.paquetes, DB.analisis_listas].forEach(col=> (col||[]).forEach(it=> fix(it.conceptos)));
+  (DB.detalle||[]).forEach(d=>{ const n = d.id_concepto!=null ? nuevoId(d.id_concepto) : null; if(n) d.id_concepto = n; });
+}
 function especialidadNombre(id){ const e = DB.especialidades.find(e=>e.id===id); return e?e.nombre:'—'; }
 function uid(prefix){ return prefix + Math.random().toString(36).slice(2,8); }
 function pillCot(estatus){ const s = ESTADOS_COT[estatus]||{color:'muted',label:estatus}; return `<span class="pill pill-${s.color}"><span class="dot dot-${s.color==='muted'?'blue':s.color}"></span>${s.label||estatus}</span>`; }
@@ -1956,7 +1994,8 @@ function renderCatalogo(){
       </div>
       <select class="select" id="cat-estatus-filter"><option value="activos">Activos</option><option value="inactivos">Inactivos</option><option value="todos">Todos</option></select>
       <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); font-weight:600;"><input type="checkbox" id="cat-agrupar"> Agrupar por elección</label>
-      <button class="btn btn-sm" style="margin-left:auto;" onclick="openTablaComisionesModal()">${icon('quote')} Tabla de comisiones</button>
+      <button class="btn btn-sm" style="margin-left:auto;" onclick="openUnificarDuplicadosModal()" title="Busca conceptos repetidos y los unifica en uno solo">${icon('checklist')} Unificar duplicados</button>
+      <button class="btn btn-sm" onclick="openTablaComisionesModal()">${icon('quote')} Tabla de comisiones</button>
       <button class="btn btn-primary" onclick="openConceptoModal()">${icon('plus')} Nuevo concepto</button>
     </div>
     <div class="table-wrap"><div id="cat-body"></div><div class="pagination" id="cat-pg"></div></div>`;
@@ -2054,6 +2093,163 @@ function openTablaComisionesModal(){
     <div class="modal-body">${tablaComisionesContentHtml()}</div>
     <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal2()">Cerrar</button></div>`);
 }
+
+/* ============================================================
+   UNIFICAR DUPLICADOS DEL CATÁLOGO
+   Duplicado = misma descripción (sin acentos, mayúsculas, signos ni espacios de más) y misma categoría.
+   Si todos los precios coinciden se unifican sin aviso; si difieren, se conserva el precio más costoso o el más
+   reciente (a elegir, y ajustable por concepto) y se reporta cuáles cambiaron.
+============================================================ */
+const DEDUP_CAMPOS_PRECIO = ['tipo_costo','exento_iva','costo_sin_iva','costo_noor','iva_noor','total_noor','vigencia_costo_noor','captura_modo_noor','costo_proveedor','ganancia_noor_pct','iva_proveedor','total_proveedor','vigencia_costo_proveedor','captura_modo_prov'];
+let dedupState = { criterio:'costoso', grupos:[], omitidos:0 };
+function normDescConcepto(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9%.,\/ ]/g,' ').replace(/\s+/g,' ').trim(); }
+function dedupVigenciaTs(c){ const v = c.tipo_costo==='proveedor' ? c.vigencia_costo_proveedor : c.vigencia_costo_noor; const t = v ? Date.parse(v) : NaN; return isNaN(t) ? 0 : t; }
+function dedupCentavos(c){ return Math.round((c.costo_sin_iva||0)*100); }
+function detectarDuplicadosCatalogo(){
+  const mapa = new Map(); let omitidos = 0;
+  DB.conceptos.forEach((c,idx)=>{
+    const n = normDescConcepto(c.descripcion);
+    if(!n || n==='SIN DESCRIPCION'){ omitidos++; return; }
+    const k = n+'|'+(c.categoria||'');
+    if(!mapa.has(k)) mapa.set(k, []);
+    mapa.get(k).push({c, idx});
+  });
+  const grupos = [];
+  mapa.forEach(items=>{
+    if(items.length<2) return;
+    // se conserva el registro más usado (mismo ID que ya aparece en cotizaciones); a igualdad, el más antiguo del catálogo
+    const survivor = [...items].sort((a,b)=> (b.c.veces_usado||0)-(a.c.veces_usado||0) || a.idx-b.idx)[0];
+    const conflicto = new Set(items.map(i=>dedupCentavos(i.c))).size>1;
+    grupos.push({ items, survivor, conflicto, ganador:null });
+  });
+  grupos.forEach(g=> dedupElegirGanador(g, dedupState.criterio));
+  return { grupos, omitidos };
+}
+function dedupElegirGanador(g, criterio){
+  if(!g.conflicto){ g.ganador = g.survivor; return; }
+  const orden = criterio==='reciente'
+    ? (a,b)=> dedupVigenciaTs(b.c)-dedupVigenciaTs(a.c) || b.idx-a.idx
+    : (a,b)=> dedupCentavos(b.c)-dedupCentavos(a.c) || (b.c===g.survivor.c)-(a.c===g.survivor.c) || b.idx-a.idx;
+  g.ganador = [...g.items].sort(orden)[0];
+}
+function openUnificarDuplicadosModal(){
+  const r = detectarDuplicadosCatalogo();
+  dedupState.grupos = r.grupos; dedupState.omitidos = r.omitidos;
+  drawUnificarDuplicadosModal();
+}
+function drawUnificarDuplicadosModal(){
+  const grupos = dedupState.grupos;
+  const conflictos = grupos.filter(g=>g.conflicto), iguales = grupos.filter(g=>!g.conflicto);
+  const totalRegs = grupos.reduce((s,g)=>s+g.items.length,0);
+  const chipC = (id,txt)=>`<button type="button" class="chip ${dedupState.criterio===id?'active':''}" data-dedup-crit="${id}">${txt}</button>`;
+  const html = `
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('checklist')} Unificar conceptos duplicados</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      ${grupos.length ? `
+        <div style="background:var(--primary-light); border-radius:10px; padding:10px 14px; font-size:12.5px; line-height:1.6; margin-bottom:14px;">
+          Encontré <b>${grupos.length} concepto${grupos.length>1?'s':''} repetido${grupos.length>1?'s':''}</b> (${totalRegs} registros → quedarían ${grupos.length}).
+          ${iguales.length ? `<b>${iguales.length}</b> con el mismo precio se unifican sin aviso. ` : ''}${conflictos.length ? `<b>${conflictos.length}</b> tienen precios distintos y los revisas abajo.` : ''}
+          Se conserva el registro más usado y todas las cotizaciones, bloques, procedimientos y paquetes se actualizan solos.
+        </div>
+        ${conflictos.length ? `
+          <div style="font-weight:700; font-size:12.5px; margin-bottom:6px;">Con precios distintos — ¿cuál precio conservar?</div>
+          <div class="chip-filter" id="dedup-crit" style="margin-bottom:10px;">${chipC('costoso','Dejar el más costoso')}${chipC('reciente','Dejar el más reciente')}</div>
+          <div style="font-size:11px; color:var(--text-faint); margin-bottom:10px;">"Más reciente" usa la fecha de vigencia del costo; si coinciden, gana el registro agregado más tarde. Puedes cambiar la elección de cada concepto.</div>
+          ${conflictos.map((g,gi)=>`
+            <div class="card" style="margin-bottom:10px;">
+              <div style="font-weight:700; font-size:13px; margin-bottom:6px;">${g.survivor.c.descripcion} <span class="pill pill-blue pill-small">${g.survivor.c.categoria||''}</span></div>
+              ${g.items.map((it,ii)=>`
+                <label style="display:flex; align-items:center; gap:10px; padding:5px 0; font-size:12.5px; cursor:pointer;">
+                  <input type="radio" name="dd-${gi}" data-dedup-pick="${grupos.indexOf(g)}:${ii}" ${g.ganador===it?'checked':''}>
+                  <span class="mono" style="min-width:74px;">${it.c.id}</span>
+                  <span style="font-weight:700; min-width:84px;">${fmtMoney(it.c.costo_sin_iva)}</span>
+                  <span style="color:var(--text-muted); flex:1;">${it.c.tipo_costo==='proveedor'?'Proveedor':'Interno'} · vigencia ${it.c.tipo_costo==='proveedor'?(it.c.vigencia_costo_proveedor?fmtDate(it.c.vigencia_costo_proveedor):'—'):(it.c.vigencia_costo_noor?fmtDate(it.c.vigencia_costo_noor):'—')} · usado ${it.c.veces_usado||0}×${it===g.survivor?' · <b>se conserva este ID</b>':''}${it.c.activo===false?' · inactivo':''}</span>
+                </label>`).join('')}
+            </div>`).join('')}` : ''}
+        ${iguales.length ? `<details style="margin-top:6px;"><summary style="cursor:pointer; font-weight:700; font-size:12.5px;">Se unifican sin aviso (${iguales.length})</summary>
+          <div style="margin-top:8px;">${iguales.map(g=>`<div style="font-size:12px; padding:4px 0; border-bottom:1px solid var(--border);">${g.survivor.c.descripcion} <span style="color:var(--text-faint);">· ${g.items.length} registros agrupados · ${fmtMoney(g.survivor.c.costo_sin_iva)}</span></div>`).join('')}</div></details>` : ''}
+        ${dedupState.omitidos ? `<div style="font-size:11px; color:var(--text-faint); margin-top:10px;">${dedupState.omitidos} registro(s) sin descripción no se tocaron (no se pueden comparar).</div>` : ''}
+        <div style="font-size:11.5px; color:var(--text-muted); margin-top:12px; background:var(--surface); border-radius:8px; padding:8px 12px;">Esta acción no se puede deshacer desde el sistema. Si quieres, descarga un respaldo antes.
+          <button class="btn btn-sm" type="button" id="dedup-backup" style="margin-left:8px;">${icon('download')} Respaldo</button></div>`
+      : `<div class="empty-state">${icon('check')}<div>No encontré conceptos duplicados en el catálogo.</div>${dedupState.omitidos?`<div style="font-size:11px; color:var(--text-faint); margin-top:6px;">${dedupState.omitidos} registro(s) sin descripción no se compararon.</div>`:''}</div>`}
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">${grupos.length?'Cancelar':'Cerrar'}</button>${grupos.length?`<button class="btn btn-primary" id="dedup-aplicar">${icon('check')} Unificar ${grupos.length} concepto${grupos.length>1?'s':''}</button>`:''}</div>`;
+  openModal(html);
+  document.getElementById('modal').style.width = '760px';
+  const modal = document.getElementById('modal');
+  modal.querySelectorAll('[data-dedup-crit]').forEach(b=> b.onclick = ()=>{
+    dedupState.criterio = b.dataset.dedupCrit;
+    dedupState.grupos.forEach(g=> dedupElegirGanador(g, dedupState.criterio));
+    drawUnificarDuplicadosModal();
+  });
+  modal.querySelectorAll('[data-dedup-pick]').forEach(r=> r.onchange = ()=>{
+    const [gi,ii] = r.dataset.dedupPick.split(':').map(Number);
+    dedupState.grupos[gi].ganador = dedupState.grupos[gi].items[ii];
+  });
+  const bk = document.getElementById('dedup-backup');
+  if(bk) bk.onclick = ()=>{
+    const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='respaldo-crm-noor-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url);
+    toast('Respaldo descargado');
+  };
+  const ap = document.getElementById('dedup-aplicar');
+  if(ap) ap.onclick = aplicarUnificacionCatalogo;
+}
+function aplicarUnificacionCatalogo(){
+  const cambios = []; let registrosAgrupados = 0, silenciosos = 0;
+  const nuevoMapa = {};
+  dedupState.grupos.forEach(g=>{
+    const surv = g.survivor.c, win = g.ganador.c;
+    const precios = [...new Set(g.items.map(i=>dedupCentavos(i.c)))].sort((a,b)=>a-b).map(x=>x/100);
+    const antes = surv.costo_sin_iva;
+    if(win!==surv){ DEDUP_CAMPOS_PRECIO.forEach(k=>{ if(win[k]===undefined) delete surv[k]; else surv[k] = win[k]; }); }
+    surv.veces_usado = g.items.reduce((s,i)=>s+(i.c.veces_usado||0),0);
+    surv.activo = g.items.some(i=>i.c.activo!==false);
+    if(!surv.grupo_eleccion){ const o = g.items.find(i=>i.c.grupo_eleccion); if(o) surv.grupo_eleccion = o.c.grupo_eleccion; }
+    if(!surv.__new) surv.__edited = true;
+    g.items.forEach(i=>{ if(i.c!==surv) nuevoMapa[String(i.c.id).toUpperCase()] = surv.id; });
+    registrosAgrupados += g.items.length;
+    if(g.conflicto) cambios.push({ descripcion:surv.descripcion, id:surv.id, ids:g.items.map(i=>i.c.id), precios, antes, despues:surv.costo_sin_iva });
+    else silenciosos++;
+  });
+  Object.assign(CONCEPTOS_UNIFICADOS, nuevoMapa);
+  // encadena por si un duplicado apuntaba a un registro que ahora también se unificó
+  Object.keys(CONCEPTOS_UNIFICADOS).forEach(k=>{ let v = CONCEPTOS_UNIFICADOS[k], n = 0; while(CONCEPTOS_UNIFICADOS[String(v).toUpperCase()] && n++<10) v = CONCEPTOS_UNIFICADOS[String(v).toUpperCase()]; CONCEPTOS_UNIFICADOS[k] = v; });
+  remapConceptoRefs(CONCEPTOS_UNIFICADOS);
+  DB.conceptos = DB.conceptos.filter(c=> !(String(c.id).toUpperCase() in CONCEPTOS_UNIFICADOS));
+  persistExtra();
+  const criterioTxt = dedupState.criterio==='reciente' ? 'el más reciente' : 'el más costoso';
+  const resumen = { grupos:dedupState.grupos.length, registrosAgrupados, silenciosos, cambios, criterioTxt, quedan:DB.conceptos.length };
+  dedupState.grupos = [];
+  drawResultadoUnificacion(resumen);
+}
+function drawResultadoUnificacion(r){
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('check')} Unificación completada</div><button class="drawer-close" onclick="closeModal(); renderCatalogo();">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="background:var(--green-bg); border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.6; margin-bottom:14px;">
+        <b>${r.registrosAgrupados} registros</b> se unificaron en <b>${r.grupos}</b> concepto${r.grupos>1?'s':''}. El catálogo ahora tiene ${r.quedan} conceptos.
+        ${r.silenciosos ? `<br>${r.silenciosos} con precio igual se unificaron sin cambios.` : ''}
+      </div>
+      ${r.cambios.length ? `
+        <div style="font-weight:700; font-size:12.5px; margin-bottom:6px; color:var(--amber);">⚠ ${r.cambios.length} con precios distintos (se dejó ${r.criterioTxt}, salvo los que ajustaste a mano)</div>
+        <div class="table-wrap"><table style="width:100%; font-size:12px;"><thead><tr><th>Concepto</th><th>Precios que había</th><th style="text-align:right;">Quedó en</th></tr></thead><tbody>
+          ${r.cambios.map(c=>`<tr><td><b>${c.descripcion}</b><div class="mono" style="font-size:10.5px; color:var(--text-faint);">${c.id} ← ${c.ids.filter(x=>x!==c.id).join(', ')}</div></td>
+            <td>${c.precios.map(fmtMoney).join(' · ')}</td>
+            <td style="text-align:right; font-weight:700;">${fmtMoney(c.despues)}${Math.round(c.antes*100)!==Math.round(c.despues*100)?`<div style="font-size:10.5px; font-weight:600; color:var(--amber);">antes ${fmtMoney(c.antes)}</div>`:''}</td></tr>`).join('')}
+        </tbody></table></div>` : ''}
+    </div>
+    <div class="modal-foot">${r.cambios.length?`<button class="btn" id="dedup-csv">${icon('download')} Descargar reporte</button>`:''}<button class="btn btn-primary" onclick="closeModal(); renderCatalogo();">Listo</button></div>`);
+  document.getElementById('modal').style.width = '760px';
+  const csv = document.getElementById('dedup-csv');
+  if(csv) csv.onclick = ()=>{
+    const filas = [['Concepto','ID conservado','IDs unificados','Precios que había','Precio anterior del ID conservado','Precio final']].concat(r.cambios.map(c=>[c.descripcion,c.id,c.ids.join(' | '),c.precios.join(' | '),c.antes,c.despues]));
+    const txt = '﻿'+filas.map(f=>f.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob([txt], {type:'text/csv;charset=utf-8'}); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='unificacion-catalogo-'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(url);
+  };
+}
+
 function openConceptoModal(id, onSaved, prefill){
   const c = id ? DB.conceptos.find(x=>String(x.id)===String(id)) : null;
   const groups = [...new Set(DB.conceptos.map(x=>x.grupo_eleccion).filter(Boolean))];
@@ -2220,7 +2416,7 @@ function openConceptoModal(id, onSaved, prefill){
       activo: document.getElementById('cc-activo').checked
     };
     let nuevo = null;
-    if(c){ Object.assign(c, payload); logAudit('Concepto', c.id, 'Edición', desc); }
+    if(c){ Object.assign(c, payload); if(!c.__new) c.__edited = true; logAudit('Concepto', c.id, 'Edición', desc); }
     else { nuevo = Object.assign({id: uid('CC').toUpperCase(), veces_usado:0, __new:true}, payload); DB.conceptos.push(nuevo); logAudit('Concepto', nuevo.id, 'Creación', desc); }
     persistExtra(); closeModal2(); toast('Concepto guardado');
     if(onSaved) onSaved(nuevo||c); else renderCatalogo();
@@ -7769,7 +7965,7 @@ function renderConfig(){
   document.getElementById('restore-file').onchange = (e)=>{
     const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
-    reader.onload = (ev)=>{ try{ const parsed = JSON.parse(ev.target.result); DB = Object.assign(DB, parsed); logAudit('Sistema','-','Respaldo restaurado', file.name); persistExtra(); toast('Respaldo restaurado'); navigate('dashboard'); }catch(err){ toast('El archivo no es un respaldo válido'); } };
+    reader.onload = (ev)=>{ try{ const parsed = JSON.parse(ev.target.result); DB = Object.assign(DB, parsed); CONCEPTOS_UNIFICADOS = {}; logAudit('Sistema','-','Respaldo restaurado', file.name); persistExtra(); toast('Respaldo restaurado'); navigate('dashboard'); }catch(err){ toast('El archivo no es un respaldo válido'); } };
     reader.readAsText(file);
   };
   document.getElementById('reset-btn').onclick = async ()=>{
