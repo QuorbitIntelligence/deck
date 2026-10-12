@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.30.0';
+const APP_VERSION = 'v2.30.2';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -798,9 +798,16 @@ function aplicarPlantillaWhatsApp(plantilla, valores){
   return msg;
 }
 function medicoById(id){ return DB.medicos.find(m=>String(m.id)===String(id)); }
+/* Para cotizar, un convenio sirve si está Activo o Próximo a vencer (con aviso); Vencido/Inactivo no. */
+function convenioUsableEnCotizacion(cv){ const e = computeConvenioEstatus(cv); return e==='Activo' || e==='Próximo a vencer'; }
+function convenioAvisoVenceHtml(cv){
+  if(computeConvenioEstatus(cv)!=='Próximo a vencer' || !cv.vigencia_fin) return '';
+  const d = Math.max(0, Math.ceil((new Date(cv.vigencia_fin)-new Date())/86400000));
+  return `<span class="pill pill-amber pill-small" style="margin-left:6px;">⚠ Vence ${d===0?'hoy':(d===1?'mañana':'en '+d+' días')} (${fmtDate(cv.vigencia_fin)})</span>`;
+}
 function conveniosActivosParaMedico(medicoId){
   if(!medicoId) return [];
-  return DB.convenios.filter(cv => (cv.medicos||[]).some(x=>String(x)===String(medicoId)) && computeConvenioEstatus(cv)==='Activo');
+  return DB.convenios.filter(cv => (cv.medicos||[]).some(x=>String(x)===String(medicoId)) && convenioUsableEnCotizacion(cv));
 }
 function conceptoById(id){ return DB.conceptos.find(c=>String(c.id).toUpperCase()===String(id).toUpperCase()); }
 function especialidadNombre(id){ const e = DB.especialidades.find(e=>e.id===id); return e?e.nombre:'—'; }
@@ -3539,7 +3546,7 @@ function drawWizardPane(){
           <div style="width:32px; height:32px; border-radius:50%; background:${incl?'var(--green)':'var(--surface-3)'}; color:${incl?'#fff':'var(--text-faint)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${icon('deals')}</div>
           <div style="flex:1; min-width:0;">
             <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em;">Convenio detectado para este médico</div>
-            <div style="font-size:13.5px; font-weight:700; margin-top:2px;">${cv.nombre}</div>
+            <div style="font-size:13.5px; font-weight:700; margin-top:2px;">${cv.nombre}${convenioAvisoVenceHtml(cv)}</div>
             <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">${cv.tipo||''}${cv.condiciones&&cv.condiciones.length?' · '+cv.condiciones.length+' condición(es) asociadas':''}</div>
           </div>
           <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; white-space:nowrap; flex-shrink:0;">
@@ -3627,12 +3634,13 @@ function drawWizardPane(){
         <div style="font-size:11px; color:var(--text-faint); margin-top:2px;">Se imprimirá como anexo del PDF.</div></div>` : ''}
       ${conveniosIncluidosArr.length ? `<div class="card" style="background:var(--green-bg); border-color:transparent; margin-bottom:16px;">
         <div style="font-size:11px; font-weight:700; color:var(--green); text-transform:uppercase;">${icon('deals')} Convenio${conveniosIncluidosArr.length>1?'s':''} aplicado${conveniosIncluidosArr.length>1?'s':''}</div>
-        ${conveniosIncluidosArr.map(cv=>`<div style="font-size:13px; font-weight:600; margin-top:4px;">${cv.nombre}</div>`).join('')}
+        ${conveniosIncluidosArr.map(cv=>`<div style="font-size:13px; font-weight:600; margin-top:4px;">${cv.nombre}${convenioAvisoVenceHtml(cv)}</div>`).join('')}
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Sus condiciones ya están incluidas abajo.</div></div>` : ''}
       ${conveniosQuitadosArr.map(cv=>`<div class="card" style="background:var(--surface-2); border-color:transparent; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-        <div style="flex:1; min-width:0;"><div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${icon('deals')} Convenio disponible, no aplicado</div><div style="font-size:13px; font-weight:600; margin-top:2px;">${cv.nombre}</div></div>
+        <div style="flex:1; min-width:0;"><div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${icon('deals')} Convenio disponible, no aplicado</div><div style="font-size:13px; font-weight:600; margin-top:2px;">${cv.nombre}${convenioAvisoVenceHtml(cv)}</div></div>
         <button class="btn btn-sm" type="button" data-wz-cv-aplicar="${cv.id}">Aplicar</button></div>`).join('')}
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        <button class="btn btn-sm" type="button" id="wz-convenio-existente">${icon('search')} Asignar convenio existente</button>
         <button class="btn btn-sm" type="button" id="wz-convenio-nuevo">${icon('deals')} ${(conveniosIncluidosArr.length||conveniosQuitadosArr.length)?'Configurar otro convenio':'Configurar convenio para este médico'}</button>
         ${conveniosIncluidosArr.map(cv=>`<button class="btn btn-sm" type="button" data-wz-cv-editar="${cv.id}">${icon('config')} Editar "${cv.nombre.length>28?cv.nombre.slice(0,28)+'…':cv.nombre}"</button>`).join('')}
         <span style="font-size:11px; color:var(--text-faint);">Sin salir de la cotización.</span>
@@ -3646,6 +3654,7 @@ function drawWizardPane(){
     foot.innerHTML = `<button class="btn" id="wz-back">Atrás</button><button class="btn btn-primary" id="wz-save">${icon('check')} ${saveLabel}</button>`;
     document.getElementById('wz-back').onclick = ()=>{ wizardState.step=3; drawWizardPane(); };
     document.getElementById('wz-save').onclick = saveWizardCotizacion;
+    document.getElementById('wz-convenio-existente').onclick = ()=> openWizardConvenioExistente();
     document.getElementById('wz-convenio-nuevo').onclick = ()=> openConvenioModal(null, wizardState.medico, {nested:true, onDone:wzConvenioTrasGuardar});
     pane.querySelectorAll('[data-wz-cv-editar]').forEach(b=> b.onclick = ()=> openConvenioModal(b.dataset.wzCvEditar, null, {nested:true, onDone:wzConvenioTrasGuardar}));
     pane.querySelectorAll('[data-wz-cv-aplicar]').forEach(b=> b.onclick = ()=>{ wzAplicarConvenio(b.dataset.wzCvAplicar, true); });
@@ -3666,6 +3675,40 @@ function wzAplicarConvenio(cvId, aplicar){
   }
   drawWizardPane();
 }
+/* Elegir un convenio ya configurado y asignárselo al médico de esta cotización (sin salir del wizard) */
+function openWizardConvenioExistente(){
+  const m = medicoById(wizardState.medico);
+  openModal2(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('deals')} Asignar convenio existente</div><button class="drawer-close" onclick="closeModal2()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Al elegir uno, <b>${m?m.nombre:'este médico'}</b> se agrega a ese convenio (queda guardado para futuras cotizaciones) y se aplica a esta cotización con sus condiciones.</div>
+      <div class="searchbox" style="width:100%; margin-bottom:10px;">${icon('search')}<input id="wzce-search" placeholder="Buscar convenio por nombre…" autocomplete="off"></div>
+      <div id="wzce-list"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal2()">Cancelar, regresar a la cotización</button></div>`);
+  const draw = ()=>{
+    const q = document.getElementById('wzce-search').value;
+    const disp = DB.convenios.filter(cv=> convenioUsableEnCotizacion(cv) && !(cv.medicos||[]).some(x=>String(x)===String(wizardState.medico)) && fuzzyMatch(cv.nombre, q));
+    const el = document.getElementById('wzce-list');
+    el.innerHTML = disp.length ? disp.map(cv=>`
+      <div class="card" style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13.5px; font-weight:700;">${cv.nombre}${convenioAvisoVenceHtml(cv)}</div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">${cv.tipo||''}${cv.valor?' · '+(cv.tipo==='Descuento %'?cv.valor+'%':(cv.tipo==='Descuento fijo'?fmtMoney(cv.valor):cv.valor)):''} · ${(cv.condiciones||[]).length} condición(es) · ${(cv.medicos||[]).length} médico(s)${cv.vigencia_fin?' · vence '+fmtDate(cv.vigencia_fin):''}</div>
+        </div>
+        <button class="btn btn-sm btn-primary" type="button" data-wzce="${cv.id}">${icon('check')} Asignar y aplicar</button>
+      </div>`).join('') : `<div class="picker-empty">${q?'Sin convenios activos que coincidan.':'No hay otros convenios activos disponibles. Puedes crear uno nuevo con "Configurar convenio".'}</div>`;
+    el.querySelectorAll('[data-wzce]').forEach(b=> b.onclick = ()=>{
+      const cv = DB.convenios.find(x=>x.id===b.dataset.wzce); if(!cv) return;
+      cv.medicos = [...(cv.medicos||[]), String(wizardState.medico)];
+      logAudit('Convenio', cv.id, 'Médico asignado', (m?m.nombre:wizardState.medico)+' (desde cotización)');
+      persistExtra(); closeModal2();
+      wzAplicarConvenio(cv.id, true); toast('Convenio asignado y aplicado a la cotización');
+    });
+  };
+  document.getElementById('wzce-search').oninput = draw;
+  draw();
+}
 function wzConvenioTrasGuardar(cv){
   if(!cv){ drawWizardPane(); return; }
   const aplica = conveniosActivosParaMedico(wizardState.medico).some(x=>x.id===cv.id);
@@ -3679,7 +3722,7 @@ function wzConvenioTrasGuardar(cv){
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('deals')} ¿Aplicar este convenio a la cotización?</div><button class="drawer-close" onclick="closeModal2(); drawWizardPane();">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="card" style="background:var(--green-bg); border-color:transparent; margin-bottom:14px;">
-        <div style="font-size:14px; font-weight:700;">${cv.nombre}</div>
+        <div style="font-size:14px; font-weight:700;">${cv.nombre}${convenioAvisoVenceHtml(cv)}</div>
         <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${cv.tipo||''}${cv.valor?' · '+(cv.tipo==='Descuento %'?cv.valor+'%':(cv.tipo==='Descuento fijo'?fmtMoney(cv.valor):cv.valor)):''}${nCond?' · '+nCond+' condición(es) se agregarían':''}</div>
       </div>
       <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">El convenio ya quedó guardado para ${m?m.nombre:'este médico'}. Decide si esta cotización lo lleva: si lo aplicas, sus condiciones se incluyen en el resumen; si no, el convenio queda vigente para futuras cotizaciones y aquí puedes aplicarlo después.</div>
