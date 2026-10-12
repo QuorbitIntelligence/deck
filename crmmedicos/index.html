@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.29.1';
+const APP_VERSION = 'v2.30.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -800,7 +800,7 @@ function aplicarPlantillaWhatsApp(plantilla, valores){
 function medicoById(id){ return DB.medicos.find(m=>String(m.id)===String(id)); }
 function conveniosActivosParaMedico(medicoId){
   if(!medicoId) return [];
-  return DB.convenios.filter(cv => (cv.medicos||[]).includes(medicoId) && computeConvenioEstatus(cv)==='Activo');
+  return DB.convenios.filter(cv => (cv.medicos||[]).some(x=>String(x)===String(medicoId)) && computeConvenioEstatus(cv)==='Activo');
 }
 function conceptoById(id){ return DB.conceptos.find(c=>String(c.id).toUpperCase()===String(id).toUpperCase()); }
 function especialidadNombre(id){ const e = DB.especialidades.find(e=>e.id===id); return e?e.nombre:'—'; }
@@ -3607,6 +3607,7 @@ function drawWizardPane(){
     const conceptosArr = Object.entries(wizardState.conceptos).map(([id,qty])=>{ const c=conceptoById(id); return {id, descripcion:c?c.descripcion:id, cantidad:qty}; });
     const condicionesArr = DB.clausulas.filter(cl=>wizardState.clausulas[cl.id]);
     const conveniosIncluidosArr = conveniosActivosParaMedico(wizardState.medico).filter(cv=>wizardState.conveniosIncluidos[cv.id]!==false);
+    const conveniosQuitadosArr = conveniosActivosParaMedico(wizardState.medico).filter(cv=>wizardState.conveniosIncluidos[cv.id]===false);
     pane.innerHTML = `
       <div style="background:var(--surface-2); border-radius:14px; padding:18px 20px; margin-bottom:16px;">
         <div class="detail-row"><span class="k">Médico</span><span class="v">${m?m.nombre:''}</span></div>
@@ -3628,6 +3629,14 @@ function drawWizardPane(){
         <div style="font-size:11px; font-weight:700; color:var(--green); text-transform:uppercase;">${icon('deals')} Convenio${conveniosIncluidosArr.length>1?'s':''} aplicado${conveniosIncluidosArr.length>1?'s':''}</div>
         ${conveniosIncluidosArr.map(cv=>`<div style="font-size:13px; font-weight:600; margin-top:4px;">${cv.nombre}</div>`).join('')}
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Sus condiciones ya están incluidas abajo.</div></div>` : ''}
+      ${conveniosQuitadosArr.map(cv=>`<div class="card" style="background:var(--surface-2); border-color:transparent; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; min-width:0;"><div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${icon('deals')} Convenio disponible, no aplicado</div><div style="font-size:13px; font-weight:600; margin-top:2px;">${cv.nombre}</div></div>
+        <button class="btn btn-sm" type="button" data-wz-cv-aplicar="${cv.id}">Aplicar</button></div>`).join('')}
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        <button class="btn btn-sm" type="button" id="wz-convenio-nuevo">${icon('deals')} ${(conveniosIncluidosArr.length||conveniosQuitadosArr.length)?'Configurar otro convenio':'Configurar convenio para este médico'}</button>
+        ${conveniosIncluidosArr.map(cv=>`<button class="btn btn-sm" type="button" data-wz-cv-editar="${cv.id}">${icon('config')} Editar "${cv.nombre.length>28?cv.nombre.slice(0,28)+'…':cv.nombre}"</button>`).join('')}
+        <span style="font-size:11px; color:var(--text-faint);">Sin salir de la cotización.</span>
+      </div>
       <div style="font-weight:700; font-size:12.5px; margin-bottom:8px;">Conceptos (${conceptosArr.length})</div>
       ${conceptosArr.length ? conceptosArr.map(l=>`<div class="line-item"><div class="desc">${l.descripcion}</div><div style="font-size:12px; color:var(--text-muted);">${l.cantidad}×</div></div>`).join('') : emptyMini('Sin conceptos.')}
       <div style="font-weight:700; font-size:12.5px; margin:16px 0 8px;">Condiciones (${condicionesArr.length})</div>
@@ -3637,7 +3646,47 @@ function drawWizardPane(){
     foot.innerHTML = `<button class="btn" id="wz-back">Atrás</button><button class="btn btn-primary" id="wz-save">${icon('check')} ${saveLabel}</button>`;
     document.getElementById('wz-back').onclick = ()=>{ wizardState.step=3; drawWizardPane(); };
     document.getElementById('wz-save').onclick = saveWizardCotizacion;
+    document.getElementById('wz-convenio-nuevo').onclick = ()=> openConvenioModal(null, wizardState.medico, {nested:true, onDone:wzConvenioTrasGuardar});
+    pane.querySelectorAll('[data-wz-cv-editar]').forEach(b=> b.onclick = ()=> openConvenioModal(b.dataset.wzCvEditar, null, {nested:true, onDone:wzConvenioTrasGuardar}));
+    pane.querySelectorAll('[data-wz-cv-aplicar]').forEach(b=> b.onclick = ()=>{ wzAplicarConvenio(b.dataset.wzCvAplicar, true); });
   }
+}
+/* Convenios desde el paso 4: aplicar/quitar sin salir de la cotización */
+function wzAplicarConvenio(cvId, aplicar){
+  const cv = DB.convenios.find(x=>x.id===cvId); if(!cv) return;
+  wizardState.conveniosIncluidos[cvId] = !!aplicar;
+  if(aplicar){
+    (cv.condiciones||[]).forEach(clId=>{ wizardState.clausulas[clId]=true; });
+  } else {
+    // quita sus condiciones, salvo las que otro convenio aplicado todavía requiera
+    (cv.condiciones||[]).forEach(clId=>{
+      const otra = conveniosActivosParaMedico(wizardState.medico).some(o=> o.id!==cvId && wizardState.conveniosIncluidos[o.id]!==false && (o.condiciones||[]).includes(clId));
+      if(!otra) delete wizardState.clausulas[clId];
+    });
+  }
+  drawWizardPane();
+}
+function wzConvenioTrasGuardar(cv){
+  if(!cv){ drawWizardPane(); return; }
+  const aplica = conveniosActivosParaMedico(wizardState.medico).some(x=>x.id===cv.id);
+  if(!aplica){ toast('El convenio se guardó, pero no aplica a este médico (o está inactivo).'); drawWizardPane(); return; }
+  if(wizardState.conveniosIncluidos[cv.id]===true){ wzAplicarConvenio(cv.id, true); return; } // ya aplicado: refresca sus condiciones
+  // Mientras no decidas, queda sin aplicar (así cerrar la pregunta con la X tampoco lo aplica a medias)
+  wizardState.conveniosIncluidos[cv.id] = false;
+  const m = medicoById(wizardState.medico);
+  const nCond = (cv.condiciones||[]).length;
+  openModal2(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('deals')} ¿Aplicar este convenio a la cotización?</div><button class="drawer-close" onclick="closeModal2(); drawWizardPane();">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div class="card" style="background:var(--green-bg); border-color:transparent; margin-bottom:14px;">
+        <div style="font-size:14px; font-weight:700;">${cv.nombre}</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${cv.tipo||''}${cv.valor?' · '+(cv.tipo==='Descuento %'?cv.valor+'%':(cv.tipo==='Descuento fijo'?fmtMoney(cv.valor):cv.valor)):''}${nCond?' · '+nCond+' condición(es) se agregarían':''}</div>
+      </div>
+      <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">El convenio ya quedó guardado para ${m?m.nombre:'este médico'}. Decide si esta cotización lo lleva: si lo aplicas, sus condiciones se incluyen en el resumen; si no, el convenio queda vigente para futuras cotizaciones y aquí puedes aplicarlo después.</div>
+    </div>
+    <div class="modal-foot"><button class="btn" id="wz-cv-no">No aplicar a esta cotización</button><button class="btn btn-primary" id="wz-cv-si">${icon('check')} Sí, aplicar</button></div>`);
+  document.getElementById('wz-cv-si').onclick = ()=>{ closeModal2(); wzAplicarConvenio(cv.id, true); toast('Convenio aplicado a la cotización'); };
+  document.getElementById('wz-cv-no').onclick = ()=>{ closeModal2(); wzAplicarConvenio(cv.id, false); };
 }
 function wzAddConcepto(id){ wizardState.conceptos[id] = (wizardState.conceptos[id]||0)+1; wizardState._costoEsManual = false; drawWizardConceptos(); }
 function drawWizardConceptos(){
@@ -6352,12 +6401,19 @@ function drawConvGrid(){
     </div>`;
   }).join('') : `<div class="empty-state" style="grid-column:1/-1;">${icon('deals')}<div>${convState.search ? 'Sin convenios que coincidan con la búsqueda.' : 'Aún no hay convenios registrados.'}</div></div>`;
 }
-function openConvenioModal(id, medicoPreset){
+/* opts.nested=true: se monta en modal2 (encima del wizard de cotización, que vive en modal) y al terminar
+   llama opts.onDone(convenioGuardado | null) en vez de refrescar el módulo Convenios. */
+function openConvenioModal(id, medicoPreset, opts){
+  opts = opts||{};
+  const nested = !!opts.nested;
+  const _open = nested ? openModal2 : openModal;
+  const _closeFn = nested ? 'closeModal2' : 'closeModal';
+  const _close = nested ? closeModal2 : closeModal;
   const cv = id ? DB.convenios.find(x=>x.id===id) : null;
   const medSel = cv ? Object.fromEntries((cv.medicos||[]).map(mid=>[mid,true])) : (medicoPreset ? {[medicoPreset]:true} : {});
   const selCl = cv ? Object.fromEntries((cv.condiciones||[]).map(cid=>[cid,true])) : {};
-  openModal(`
-    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${cv?'Editar convenio':'Nuevo convenio'}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+  _open(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${cv?'Editar convenio':'Nuevo convenio'}</div><button class="drawer-close" onclick="${_closeFn}()">${icon('x')}</button></div>
     <div class="modal-body">
       <div class="form-grid" style="margin-bottom:14px;">
         <div class="form-field full"><label>Nombre del convenio</label><input class="input uc-input" id="cv-nombre" style="width:100%;" value="${cv?cv.nombre:''}" placeholder="EJ. CONVENIO PREFERENCIAL CARDIOLOGÍA 2026"></div>
@@ -6382,7 +6438,7 @@ function openConvenioModal(id, medicoPreset){
       <div id="cv-cl-list" style="max-height:170px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; padding:6px 10px;"></div>
       <div class="form-field full" style="margin-top:14px;"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cv-activo" ${!cv||cv.estatus!=='Inactivo'?'checked':''}> Convenio activo</label></div>
     </div>
-    <div class="modal-foot">${cv?`<button class="btn btn-danger" id="cv-del">${icon('trash')} Eliminar</button>`:''}<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="cv-save">Guardar convenio</button></div>`);
+    <div class="modal-foot">${cv?`<button class="btn btn-danger" id="cv-del">${icon('trash')} Eliminar</button>`:''}<button class="btn" onclick="${_closeFn}()">Cancelar</button><button class="btn btn-primary" id="cv-save">Guardar convenio</button></div>`);
   const drawMedList = wireMedicoMultiPicker(document.getElementById('cv-med-search'), document.getElementById('cv-med-list'), medSel);
   const espFilterEl = document.getElementById('cv-esp-filter');
   espFilterEl.onchange = ()=>{
@@ -6406,12 +6462,14 @@ function openConvenioModal(id, medicoPreset){
       vigencia_inicio: document.getElementById('cv-ini').value || null, vigencia_fin: document.getElementById('cv-fin').value || null,
       notas: document.getElementById('cv-notas').value, medicos, condiciones: Object.entries(selCl).filter(([,v])=>v).map(([id])=>id),
       estatus: document.getElementById('cv-activo').checked ? 'Activo' : 'Inactivo' };
-    if(cv){ Object.assign(cv, payload); logAudit('Convenio', cv.id, 'Edición', nombre); }
-    else { const nuevo = Object.assign({id:uid('cv'), __new:true}, payload); DB.convenios.push(nuevo); logAudit('Convenio', nuevo.id, 'Creación', nombre); }
-    persistExtra(); closeModal(); toast('Convenio guardado'); renderConvenios();
+    let guardado;
+    if(cv){ Object.assign(cv, payload); logAudit('Convenio', cv.id, 'Edición', nombre); guardado = cv; }
+    else { const nuevo = Object.assign({id:uid('cv'), __new:true}, payload); DB.convenios.push(nuevo); logAudit('Convenio', nuevo.id, 'Creación', nombre); guardado = nuevo; }
+    persistExtra(); _close(); toast('Convenio guardado');
+    if(nested){ if(opts.onDone) opts.onDone(guardado); } else renderConvenios();
   };
   const delBtn = document.getElementById('cv-del');
-  if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Eliminar este convenio?')){ DB.convenios = DB.convenios.filter(x=>x.id!==cv.id); logAudit('Convenio', cv.id, 'Eliminación', cv.nombre); persistExtra(); closeModal(); renderConvenios(); } };
+  if(delBtn) delBtn.onclick = ()=>{ if(confirm('¿Eliminar este convenio?')){ DB.convenios = DB.convenios.filter(x=>x.id!==cv.id); logAudit('Convenio', cv.id, 'Eliminación', cv.nombre); persistExtra(); _close(); if(nested){ if(opts.onDone) opts.onDone(null); } else renderConvenios(); } };
 }
 
 /* Checklist de médicos con buscador por palabras, reutilizable (ej. convenios) */
