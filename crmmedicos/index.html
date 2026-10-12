@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.31.0';
+const APP_VERSION = 'v2.32.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -1994,7 +1994,8 @@ function renderCatalogo(){
       </div>
       <select class="select" id="cat-estatus-filter"><option value="activos">Activos</option><option value="inactivos">Inactivos</option><option value="todos">Todos</option></select>
       <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); font-weight:600;"><input type="checkbox" id="cat-agrupar"> Agrupar por elección</label>
-      <button class="btn btn-sm" style="margin-left:auto;" onclick="openUnificarDuplicadosModal()" title="Busca conceptos repetidos y los unifica en uno solo">${icon('checklist')} Unificar duplicados</button>
+      <button class="btn btn-sm" style="margin-left:auto;" onclick="openImportarBloqueModal()" title="Pega un bloque de medicamentos, materiales o servicios y agrégalos al catálogo">${icon('upload')} Importar bloque</button>
+      <button class="btn btn-sm" onclick="openUnificarDuplicadosModal()" title="Busca conceptos repetidos y los unifica en uno solo">${icon('checklist')} Unificar duplicados</button>
       <button class="btn btn-sm" onclick="openTablaComisionesModal()">${icon('quote')} Tabla de comisiones</button>
       <button class="btn btn-primary" onclick="openConceptoModal()">${icon('plus')} Nuevo concepto</button>
     </div>
@@ -2094,6 +2095,8 @@ function openTablaComisionesModal(){
     <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal2()">Cerrar</button></div>`);
 }
 
+/* Monto con centavos exactos (el fmtMoney del sistema redondea a pesos; aquí los centavos sí importan) */
+function fmtMoney2(n){ return '$'+Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2, maximumFractionDigits:2}); }
 /* ============================================================
    UNIFICAR DUPLICADOS DEL CATÁLOGO
    Duplicado = misma descripción (sin acentos, mayúsculas, signos ni espacios de más) y misma categoría.
@@ -2162,12 +2165,12 @@ function drawUnificarDuplicadosModal(){
                 <label style="display:flex; align-items:center; gap:10px; padding:5px 0; font-size:12.5px; cursor:pointer;">
                   <input type="radio" name="dd-${gi}" data-dedup-pick="${grupos.indexOf(g)}:${ii}" ${g.ganador===it?'checked':''}>
                   <span class="mono" style="min-width:74px;">${it.c.id}</span>
-                  <span style="font-weight:700; min-width:84px;">${fmtMoney(it.c.costo_sin_iva)}</span>
+                  <span style="font-weight:700; min-width:84px;">${fmtMoney2(it.c.costo_sin_iva)}</span>
                   <span style="color:var(--text-muted); flex:1;">${it.c.tipo_costo==='proveedor'?'Proveedor':'Interno'} · vigencia ${it.c.tipo_costo==='proveedor'?(it.c.vigencia_costo_proveedor?fmtDate(it.c.vigencia_costo_proveedor):'—'):(it.c.vigencia_costo_noor?fmtDate(it.c.vigencia_costo_noor):'—')} · usado ${it.c.veces_usado||0}×${it===g.survivor?' · <b>se conserva este ID</b>':''}${it.c.activo===false?' · inactivo':''}</span>
                 </label>`).join('')}
             </div>`).join('')}` : ''}
         ${iguales.length ? `<details style="margin-top:6px;"><summary style="cursor:pointer; font-weight:700; font-size:12.5px;">Se unifican sin aviso (${iguales.length})</summary>
-          <div style="margin-top:8px;">${iguales.map(g=>`<div style="font-size:12px; padding:4px 0; border-bottom:1px solid var(--border);">${g.survivor.c.descripcion} <span style="color:var(--text-faint);">· ${g.items.length} registros agrupados · ${fmtMoney(g.survivor.c.costo_sin_iva)}</span></div>`).join('')}</div></details>` : ''}
+          <div style="margin-top:8px;">${iguales.map(g=>`<div style="font-size:12px; padding:4px 0; border-bottom:1px solid var(--border);">${g.survivor.c.descripcion} <span style="color:var(--text-faint);">· ${g.items.length} registros agrupados · ${fmtMoney2(g.survivor.c.costo_sin_iva)}</span></div>`).join('')}</div></details>` : ''}
         ${dedupState.omitidos ? `<div style="font-size:11px; color:var(--text-faint); margin-top:10px;">${dedupState.omitidos} registro(s) sin descripción no se tocaron (no se pueden comparar).</div>` : ''}
         <div style="font-size:11.5px; color:var(--text-muted); margin-top:12px; background:var(--surface); border-radius:8px; padding:8px 12px;">Esta acción no se puede deshacer desde el sistema. Si quieres, descarga un respaldo antes.
           <button class="btn btn-sm" type="button" id="dedup-backup" style="margin-left:8px;">${icon('download')} Respaldo</button></div>`
@@ -2235,8 +2238,8 @@ function drawResultadoUnificacion(r){
         <div style="font-weight:700; font-size:12.5px; margin-bottom:6px; color:var(--amber);">⚠ ${r.cambios.length} con precios distintos (se dejó ${r.criterioTxt}, salvo los que ajustaste a mano)</div>
         <div class="table-wrap"><table style="width:100%; font-size:12px;"><thead><tr><th>Concepto</th><th>Precios que había</th><th style="text-align:right;">Quedó en</th></tr></thead><tbody>
           ${r.cambios.map(c=>`<tr><td><b>${c.descripcion}</b><div class="mono" style="font-size:10.5px; color:var(--text-faint);">${c.id} ← ${c.ids.filter(x=>x!==c.id).join(', ')}</div></td>
-            <td>${c.precios.map(fmtMoney).join(' · ')}</td>
-            <td style="text-align:right; font-weight:700;">${fmtMoney(c.despues)}${Math.round(c.antes*100)!==Math.round(c.despues*100)?`<div style="font-size:10.5px; font-weight:600; color:var(--amber);">antes ${fmtMoney(c.antes)}</div>`:''}</td></tr>`).join('')}
+            <td>${c.precios.map(fmtMoney2).join(' · ')}</td>
+            <td style="text-align:right; font-weight:700;">${fmtMoney2(c.despues)}${Math.round(c.antes*100)!==Math.round(c.despues*100)?`<div style="font-size:10.5px; font-weight:600; color:var(--amber);">antes ${fmtMoney2(c.antes)}</div>`:''}</td></tr>`).join('')}
         </tbody></table></div>` : ''}
     </div>
     <div class="modal-foot">${r.cambios.length?`<button class="btn" id="dedup-csv">${icon('download')} Descargar reporte</button>`:''}<button class="btn btn-primary" onclick="closeModal(); renderCatalogo();">Listo</button></div>`);
@@ -2248,6 +2251,261 @@ function drawResultadoUnificacion(r){
     const blob = new Blob([txt], {type:'text/csv;charset=utf-8'}); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href=url; a.download='unificacion-catalogo-'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(url);
   };
+}
+
+
+/* ============================================================
+   IMPORTAR BLOQUE AL CATÁLOGO
+   Formato por línea: CANTIDAD DESCRIPCION PRECIO IMPUESTO TOTAL (precio por pieza; impuesto y total de toda la línea).
+   Cada concepto entra por 1 pieza, costo interno Noor, vigencia 31 dic 2026. Solo Medicamento va exento de IVA.
+============================================================ */
+const IMP_VIGENCIA = '2026-12-31';
+let impState = { categoria:'', texto:'', filas:[], errores:[], filtro:'todas' };
+const impR2 = x => Math.round((x + Number.EPSILON)*100)/100;
+const impEsc = t => String(t==null?'':t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function impTokens(d){ return normDescConcepto(d).split(' ').filter(Boolean); }
+function impParseTexto(texto){
+  const filas = [], errores = [];
+  texto.split(/\r?\n/).forEach((raw,i)=>{
+    const l = raw.trim(); if(!l) return;
+    const m = l.match(/^(\d+)\s+(.+?)\s+(-?\d[\d,]*(?:\.\d+)?)\s+(-?\d[\d,]*(?:\.\d+)?)\s+(-?\d[\d,]*(?:\.\d+)?)$/);
+    if(!m){ errores.push({n:i+1, raw:l}); return; }
+    const num = x=>parseFloat(String(x).replace(/,/g,''));
+    const q = parseInt(m[1],10), pr = num(m[3]), im = num(m[4]), to = num(m[5]);
+    if(!q || isNaN(pr) || isNaN(im) || isNaN(to)){ errores.push({n:i+1, raw:l}); return; }
+    filas.push({ n:i+1, q, desc:m[2].replace(/\s+/g,' ').trim().toUpperCase(), pegado:{pr,im,to} });
+  });
+  return { filas, errores };
+}
+function impCalcPieza(f, categoria){
+  const exento = categoria==='Medicamento';
+  const q = f.q, pr = f.pegado.pr, im = f.pegado.im, to = f.pegado.to;
+  const precio = impR2(pr), impU = impR2(im/q), totalPegU = impR2(to/q);
+  const avisos = [];
+  let imp, total;
+  if(exento){
+    imp = 0; total = precio;
+    if(impU>0.004) avisos.push('Traía impuesto en un medicamento; se guardó exento de IVA.');
+  } else {
+    imp = impU; total = impR2(precio+imp);
+    if(imp<0.004) avisos.push('Sin IVA en una categoría que sí lleva IVA — revísalo.');
+    else if(Math.abs(imp-impR2(precio*0.16))>0.02) avisos.push('El IVA pegado no es el 16% del precio.');
+  }
+  if(Math.abs(total-totalPegU)>0.02) avisos.push('Precio + impuesto no coincide con el total pegado ('+fmtMoney2(totalPegU)+' por pieza).');
+  return { precio, imp, total, exento, avisos };
+}
+function impBuscarExistente(desc, categoria){
+  const n = normDescConcepto(desc);
+  return DB.conceptos.find(c=> c.categoria===categoria && normDescConcepto(c.descripcion)===n) || null;
+}
+function impBuscarCandidato(desc, categoria){
+  const t = impTokens(desc); if(t.length<2) return null;
+  const set = new Set(t); let mejor = null, mejorScore = 0;
+  DB.conceptos.forEach(c=>{
+    if(c.categoria!==categoria) return;
+    const ct = impTokens(c.descripcion); if(ct.length<2 || ct.length>t.length*2.5) return;
+    const inter = ct.filter(x=>set.has(x)).length; if(inter<2) return;
+    const score = inter/Math.min(ct.length, t.length);
+    if(score>=0.6 && score>mejorScore){ mejor = c; mejorScore = score; }
+  });
+  return mejor;
+}
+function impClasificar(r){
+  r.existente = impBuscarExistente(r.desc, impState.categoria);
+  r.candidato = null;
+  if(r.existente){
+    r.estado = dedupCentavos({costo_sin_iva:r.total})===dedupCentavos(r.existente) ? 'igual' : 'distinto';
+    r.accion = r.estado==='distinto' ? (r.existente.tipo_costo==='proveedor' ? 'existente' : 'costoso') : 'existente';
+  } else {
+    r.candidato = impBuscarCandidato(r.desc, impState.categoria);
+    r.estado = r.candidato ? 'posible' : 'nuevo';
+    r.accion = r.candidato ? 'crear' : 'nuevo';
+  }
+}
+function impAnalizar(){
+  const { filas, errores } = impParseTexto(impState.texto);
+  const vistos = new Map(), salida = [];
+  filas.forEach(f=>{
+    const calc = impCalcPieza(f, impState.categoria);
+    const fila = Object.assign({}, f, calc, { incluir:true, repetidas:1, preciosRep:[calc.total], editado:false });
+    const k = normDescConcepto(f.desc);
+    const previa = vistos.get(k);
+    if(previa){
+      // repetida dentro del mismo bloque: se unifica; si los precios difieren se queda el más costoso y se avisa
+      previa.repetidas++; previa.preciosRep.push(calc.total);
+      if(dedupCentavos({costo_sin_iva:calc.total})>dedupCentavos({costo_sin_iva:previa.total})){
+        previa.precio = calc.precio; previa.imp = calc.imp; previa.total = calc.total; previa.avisos = calc.avisos.slice();
+      }
+      return;
+    }
+    vistos.set(k, fila); salida.push(fila);
+  });
+  salida.forEach(r=>{
+    if(r.repetidas>1 && new Set(r.preciosRep.map(x=>Math.round(x*100))).size>1) r.avisos.push('Repetida '+r.repetidas+' veces en el bloque con precios distintos ('+r.preciosRep.map(fmtMoney2).join(' · ')+'); se tomó el más costoso.');
+    impClasificar(r);
+  });
+  impState.filas = salida; impState.errores = errores;
+  const nAt = salida.filter(impAtencion).length;
+  impState.filtro = nAt ? 'atencion' : 'todas';
+}
+const impAtencion = r => r.estado==='distinto' || r.estado==='posible' || r.avisos.length>0;
+
+function openImportarBloqueModal(){
+  const cats = [...new Set(['Medicamento','Material/Insumo','Servicio','Sala/Equipo','Equipo','Lista completa','Otro', ...DB.conceptos.map(c=>c.categoria).filter(Boolean)])];
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('upload')} Importar bloque al catálogo</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12.5px; color:var(--text-muted); line-height:1.6; margin-bottom:14px;">
+        Pega un bloque con el formato <b>CANTIDAD DESCRIPCIÓN PRECIO IMPUESTO TOTAL</b>, una línea por concepto. Cada uno se agrega al catálogo <b>por 1 pieza</b> (impuesto y total divididos entre la cantidad), como <b>costo interno Noor</b> con vigencia al <b>31 dic 2026</b>. Los conceptos que ya existen se unifican, y antes de guardar revisas cada caso.
+      </div>
+      <div class="form-field" style="margin-bottom:12px;"><label>Categoría de todo este bloque</label>
+        <select class="select" id="imp-cat" style="width:100%;"><option value="">Elige la categoría…</option>${cats.map(c=>`<option ${impState.categoria===c?'selected':''}>${c}</option>`).join('')}</select>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:4px;">Los medicamentos van exentos de IVA; cualquier otra categoría lleva IVA.</div></div>
+      <div class="form-field full"><label>Bloque a importar</label>
+        <textarea class="input" id="imp-texto" style="width:100%; min-height:240px; font-family:ui-monospace,Menlo,monospace; font-size:12px;" placeholder="13 SOLUCION HARTMANN 1000ML FCO/BOLSA 102.18 0.00 1328.33&#10;1 OMEPRAZOL SOL. INYECTABLE 40MG FCO IV 98.18 0.00 98.18">${impEsc(impState.texto)}</textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="imp-analizar">${icon('search')} Analizar bloque</button></div>`);
+  document.getElementById('modal').style.width = '700px';
+  document.getElementById('imp-analizar').onclick = ()=>{
+    const cat = document.getElementById('imp-cat').value, txt = document.getElementById('imp-texto').value;
+    if(!cat){ toast('Primero elige la categoría del bloque'); return; }
+    if(!txt.trim()){ toast('Pega el bloque a importar'); return; }
+    impState.categoria = cat; impState.texto = txt;
+    impAnalizar();
+    if(!impState.filas.length){ toast('No pude leer ninguna línea con el formato esperado'); return; }
+    drawImportarRevision();
+  };
+}
+function drawImportarRevision(){
+  const f = impState.filas;
+  const cuenta = fn => f.filter(fn).length;
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('upload')} Revisar bloque · ${impState.categoria}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div id="imp-resumen" style="background:var(--primary-light); border-radius:10px; padding:10px 14px; font-size:12.5px; line-height:1.6; margin-bottom:12px;"></div>
+      <div class="chip-filter" id="imp-chips" style="margin-bottom:10px;">
+        <button type="button" class="chip" data-f="todas">Todas (${f.length})</button>
+        <button type="button" class="chip" data-f="atencion">Con atención (${cuenta(impAtencion)})</button>
+        <button type="button" class="chip" data-f="nuevo">Nuevas (${cuenta(r=>r.estado==='nuevo')})</button>
+        <button type="button" class="chip" data-f="existe">Ya existen (${cuenta(r=>r.estado==='igual'||r.estado==='distinto')})</button>
+      </div>
+      <div id="imp-errores"></div>
+      <div class="table-wrap" style="max-height:52vh; overflow:auto;"><table style="width:100%; font-size:12px;">
+        <thead><tr><th style="width:28px;"></th><th>Descripción</th><th style="width:118px;">Precio</th><th style="width:70px; text-align:right;">IVA</th><th style="width:84px; text-align:right;">Total</th><th style="width:260px;">Estado</th></tr></thead>
+        <tbody id="imp-body"></tbody></table></div>
+    </div>
+    <div class="modal-foot"><button class="btn" id="imp-atras">Atrás</button><button class="btn btn-primary" id="imp-aplicar"></button></div>`);
+  document.getElementById('modal').style.width = '1040px';
+  document.getElementById('imp-atras').onclick = openImportarBloqueModal;
+  document.getElementById('imp-aplicar').onclick = aplicarImportacion;
+  document.querySelectorAll('#imp-chips .chip').forEach(b=> b.onclick = ()=>{ impState.filtro = b.dataset.f; impDrawBody(); });
+  impDrawBody();
+}
+function impDrawBody(){
+  const f = impState.filas;
+  document.querySelectorAll('#imp-chips .chip').forEach(b=> b.classList.toggle('active', b.dataset.f===impState.filtro));
+  const visibles = f.map((r,i)=>[r,i]).filter(([r])=>{
+    if(impState.filtro==='atencion') return impAtencion(r);
+    if(impState.filtro==='nuevo') return r.estado==='nuevo' && !r.avisos.length;
+    if(impState.filtro==='existe') return r.estado==='igual' || r.estado==='distinto';
+    return true;
+  });
+  const sel = (r,i)=>{
+    if(r.estado==='distinto') return `<select class="select" data-imp-acc="${i}" style="font-size:11.5px; padding:3px 6px; margin-top:4px; width:100%;">
+      <option value="costoso" ${r.accion==='costoso'?'selected':''}>Dejar el más costoso</option><option value="nuevo" ${r.accion==='nuevo'?'selected':''}>Usar el precio nuevo</option><option value="existente" ${r.accion==='existente'?'selected':''}>Dejar el existente</option></select>`;
+    if(r.estado==='posible') return `<select class="select" data-imp-acc="${i}" style="font-size:11.5px; padding:3px 6px; margin-top:4px; width:100%;">
+      <option value="crear" ${r.accion==='crear'?'selected':''}>Es distinto: crear nuevo</option><option value="u_costoso" ${r.accion==='u_costoso'?'selected':''}>Es el mismo: dejar el más costoso</option><option value="u_nuevo" ${r.accion==='u_nuevo'?'selected':''}>Es el mismo: usar el precio nuevo</option><option value="u_existente" ${r.accion==='u_existente'?'selected':''}>Es el mismo: dejar el existente</option></select>`;
+    return '';
+  };
+  const estado = (r,i)=>{
+    let h = '';
+    if(r.estado==='nuevo') h = `<span class="pill pill-green pill-small">Nuevo</span>`;
+    else if(r.estado==='igual') h = `<span class="pill pill-blue pill-small">Ya existe · mismo precio</span> <span class="mono" style="font-size:10.5px; color:var(--text-faint);">${r.existente.id}</span>`;
+    else if(r.estado==='distinto') h = `<span class="pill pill-amber pill-small">Ya existe · precio distinto</span><div style="font-size:11px; color:var(--text-muted); margin-top:3px;"><span class="mono">${r.existente.id}</span> en catálogo: <b>${fmtMoney2(r.existente.costo_sin_iva)}</b>${r.existente.tipo_costo==='proveedor'?' (era costo de proveedor)':''}${r.existente.activo===false?' · inactivo':''}</div>`;
+    else h = `<span class="pill pill-violet pill-small">Posible coincidencia</span><div style="font-size:11px; color:var(--text-muted); margin-top:3px;">«${impEsc(r.candidato.descripcion)}» · <b>${fmtMoney2(r.candidato.costo_sin_iva)}</b></div>`;
+    if(r.repetidas>1) h += `<div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">${r.repetidas} líneas repetidas unificadas</div>`;
+    h += r.avisos.map(a=>`<div style="font-size:10.5px; color:var(--amber); margin-top:3px;">⚠ ${impEsc(a)}</div>`).join('');
+    return h + sel(r,i);
+  };
+  document.getElementById('imp-body').innerHTML = visibles.length ? visibles.map(([r,i])=>`
+    <tr style="${impAtencion(r)?'background:var(--amber-bg);':''}">
+      <td><input type="checkbox" data-imp-inc="${i}" ${r.incluir?'checked':''}></td>
+      <td><input class="input uc-input" data-imp-desc="${i}" value="${impEsc(r.desc)}" style="width:100%; font-size:12px;"></td>
+      <td><input class="input" type="number" step="0.01" data-imp-precio="${i}" value="${r.precio}" style="width:100%; min-width:96px; font-size:12px; text-align:right;"></td>
+      <td style="text-align:right; color:var(--text-muted);">${r.exento?'exento':fmtMoney2(r.imp)}</td>
+      <td style="text-align:right; font-weight:700;">${fmtMoney2(r.total)}</td>
+      <td>${estado(r,i)}</td></tr>`).join('') : `<tr><td colspan="6"><div class="empty-state">${icon('check')}<div>No hay filas en este filtro.</div></div></td></tr>`;
+  const body = document.getElementById('imp-body');
+  body.querySelectorAll('[data-imp-inc]').forEach(c=> c.onchange = ()=>{ impState.filas[+c.dataset.impInc].incluir = c.checked; impResumen(); });
+  body.querySelectorAll('[data-imp-acc]').forEach(c=> c.onchange = ()=>{ impState.filas[+c.dataset.impAcc].accion = c.value; });
+  body.querySelectorAll('[data-imp-desc]').forEach(c=> c.onchange = ()=>{
+    const r = impState.filas[+c.dataset.impDesc]; r.desc = c.value.trim().toUpperCase() || r.desc; impClasificar(r); impDrawBody(); });
+  body.querySelectorAll('[data-imp-precio]').forEach(c=> c.onchange = ()=>{
+    const r = impState.filas[+c.dataset.impPrecio]; const v = parseFloat(c.value); if(isNaN(v)||v<0) { impDrawBody(); return; }
+    r.precio = impR2(v); r.imp = r.exento ? 0 : impR2(r.precio*0.16); r.total = impR2(r.precio+r.imp); r.avisos = []; r.editado = true;
+    impClasificar(r); impDrawBody(); });
+  impResumen();
+}
+function impResumen(){
+  const f = impState.filas, inc = f.filter(r=>r.incluir);
+  const nuevos = inc.filter(r=>r.estado==='nuevo' || (r.estado==='posible' && r.accion==='crear')).length;
+  const dist = inc.filter(r=>r.estado==='distinto').length, pos = inc.filter(r=>r.estado==='posible').length, ig = inc.filter(r=>r.estado==='igual').length;
+  const el = document.getElementById('imp-resumen');
+  if(el) el.innerHTML = `<b>${f.length} conceptos leídos</b> · ${nuevos} se agregarían como nuevos · ${ig} ya existen con el mismo precio · <b>${dist}</b> ya existen con precio distinto · <b>${pos}</b> son posibles coincidencias.
+    ${impState.filtro==='atencion' ? '<br>Estás viendo solo las filas que piden tu decisión; las demás se agregan tal cual (usa "Todas" para verlas).' : ''}
+    ${impState.errores.length ? `<br><span style="color:var(--red);">${impState.errores.length} línea(s) no se pudieron leer y no se importarán: ${impState.errores.slice(0,3).map(e=>'#'+e.n).join(', ')}${impState.errores.length>3?'…':''}</span>` : ''}`;
+  const b = document.getElementById('imp-aplicar');
+  if(b){ b.innerHTML = `${icon('check')} Agregar ${inc.length} concepto${inc.length===1?'':'s'}`; b.disabled = !inc.length; }
+}
+function impAplicarPrecio(c, r){
+  c.tipo_costo = 'interno'; c.exento_iva = r.exento;
+  c.costo_noor = r.precio; c.iva_noor = r.imp; c.total_noor = r.total; c.vigencia_costo_noor = IMP_VIGENCIA; c.captura_modo_noor = 'subtotal';
+  c.costo_proveedor = null; c.ganancia_noor_pct = null; c.iva_proveedor = null; c.total_proveedor = null; c.vigencia_costo_proveedor = null;
+  c.costo_sin_iva = r.total;
+  if(!c.__new) c.__edited = true;
+}
+function aplicarImportacion(){
+  const res = { nuevos:0, iguales:0, actualizados:[], conservados:[] };
+  const ids = new Set(DB.conceptos.map(c=>String(c.id).toUpperCase()));
+  impState.filas.filter(r=>r.incluir).forEach(r=>{
+    const crear = r.estado==='nuevo' || (r.estado==='posible' && r.accion==='crear');
+    if(crear){
+      let id; do{ id = uid('CC').toUpperCase(); }while(ids.has(id)); ids.add(id);
+      DB.conceptos.push({ id, descripcion:r.desc, categoria:impState.categoria, grupo_eleccion:null, veces_usado:0, notas:'', activo:true, __new:true,
+        tipo_costo:'interno', exento_iva:r.exento, costo_noor:r.precio, iva_noor:r.imp, total_noor:r.total, vigencia_costo_noor:IMP_VIGENCIA, captura_modo_noor:'subtotal',
+        costo_proveedor:null, ganancia_noor_pct:null, iva_proveedor:null, total_proveedor:null, vigencia_costo_proveedor:null, costo_sin_iva:r.total });
+      res.nuevos++; return;
+    }
+    const destino = r.estado==='posible' ? r.candidato : r.existente;
+    const modo = r.estado==='igual' ? 'existente' : (r.estado==='posible' ? r.accion.slice(2) : r.accion);
+    const viejo = destino.costo_sin_iva, difiere = dedupCentavos({costo_sin_iva:r.total})!==dedupCentavos(destino);
+    if(!difiere){ res.iguales++; return; }
+    const usarNuevo = modo==='nuevo' || (modo==='costoso' && dedupCentavos({costo_sin_iva:r.total})>dedupCentavos(destino));
+    if(usarNuevo){ impAplicarPrecio(destino, r); res.actualizados.push({ desc:destino.descripcion, id:destino.id, antes:viejo, despues:r.total }); }
+    else res.conservados.push({ desc:destino.descripcion, id:destino.id, catalogo:viejo, pegado:r.total });
+  });
+  persistExtra();
+  drawResultadoImportacion(res);
+}
+function drawResultadoImportacion(r){
+  const tabla = (titulo, color, filas, cols)=> filas.length ? `
+    <div style="font-weight:700; font-size:12.5px; margin:12px 0 6px; color:${color};">${titulo}</div>
+    <div class="table-wrap" style="max-height:30vh; overflow:auto;"><table style="width:100%; font-size:12px;"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${filas.join('')}</tbody></table></div>` : '';
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('check')} Importación completada</div><button class="drawer-close" onclick="closeModal(); renderCatalogo();">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="background:var(--green-bg); border-radius:10px; padding:10px 14px; font-size:13px; line-height:1.7;">
+        <b>${r.nuevos}</b> concepto${r.nuevos===1?'':'s'} nuevo${r.nuevos===1?'':'s'} en ${impState.categoria}.<br>
+        ${r.iguales} ya existían con el mismo precio (unificados, sin cambios).
+        ${r.actualizados.length?`<br><b>${r.actualizados.length}</b> ya existían y se actualizó su precio.`:''}
+        ${r.conservados.length?`<br><b>${r.conservados.length}</b> ya existían y se conservó el precio del catálogo.`:''}
+      </div>
+      ${tabla('⚠ Precios que cambiaron en el catálogo','var(--amber)', r.actualizados.map(a=>`<tr><td><b>${impEsc(a.desc)}</b><div class="mono" style="font-size:10.5px; color:var(--text-faint);">${a.id}</div></td><td>${fmtMoney2(a.antes)}</td><td style="font-weight:700;">${fmtMoney2(a.despues)}</td></tr>`), ['Concepto','Antes','Ahora'])}
+      ${tabla('Existían con otro precio y se dejó el del catálogo','var(--text-muted)', r.conservados.map(a=>`<tr><td><b>${impEsc(a.desc)}</b><div class="mono" style="font-size:10.5px; color:var(--text-faint);">${a.id}</div></td><td style="font-weight:700;">${fmtMoney2(a.catalogo)}</td><td>${fmtMoney2(a.pegado)}</td></tr>`), ['Concepto','Quedó en','Bloque pegado'])}
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal(); renderCatalogo();">Listo</button></div>`);
+  document.getElementById('modal').style.width = '760px';
+  impState = { categoria:'', texto:'', filas:[], errores:[], filtro:'todas' };
 }
 
 function openConceptoModal(id, onSaved, prefill){
