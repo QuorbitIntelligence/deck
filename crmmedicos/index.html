@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.32.0';
+const APP_VERSION = 'v2.32.1';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -2351,7 +2351,7 @@ function impAnalizar(){
 const impAtencion = r => r.estado==='distinto' || r.estado==='posible' || r.avisos.length>0;
 
 function openImportarBloqueModal(){
-  const cats = [...new Set(['Medicamento','Material/Insumo','Servicio','Sala/Equipo','Equipo','Lista completa','Otro', ...DB.conceptos.map(c=>c.categoria).filter(Boolean)])];
+  const cats = [...new Set(['Medicamento','Material/Insumo','Servicio','Sala/Equipo','Equipo','Lista completa','Otro', ...DB.conceptos.map(c=>c.categoria).filter(Boolean), ...(impState.categoria?[impState.categoria]:[])])];
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">${icon('upload')} Importar bloque al catálogo</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
     <div class="modal-body">
@@ -2359,15 +2359,25 @@ function openImportarBloqueModal(){
         Pega un bloque con el formato <b>CANTIDAD DESCRIPCIÓN PRECIO IMPUESTO TOTAL</b>, una línea por concepto. Cada uno se agrega al catálogo <b>por 1 pieza</b> (impuesto y total divididos entre la cantidad), como <b>costo interno Noor</b> con vigencia al <b>31 dic 2026</b>. Los conceptos que ya existen se unifican, y antes de guardar revisas cada caso.
       </div>
       <div class="form-field" style="margin-bottom:12px;"><label>Categoría de todo este bloque</label>
-        <select class="select" id="imp-cat" style="width:100%;"><option value="">Elige la categoría…</option>${cats.map(c=>`<option ${impState.categoria===c?'selected':''}>${c}</option>`).join('')}</select>
-        <div style="font-size:11px; color:var(--text-faint); margin-top:4px;">Los medicamentos van exentos de IVA; cualquier otra categoría lleva IVA.</div></div>
+        <select class="select" id="imp-cat" style="width:100%;"><option value="">Elige la categoría…</option>${cats.map(c=>`<option value="${impEsc(c)}" ${impState.categoria===c?'selected':''}>${impEsc(c)}</option>`).join('')}<option value="__otra__">➕ Otra categoría (escribirla)…</option></select>
+        <input class="input" id="imp-cat-nueva" style="width:100%; margin-top:8px; display:none;" placeholder="Ej. Terapia intensiva" autocomplete="off">
+        <div style="font-size:11px; color:var(--text-faint); margin-top:4px;">Los medicamentos van exentos de IVA; cualquier otra categoría, incluida una nueva, lleva IVA.</div></div>
       <div class="form-field full"><label>Bloque a importar</label>
         <textarea class="input" id="imp-texto" style="width:100%; min-height:240px; font-family:ui-monospace,Menlo,monospace; font-size:12px;" placeholder="13 SOLUCION HARTMANN 1000ML FCO/BOLSA 102.18 0.00 1328.33&#10;1 OMEPRAZOL SOL. INYECTABLE 40MG FCO IV 98.18 0.00 98.18">${impEsc(impState.texto)}</textarea></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="imp-analizar">${icon('search')} Analizar bloque</button></div>`);
   document.getElementById('modal').style.width = '700px';
+  const selCat = document.getElementById('imp-cat'), inpNueva = document.getElementById('imp-cat-nueva');
+  selCat.onchange = ()=>{ inpNueva.style.display = selCat.value==='__otra__' ? 'block' : 'none'; if(selCat.value==='__otra__') inpNueva.focus(); };
   document.getElementById('imp-analizar').onclick = ()=>{
-    const cat = document.getElementById('imp-cat').value, txt = document.getElementById('imp-texto').value;
+    let cat = selCat.value; const txt = document.getElementById('imp-texto').value;
+    if(cat==='__otra__'){
+      const escrita = inpNueva.value.replace(/\s+/g,' ').trim();
+      if(!escrita){ toast('Escribe el nombre de la nueva categoría'); inpNueva.focus(); return; }
+      // si ya existe una igual (sin importar mayúsculas o acentos) se reutiliza, para no duplicar categorías
+      const igual = DB.conceptos.map(c=>c.categoria).filter(Boolean).find(x=> normDescConcepto(x)===normDescConcepto(escrita));
+      cat = igual || (escrita.charAt(0).toUpperCase()+escrita.slice(1));
+    }
     if(!cat){ toast('Primero elige la categoría del bloque'); return; }
     if(!txt.trim()){ toast('Pega el bloque a importar'); return; }
     impState.categoria = cat; impState.texto = txt;
