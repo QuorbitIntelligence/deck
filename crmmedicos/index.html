@@ -578,7 +578,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.32.1';
+const APP_VERSION = 'v2.33.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -3646,6 +3646,7 @@ function openCotizacionDrawer(id){
       <div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">
         ${Object.keys(ESTADOS_COT).map(s=>`<button class="btn btn-sm ${c.estatus===s?'btn-primary':''}" onclick="setCotEstatus('${c.id}','${s}')">${s}</button>`).join('')}
       </div>
+      ${progInfoHtml('cot', c, DB.casos.find(x=>x.id_cotizacion===c.id))}
       <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
         <button class="btn" style="flex:1;" onclick="closeDrawer();editCotizacionWizard('${c.id}', false)">${icon('config')} Editar</button>
         <button class="btn" style="flex:1;" onclick="closeDrawer();editCotizacionWizard('${c.id}', true)">${icon('plus')} Regenerar / reenviar</button>
@@ -3731,6 +3732,13 @@ function sendCotizacionWhatsApp(id){
   persistExtra(); toast('Descargando PDF y abriendo WhatsApp — adjunta el PDF manualmente en el chat');
   openCotizacionDrawer(id); renderFollowUpBubble();
 }
+/* v2.33.0: sugiere el tipo de procedimiento a partir del nombre de la lista asignada */
+function inferTipoProcDeLista(nombre){
+  const n = String(nombre||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if(/AMBULATORI|SIN HOSPITALIZ|MISMO DIA|CIRUGIA DE DIA/.test(n)) return 'PROCEDIMIENTO AMBULATORIO';
+  if(/HOSPITALIZ|NOCHE|ESTANCIA|INTERNAMIENTO|TERAPIA INTENSIVA/.test(n)) return 'PROCEDIMIENTO CON HOSPITALIZACIÓN';
+  return null;
+}
 function setCotEstatus(id, estatus){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
   if(!c) return;
@@ -3740,12 +3748,18 @@ function setCotEstatus(id, estatus){
     abrirConfirmarFechaRealizado(fechaSugerida, (fecha)=> aplicarCotEstatus(id, estatus, fecha));
     return;
   }
+  if(estatus==='Confirmado' && c.estatus!=='Confirmado'){
+    const cs = DB.casos.find(x=>x.id_cotizacion===id);
+    abrirFechaProgramacion(c.fecha_programacion || (cs&&cs.fecha_programacion) || '', (fp)=> aplicarCotEstatus(id, estatus, null, fp));
+    return;
+  }
   aplicarCotEstatus(id, estatus, null);
 }
-function aplicarCotEstatus(id, estatus, fechaRealizado){
+function aplicarCotEstatus(id, estatus, fechaRealizado, fechaProg){
   const c = DB.cotizaciones.find(x=>String(x.id)===String(id));
   if(!c) return;
   const prev = c.estatus; c.estatus = estatus;
+  if(estatus==='Confirmado' && fechaProg){ c.fecha_programacion = fechaProg; const csp = DB.casos.find(x=>x.id_cotizacion===id); if(csp) csp.fecha_programacion = fechaProg; }
   if(estatus==='Vencida') c.fecha_vencida = new Date().toISOString();
   if(estatus==='Realizado' && fechaRealizado) c.fecha_realizado = new Date(fechaRealizado+'T12:00:00').toISOString();
   logAudit('Cotización', id, 'Cambio de estatus', `${prev} → ${estatus}`);
@@ -3758,7 +3772,8 @@ function aplicarCotEstatus(id, estatus, fechaRealizado){
     cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde la cotización)'+(fechaRealizado?(' · fecha de realizado: '+fmtDate(fechaRealizado)):'')});
     logAudit('Caso', cs.id, 'Cambio de estatus', prevCaso+' → '+estatus+' (sincronizado desde cotización)');
   }
-  persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCotizacionDrawer(id); renderFollowUpBubble();
+  const auto = autoRealizarProgramadas();
+  persistExtra(); toast(auto.length ? 'Confirmado · la fecha programada ya llegó: pasó a "Realizado"' : 'Estatus actualizado a "'+estatus+'"'); openCotizacionDrawer(id); renderFollowUpBubble();
 }
 
 /* ---- Wizard nueva cotización / edición / regeneración (4 pasos) ---- */
@@ -3781,7 +3796,7 @@ function editCotizacionWizard(id, regenerar){
     conceptos: conceptosOriginales,
     clausulas: Object.fromEntries((c.condiciones||[]).map(cl=>[cl.id,true])),
     step:1, costoManual: eraManual ? c.costo_propuesta : null, _costoEsManual: eraManual, vigenciaManual: regenerar ? null : (c.fecha_vigencia ? c.fecha_vigencia.slice(0,10) : null),
-    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, tipoProcedimiento: c.tipo_procedimiento||null, telefonoContacto: c.telefono_contacto||null, _defaultsApplied:true, _conveniosChecked:false, conveniosIncluidos: Object.fromEntries((c.convenios_aplicados||[]).map(cv=>[cv.id,true]))
+    listaAsignada: c.lista_asignada||null, listaAsignadaActiva:true, tipoProcedimiento: c.tipo_procedimiento||null, _tipoManual: !!c.tipo_procedimiento, telefonoContacto: c.telefono_contacto||null, _defaultsApplied:true, _conveniosChecked:false, conveniosIncluidos: Object.fromEntries((c.convenios_aplicados||[]).map(cv=>[cv.id,true]))
   };
   drawWizard();
 }
@@ -3849,6 +3864,7 @@ function drawWizardPane(){
           <option value="PROCEDIMIENTO AMBULATORIO" ${wizardState.tipoProcedimiento==='PROCEDIMIENTO AMBULATORIO'?'selected':''}>PROCEDIMIENTO AMBULATORIO</option>
           <option value="PROCEDIMIENTO CON HOSPITALIZACIÓN" ${wizardState.tipoProcedimiento==='PROCEDIMIENTO CON HOSPITALIZACIÓN'?'selected':''}>PROCEDIMIENTO CON HOSPITALIZACIÓN</option>
         </select>
+        <div id="wz-tipo-hint" style="font-size:11px; color:var(--text-faint); margin-top:5px;"></div>
       </div>
       <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Al elegir una plantilla se agregan automáticamente sus conceptos y condiciones; podrás seguir editando en los siguientes pasos.</div>
     `;
@@ -3907,6 +3923,21 @@ function drawWizardPane(){
       }
     };
     refreshListaChip();
+    const refreshTipoHint = ()=>{
+      const h = document.getElementById('wz-tipo-hint'); if(!h) return;
+      h.innerHTML = (wizardState._tipoAuto && !wizardState._tipoManual && wizardState.listaAsignada)
+        ? `✨ Sugerido según la lista «${wizardState.listaAsignada.nombre}» · puedes cambiarlo` : '';
+    };
+    const autoTipoDeLista = (lm)=>{
+      if(!lm || wizardState._tipoManual) return;
+      const t = inferTipoProcDeLista(lm.nombre);
+      if(!t) return;
+      wizardState.tipoProcedimiento = t; wizardState._tipoAuto = true;
+      const sel = document.getElementById('wz-tipo-proc'); if(sel) sel.value = t;
+      refreshTipoHint();
+    };
+    document.getElementById('wz-tipo-proc').onchange = ()=>{ wizardState._tipoManual = true; wizardState._tipoAuto = false; refreshTipoHint(); };
+    refreshTipoHint();
     const wireTmpl = (searchId, resultsId, items, onPick)=>{
       const s = document.getElementById(searchId), r = document.getElementById(resultsId);
       s.oninput = ()=>{
@@ -3924,7 +3955,7 @@ function drawWizardPane(){
       wizardState._costoEsManual = false;
       if(item.lista_asignada_id && !wizardState.listaAsignada){
         const lm = DB.listas_materiales.find(x=>x.id===item.lista_asignada_id);
-        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); }
+        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); autoTipoDeLista(lm); }
       }
       toast('Procedimiento predefinido aplicado');
     });
@@ -3935,7 +3966,7 @@ function drawWizardPane(){
       if(item.precio_paquete){ wizardState.costoManual = item.precio_paquete; wizardState._costoEsManual = true; }
       if(item.lista_asignada_id && !wizardState.listaAsignada){
         const lm = DB.listas_materiales.find(x=>x.id===item.lista_asignada_id);
-        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); }
+        if(lm){ wizardState.listaAsignada = {id:lm.id, nombre:lm.nombre}; wizardState.listaAsignadaActiva = true; refreshListaChip(); autoTipoDeLista(lm); }
       }
       toast('Paquete aplicado');
     });
@@ -3943,6 +3974,7 @@ function drawWizardPane(){
       wizardState.listaAsignada = {id:item.id, nombre:item.nombre};
       wizardState.listaAsignadaActiva = true;
       refreshListaChip();
+      autoTipoDeLista(item);
       toast('Lista de materiales asignada: '+item.nombre);
     });
     document.getElementById('wz-next').onclick = ()=>{
@@ -4572,6 +4604,7 @@ function openAsgDrawer(id){
       <div style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap;">
         ${Object.keys(ESTADOS_COT).map(s=>`<button class="btn btn-sm ${a.estatus===s?'btn-primary':''}" onclick="setAsgEstatus('${a.id}','${s}')">${s}</button>`).join('')}
       </div>
+      ${progInfoHtml('asg', a, DB.casos.find(x=>x.id_cotizacion_asg===a.id))}
       <button class="btn" style="width:100%; margin-top:14px;" onclick="closeDrawer();editAseguradoraWizard('${a.id}')">${icon('config')} Editar</button>
       <button class="btn btn-guinda" style="width:100%; margin-top:8px;" onclick="sendAseguradoraWhatsApp('${a.id}')">${icon('whatsapp')} Enviar por WhatsApp</button>
       <button class="btn" style="width:100%; margin-top:8px;" onclick="generateAseguradoraPDF('${a.id}')">${icon('download')} Descargar reporte PDF</button>
@@ -4604,11 +4637,17 @@ function setAsgEstatus(id, estatus){
     abrirConfirmarFechaRealizado(fechaSugerida, (fecha)=> aplicarAsgEstatus(id, estatus, fecha));
     return;
   }
+  if(estatus==='Confirmado' && a.estatus!=='Confirmado'){
+    const cs = DB.casos.find(x=>x.id_cotizacion_asg===id);
+    abrirFechaProgramacion(a.fecha_programacion || (cs&&cs.fecha_programacion) || '', (fp)=> aplicarAsgEstatus(id, estatus, null, fp));
+    return;
+  }
   aplicarAsgEstatus(id, estatus, null);
 }
-function aplicarAsgEstatus(id, estatus, fechaRealizado){
+function aplicarAsgEstatus(id, estatus, fechaRealizado, fechaProg){
   const a = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); if(!a) return;
   const prev = a.estatus; a.estatus = estatus;
+  if(estatus==='Confirmado' && fechaProg){ a.fecha_programacion = fechaProg; const csp = DB.casos.find(x=>x.id_cotizacion_asg===id); if(csp) csp.fecha_programacion = fechaProg; }
   if(estatus==='Realizado' && fechaRealizado) a.fecha_realizado = new Date(fechaRealizado+'T12:00:00').toISOString();
   logAudit('Cotización Aseguradora', id, 'Cambio de estatus', `${prev} → ${estatus}`);
   const cs = DB.casos.find(x=>x.id_cotizacion_asg===id);
@@ -4619,7 +4658,8 @@ function aplicarAsgEstatus(id, estatus, fechaRealizado){
     cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: '+prevCaso+' → '+estatus+' (desde cotización a aseguradora)'});
     logAudit('Caso', cs.id, 'Cambio de estatus', prevCaso+' → '+estatus+' (sincronizado desde aseguradora)');
   }
-  persistExtra(); toast('Estatus actualizado'); openAsgDrawer(id);
+  const auto = autoRealizarProgramadas();
+  persistExtra(); toast(auto.length ? 'Confirmado · la fecha programada ya llegó: pasó a "Realizado"' : 'Estatus actualizado'); openAsgDrawer(id);
 }
 
 /* ---- Wizard: nueva / editar cotización aseguradora (4 pasos) ---- */
@@ -6287,6 +6327,7 @@ function openCasoModal(id, medicoPreset){
       fecha_programacion: document.getElementById('cs-fecha-prog').value || null, convenio_id: document.getElementById('cs-convenio').value || null };
     if(cs){ Object.assign(cs, payload); logAudit('Caso', cs.id, 'Edición', titulo); }
     else { const nuevo = Object.assign({id:uid('cs'), id_cotizacion:null, fecha_apertura:new Date().toISOString(), interacciones:[], __new:true}, payload); DB.casos.unshift(nuevo); logAudit('Caso', nuevo.id, 'Creación', titulo); }
+    autoRealizarProgramadas();
     persistExtra(); closeModal(); toast('Caso guardado');
     if(CURRENT_ROUTE==='casos') renderCasos();
     renderFollowUpBubble();
@@ -6313,9 +6354,7 @@ function openCasoDrawer(id){
         <button class="btn btn-sm" onclick="abrirConversacion('${cs.id}')">${icon('followup')} Abrir conversación</button>
         ${whatsappButtonHtml(cs.id)}
       </div>
-      ${cs.fecha_programacion ? `<div class="card" style="margin-bottom:12px; background:var(--violet-light); border-color:transparent;">
-        <div style="font-size:11px; font-weight:700; color:var(--violet); text-transform:uppercase;">Cirugía programada</div>
-        <div style="font-size:13px; font-weight:600; margin-top:4px;">${fmtDate(cs.fecha_programacion)}</div></div>` : ''}
+      <div style="margin-bottom:12px;">${progInfoHtml('caso', cs, null).replace('margin-top:10px;','margin-top:0;')}</div>
       ${cv ? `<div class="card" style="margin-bottom:12px; background:var(--green-bg); border-color:transparent;">
         <div style="font-size:11px; font-weight:700; color:var(--green); text-transform:uppercase;">Convenio asignado</div>
         <div style="font-size:13px; font-weight:600; margin-top:4px;">${cv.nombre}</div></div>` : ''}
@@ -6468,6 +6507,102 @@ function atenderAccionMonitor(id){
   logAudit('Caso', id, 'Acción atendida', 'Marcada como atendida desde el Dashboard');
   persistExtra(); toast('Acción atendida'); renderDashboard();
 }
+/* ---- v2.33.0: fecha de programación opcional al Confirmar + paso automático a Realizado ---- */
+function abrirFechaProgramacion(fechaSugerida, callback){
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Confirmar cirugía</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.55;">Si ya tienes la fecha de programación, captúrala. Es <b>opcional</b>: puedes confirmar sin fecha y ponerla después. Cuando llegue la fecha, el estatus pasará solo a <b>Realizado</b>.</div>
+      <div class="form-field full"><label>Fecha de programación (cirugía)</label><input class="input" type="date" id="fp-fecha" style="width:100%;" value="${fechaSugerida||''}"></div>
+      <div id="fp-aviso" style="font-size:12px; margin-top:10px; line-height:1.5;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn" id="fp-sin">Confirmar sin fecha</button><button class="btn btn-primary" id="fp-con">${icon('check')} Confirmar con fecha</button></div>`);
+  const inp = document.getElementById('fp-fecha'), av = document.getElementById('fp-aviso'), con = document.getElementById('fp-con');
+  const refresh = ()=>{
+    const v = inp.value;
+    con.disabled = !v; con.style.opacity = v ? '' : '.5';
+    if(!v){ av.innerHTML=''; return; }
+    av.innerHTML = v <= ymd(new Date())
+      ? `<span style="color:var(--amber);">⚠ Esta fecha ya llegó: la cotización quedará directamente como <b>Realizado</b> con fecha ${fmtDate(v)}.</span>`
+      : `<span style="color:var(--text-faint);">Pasará a Realizado automáticamente el ${fmtDate(v)}.</span>`;
+  };
+  inp.oninput = refresh; inp.onchange = refresh; refresh();
+  document.getElementById('fp-sin').onclick = ()=>{ closeModal(); callback(null); };
+  con.onclick = ()=>{ const v = inp.value; if(!v){ toast('Selecciona una fecha'); return; } closeModal(); callback(v); };
+}
+/* Cambiar / poner la fecha de programación sin cambiar el estatus */
+function cambiarFechaProg(kind, id){
+  let obj, cs;
+  if(kind==='cot'){ obj = DB.cotizaciones.find(x=>String(x.id)===String(id)); cs = DB.casos.find(x=>String(x.id_cotizacion)===String(id)); }
+  else if(kind==='asg'){ obj = DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(id)); cs = DB.casos.find(x=>String(x.id_cotizacion_asg)===String(id)); }
+  else { cs = DB.casos.find(x=>x.id===id); obj = cs; }
+  if(!obj) return;
+  abrirFechaProgramacion(obj.fecha_programacion || (cs&&cs.fecha_programacion) || '', (fp)=>{
+    const val = fp || null;
+    const cot = kind==='caso' ? (cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null) : (kind==='cot'?obj:null);
+    const asg = kind==='caso' ? (cs.id_cotizacion_asg ? DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(cs.id_cotizacion_asg)) : null) : (kind==='asg'?obj:null);
+    [cs,cot,asg].forEach(o=>{ if(o && fp) o.fecha_programacion = val; });
+    const auto = autoRealizarProgramadas();
+    persistExtra(); toast(fp ? (auto.length ? 'Fecha ya cumplida: pasó a "Realizado"' : 'Fecha de programación guardada') : 'Sin cambios en la fecha');
+    if(kind==='cot') openCotizacionDrawer(id); else if(kind==='asg') openAsgDrawer(id); else openCasoDrawer(id);
+    renderFollowUpBubble();
+  });
+}
+function progInfoHtml(kind, obj, cs){
+  const fp = (obj && obj.fecha_programacion) || (cs && cs.fecha_programacion) || null;
+  const idJs = (kind==='caso' ? obj.id : obj.id);
+  const pill = fp ? `<span class="pill pill-violet pill-small">${icon('bolt')} Cirugía programada: ${fmtDate(fp)}</span>` : `<span style="font-size:11.5px; color:var(--text-faint);">Sin fecha de programación</span>`;
+  const aut = (fp && obj.estatus==='Confirmado') ? `<span style="font-size:11px; color:var(--text-faint);">pasa a Realizado ese día</span>` : '';
+  return `<div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">${pill}${aut}<button class="btn btn-sm" onclick="cambiarFechaProg('${kind}','${idJs}')">${icon('calendar')} ${fp?'Cambiar fecha':'Poner fecha'}</button></div>`;
+}
+/* Revisa los "Confirmado" cuya fecha de programación ya llegó (hoy o antes) y los pasa a Realizado.
+   Devuelve la lista de grupos que cambiaron (para avisar). Guarda solo si hubo cambios. */
+function autoRealizarProgramadas(){
+  const hoy = ymd(new Date());
+  const fpOf = (o)=> o && o.fecha_programacion ? String(o.fecha_programacion).slice(0,10) : null;
+  const clusters = []; const vistoCot = new Set(), vistoAsg = new Set();
+  DB.casos.forEach(cs=>{
+    const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
+    const asg = cs.id_cotizacion_asg ? DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(cs.id_cotizacion_asg)) : null;
+    if(cot) vistoCot.add(String(cot.id)); if(asg) vistoAsg.add(String(asg.id));
+    clusters.push({cs, cot, asg});
+  });
+  DB.cotizaciones.forEach(c=>{ if(!vistoCot.has(String(c.id))) clusters.push({cs:null, cot:c, asg:null}); });
+  DB.cotizaciones_aseguradora.forEach(a=>{ if(!vistoAsg.has(String(a.id))) clusters.push({cs:null, cot:null, asg:a}); });
+  const cambiados = [];
+  clusters.forEach(({cs,cot,asg})=>{
+    const miembros = [cs,cot,asg].filter(Boolean);
+    const pend = miembros.filter(m=>m.estatus==='Confirmado');
+    if(!pend.length) return;
+    const fecha = fpOf(cs) || fpOf(cot) || fpOf(asg);
+    if(!fecha || fecha > hoy) return;
+    const iso = new Date(fecha+'T12:00:00').toISOString();
+    pend.forEach(m=>{
+      m.estatus = 'Realizado'; m.fecha_realizado = iso; m.fecha_programacion = fecha;
+    });
+    if(cs){
+      cs.interacciones = cs.interacciones||[];
+      cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Cambio de estatus', nota:'Estatus actualizado: Confirmado → Realizado (automático: llegó la fecha de programación '+fmtDate(fecha)+')'});
+    }
+    const med = medicoById((cs&&cs.id_medico)||(cot&&cot.id_medico)||(asg&&asg.id_medico));
+    cambiados.push({ id:(cot&&cot.id)||(asg&&asg.id)||(cs&&cs.id), medico: med?med.nombre:'—', detalle:(cot&&cot.procedimiento)||(asg&&asg.procedimiento)||(cs&&cs.titulo)||'', fecha });
+    logAudit('Cirugía', cambiados[cambiados.length-1].id, 'Realizado automático', 'Llegó la fecha de programación '+fecha);
+  });
+  if(cambiados.length) persistExtra();
+  return cambiados;
+}
+function mostrarAutoRealizadas(lista){
+  if(!lista || !lista.length) return;
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">${lista.length} cirugía${lista.length>1?'s':''} pasaron a Realizado</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.55;">Estaban en <b>Confirmado</b> y su fecha de programación ya llegó, así que se marcaron como <b>Realizado</b> con esa fecha (cuenta en el mes correspondiente del Dashboard). Si alguna no se realizó, ábrela y cambia su estatus.</div>
+      <div style="max-height:340px; overflow:auto; display:flex; flex-direction:column; gap:6px;">
+        ${lista.map(x=>`<div class="card" style="padding:9px 12px;"><div style="font-weight:600; font-size:12.5px;">${x.medico}</div><div style="font-size:11.5px; color:var(--text-muted);">${x.detalle} · ${x.id} · ${fmtDate(x.fecha)}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">Entendido</button></div>`);
+}
 function abrirConfirmarFechaRealizado(fechaSugerida, callback){
   openModal(`
     <div class="modal-head"><div style="font-weight:700; font-size:16px;">Confirmar fecha de realizado</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
@@ -6490,11 +6625,21 @@ function setCasoEstatus(id, estatus){
     abrirConfirmarFechaRealizado(fechaSugerida, (fecha)=> aplicarCasoEstatus(id, estatus, fecha));
     return;
   }
+  if(estatus==='Confirmado' && cs.estatus!=='Confirmado'){
+    const cot = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null;
+    abrirFechaProgramacion(cs.fecha_programacion || (cot&&cot.fecha_programacion) || '', (fp)=> aplicarCasoEstatus(id, estatus, null, fp));
+    return;
+  }
   aplicarCasoEstatus(id, estatus, null);
 }
-function aplicarCasoEstatus(id, estatus, fechaRealizado){
+function aplicarCasoEstatus(id, estatus, fechaRealizado, fechaProg){
   const cs = DB.casos.find(x=>x.id===id); if(!cs) return;
   const prev = cs.estatus; cs.estatus = estatus;
+  if(estatus==='Confirmado' && fechaProg){
+    cs.fecha_programacion = fechaProg;
+    const c0 = cs.id_cotizacion ? DB.cotizaciones.find(x=>String(x.id)===String(cs.id_cotizacion)) : null; if(c0) c0.fecha_programacion = fechaProg;
+    const a0 = cs.id_cotizacion_asg ? DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(cs.id_cotizacion_asg)) : null; if(a0) a0.fecha_programacion = fechaProg;
+  }
   if(estatus==='Vencida') cs.fecha_vencida = new Date().toISOString();
   if(estatus==='Realizado' && fechaRealizado) cs.fecha_realizado = new Date(fechaRealizado+'T12:00:00').toISOString();
   if(prev!==estatus){
@@ -6519,7 +6664,8 @@ function aplicarCasoEstatus(id, estatus, fechaRealizado){
       logAudit('Cotización Aseguradora', a.id, 'Cambio de estatus', prevAsg+' → '+estatus+' (sincronizado desde Seguimiento CRM)');
     }
   }
-  persistExtra(); toast('Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
+  const auto = autoRealizarProgramadas();
+  persistExtra(); toast(auto.length ? 'Confirmado · la fecha programada ya llegó: pasó a "Realizado"' : 'Estatus actualizado a "'+estatus+'"'); openCasoDrawer(id); renderFollowUpBubble();
 }
 function formatBytes(n){ if(!n) return '0 KB'; if(n<1024*1024) return Math.round(n/1024)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; }
 function adjuntoChipHtml(adj){
@@ -8491,6 +8637,7 @@ async function boot(){
   document.getElementById('logout-btn').onclick = ()=>{ SESSION.authed=false; saveSession(); location.reload(); };
   if(SESSION.authed){ showApp(); }
   setInterval(()=>{ if(SESSION.authed) renderFollowUpBubble(); }, 5*60*1000);
+  setInterval(()=>{ if(SESSION.authed){ const l = autoRealizarProgramadas(); if(l.length){ toast(l.length+' cirugía(s) pasaron a Realizado (llegó su fecha)'); renderFollowUpBubble(); } } }, 30*60*1000);
   setInterval(()=>{ if(SESSION.authed) renderReminderStack(); }, 30*1000);
   document.getElementById('login-btn').onclick = doLogin;
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
@@ -8699,12 +8846,14 @@ function showApp(){
   backfillCasosAseguradora();
   if(DB.auditoria && DB.auditoria.length){ DB.auditoria = []; persistExtra(); }
   sincronizarEstatusCasoCotizacion();
+  const autoRealizadas = autoRealizarProgramadas();
   checkCotizacionesVencidas();
   checkVencidasAPerdido();
   checkCotizacionesCaducadas();
   renderNav();
   const r = location.hash.slice(1);
   navigate(ROUTES.find(x=>x.id===r) ? r : 'dashboard');
+  if(autoRealizadas.length) setTimeout(()=>mostrarAutoRealizadas(autoRealizadas), 400);
 }
 boot();
 </script>
