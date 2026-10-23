@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.35.0';
+const APP_VERSION = 'v2.36.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -721,13 +721,25 @@ function persistExtra(){
 // automática; si no, se usa el intercambio por archivo desde Configuración.
 const PUENTE_CRM_KEY = 'noor_bridge_crm_v1', PUENTE_PROG_KEY = 'noor_bridge_prog_v1';
 function datosPuenteProgramacion(){
+  // v2.36.0: además del resumen, viaja la cotización completa (como la ve el médico en su PDF)
+  // para que quirófano, caja y demás áreas la consulten desde Programación.
   const fp = (o)=> o && o.fecha_programacion ? String(o.fecha_programacion).slice(0,10) : null;
   const casoDe = (id, asg)=> DB.casos.find(x=> asg ? x.id_cotizacion_asg===id : x.id_cotizacion===id);
+  const listasUsadas = new Set();
+  const conveniosDe = (c)=> (c.convenios_aplicados||[]).map(cvRef=>{ const cv = DB.convenios.find(x=>x.id===cvRef.id); return { nombre: (cv&&cv.nombre)||cvRef.nombre||'', condiciones: cv ? (cv.condiciones||[]).map(clId=>{ const cl = DB.clausulas.find(x=>x.id===clId); return cl ? stripEmoji(cl.texto) : null; }).filter(Boolean) : [] }; });
+  const condAsg = (a)=> Array.isArray(a.condiciones) ? a.condiciones.map(x=>(x.titulo?x.titulo+': ':'')+stripEmoji(x.texto)) : [];
+  const cots = DB.cotizaciones.map(c=>{
+    if(c.lista_asignada && c.lista_asignada.id) listasUsadas.add(c.lista_asignada.id);
+    return {folio:c.id, tipo:'particular', id_medico:c.id_medico, medico_nombre:c.medico_nombre||'', especialidad:c.especialidad||'', procedimiento:c.procedimiento||'', tipo_procedimiento:c.tipo_procedimiento||'', estatus:c.estatus, fecha_programacion: fp(c)||fp(casoDe(c.id,false)), monto:c.costo_propuesta, lista_nombre:(c.lista_asignada&&c.lista_asignada.nombre)||'', lista_id:(c.lista_asignada&&c.lista_asignada.id)||'', convenios:(c.convenios_aplicados||[]).map(x=>x.nombre), fecha_creacion:c.fecha_creacion,
+      detalle:{ fecha_vigencia:c.fecha_vigencia||'', telefono_contacto:c.telefono_contacto||'', conceptos: getConceptosRows(c).map(l=>({d:l.descripcion||'', q:l.cantidad||1})), condiciones: getCondicionesTexts(c), convenios: conveniosDe(c) }};
+  });
+  const asgs = DB.cotizaciones_aseguradora.map(a=>({folio:a.id, tipo:'aseguradora', id_medico:a.id_medico, medico_nombre:a.medico_nombre||'', especialidad:a.especialidad||'', procedimiento:a.procedimiento||'', tipo_procedimiento:'', estatus:a.estatus, fecha_programacion: fp(a)||fp(casoDe(a.id,true)), monto:a.total_general, aseguradora:a.aseguradora||'', proveedor_nombre:a.incluir_proveedor?(a.proveedor_nombre||''):'', fecha_creacion:a.fecha_creacion,
+    detalle:{ fecha_vigencia:a.fecha_vigencia||'', hospital_conceptos:(a.hospital_conceptos||[]).map(l=>({d:l.descripcion||'', q:l.cantidad||1})), hospital_total:a.hospital_total, incluir_proveedor:a.incluir_proveedor!==false, proveedor_conceptos:(a.incluir_proveedor!==false?(a.proveedor_conceptos||[]):[]).map(l=>({d:l.descripcion||'', q:l.cantidad||1, t:l.total})), proveedor_total:a.incluir_proveedor!==false?a.proveedor_total:0, condiciones: condAsg(a) }}));
   return {
-    tipo:'noor_crm', version:1, version_crm: APP_VERSION, generado: new Date().toISOString(),
+    tipo:'noor_crm', version:2, version_crm: APP_VERSION, generado: new Date().toISOString(),
     medicos: DB.medicos.map(m=>({id:m.id, nombre:m.nombre, especialidad:m.especialidad||'', telefono:m.telefono||'', activo:m.activo!==false})),
-    cotizaciones: DB.cotizaciones.map(c=>({folio:c.id, tipo:'particular', id_medico:c.id_medico, medico_nombre:c.medico_nombre||'', especialidad:c.especialidad||'', procedimiento:c.procedimiento||'', tipo_procedimiento:c.tipo_procedimiento||'', estatus:c.estatus, fecha_programacion: fp(c)||fp(casoDe(c.id,false)), monto:c.costo_propuesta, lista_nombre:(c.lista_asignada&&c.lista_asignada.nombre)||'', convenios:(c.convenios_aplicados||[]).map(x=>x.nombre), fecha_creacion:c.fecha_creacion}))
-      .concat(DB.cotizaciones_aseguradora.map(a=>({folio:a.id, tipo:'aseguradora', id_medico:a.id_medico, medico_nombre:a.medico_nombre||'', especialidad:a.especialidad||'', procedimiento:a.procedimiento||'', tipo_procedimiento:'', estatus:a.estatus, fecha_programacion: fp(a)||fp(casoDe(a.id,true)), monto:a.total_general, aseguradora:a.aseguradora||'', proveedor_nombre:a.incluir_proveedor?(a.proveedor_nombre||''):'', fecha_creacion:a.fecha_creacion})))
+    cotizaciones: cots.concat(asgs),
+    listas: DB.listas_materiales.filter(l=>listasUsadas.has(l.id)).map(l=>({id:l.id, nombre:l.nombre, notas:l.notas||'', medicamentos:(l.medicamentos||[]).map(x=>({q:x.cantidad, d:x.descripcion})), materiales:(l.materiales||[]).map(x=>({q:x.cantidad, d:x.descripcion}))}))
   };
 }
 function publicarPuenteProgramacion(){ try{ localStorage.setItem(PUENTE_CRM_KEY, JSON.stringify(datosPuenteProgramacion())); }catch(e){} }
