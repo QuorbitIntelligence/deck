@@ -541,6 +541,7 @@ let DB = {
   campanas_difusion: RAW.campanas_difusion || [],
   analisis_cuentas: RAW.analisis_cuentas || [],
   mensajes_whatsapp: RAW.mensajes_whatsapp || {},
+  avisos_envios: RAW.avisos_envios || {},
   acuerdo_responsables: RAW.acuerdo_responsables || [],
   config_general: RAW.config_general || { enlace_drive: 'https://drive.google.com/file/d/15O0RWtYxvkr_kpdNWQHjghijENugEHoZ/view?usp=sharing' },
   analisis_listas: RAW.analisis_listas || [],
@@ -578,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.33.0';
+const APP_VERSION = 'v2.34.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -610,6 +611,7 @@ async function loadSession(){
       if(extra.campanas_difusion) DB.campanas_difusion = extra.campanas_difusion;
       if(extra.analisis_cuentas) DB.analisis_cuentas = extra.analisis_cuentas;
       if(extra.mensajes_whatsapp) DB.mensajes_whatsapp = extra.mensajes_whatsapp;
+      if(extra.avisos_envios) DB.avisos_envios = extra.avisos_envios;
       if(extra.acuerdo_responsables) DB.acuerdo_responsables = extra.acuerdo_responsables;
       if(extra.config_general) DB.config_general = extra.config_general;
       if(extra.analisis_listas) DB.analisis_listas = extra.analisis_listas;
@@ -674,6 +676,7 @@ function persistExtra(){
         campanas_difusion: DB.campanas_difusion,
         analisis_cuentas: DB.analisis_cuentas,
         mensajes_whatsapp: DB.mensajes_whatsapp,
+        avisos_envios: DB.avisos_envios,
         acuerdo_responsables: DB.acuerdo_responsables,
         config_general: DB.config_general,
         analisis_listas: DB.analisis_listas,
@@ -787,6 +790,15 @@ Conozca nuestro hospital, video de recorrido virtual https://drive.google.com/fi
   prospecto_seguimiento: `Dr(a). {nombre}, especialista en {especialidad}. 👋 Le escribo nuevamente de parte de Hospital Noor de Bosque Real, para darle seguimiento a nuestra plática anterior.
 ¿Ya tuvo oportunidad de revisar el recorrido virtual del hospital? Me encantaría conocer sus comentarios, y por supuesto, quedo a sus órdenes por si tiene alguna duda o si gusta que agendemos una visita presencial para conocernos en persona. 🙌
 Saludos cordiales, Juan Carlos.`,
+  dia_medico: `{titulo} {nombre}, 🩺 ¡Feliz Día del Médico! 🎉
+En Hospital Noor de Bosque Real queremos reconocer su vocación, su dedicación y su entrega diaria al cuidado de la salud de sus pacientes. Gracias por permitirnos ser parte de su práctica.
+Le deseamos un día lleno de satisfacciones, y quedamos a sus órdenes para lo que necesite. 🙌
+Con aprecio,
+Equipo Hospital Noor de Bosque Real`,
+  aviso_emergencia: `{titulo} {nombre}, 🚨 AVISO IMPORTANTE de Hospital Noor de Bosque Real:
+[ESCRIBA AQUÍ EL AVISO]
+Para cualquier duda o aclaración, quedamos atentos a su respuesta. Gracias por su atención.
+Equipo Hospital Noor de Bosque Real`,
   email_asunto: `Hospital Noor de Bosque Real — Le escribimos para presentarnos`,
   email_cuerpo: `Dr(a). {nombre}, especialista en {especialidad}:
 
@@ -1530,6 +1542,7 @@ function renderMedicos(){
       </div>
       <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); font-weight:600;"><input type="checkbox" id="medico-ver-inactivos" ${medState.verInactivos?'checked':''}> Ver dados de baja</label>
       <button class="btn btn-guinda" onclick="openMassEdit()">${icon('config')} Edición masiva</button>
+      <button class="btn" style="background:#25D366; color:#fff; border-color:#25D366;" onclick="openAvisoMasivo()">${icon('whatsapp')} Mensaje masivo</button>
       <button class="btn btn-primary" style="margin-left:auto;" onclick="openMedicoModal()">${icon('plus')} Nuevo registro</button>
     </div>
     <div class="table-wrap">
@@ -1569,6 +1582,128 @@ function renderMedicos(){
   });
   drawMedTable();
 }
+/* ---- v2.34.0: Avisos a médicos por WhatsApp (Día del Médico / urgente), individual y masivo uno a uno ---- */
+const AVISO_TIPOS = { dia_medico:'🩺 Día del Médico', aviso_emergencia:'🚨 Aviso urgente / emergencia' };
+function medTitulo(m){ const n=(m.nombre||'').trim().toUpperCase(); if(/^DRA\b/.test(n)) return 'Dra.'; if(/^DR\b/.test(n)) return 'Dr.'; return 'Dr(a).'; }
+function medNombreBonito(m){
+  const base = (m.nombre||'').replace(/^DRA?\.?\s+/i,'').trim().toLowerCase();
+  const peq = ['de','del','la','las','los','y','e'];
+  return base.split(/\s+/).map((w,i)=> (i>0 && peq.includes(w)) ? w : w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+}
+function waDigitsMedico(m){ if(!m||!m.telefono) return null; let d=String(m.telefono).replace(/\D/g,''); if(!d) return null; if(d.length===10) d='52'+d; return d; }
+function avisoMensajeParaMedico(texto, m){
+  return aplicarPlantillaWhatsApp(texto, { titulo: medTitulo(m), nombre: medNombreBonito(m), especialidad: (m.especialidad||'').toLowerCase() });
+}
+function avisoKey(tipo, medId){ return tipo+':'+medId; }
+function avisoYaEnviado(tipo, medId){ return (DB.avisos_envios||{})[avisoKey(tipo,medId)] || null; }
+function avisoRegistrarEnvio(tipo, m){
+  DB.avisos_envios = DB.avisos_envios || {};
+  const k = avisoKey(tipo, m.id), prev = DB.avisos_envios[k];
+  DB.avisos_envios[k] = { fecha:new Date().toISOString(), veces:(prev?prev.veces:0)+1 };
+  logAudit('Aviso', m.id, 'Aviso enviado', tipo+' → '+m.nombre);
+  persistExtra();
+}
+function avisoTextoPendiente(texto){ return /\[ESCRIBA AQU/i.test(texto||''); }
+function abrirWhatsAppAviso(m, mensaje){
+  const d = waDigitsMedico(m);
+  if(!d){ toast('Este médico no tiene teléfono registrado'); return false; }
+  window.open('https://wa.me/'+d+'?text='+encodeURIComponent(mensaje), '_blank');
+  return true;
+}
+/* Individual: botón en cada médico */
+function openAvisoMedico(medId, tipoIni){
+  const m = medicoById(medId); if(!m) return;
+  let tipo = tipoIni || 'dia_medico';
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Enviar aviso a ${m.nombre}</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div class="chip-filter" id="av-tipos" style="margin-bottom:12px;">${Object.keys(AVISO_TIPOS).map(k=>`<button class="chip ${k===tipo?'active':''}" data-k="${k}">${AVISO_TIPOS[k]}</button>`).join('')}</div>
+      <div style="font-size:11.5px; color:var(--text-faint); margin-bottom:6px;">Mensaje personalizado — puedes ajustarlo solo para este envío. La plantilla base se edita en Configuración.</div>
+      <textarea class="input" id="av-texto" style="width:100%; min-height:190px; font-size:13px;"></textarea>
+      <div id="av-prev" style="font-size:11.5px; color:var(--text-muted); margin-top:8px;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="av-enviar" style="background:#25D366; border-color:#25D366;">${icon('whatsapp')} Abrir WhatsApp</button></div>`);
+  const ta = document.getElementById('av-texto');
+  const cargar = ()=>{
+    ta.value = avisoMensajeParaMedico(getPlantillaWhatsApp(tipo), m);
+    const prev = avisoYaEnviado(tipo, m.id);
+    document.getElementById('av-prev').innerHTML = (prev ? `✓ Ya se le envió este aviso el ${fmtDateTime(prev.fecha)}${prev.veces>1?' ('+prev.veces+' veces)':''}.` : '')+(waDigitsMedico(m)?'':' <span style="color:var(--red);">Sin teléfono registrado.</span>');
+  };
+  document.querySelectorAll('#av-tipos .chip').forEach(b=> b.onclick = ()=>{ tipo=b.dataset.k; document.querySelectorAll('#av-tipos .chip').forEach(x=>x.classList.toggle('active',x===b)); cargar(); });
+  cargar();
+  document.getElementById('av-enviar').onclick = ()=>{
+    if(avisoTextoPendiente(ta.value)){ toast('Reemplaza [ESCRIBA AQUÍ EL AVISO] por el texto del aviso'); return; }
+    if(abrirWhatsAppAviso(m, ta.value)){ avisoRegistrarEnvio(tipo, m); toast('WhatsApp abierto — envía el mensaje desde ahí'); closeModal(); }
+  };
+}
+/* Masivo: uno a uno, personalizado, sobre la lista filtrada */
+let avisoMas = { tipo:'dia_medico', texto:'', omitir:true, sesion:{} };
+function medicosFiltradosActuales(){
+  return DB.medicos.filter(m=>{
+    if(!medState.verInactivos && m.activo===false) return false;
+    if(medState.search && !fuzzyMatch(m.nombre, medState.search)) return false;
+    if(medState.estatus!=='todos' && m.estatus_relacion!==medState.estatus) return false;
+    if(medState.esp!=='todas' && m.especialidad!==medState.esp) return false;
+    return true;
+  });
+}
+function openAvisoMasivo(){
+  avisoMas = { tipo: avisoMas.tipo||'dia_medico', texto:'', omitir:true, sesion:{} };
+  avisoMas.texto = getPlantillaWhatsApp(avisoMas.tipo);
+  const lista = medicosFiltradosActuales();
+  openModal(`
+    <div class="modal-head"><div style="font-weight:700; font-size:16px;">Mensaje masivo a médicos</div><button class="drawer-close" onclick="closeModal()">${icon('x')}</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px; line-height:1.55;">Se enviará a los médicos que estén en la lista filtrada actual (<b>${lista.length}</b>). WhatsApp se abre <b>uno por uno</b> con el mensaje ya personalizado con su nombre; tú solo das enviar en cada chat.</div>
+      <div class="chip-filter" id="avm-tipos" style="margin-bottom:10px;">${Object.keys(AVISO_TIPOS).map(k=>`<button class="chip ${k===avisoMas.tipo?'active':''}" data-k="${k}">${AVISO_TIPOS[k]}</button>`).join('')}</div>
+      <textarea class="input" id="avm-texto" style="width:100%; min-height:150px; font-size:12.5px;"></textarea>
+      <div style="display:flex; gap:8px; margin-top:6px; align-items:center; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--text-faint); flex:1; min-width:200px;">Variables: {titulo} {nombre} {especialidad}. Los cambios aquí aplican a este envío.</span>
+        <button class="btn btn-sm" id="avm-guardar">${icon('check')} Guardar como plantilla</button>
+      </div>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px; margin:12px 0 8px;"><input type="checkbox" id="avm-omitir" checked> Omitir a quienes ya se les envió este aviso</label>
+      <div id="avm-resumen" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;"></div>
+      <div id="avm-lista" style="max-height:300px; overflow:auto; border:1px solid var(--border); border-radius:10px; padding:2px 12px;"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
+  document.getElementById('modal').style.width = '720px';
+  const ta = document.getElementById('avm-texto');
+  ta.value = avisoMas.texto;
+  ta.oninput = ()=>{ avisoMas.texto = ta.value; drawAvisoMasLista(lista); };
+  document.querySelectorAll('#avm-tipos .chip').forEach(b=> b.onclick = ()=>{
+    avisoMas.tipo = b.dataset.k; avisoMas.texto = getPlantillaWhatsApp(avisoMas.tipo); ta.value = avisoMas.texto;
+    document.querySelectorAll('#avm-tipos .chip').forEach(x=>x.classList.toggle('active',x===b)); drawAvisoMasLista(lista);
+  });
+  document.getElementById('avm-omitir').onchange = (e)=>{ avisoMas.omitir = e.target.checked; drawAvisoMasLista(lista); };
+  document.getElementById('avm-guardar').onclick = ()=>{
+    DB.mensajes_whatsapp = DB.mensajes_whatsapp || {}; DB.mensajes_whatsapp[avisoMas.tipo] = ta.value; persistExtra(); toast('Plantilla guardada en Configuración');
+  };
+  drawAvisoMasLista(lista);
+}
+function drawAvisoMasLista(lista){
+  const el = document.getElementById('avm-lista'); if(!el) return;
+  const tipo = avisoMas.tipo;
+  const conTel = lista.filter(m=>waDigitsMedico(m));
+  const sinTel = lista.length - conTel.length;
+  const yaPrev = (m)=> !!avisoYaEnviado(tipo, m.id);
+  const pendientes = conTel.filter(m=> !avisoMas.sesion[tipo+':'+m.id] && !(avisoMas.omitir && yaPrev(m)));
+  document.getElementById('avm-resumen').innerHTML = `
+    <button class="btn btn-primary" id="avm-siguiente" style="background:#25D366; border-color:#25D366;" ${pendientes.length?'':'disabled'}>${icon('whatsapp')} Enviar al siguiente (${pendientes.length} pendientes)</button>
+    <span style="font-size:11.5px; color:var(--text-faint);">${sinTel} sin teléfono · ${conTel.length-pendientes.length} ya enviados u omitidos</span>`;
+  el.innerHTML = conTel.length ? conTel.map(m=>{
+    const hecho = !!avisoMas.sesion[tipo+':'+m.id], prev = avisoYaEnviado(tipo, m.id);
+    const omit = !hecho && avisoMas.omitir && prev;
+    const acc = hecho ? `<span class="pill pill-green pill-small">${icon('check')} Enviado</span>` : (omit ? `<span class="pill pill-muted pill-small">Ya enviado</span> <button class="btn btn-sm" data-s="${m.id}">Reenviar</button>` : `<button class="btn btn-sm btn-guinda" data-s="${m.id}">${icon('whatsapp')} Enviar</button>`);
+    return `<div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);"><div style="flex:1; min-width:0;"><div style="font-size:12.5px; font-weight:600;">${m.nombre}</div><div style="font-size:11px; color:var(--text-faint);">${m.telefono}${prev?' · Últ. envío '+fmtDateTime(prev.fecha):''}</div></div>${acc}</div>`;
+  }).join('') : `<div class="empty-state" style="padding:18px;"><div>Ningún médico con teléfono en esta lista.</div></div>`;
+  const enviar = (m)=>{
+    if(avisoTextoPendiente(avisoMas.texto)){ toast('Reemplaza [ESCRIBA AQUÍ EL AVISO] por el texto del aviso'); return; }
+    if(abrirWhatsAppAviso(m, avisoMensajeParaMedico(avisoMas.texto, m))){ avisoRegistrarEnvio(tipo, m); avisoMas.sesion[tipo+':'+m.id] = true; drawAvisoMasLista(lista); }
+  };
+  el.querySelectorAll('[data-s]').forEach(b=> b.onclick = ()=> enviar(medicoById(b.dataset.s)));
+  const sig = document.getElementById('avm-siguiente');
+  if(sig) sig.onclick = ()=>{ if(pendientes[0]) enviar(pendientes[0]); };
+}
 function drawMedTable(){
   let list = DB.medicos.filter(m=>{
     if(!medState.verInactivos && m.activo===false) return false;
@@ -1600,7 +1735,7 @@ function drawMedTable(){
       <td><div class="name-cell"><div class="avatar">${initials(m.nombre)}</div>
         <div><div style="font-weight:600;">${m.nombre}${m.activo===false?' <span class="pill pill-red pill-small">De baja</span>':''}</div><div class="sub">${m.especialidad}</div></div></div></td>
       <td>${pillMed(m.estatus_relacion)}</td>
-      <td style="font-size:12.5px; color:var(--text-muted);">${m.telefono?('📞 '+m.telefono):'Sin teléfono'}</td>
+      <td style="font-size:12.5px; color:var(--text-muted);"><div style="display:flex; align-items:center; gap:8px;">${m.telefono?('📞 '+m.telefono):'Sin teléfono'}${m.telefono?`<button type="button" class="btn-whatsapp" onclick="event.stopPropagation(); openAvisoMedico('${m.id}')" title="Enviar aviso por WhatsApp (Día del Médico / urgente)" style="width:26px;height:26px;flex:none;">${icon('whatsapp')}</button>`:''}</div></td>
       <td>${nCot}</td>
       <td><span class="pill ${m.estatus_credencializacion==='CREDENCIALIZADO'?'pill-green':'pill-muted'}">${m.estatus_credencializacion}</span></td>
     </tr>`;
@@ -1646,6 +1781,7 @@ function openMedicoDrawer(id){
     <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="openCotizacionWizard('${m.id}')">${icon('plus')} Nueva cotización</button>
       <button class="btn btn-sm" onclick="openCasoModal(null,'${m.id}')">${icon('followup')} Nuevo caso CRM</button>
+      ${m.telefono ? `<button class="btn btn-sm" style="background:#25D366; color:#fff; border-color:#25D366;" onclick="openAvisoMedico('${m.id}')">${icon('whatsapp')} Enviar aviso</button>` : ''}
     </div>
     <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-sm" onclick="closeDrawer();openMedicoModal('${m.id}')">${icon('config')} Editar registro</button>
@@ -8338,6 +8474,8 @@ function renderConfig(){
         <button class="chip" data-k="cotizacion_aseguradora">Cotización a aseguradora</button>
         <button class="chip" data-k="primer_acercamiento">Primer acercamiento — WhatsApp (Prospectos)</button>
         <button class="chip" data-k="prospecto_seguimiento">Seguimiento — WhatsApp (Prospectos)</button>
+        <button class="chip" data-k="dia_medico">🩺 Aviso — Día del Médico</button>
+        <button class="chip" data-k="aviso_emergencia">🚨 Aviso — Urgente / emergencia</button>
         <button class="chip" data-k="email_asunto">Primer acercamiento — Correo (Asunto)</button>
         <button class="chip" data-k="email_cuerpo">Primer acercamiento — Correo (Cuerpo)</button>
       </div>
@@ -8399,6 +8537,8 @@ const MSG_PLACEHOLDERS = {
   cotizacion_aseguradora: '{nombre} {folio} {procedimiento} {aseguradora} {monto}',
   primer_acercamiento: '{nombre} {especialidad}',
   prospecto_seguimiento: '{nombre} {especialidad}',
+  dia_medico: '{titulo} {nombre} {especialidad}',
+  aviso_emergencia: '{titulo} {nombre} {especialidad} — reemplaza [ESCRIBA AQUÍ EL AVISO] por el texto del aviso',
   email_asunto: '(este mensaje no usa variables, es el asunto fijo del correo)',
   email_cuerpo: '{nombre} {especialidad} {enlace_drive}'
 };
