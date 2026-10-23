@@ -579,7 +579,7 @@ const ESTADOS_MED = {
 };
 
 let SESSION = { authed:false, theme:'auto' };
-const APP_VERSION = 'v2.34.0';
+const APP_VERSION = 'v2.35.0';
 
 /* ============ STORAGE (localStorage — funciona igual en Claude, tu equipo o GitHub Pages) ============ */
 function lsGet(key){ try{ const v = localStorage.getItem(key); return Promise.resolve(v!=null ? {value:v} : null); }catch(e){ return Promise.resolve(null); } }
@@ -703,12 +703,84 @@ function persistExtra(){
         )
       }));
     }catch(e){ ok = false; }
+    // Puente con Programación de procedimientos: si el navegador se quedó sin espacio, primero
+    // se libera la copia del puente (se regenera sola) y se reintenta el guardado principal.
+    if(!ok && !window.__puenteLiberado){ window.__puenteLiberado = true; try{ localStorage.removeItem(PUENTE_CRM_KEY); }catch(e){} persistExtra(); return; }
+    if(ok){ window.__puenteLiberado = false; publicarPuenteProgramacion(); }
     if(!ok && !window.__storageWarned){
       window.__storageWarned = true;
       toast('⚠️ No se pudo guardar — el almacenamiento del navegador está lleno. Borra imágenes de promociones antiguas o usa "Reiniciar datos" con respaldo previo.');
       setTimeout(()=>{ window.__storageWarned = false; }, 15000);
     }
   }, 300);
+}
+
+/* ============ PUENTE CON PROGRAMACIÓN DE PROCEDIMIENTOS (v2.34.0) ============ */
+// El CRM publica médicos y cotizaciones en 'noor_bridge_crm_v1'; Programación publica sus cirugías
+// ligadas por folio en 'noor_bridge_prog_v1'. Si ambos HTML se abren desde el mismo sitio, la liga es
+// automática; si no, se usa el intercambio por archivo desde Configuración.
+const PUENTE_CRM_KEY = 'noor_bridge_crm_v1', PUENTE_PROG_KEY = 'noor_bridge_prog_v1';
+function datosPuenteProgramacion(){
+  const fp = (o)=> o && o.fecha_programacion ? String(o.fecha_programacion).slice(0,10) : null;
+  const casoDe = (id, asg)=> DB.casos.find(x=> asg ? x.id_cotizacion_asg===id : x.id_cotizacion===id);
+  return {
+    tipo:'noor_crm', version:1, version_crm: APP_VERSION, generado: new Date().toISOString(),
+    medicos: DB.medicos.map(m=>({id:m.id, nombre:m.nombre, especialidad:m.especialidad||'', telefono:m.telefono||'', activo:m.activo!==false})),
+    cotizaciones: DB.cotizaciones.map(c=>({folio:c.id, tipo:'particular', id_medico:c.id_medico, medico_nombre:c.medico_nombre||'', especialidad:c.especialidad||'', procedimiento:c.procedimiento||'', tipo_procedimiento:c.tipo_procedimiento||'', estatus:c.estatus, fecha_programacion: fp(c)||fp(casoDe(c.id,false)), monto:c.costo_propuesta, lista_nombre:(c.lista_asignada&&c.lista_asignada.nombre)||'', convenios:(c.convenios_aplicados||[]).map(x=>x.nombre), fecha_creacion:c.fecha_creacion}))
+      .concat(DB.cotizaciones_aseguradora.map(a=>({folio:a.id, tipo:'aseguradora', id_medico:a.id_medico, medico_nombre:a.medico_nombre||'', especialidad:a.especialidad||'', procedimiento:a.procedimiento||'', tipo_procedimiento:'', estatus:a.estatus, fecha_programacion: fp(a)||fp(casoDe(a.id,true)), monto:a.total_general, aseguradora:a.aseguradora||'', proveedor_nombre:a.incluir_proveedor?(a.proveedor_nombre||''):'', fecha_creacion:a.fecha_creacion})))
+  };
+}
+function publicarPuenteProgramacion(){ try{ localStorage.setItem(PUENTE_CRM_KEY, JSON.stringify(datosPuenteProgramacion())); }catch(e){} }
+const RANGO_EST_PROG = {'Borrador':0,'Nuevo':1,'En seguimiento':1,'En negociación':1,'Con promoción':1,'Vencida':1,'Aprobada':2,'Programación agendada':3,'Confirmado':4,'Realizado':5};
+function aplicarPuenteProgramacion(data){
+  if(!data || !Array.isArray(data.cirugias)) return 0;
+  let cambios = 0;
+  const esc = (t)=> String(t==null?'':t).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  // Si un folio aparece en varias cirugías (p. ej. una cancelada y otra reprogramada), gana la no cancelada más reciente
+  const porFolio = {};
+  data.cirugias.forEach(pg=>{ const k = (pg.tipo||'particular')+'|'+pg.folio; const prev = porFolio[k];
+    const peso = (x)=> (['Cancelada'].includes(x.estatus)?'0':'1')+String(x.actualizado||'');
+    if(!prev || peso(pg) > peso(prev)) porFolio[k] = pg; });
+  Object.values(porFolio).forEach(pg=>{
+    const asg = pg.tipo==='aseguradora';
+    const obj = asg ? DB.cotizaciones_aseguradora.find(x=>String(x.id)===String(pg.folio)) : DB.cotizaciones.find(x=>String(x.id)===String(pg.folio));
+    if(!obj) return;
+    const prevPq = obj.programacion_quirofano;
+    if(prevPq && prevPq.id===pg.id && prevPq.actualizado===pg.actualizado) return; // ya aplicado
+    const cs = DB.casos.find(x=> asg ? x.id_cotizacion_asg===obj.id : x.id_cotizacion===obj.id);
+    const notas = [];
+    obj.programacion_quirofano = {id:pg.id, fecha:pg.fecha, hora_inicio:pg.hora_inicio||'', hora_fin:pg.hora_fin||'', sala:esc(pg.sala), estatus:pg.estatus, paciente:esc(pg.paciente), motivo:esc(pg.motivo), actualizado:pg.actualizado};
+    if(cs) cs.programacion_quirofano = obj.programacion_quirofano;
+    if(!prevPq || prevPq.id!==pg.id) notas.push('Ligada a la programación de quirófano '+pg.id+' ('+(pg.sala||'')+', '+(pg.hora_inicio||'')+')');
+    if(['Tentativa','Confirmada','En quirófano','Realizada'].includes(pg.estatus) && pg.fecha){
+      const actual = obj.fecha_programacion ? String(obj.fecha_programacion).slice(0,10) : null;
+      if(actual!==pg.fecha){ obj.fecha_programacion = pg.fecha; if(cs) cs.fecha_programacion = pg.fecha; notas.push(actual ? 'Fecha de cirugía cambiada en quirófano: '+fmtDate(actual)+' → '+fmtDate(pg.fecha) : 'Cirugía programada en quirófano para '+fmtDate(pg.fecha)); }
+    }
+    if(['Cancelada','Suspendida'].includes(pg.estatus) && (!prevPq || prevPq.estatus!==pg.estatus)) notas.push('Cirugía '+pg.estatus.toLowerCase()+' en quirófano'+(pg.motivo?': '+pg.motivo:'')+'. No pasará sola a Realizado.');
+    const r = RANGO_EST_PROG[obj.estatus];
+    let nuevo = null;
+    if(r!=null){
+      if(pg.estatus==='Realizada' && r<5) nuevo = 'Realizado';
+      else if(['Confirmada','En quirófano'].includes(pg.estatus) && r<4) nuevo = 'Confirmado';
+      else if(pg.estatus==='Tentativa' && r<3) nuevo = 'Programación agendada';
+    }
+    if(nuevo){
+      const prev = obj.estatus; obj.estatus = nuevo;
+      if(nuevo==='Realizado'){ obj.fecha_realizado = new Date((pg.fecha||ymd(new Date()))+'T12:00:00').toISOString(); }
+      notas.push('Estatus actualizado: '+prev+' → '+nuevo+' (desde Programación de quirófano)');
+      if(cs && cs.estatus!==nuevo){ cs.estatus = nuevo; if(obj.fecha_realizado) cs.fecha_realizado = obj.fecha_realizado; }
+    }
+    if(cs && notas.length){ cs.interacciones = cs.interacciones||[]; cs.interacciones.push({id:uid('it'), fecha:new Date().toISOString(), tipo:'Programación quirófano', nota:notas.join(' · ')}); }
+    cambios++;
+  });
+  return cambios;
+}
+function importarProgramacionQuirofano(){
+  let data = null;
+  try{ data = JSON.parse(localStorage.getItem(PUENTE_PROG_KEY)||'null'); }catch(e){}
+  const n = aplicarPuenteProgramacion(data);
+  if(n) persistExtra();
+  return n;
 }
 
 /* ============ AUDIT ============ */
@@ -6688,8 +6760,11 @@ function progInfoHtml(kind, obj, cs){
   const fp = (obj && obj.fecha_programacion) || (cs && cs.fecha_programacion) || null;
   const idJs = (kind==='caso' ? obj.id : obj.id);
   const pill = fp ? `<span class="pill pill-violet pill-small">${icon('bolt')} Cirugía programada: ${fmtDate(fp)}</span>` : `<span style="font-size:11.5px; color:var(--text-faint);">Sin fecha de programación</span>`;
-  const aut = (fp && obj.estatus==='Confirmado') ? `<span style="font-size:11px; color:var(--text-faint);">pasa a Realizado ese día</span>` : '';
-  return `<div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">${pill}${aut}<button class="btn btn-sm" onclick="cambiarFechaProg('${kind}','${idJs}')">${icon('calendar')} ${fp?'Cambiar fecha':'Poner fecha'}</button></div>`;
+  const pq = (obj && obj.programacion_quirofano) || (cs && cs.programacion_quirofano) || null;
+  const pqCanc = pq && ['Cancelada','Suspendida'].includes(pq.estatus);
+  const aut = (fp && obj.estatus==='Confirmado') ? `<span style="font-size:11px; color:var(--text-faint);">${pqCanc?'no pasará a Realizado ('+pq.estatus.toLowerCase()+' en quirófano)':'pasa a Realizado ese día'}</span>` : '';
+  const pqHtml = pq ? `<div style="font-size:12px; margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--surface-2); line-height:1.5;">${icon('building')} Quirófano: <b style="color:${pqCanc?'var(--red)':'var(--primary)'}">${pq.estatus}</b> · ${fmtDate(pq.fecha)} ${pq.hora_inicio||''}${pq.hora_fin?'–'+pq.hora_fin:''} · ${pq.sala||''}${pq.paciente?' · '+pq.paciente:''}${pq.motivo&&pqCanc?' · '+pq.motivo:''} <span style="color:var(--text-faint)">(${pq.id})</span></div>` : '';
+  return `<div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">${pill}${aut}<button class="btn btn-sm" onclick="cambiarFechaProg('${kind}','${idJs}')">${icon('calendar')} ${fp?'Cambiar fecha':'Poner fecha'}</button></div>${pqHtml}`;
 }
 /* Revisa los "Confirmado" cuya fecha de programación ya llegó (hoy o antes) y los pasa a Realizado.
    Devuelve la lista de grupos que cambiaron (para avisar). Guarda solo si hubo cambios. */
@@ -6710,6 +6785,7 @@ function autoRealizarProgramadas(){
     const miembros = [cs,cot,asg].filter(Boolean);
     const pend = miembros.filter(m=>m.estatus==='Confirmado');
     if(!pend.length) return;
+    if(miembros.some(m=>m.programacion_quirofano && ['Cancelada','Suspendida'].includes(m.programacion_quirofano.estatus))) return;
     const fecha = fpOf(cs) || fpOf(cot) || fpOf(asg);
     if(!fecha || fecha > hoy) return;
     const iso = new Date(fecha+'T12:00:00').toISOString();
@@ -8465,6 +8541,16 @@ function renderConfig(){
         <button class="btn btn-danger" id="reset-btn">${icon('trash')} Reiniciar datos de la sesión</button>
       </div>
     </div>
+    <div class="section-title">Programación de quirófano <span style="font-size:11px; color:var(--text-faint); font-weight:500;">Liga con el HTML "Programación de procedimientos Noor"</span></div>
+    <div class="card">
+      <div style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.6;">Si abres ambos archivos desde el mismo sitio (p. ej. tu GitHub Pages) en este navegador, la liga es automática: Programación recibe médicos, anestesiólogos y cotizaciones, y el CRM recibe fechas de cirugía, canceladas y realizadas. Si los abres desde lugares distintos, intercambia estos archivos.</div>
+      <div id="prog-qx-status" style="font-size:12px; margin-bottom:12px;"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="prog-exp-btn">${icon('download')} Descargar datos para Programación</button>
+        <button class="btn" id="prog-imp-btn">${icon('upload')} Importar programación de quirófano</button>
+        <input type="file" id="prog-imp-file" accept="application/json,.json" style="display:none;">
+      </div>
+    </div>
     <div class="section-title">Mensajes de WhatsApp y Correo <span style="font-size:11px; color:var(--text-faint); font-weight:500;">Edita el texto que se usa al enviar cada tipo de mensaje</span></div>
     <div class="card" style="margin-bottom:20px;">
       <div id="msg-tabs" class="chip-filter" style="margin-bottom:14px;">
@@ -8529,6 +8615,38 @@ function renderConfig(){
   };
   drawStorageUsage();
   wireMsgEditor();
+  wireProgramacionQx();
+}
+function wireProgramacionQx(){
+  const st = document.getElementById('prog-qx-status');
+  if(st){
+    let d = null; try{ d = JSON.parse(localStorage.getItem(PUENTE_PROG_KEY)||'null'); }catch(e){}
+    const ligadas = DB.cotizaciones.concat(DB.cotizaciones_aseguradora).filter(x=>x.programacion_quirofano).length;
+    st.innerHTML = d && d.generado ? `<span class="pill pill-green">${icon('check')} Última programación recibida: ${fmtDateTime(d.generado)} · ${(d.cirugias||[]).length} cirugía(s)</span> <span style="color:var(--text-faint)">${ligadas} cotización(es) ligadas a quirófano</span>` : `<span class="pill pill-amber">Aún no se ha recibido programación de quirófano en este navegador</span>`;
+  }
+  const exp = document.getElementById('prog-exp-btn');
+  if(exp) exp.onclick = ()=>{
+    const blob = new Blob([JSON.stringify(datosPuenteProgramacion())], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='crm-para-programacion-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+    toast('Archivo descargado — impórtalo en Programación → Conexión y respaldos');
+  };
+  const imp = document.getElementById('prog-imp-btn'), fi = document.getElementById('prog-imp-file');
+  if(imp && fi){
+    imp.onclick = ()=> fi.click();
+    fi.onchange = (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        let data = null; try{ data = JSON.parse(ev.target.result); }catch(err){}
+        if(!data || data.tipo!=='noor_programacion' || !Array.isArray(data.cirugias)){ toast('El archivo no es una exportación de Programación de procedimientos'); return; }
+        const n = aplicarPuenteProgramacion(data);
+        if(n) persistExtra();
+        toast(n ? n+' cotización(es) actualizada(s) con la programación de quirófano' : 'Sin cambios: la programación ya estaba al día');
+        renderFollowUpBubble(); renderConfig();
+      };
+      reader.readAsText(file);
+    };
+  }
 }
 const MSG_PLACEHOLDERS = {
   cotizacion: '{nombre} {folio} {procedimiento} {monto} {vigencia} {beneficio} {portal}',
@@ -8779,6 +8897,7 @@ async function boot(){
   setInterval(()=>{ if(SESSION.authed) renderFollowUpBubble(); }, 5*60*1000);
   setInterval(()=>{ if(SESSION.authed){ const l = autoRealizarProgramadas(); if(l.length){ toast(l.length+' cirugía(s) pasaron a Realizado (llegó su fecha)'); renderFollowUpBubble(); } } }, 30*60*1000);
   setInterval(()=>{ if(SESSION.authed) renderReminderStack(); }, 30*1000);
+  window.addEventListener('storage', e=>{ if(e.key===PUENTE_PROG_KEY && SESSION.authed){ const n = importarProgramacionQuirofano(); if(n){ toast(n+' cotización(es) actualizada(s) desde Programación de quirófano'); renderFollowUpBubble(); } } });
   document.getElementById('login-btn').onclick = doLogin;
   document.getElementById('pass-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
 }
@@ -8986,6 +9105,9 @@ function showApp(){
   backfillCasosAseguradora();
   if(DB.auditoria && DB.auditoria.length){ DB.auditoria = []; persistExtra(); }
   sincronizarEstatusCasoCotizacion();
+  const nProgQx = importarProgramacionQuirofano();
+  if(nProgQx) setTimeout(()=>toast(nProgQx+' cotización(es) actualizada(s) desde Programación de quirófano'), 1200);
+  publicarPuenteProgramacion();
   const autoRealizadas = autoRealizarProgramadas();
   checkCotizacionesVencidas();
   checkVencidasAPerdido();
