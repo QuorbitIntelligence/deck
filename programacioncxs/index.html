@@ -5,54 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Programación Noor</title>
 <meta name="apple-mobile-web-app-title" content="Programación Noor">
-<meta name="theme-color" content="#2660AB">
+<meta name="theme-color" content="#3B5BFD">
 <link rel="apple-touch-icon" href="icono-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{ --bg:#F5F7FA; --card:#FFFFFF; --text:#101826; --muted:#5B6675; --primary:#2660AB; --primary-dark:#1B3E73; --border:#DCE3EC; }
-  @media (prefers-color-scheme: dark){ :root{ --bg:#0B1220; --card:#111A2C; --text:#E9EFF4; --muted:#93A5B5; --primary:#5B9BE0; --primary-dark:#3E7AC0; --border:#26334D; } }
+  :root{ --bg:#F3F5FC; --card:#FFFFFF; --text:#0F1530; --muted:#56607E; --border:#DDE2F2; --grad:linear-gradient(120deg,#3B5BFD 0%,#8B5CF6 55%,#0FB5AE 110%); }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#090D1C; --card:#11172C; --text:#EEF1FF; --muted:#A0A9CC; --border:#29335A; } }
   *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ height:100%; }
-  body{ background:var(--bg); color:var(--text); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; display:flex; align-items:center; justify-content:center; padding:24px max(16px, env(safe-area-inset-left)) 24px max(16px, env(safe-area-inset-right)); }
-  .box{ text-align:center; max-width:380px; width:100%; }
-  img{ width:84px; height:84px; border-radius:20px; }
-  h1{ font-size:21px; margin:16px 0 4px; }
-  p{ color:var(--muted); font-size:14px; line-height:1.5; }
-  .btn{ display:inline-block; margin-top:20px; padding:13px 26px; border-radius:12px; background:var(--primary); color:#fff; text-decoration:none; font-weight:600; font-size:15px; }
-  .btn:active{ background:var(--primary-dark); }
-  .aviso{ margin-top:18px; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--card); font-size:13px; color:var(--muted); display:none; }
+  html,body{ height:100%; background:var(--bg); color:var(--text); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  #app{ position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:var(--bg); }
+  #abrir{ position:fixed; top:8px; right:max(10px, env(safe-area-inset-right)); z-index:5; display:none; font-size:12px; padding:5px 10px; border-radius:20px; background:var(--card); color:var(--muted); border:1px solid var(--border); text-decoration:none; opacity:.75; }
+  #abrir:hover{ opacity:1; }
+  .box{ min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px max(16px, env(safe-area-inset-left)) 24px max(16px, env(safe-area-inset-right)); }
+  .box img{ width:84px; height:84px; border-radius:20px; }
+  .box h1{ font-size:21px; margin:16px 0 4px; }
+  .box p{ color:var(--muted); font-size:14px; line-height:1.5; max-width:380px; }
+  .btn{ display:inline-block; margin-top:20px; padding:13px 26px; border-radius:12px; background:var(--grad); color:#fff; text-decoration:none; font-weight:600; font-size:15px; }
 </style>
 </head>
 <body>
-  <div class="box">
+  <iframe id="app" title="Programación de procedimientos · Hospital Noor" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+  <a id="abrir" href="#" target="_top" title="Si no carga aquí, ábrela directo en Google">Abrir directo ↗</a>
+  <div class="box" id="portada">
     <img src="icono-180.png" alt="">
     <h1>Programación Noor</h1>
     <p>Programación de procedimientos · Hospital Noor</p>
     <p id="msg" style="margin-top:10px">Abriendo la plataforma…</p>
-    <a class="btn" id="entrar" href="#">Entrar</a>
-    <div class="aviso" id="aviso">Falta configurar la liga de la plataforma en este archivo (LIGA_PLATAFORMA).</div>
+    <a class="btn" id="entrar" href="#" target="_top">Entrar</a>
   </div>
 <script>
-  // Pega aquí la liga de tu aplicación web de Apps Script (la que termina en /exec)
-  var LIGA_PLATAFORMA = 'PEGA_AQUI_TU_LIGA_EXEC';
+  /* Liga de la aplicación web de Apps Script (termina en /exec) */
+  var LIGA_PLATAFORMA = 'https://script.google.com/macros/s/AKfycbzl186yA2E5OOLQAp1j15SjfxOJkjMQLgkz3PCcEOJBhcv0XOI4O4y3Z1H-4CBkN0s/exec';
 
-  var ok = /^https:\/\/script\.google\.com\/.+\/exec/.test(LIGA_PLATAFORMA);
-  var btn = document.getElementById('entrar');
-  if(ok){
-    btn.href = LIGA_PLATAFORMA;
-    // Entra solo; ?quedarse en la dirección evita la redirección (útil para guardar el ícono en el iPhone)
-    if(location.search.indexOf('quedarse') < 0) setTimeout(function(){ location.replace(LIGA_PLATAFORMA); }, 700);
-    else {
-      // Limpia ?quedarse de la dirección: así el ícono guardado en el iPhone sí entra directo a la plataforma
-      try{ history.replaceState(null, '', location.pathname); }catch(e){}
-      document.getElementById('msg').textContent = 'Toca Compartir → "Agregar a inicio" para guardar el ícono.';
-    }
+  var q = location.search;
+  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  document.getElementById('entrar').href = LIGA_PLATAFORMA;
+  document.getElementById('abrir').href = LIGA_PLATAFORMA;
+
+  if (q.indexOf('quedarse') >= 0) {
+    // Para guardar el ícono en la pantalla de inicio: no redirige y limpia la dirección
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    document.getElementById('msg').textContent = 'Toca Compartir → "Agregar a inicio" para guardar el ícono.';
+  } else if (ios || q.indexOf('directo') >= 0) {
+    // iPhone/iPad: Safari no permite iniciar sesión de Google dentro de otra página; se abre directo
+    setTimeout(function(){ location.replace(LIGA_PLATAFORMA); }, 500);
   } else {
-    document.getElementById('msg').textContent = '';
-    document.getElementById('aviso').style.display = 'block';
-    btn.style.display = 'none';
+    // Computadora: la plataforma se abre dentro de esta página, sin la barra de aviso de Google
+    var f = document.getElementById('app');
+    f.src = LIGA_PLATAFORMA;
+    f.style.display = 'block';
+    document.getElementById('portada').style.display = 'none';
+    document.getElementById('abrir').style.display = 'block';
   }
 </script>
 </body>
