@@ -4,61 +4,131 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Programación Noor</title>
-<meta name="apple-mobile-web-app-title" content="Programación Noor">
+<meta name="description" content="Programación de procedimientos quirúrgicos · Hospital Noor">
 <meta name="theme-color" content="#3B5BFD">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Programación Noor">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icono-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
 <link rel="icon" href="favicon.ico" sizes="any">
-<link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{ --bg:#F3F5FC; --card:#FFFFFF; --text:#0F1530; --muted:#56607E; --border:#DDE2F2; --grad:linear-gradient(120deg,#3B5BFD 0%,#8B5CF6 55%,#0FB5AE 110%); }
-  @media (prefers-color-scheme: dark){ :root{ --bg:#090D1C; --card:#11172C; --text:#EEF1FF; --muted:#A0A9CC; --border:#29335A; } }
+  :root{ --bg:#F3F5FC; --card:#FFFFFF; --text:#0F1530; --muted:#56607E; --border:#DDE2F2; --primary:#3B5BFD; --grad:linear-gradient(120deg,#3B5BFD 0%,#8B5CF6 55%,#0FB5AE 110%); }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#090D1C; --card:#11172C; --text:#EEF1FF; --muted:#A0A9CC; --border:#29335A; --primary:#7C8CFF; } }
   *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ height:100%; background:var(--bg); color:var(--text); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-  #app{ position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:var(--bg); }
-  #abrir{ position:fixed; top:8px; right:max(10px, env(safe-area-inset-right)); z-index:5; display:none; font-size:12px; padding:5px 10px; border-radius:20px; background:var(--card); color:var(--muted); border:1px solid var(--border); text-decoration:none; opacity:.75; }
-  #abrir:hover{ opacity:1; }
-  .box{ min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px max(16px, env(safe-area-inset-left)) 24px max(16px, env(safe-area-inset-right)); }
-  .box img{ width:84px; height:84px; border-radius:20px; }
-  .box h1{ font-size:21px; margin:16px 0 4px; }
-  .box p{ color:var(--muted); font-size:14px; line-height:1.5; max-width:380px; }
-  .btn{ display:inline-block; margin-top:20px; padding:13px 26px; border-radius:12px; background:var(--grad); color:#fff; text-decoration:none; font-weight:600; font-size:15px; }
+  html,body{ height:100%; background:var(--bg); color:var(--text); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+  #app{ position:fixed; top:env(safe-area-inset-top, 0px); left:0; right:0; bottom:0; width:100%; height:calc(100% - env(safe-area-inset-top, 0px)); border:0; display:none; background:var(--bg); }
+  body.con-app::before{ content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); background:var(--bg); z-index:2; }
+  .chip{ position:fixed; z-index:5; display:none; font-size:12px; padding:6px 11px; border-radius:20px; background:var(--card); color:var(--muted); border:1px solid var(--border); text-decoration:none; opacity:.8; cursor:pointer; font-family:inherit; }
+  .chip:hover{ opacity:1; }
+  #abrir{ top:calc(8px + env(safe-area-inset-top, 0px)); right:max(10px, env(safe-area-inset-right, 0px)); }
+  #instalar-chip{ bottom:calc(12px + env(safe-area-inset-bottom, 0px)); right:max(12px, env(safe-area-inset-right, 0px)); background:var(--grad); color:#fff; border:0; opacity:.95; font-weight:600; }
+  .box{ min-height:100%; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:6px; padding:calc(24px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  .box img{ width:92px; height:92px; border-radius:22px; box-shadow:0 10px 30px rgba(59,91,253,.3); }
+  .box h1{ font-size:22px; margin-top:14px; }
+  .box p{ color:var(--muted); font-size:14.5px; line-height:1.5; max-width:380px; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-top:18px; padding:14px 26px; border-radius:14px; background:var(--grad); color:#fff; text-decoration:none; font-weight:700; font-size:16px; border:0; cursor:pointer; min-width:230px; font-family:inherit; }
+  .link{ margin-top:14px; color:var(--primary); font-size:14px; font-weight:600; text-decoration:none; background:none; border:0; cursor:pointer; font-family:inherit; }
+  .pasos{ margin-top:16px; text-align:left; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; max-width:360px; width:100%; display:none; }
+  .pasos ol{ padding-left:20px; font-size:14px; line-height:1.7; }
+  .pasos b{ color:var(--text); }
+  .ico{ display:inline-block; vertical-align:-3px; width:18px; height:18px; }
 </style>
 </head>
 <body>
   <iframe id="app" title="Programación de procedimientos · Hospital Noor" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
-  <a id="abrir" href="#" target="_top" title="Si no carga aquí, ábrela directo en Google">Abrir directo ↗</a>
+  <a id="abrir" class="chip" href="#" target="_top" title="Si no carga aquí, ábrela directo en Google">Abrir directo ↗</a>
+  <button id="instalar-chip" class="chip" type="button">Instalar app</button>
+
+  <!-- Portada de instalación (celular en el navegador) -->
   <div class="box" id="portada">
     <img src="icono-180.png" alt="">
     <h1>Programación Noor</h1>
     <p>Programación de procedimientos · Hospital Noor</p>
-    <p id="msg" style="margin-top:10px">Abriendo la plataforma…</p>
-    <a class="btn" id="entrar" href="#" target="_top">Entrar</a>
+    <button class="btn" id="instalar" type="button">Instalar app</button>
+    <div class="pasos" id="pasos-ios">
+      <ol>
+        <li>Toca <b>Compartir</b> <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg> en la barra de Safari.</li>
+        <li>Elige <b>Agregar a inicio</b> (desliza hacia abajo si no lo ves).</li>
+        <li>Toca <b>Agregar</b>. Abre la app desde el ícono azul.</li>
+      </ol>
+    </div>
+    <div class="pasos" id="pasos-android">
+      <ol>
+        <li>Toca el menú <b>⋮</b> de Chrome (arriba a la derecha).</li>
+        <li>Elige <b>Instalar app</b> o <b>Agregar a pantalla principal</b>.</li>
+        <li>Confirma. Abre la app desde el ícono azul.</li>
+      </ol>
+    </div>
+    <button class="link" id="sin-instalar" type="button">Abrir sin instalar</button>
+  </div>
+
+  <!-- Sin conexión -->
+  <div class="box" id="offline">
+    <img src="icono-180.png" alt="">
+    <h1>Sin conexión</h1>
+    <p>La programación necesita internet para mostrar la agenda actualizada. Revisa tu conexión.</p>
+    <button class="btn" type="button" onclick="location.reload()">Reintentar</button>
   </div>
 <script>
   /* Liga de la aplicación web de Apps Script (termina en /exec) */
   var LIGA_PLATAFORMA = 'https://script.google.com/macros/s/AKfycbzl186yA2E5OOLQAp1j15SjfxOJkjMQLgkz3PCcEOJBhcv0XOI4O4y3Z1H-4CBkN0s/exec';
 
+  var ua = navigator.userAgent;
+  var ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var android = /Android/.test(ua);
+  var movil = ios || android;
+  var instalada = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   var q = location.search;
-  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  document.getElementById('entrar').href = LIGA_PLATAFORMA;
-  document.getElementById('abrir').href = LIGA_PLATAFORMA;
+  var avisoInstalar = null;
+  function $(id){ return document.getElementById(id); }
+  function pref(k, v){ try{ if(v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
 
-  if (q.indexOf('quedarse') >= 0) {
-    // Para guardar el ícono en la pantalla de inicio: no redirige y limpia la dirección
-    try { history.replaceState(null, '', location.pathname); } catch (e) {}
-    document.getElementById('msg').textContent = 'Toca Compartir → "Agregar a inicio" para guardar el ícono.';
-  } else if (ios || q.indexOf('directo') >= 0) {
-    // iPhone/iPad: Safari no permite iniciar sesión de Google dentro de otra página; se abre directo
-    setTimeout(function(){ location.replace(LIGA_PLATAFORMA); }, 500);
-  } else {
-    // Computadora: la plataforma se abre dentro de esta página, sin la barra de aviso de Google
-    var f = document.getElementById('app');
-    f.src = LIGA_PLATAFORMA;
-    f.style.display = 'block';
-    document.getElementById('portada').style.display = 'none';
-    document.getElementById('abrir').style.display = 'block';
+  $('abrir').href = LIGA_PLATAFORMA;
+
+  // Android/Chrome avisa cuando la app se puede instalar
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); avisoInstalar = e;
+    if(!instalada && !movil) $('instalar-chip').style.display = 'block';
+  });
+  window.addEventListener('appinstalled', function(){ $('instalar-chip').style.display = 'none'; pref('pn_instalada', '1'); });
+
+  function instalar(){
+    if(avisoInstalar){ avisoInstalar.prompt(); avisoInstalar.userChoice.then(function(){ avisoInstalar = null; }); return; }
+    $(ios ? 'pasos-ios' : 'pasos-android').style.display = 'block';
+    $('instalar').style.display = 'none';
   }
+  $('instalar').onclick = instalar;
+  $('instalar-chip').onclick = instalar;
+  $('sin-instalar').onclick = function(){ pref('pn_sin_instalar', '1'); abrirPlataforma(); };
+
+  function abrirPlataforma(){
+    if(!navigator.onLine){ mostrar('offline'); return; }
+    if(ios){
+      // iPhone/iPad: Safari no permite iniciar sesión de Google dentro de otra página; se abre directo
+      location.replace(LIGA_PLATAFORMA); return;
+    }
+    // Android y computadora: la plataforma va dentro de esta página (sin la barra de aviso de Google)
+    var f = $('app'); f.src = LIGA_PLATAFORMA; f.style.display = 'block';
+    document.body.classList.add('con-app');
+    $('portada').style.display = 'none';
+    $('abrir').style.display = 'block';
+  }
+  function mostrar(id){ ['portada','offline'].forEach(function(x){ $(x).style.display = (x === id) ? 'flex' : 'none'; }); }
+
+  if(q.indexOf('quedarse') >= 0 || q.indexOf('instalar') >= 0){
+    try{ history.replaceState(null, '', location.pathname); }catch(e){}
+    mostrar('portada');
+  } else if(instalada || !movil || pref('pn_sin_instalar') === '1' || q.indexOf('directo') >= 0){
+    abrirPlataforma();
+  } else {
+    mostrar('portada');   // celular en el navegador: ofrecer instalar
+  }
+  window.addEventListener('online', function(){ if($('offline').style.display === 'flex') location.reload(); });
+
+  if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 </script>
 </body>
 </html>

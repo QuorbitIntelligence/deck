@@ -1,0 +1,12 @@
+APP PROGRAMACIÓN NOOR (instalable en iPhone y Android) — ESTOS ARCHIVOS VAN SOLO EN GITHUB
+Carpeta: quorbitintelligence.github.io / deck / programacioncxs
+NO se pegan en Apps Script. La plataforma (index de Apps Script) y Código.gs no cambian.
+
+Sube TODOS estos archivos a esa carpeta, reemplazando los anteriores:
+  index.html            → página de la app (ya trae tu liga /exec)
+  manifest.webmanifest  → nombre, colores e íconos de la app
+  sw.js                 → necesario para que Android ofrezca "Instalar app"
+  icono-180.png, icono-192.png, icono-512.png, icono-maskable-512.png, favicon.ico
+(Este LEEME.txt no hace falta subirlo.)
+
+Liga para instalar: https://quorbitintelligence.github.io/deck/programacioncxs/
