@@ -121,7 +121,7 @@ var EXEC_URL = 'https://script.google.com/macros/s/AKfycbw4iOGk1AFPPg53QfubcpNZM
   function instalarVista(){
     show('v-install');
     var ua = navigator.userAgent, ios = /iphone|ipad|ipod/i.test(ua), help = $('ins-help');
-    if (ios) { help.textContent = 'En iPhone/iPad: toca Compartir y luego "Añadir a pantalla de inicio".'; help.classList.remove('hide'); }
+    if (ios) { help.textContent = 'En iPhone/iPad: Apple no permite instalar desde aquí una app que abra otro sitio. Toca "Abrir CRM ahora" y, ya dentro del CRM, usa Compartir → Agregar a Inicio con "Abrir como app web" activado.'; help.classList.remove('hide'); }
     else if (!deferred) {
       help.textContent = /edg\//i.test(ua) ? 'En Edge: menú ⋯ → Aplicaciones → "Instalar este sitio como aplicación".' : 'En Chrome: menú ⋮ → "Transmitir, guardar y compartir" → "Instalar página como aplicación" (en Android: "Instalar aplicación").';
       help.classList.remove('hide');
