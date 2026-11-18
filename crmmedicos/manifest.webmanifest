@@ -1,13 +1,12 @@
 {
-  "name": "CRM Médicos — Noor",
+  "name": "CRM Médicos — Hospital Noor",
   "short_name": "CRM Noor",
-  "description": "Leads, cotizaciones y seguimiento médico — Hospital Noor de Bosque Real",
-  "start_url": "./?app=1",
+  "description": "Acceso directo al CRM Médicos (base de datos en Google Drive)",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#EEF3FC",
-  "theme_color": "#133FAA",
+  "background_color": "#ffffff",
+  "theme_color": "#2660AB",
   "lang": "es-MX",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
