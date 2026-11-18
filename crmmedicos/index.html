@@ -45,6 +45,15 @@
     <button id="btn-change" class="sec hide">Cambiar enlace del CRM</button>
   </div>
 
+  <!-- Instalar (solo cuando se abre en el navegador) -->
+  <div id="v-install" class="hide">
+    <p>Instala el CRM como aplicación para abrirlo siempre con tu base de datos de Drive.</p>
+    <button id="btn-install" class="hide">Instalar app</button>
+    <p id="ins-help" class="hide" style="font-size:13px"></p>
+    <button id="btn-go" class="sec" style="font-size:15px">Abrir CRM ahora</button>
+    <a class="small" id="lnk-change">Cambiar enlace del CRM</a>
+  </div>
+
   <!-- Primera vez -->
   <div id="v-setup" class="hide">
     <p>Pega una sola vez el enlace de tu CRM (el que termina en <b>/exec</b>). Después esta app abrirá siempre tu base de datos en Drive.</p>
@@ -72,7 +81,7 @@ var EXEC_URL = 'https://script.google.com/macros/s/AKfycbw4iOGk1AFPPg53QfubcpNZM
   function get(){ try { return localStorage.getItem(KEY) || ''; } catch(e){ return ''; } }
   function set(v){ try { localStorage.setItem(KEY, v); } catch(e){} }
   function valid(u){ return /^https:\/\/script\.google\.com\/(macros\/s\/[^\s]+\/exec|a\/macros\/[^\s]+\/exec)(\?.*)?$/i.test(u); }
-  function show(id){ ['v-open','v-setup','v-off'].forEach(function(x){ $(x).classList.toggle('hide', x !== id); }); }
+  function show(id){ ['v-open','v-setup','v-off','v-install'].forEach(function(x){ $(x).classList.toggle('hide', x !== id); }); }
   var url = EXEC_URL || get();
 
   function go(){
@@ -99,11 +108,32 @@ var EXEC_URL = 'https://script.google.com/macros/s/AKfycbw4iOGk1AFPPg53QfubcpNZM
   $('btn-change').onclick = function(){ setup(true); };
   $('btn-retry').onclick = go;
   window.addEventListener('online', function(){ if (!$('v-off').classList.contains('hide')) go(); });
-  window.addEventListener('pageshow', function(e){ if (e.persisted && url) manual(); });
+  window.addEventListener('pageshow', function(e){ if (e.persisted && url) { if (standalone) manual(); else instalarVista(); } });
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 
-  if (q.has('setup') || q.has('reset') || !url) setup(true); else go();
+  var standalone = (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches || matchMedia('(display-mode: minimal-ui)').matches)) || navigator.standalone === true;
+  var deferred = null;
+  function instalarVista(){
+    show('v-install');
+    var ua = navigator.userAgent, ios = /iphone|ipad|ipod/i.test(ua), help = $('ins-help');
+    if (ios) { help.textContent = 'En iPhone/iPad: toca Compartir y luego "Añadir a pantalla de inicio".'; help.classList.remove('hide'); }
+    else if (!deferred) {
+      help.textContent = /edg\//i.test(ua) ? 'En Edge: menú ⋯ → Aplicaciones → "Instalar este sitio como aplicación".' : 'En Chrome: menú ⋮ → "Transmitir, guardar y compartir" → "Instalar página como aplicación" (en Android: "Instalar aplicación").';
+      help.classList.remove('hide');
+    }
+  }
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferred = e; $('btn-install').classList.remove('hide'); $('ins-help').classList.add('hide');
+  });
+  window.addEventListener('appinstalled', function(){ $('btn-install').classList.add('hide'); $('ins-help').textContent='¡Instalada! Ábrela desde su ícono.'; $('ins-help').classList.remove('hide'); });
+  $('btn-install').onclick = function(){ if (deferred) { deferred.prompt(); deferred = null; $('btn-install').classList.add('hide'); } };
+  $('btn-go').onclick = go;
+  $('lnk-change').onclick = function(){ setup(true); };
+
+  if (q.has('setup') || q.has('reset') || !url) setup(true);
+  else if (standalone || q.has('open')) go();
+  else instalarVista();
 })();
 </script>
 </body>
