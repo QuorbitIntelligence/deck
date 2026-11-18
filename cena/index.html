@@ -1,1 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cena de Fin de Año 2026 · Hospital Noor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style id="css">
+*{box-sizing:border-box}
+body{margin:0;background:#FAF7F0;color:#1B2433;font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.45}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+header.top{background:#7F1820;color:#FAF7F0;padding:48px 0 40px}
+.eyebrow{display:flex;align-items:center;gap:10px;color:#E2C185;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+h1,h2{font-family:'Playfair Display',Georgia,serif;margin:0}
+h2{font-size:30px;color:#7F1820}
+.ed{font:inherit;color:inherit;background:transparent;border:1px solid transparent;border-radius:8px;padding:6px 8px;width:100%;min-width:0}
+.ed:hover{border-color:#E1D8C5;background:#fff}
+.ed:focus{outline:2px solid #C9A15A;outline-offset:0;background:#fff}
+.ed::placeholder{color:#8A93A3}
+.dark .ed:hover,.dark .ed:focus{background:#94262F;border-color:#B5525A}
+.dark .ed::placeholder{color:#A9B4C5}
+.ed.num{text-align:right;font-variant-numeric:tabular-nums}
+.title-in{font-family:'Playfair Display',Georgia,serif;font-size:52px;font-weight:700;line-height:1.1;padding:4px 8px;margin-left:-8px}
+.sub{color:#F6DCDC;font-size:18px;margin:10px 0 0}
+.meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:28px}
+.meta label{display:block;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#E2C185;margin:0 0 2px 8px}
+.bar{position:sticky;top:0;z-index:5;background:#FFFFFFEE;backdrop-filter:blur(6px);border-bottom:1px solid #E6DFD0}
+.bar .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+.status{font-size:14px;color:#5B6575;flex:1;min-width:200px}
+.status.dirty{color:#7A4F05;font-weight:600}
+.btn{font:inherit;font-size:15px;font-weight:600;border-radius:10px;padding:10px 16px;min-height:44px;cursor:pointer;border:1px solid #D9CFBB;background:#fff;color:#7F1820}
+.btn:hover{background:#F1EADB}
+.btn.primary{background:#7F1820;color:#fff;border-color:#7F1820}
+.btn.primary:hover{background:#9E2530}
+.btn.small{font-size:13px;padding:6px 10px;min-height:36px}
+.btn.add{border-style:dashed;color:#8A6420;background:transparent;width:100%;margin-top:4px}
+.x{font:inherit;background:none;border:none;color:#8A93A3;cursor:pointer;width:36px;height:36px;border-radius:8px;font-size:20px;line-height:1}
+.x:hover{background:#F6DADA;color:#7E1F1F}
+section{margin-top:44px}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.hint{color:#5B6575;font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:32px}
+.kpi{background:#fff;border:1px solid #E6DFD0;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:6px}
+.kpi.navy{background:#7F1820;border-color:#7F1820;color:#fff}
+.kpi .lb{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5B6575}
+.kpi.navy .lb{color:#E2C185}
+.kpi .big{font-family:'Playfair Display',Georgia,serif;font-size:38px;font-weight:700;color:#7F1820}
+.kpi.navy .big{color:#fff}
+.kpi .sm{font-size:14px;color:#5B6575}
+.kpi.navy .sm{color:#F6DCDC}
+.prog{height:8px;background:#A8434B;border-radius:4px;overflow:hidden}
+.prog>div{height:8px;background:#C9A15A}
+.card{background:#fff;border:1px solid #E6DFD0;border-radius:16px;overflow:hidden}
+.row{display:grid;gap:8px;align-items:center;padding:8px 16px;border-top:1px solid #EEE8DB}
+.row:first-child{border-top:none}
+.row.head{background:#F1EADB;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#5B6575;padding:12px 24px}
+.row.total{background:#7F1820;color:#fff;font-weight:700;padding:14px 24px}
+.r-people{grid-template-columns:2fr 1fr 1fr 1fr 1.4fr 36px}
+.r-gasto{grid-template-columns:2.6fr .7fr 1fr 1fr 36px}
+.r-resp{grid-template-columns:1.6fr 1.1fr 1fr 1.6fr 36px}
+.r-todo{grid-template-columns:36px 1fr 36px}
+.calc{text-align:right;font-variant-numeric:tabular-nums;padding:0 8px}
+.pend{font-weight:600;color:#8E2424}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.p-ok{background:#DCEFE3;color:#1A5130}
+.p-mid{background:#FBEBC8;color:#6B4504}
+.p-no{background:#F6DADA;color:#7E1F1F}
+.p-sug{background:#DCEBDF;color:#1F5C3A}
+header.top{position:relative;overflow:hidden;background:#7F1820 radial-gradient(circle at 85% 30%,#9E2530 0,#7F1820 60%)}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:repeating-linear-gradient(135deg,#C9A15A 0 14px,#1F5C3A 14px 28px)}
+.hero{display:flex;align-items:center;gap:24px}
+.hero-l{flex:1;min-width:0}
+.tree{flex:0 0 auto;width:200px;height:auto}
+.snow{position:absolute;inset:0;pointer-events:none;opacity:.5}
+h2{display:flex;align-items:center;gap:10px}
+h2::before{content:"";flex:0 0 auto;margin-right:12px;width:12px;height:12px;border-radius:50%;background:#1F5C3A;box-shadow:10px 0 0 #8E2424}
+h2{padding-left:0}
+@media (max-width:760px){.tree{width:110px}}
+.st{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.det{font-size:13px;color:#5B6575}
+.note{background:#FBEBC8;border-radius:14px;padding:16px 20px;color:#4A3003;margin-top:14px}
+.bal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+.bal .kpi .big{font-size:28px}
+.neg{color:#8E2424 !important}
+.posi{color:#1A5130 !important}
+select.ed{appearance:auto}
+.bebs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.beb{background:#fff;border:2px solid #E6DFD0;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.beb.on{border-color:#C9A15A;box-shadow:0 0 0 4px #F3E4C4}
+.beb .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.beb .op{font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8A6420}
+.beb .foot{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.votes{display:flex;align-items:center;gap:6px;font-size:14px;color:#5B6575}
+.votes .ed{width:70px}
+.badge{background:#7F1820;color:#E2C185;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px}
+textarea.ed{resize:vertical;min-height:60px}
+footer{padding:48px 0 64px;color:#5B6575;font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.copybox{position:fixed;inset:0;background:#5A0F1599;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.copybox .in{background:#fff;border-radius:16px;padding:20px;max-width:560px;width:100%;display:flex;flex-direction:column;gap:12px}
+.copybox textarea{width:100%;height:320px;font:13px/1.4 ui-monospace,monospace;border:1px solid #E6DFD0;border-radius:10px;padding:10px}
+.sr{position:absolute;left:-9999px}
+@media (max-width:760px){
+  .title-in{font-size:34px}
+  .meta,.kpis,.bal{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bebs{grid-template-columns:1fr}
+  .row.head{display:none}
+  .r-people{grid-template-columns:1fr 1fr 36px}
+  .r-people>.nm{grid-column:1/3}
+  .r-gasto{grid-template-columns:1fr 1fr 36px}
+  .r-gasto>.nm{grid-column:1/3}
+  .r-resp{grid-template-columns:1fr 1fr 36px}
+  .r-resp>.nm{grid-column:1/3}
+  .row.total{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="state" type="application/json">
+{"titulo":"Cena de Fin de Año 2026","subtitulo":"Buffet de mariscos para 75 personas. Estado de cooperaciones, responsables y bebidas.","fecha":"","hora":"","lugar":"","personas":75,
+"people":[
+{"n":"Dr. Campos","c":2000,"a":0},
+{"n":"Dr. Gessner","c":2000,"a":2000},
+{"n":"Jefa Nancy","c":2000,"a":1000},
+{"n":"Aline","c":2000,"a":1000},
+{"n":"Mayra","c":2000,"a":1000},
+{"n":"Diana","c":2000,"a":1000},
+{"n":"Yadira","c":2000,"a":1000},
+{"n":"La Química","c":1000,"a":500},
+{"n":"Lulu","c":2000,"a":2000},
+{"n":"Don Gaby","c":2000,"a":2000},
+{"n":"Juances","c":1000,"a":1000},
+{"n":"Laura","c":1000,"a":1000}],
+"gastos":[
+{"n":"Menú buffet de mariscos","d":"75 personas, incluye loza. Anticipo entregado para apartar.","q":1,"p":23625,"menu":true},
+{"n":"Mesas con sillas y mantel","d":"Propuesta de Laura: $160 por mesa. 8 mesas sugeridas (~10 personas c/u), confirmar.","q":8,"p":160},
+{"n":"Carpa","d":"Propuesta pendiente de Lulu (carpa, mesas y sillas).","q":1,"p":0},
+{"n":"Bebidas alcohólicas","d":"Se toma de la opción elegida en la votación.","q":1,"p":0,"beb":true}],
+"anticipo":0,
+"resp":[
+{"t":"Bebida alcohólica","q":"Juances","e":"En proceso","nt":"Compra el viernes según votación"},
+{"t":"Comida (buffet de mariscos)","q":"Yadira","e":"En proceso","nt":"Anticipo entregado"},
+{"t":"Carpa","q":"Lulu","e":"Pendiente","nt":"Falta su propuesta de carpa, mesas y sillas"},
+{"t":"Mesas y sillas","q":"Laura","e":"En proceso","nt":"Propuesta: $160 por mesa con sillas y mantel"},
+{"t":"Cobro de cooperaciones pendientes","q":"","e":"Pendiente","nt":"","sug":true},
+{"t":"Refrescos, agua y hielo","q":"","e":"Pendiente","nt":"Para quien no toma alcohol y para preparar bebidas","sug":true},
+{"t":"Desechables (vasos, servilletas, popotes)","q":"","e":"Pendiente","nt":"La loza viene con el menú; confirmar vasos","sug":true},
+{"t":"Música / bocina","q":"","e":"Pendiente","nt":"","sug":true},
+{"t":"Decoración y centros de mesa","q":"","e":"Pendiente","nt":"","sug":true},
+{"t":"Pastel o postre","q":"","e":"Pendiente","nt":"Confirmar si el menú lo incluye","sug":true},
+{"t":"Limpieza y recoger al final","q":"","e":"Pendiente","nt":"","sug":true}],
+"todos":[
+{"t":"Definir fecha, hora y lugar del evento","h":false},
+{"t":"Confirmar monto del anticipo y fecha para liquidar el menú","h":false},
+{"t":"Confirmar número de mesas","h":false},
+{"t":"Recibir la propuesta de carpa de Lulu","h":false},
+{"t":"Decidir cómo cubrir el faltante (más cooperantes o aportación extra)","h":false},
+{"t":"Lista final de asistentes (75 personas)","h":false},
+{"t":"Cerrar votación de bebidas antes del viernes","h":false}],
+"bebidas":[
+{"o":"Opción 1","d":"2 barriles (1 oscura, 1 clara, 30 L), bomba Fría 2 Grados, jarras y vasos de litro para micheladas","p":2800,"v":0},
+{"o":"Opción 2","d":"Charolas Modelo Especial, coronitas y Negra Modelo","p":3600,"v":0},
+{"o":"Opción 3","d":"9 botellas de tequila, brandy y whisky para copeo","p":4200,"v":0},
+{"o":"Opción 4","d":"Todo lo de la Opción 1 + vitrolero (20 L) de cantaritos o mojitos de frutos rojos","p":4000,"v":0}],
+"elegida":null,"compra":"Viernes 20 de noviembre","actualizado":"18 de noviembre de 2026"}
+</script>
+<script id="appjs">
+(function(){
+var S = JSON.parse(document.getElementById('state').textContent);
+var app = document.getElementById('app');
+var art = null, dirty = false, saving = false;
+var ESTADOS = ['Pendiente','En proceso','Listo'];
+var IN_CLAUDE = !!(window.claude && window.claude.use);
+var LS_KEY = 'cena-noor-2026';
+var BASE = S.actualizado;
+if (!IN_CLAUDE) { try { var d = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (d && d.base === BASE && d.state) S = d.state; } catch (e) {} }
+var TREE = '<svg class="tree" viewBox="0 0 200 240" role="img" aria-label="Árbol de Navidad">' +
+  '<polygon points="100,22 104,34 117,34 106,42 110,55 100,47 90,55 94,42 83,34 96,34" fill="#E2C185"/>' +
+  '<polygon points="100,52 140,110 60,110" fill="#2F7A4D"/>' +
+  '<polygon points="100,85 158,160 42,160" fill="#256B42"/>' +
+  '<polygon points="100,120 176,212 24,212" fill="#1F5C3A"/>' +
+  '<rect x="88" y="212" width="24" height="22" rx="3" fill="#6B3E1E"/>' +
+  '<path d="M70 100 Q100 116 128 96 M56 148 Q100 168 146 140 M40 200 Q100 222 162 190" stroke="#E2C185" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+  '<circle cx="86" cy="88" r="6" fill="#E23B3B"/><circle cx="118" cy="128" r="6" fill="#E2C185"/><circle cx="74" cy="135" r="6" fill="#FFFFFF"/>' +
+  '<circle cx="130" cy="172" r="7" fill="#E23B3B"/><circle cx="66" cy="182" r="7" fill="#E2C185"/><circle cx="100" cy="196" r="6" fill="#FFFFFF"/>' +
+  '<circle cx="112" cy="74" r="5" fill="#E2C185"/><circle cx="142" cy="200" r="6" fill="#FFFFFF"/><circle cx="96" cy="152" r="6" fill="#E23B3B"/></svg>';
+var SNOW = (function(){ var s = '<svg class="snow" aria-hidden="true" width="100%" height="100%">', pts = [[5,12],[12,70],[20,35],[28,85],[36,18],[45,60],[52,30],[60,80],[67,10],[74,50],[90,15],[95,75],[40,92],[83,88],[8,48]];
+  pts.forEach(function(p, i){ s += '<circle cx="' + p[0] + '%" cy="' + p[1] + '%" r="' + (i % 3 + 1.5) + '" fill="#FFFFFF"/>'; }); return s + '</svg>'; })();
 
+function money(n){ return '$' + Math.round(+n || 0).toLocaleString('es-MX'); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function setPath(path, v){ var k = path.split('.'), o = S; for (var i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length-1]] = v; }
+function inp(k, v, opts){ opts = opts || {};
+  return '<input class="ed' + (opts.num ? ' num' : '') + '" data-k="' + k + '"' + (opts.num ? ' data-num="1" inputmode="numeric"' : '') +
+    ' value="' + esc(v) + '" placeholder="' + esc(opts.ph || '') + '" aria-label="' + esc(opts.label || opts.ph || k) + '">'; }
+
+function render(){
+  var h = '';
+  h += '<header class="top dark">' + SNOW + '<div class="wrap" style="position:relative"><div class="hero"><div class="hero-l">';
+  h += '<div class="eyebrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E2C185" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 6.9H21l-5.4 4.2 2 7-5.6-4.3-5.6 4.3 2-7L3 8.9h6.6z"/></svg>Hospital Noor</div>';
+  h += '<input class="ed title-in" data-k="titulo" value="' + esc(S.titulo) + '" aria-label="Título">';
+  h += '<input class="ed sub" data-k="subtitulo" value="' + esc(S.subtitulo) + '" aria-label="Descripción" style="margin-left:-8px">';
+  h += '<div class="meta">';
+  h += '<div><label for="f-fecha">Fecha</label><input id="f-fecha" class="ed" data-k="fecha" value="' + esc(S.fecha) + '" placeholder="Por definir"></div>';
+  h += '<div><label for="f-hora">Hora</label><input id="f-hora" class="ed" data-k="hora" value="' + esc(S.hora) + '" placeholder="Por definir"></div>';
+  h += '<div><label for="f-lugar">Lugar</label><input id="f-lugar" class="ed" data-k="lugar" value="' + esc(S.lugar) + '" placeholder="Por definir"></div>';
+  h += '<div><label for="f-pers">Personas</label><input id="f-pers" class="ed" data-k="personas" data-num="1" inputmode="numeric" value="' + esc(S.personas) + '"></div>';
+  h += '</div></div>' + TREE + '</div></div></header>';
+
+  h += '<div class="bar"><div class="wrap"><span class="status" id="status" role="status"></span>';
+  h += '<button class="btn" data-act="copy">Copiar resumen para WhatsApp</button>';
+  if (!IN_CLAUDE) h += '<button class="btn" data-act="download">Descargar index.html actualizado</button>';
+  h += '<button class="btn primary" data-act="save" id="saveBtn">Guardar cambios</button></div></div>';
+
+  h += '<main class="wrap">';
+  h += '<div class="kpis">';
+  h += '<div class="kpi"><span class="lb">Comprometido</span><span class="big" id="k-comp"></span><span class="sm" id="k-compn"></span></div>';
+  h += '<div class="kpi navy"><span class="lb">Recaudado</span><span class="big" id="k-apor"></span><div class="prog"><div id="k-bar"></div></div><span class="sm" id="k-pct"></span></div>';
+  h += '<div class="kpi"><span class="lb">Por recaudar</span><span class="big neg" id="k-pend"></span><span class="sm" id="k-pendn"></span></div>';
+  h += '</div>';
+
+  // Cooperaciones
+  h += '<section><div class="sec-head"><h2>Cooperaciones</h2><span class="hint">Edita montos directamente; el estado se calcula solo.</span></div><div class="card">';
+  h += '<div class="row head r-people"><span>Nombre</span><span style="text-align:right">Coopera</span><span style="text-align:right">Aportado</span><span style="text-align:right">Pendiente</span><span style="text-align:center">Estado</span><span></span></div>';
+  S.people.forEach(function(p, i){
+    h += '<div class="row r-people"><div class="nm">' + inp('people.'+i+'.n', p.n, {ph:'Nombre', label:'Nombre'}) + '</div>' +
+      inp('people.'+i+'.c', p.c, {num:1, label:'Coopera ' + p.n}) + inp('people.'+i+'.a', p.a, {num:1, label:'Aportado ' + p.n}) +
+      '<span class="calc" id="pp-'+i+'"></span><span class="st" id="ps-'+i+'"></span>' +
+      '<button class="x" data-act="delPerson" data-i="'+i+'" aria-label="Quitar a ' + esc(p.n) + '">×</button></div>';
+  });
+  h += '<div class="row total r-people"><span>Total</span><span class="calc" id="t-comp"></span><span class="calc" id="t-apor"></span><span class="calc" id="t-pend" style="color:#FFD9A0"></span><span></span><span></span></div>';
+  h += '</div><button class="btn add" data-act="addPerson">+ Agregar persona</button></section>';
+
+  // Gastos
+  h += '<section><div class="sec-head"><h2>Gastos del evento</h2><span class="hint">Cantidad × precio. Las bebidas toman la opción elegida abajo.</span></div><div class="card">';
+  h += '<div class="row head r-gasto"><span>Concepto</span><span style="text-align:right">Cant.</span><span style="text-align:right">Precio</span><span style="text-align:right">Subtotal</span><span></span></div>';
+  S.gastos.forEach(function(g, i){
+    h += '<div class="row r-gasto"><div class="nm">' + inp('gastos.'+i+'.n', g.n, {label:'Concepto'}) +
+      '<input class="ed det" data-k="gastos.'+i+'.d" value="' + esc(g.d) + '" placeholder="Detalle" aria-label="Detalle"></div>';
+    if (g.beb) {
+      h += '<span class="calc">1</span><span class="calc" id="gbp"></span>';
+    } else {
+      h += inp('gastos.'+i+'.q', g.q, {num:1, label:'Cantidad'}) + inp('gastos.'+i+'.p', g.p, {num:1, label:'Precio'});
+    }
+    h += '<span class="calc" style="font-weight:700" id="gs-'+i+'"></span>' +
+      (g.menu || g.beb ? '<span></span>' : '<button class="x" data-act="delGasto" data-i="'+i+'" aria-label="Quitar gasto">×</button>') + '</div>';
+  });
+  h += '<div class="row total r-gasto"><span>Total estimado</span><span></span><span></span><span class="calc" id="g-tot"></span><span></span></div>';
+  h += '</div><button class="btn add" data-act="addGasto">+ Agregar gasto</button>';
+
+  h += '<div class="bal">';
+  h += '<div class="kpi"><span class="lb">Anticipo del menú</span><input class="ed num" style="font-size:24px;font-weight:700;text-align:left;padding-left:0" data-k="anticipo" data-num="1" inputmode="numeric" value="' + esc(S.anticipo) + '" aria-label="Anticipo del menú"><span class="sm">Escribe el monto entregado</span></div>';
+  h += '<div class="kpi"><span class="lb">Saldo del menú</span><span class="big" id="b-saldo"></span><span class="sm">Por liquidar al proveedor</span></div>';
+  h += '<div class="kpi"><span class="lb">Comprometido vs gastos</span><span class="big" id="b-dif"></span><span class="sm" id="b-difn"></span></div>';
+  h += '<div class="kpi"><span class="lb">Extra por persona</span><span class="big" id="b-extra"></span><span class="sm" id="b-extran"></span></div>';
+  h += '</div><div class="note" id="b-note"></div></section>';
+
+  // Responsables
+  h += '<section><div class="sec-head"><h2>Responsables</h2><span class="hint">Las marcadas como “Sugerido” son ideas: asigna a alguien o quítalas.</span></div><div class="card">';
+  h += '<div class="row head r-resp"><span>Tarea</span><span>Responsable</span><span>Estado</span><span>Nota</span><span></span></div>';
+  S.resp.forEach(function(r, i){
+    var sel = '<select class="ed" data-k="resp.'+i+'.e" aria-label="Estado">' + ESTADOS.map(function(e){ return '<option' + (e === r.e ? ' selected' : '') + '>' + e + '</option>'; }).join('') + '</select>';
+    h += '<div class="row r-resp"><div class="nm" style="display:flex;align-items:center;gap:6px">' + inp('resp.'+i+'.t', r.t, {label:'Tarea'}) +
+      (r.sug && !r.q ? '<span class="pill p-sug">Sugerido</span>' : '') + '</div>' +
+      inp('resp.'+i+'.q', r.q, {ph:'Por asignar', label:'Responsable'}) + sel + inp('resp.'+i+'.nt', r.nt, {ph:'Nota', label:'Nota'}) +
+      '<button class="x" data-act="delResp" data-i="'+i+'" aria-label="Quitar tarea">×</button></div>';
+  });
+  h += '</div><button class="btn add" data-act="addResp">+ Agregar responsabilidad</button></section>';
+
+  // Pendientes
+  h += '<section><div class="sec-head"><h2>Datos por confirmar</h2><span class="hint">Cosas que faltan definir.</span></div><div class="card">';
+  S.todos.forEach(function(t, i){
+    h += '<div class="row r-todo"><input type="checkbox" data-k="todos.'+i+'.h"' + (t.h ? ' checked' : '') + ' style="width:22px;height:22px;margin:auto" aria-label="Hecho">' +
+      '<input class="ed" data-k="todos.'+i+'.t" value="' + esc(t.t) + '" aria-label="Pendiente"' + (t.h ? ' style="text-decoration:line-through;color:#8A93A3"' : '') + '>' +
+      '<button class="x" data-act="delTodo" data-i="'+i+'" aria-label="Quitar">×</button></div>';
+  });
+  h += '</div><button class="btn add" data-act="addTodo">+ Agregar dato</button></section>';
+
+  // Bebidas
+  h += '<section><div class="sec-head"><h2>Propuestas de bebidas</h2><span class="badge">Compra: <span>' + esc(S.compra) + '</span></span></div>';
+  h += '<p class="hint" style="margin:0 0 14px">Anota los votos del grupo y elige la ganadora; su precio pasa a los gastos.</p><div class="bebs">';
+  S.bebidas.forEach(function(b, i){
+    var on = S.elegida === i;
+    h += '<div class="beb' + (on ? ' on' : '') + '"><div class="top"><input class="ed op" style="width:auto;flex:1" data-k="bebidas.'+i+'.o" value="' + esc(b.o) + '" aria-label="Nombre opción">' +
+      '<input class="ed num" style="font-size:24px;font-weight:700;color:#7F1820;width:130px" data-k="bebidas.'+i+'.p" data-num="1" inputmode="numeric" value="' + esc(b.p) + '" aria-label="Precio"></div>' +
+      '<textarea class="ed" data-k="bebidas.'+i+'.d" aria-label="Descripción">' + esc(b.d) + '</textarea>' +
+      '<div class="foot"><span class="votes"><label for="v'+i+'">Votos</label><input id="v'+i+'" class="ed num" data-k="bebidas.'+i+'.v" data-num="1" inputmode="numeric" value="' + esc(b.v) + '"></span>' +
+      '<button class="btn small' + (on ? ' primary' : '') + '" data-act="pickBeb" data-i="'+i+'">' + (on ? 'Elegida ✓' : 'Elegir esta') + '</button></div></div>';
+  });
+  h += '</div></section>';
+
+  h += '<footer><span>Hospital Noor · ' + esc(S.titulo) + ' · ¡Felices fiestas!</span><span>Actualizado: ' + esc(S.actualizado) + '</span></footer>';
+  h += '</main>';
+  app.innerHTML = h;
+  derive();
+  showStatus();
+}
+
+function totals(){
+  var c = 0, a = 0, p = 0, deben = 0;
+  S.people.forEach(function(x){ var pe = Math.max((+x.c||0) - (+x.a||0), 0); c += +x.c||0; a += +x.a||0; p += pe; if (pe > 0) deben++; });
+  var bebP = S.elegida != null && S.bebidas[S.elegida] ? (+S.bebidas[S.elegida].p || 0) : 0;
+  var g = 0, menu = 0;
+  S.gastos.forEach(function(x){ var s = x.beb ? bebP : (+x.q||0) * (+x.p||0); g += s; if (x.menu) menu += s; });
+  return {c:c, a:a, p:p, deben:deben, bebP:bebP, g:g, menu:menu};
+}
+function txt(id, v, cls){ var el = document.getElementById(id); if (el) { el.textContent = v; if (cls !== undefined) el.className = cls; } }
+
+function derive(){
+  var T = totals();
+  S.people.forEach(function(x, i){
+    var c = +x.c||0, a = +x.a||0, pe = Math.max(c - a, 0);
+    txt('pp-'+i, money(pe), 'calc' + (pe > 0 ? ' pend' : ''));
+    var lab = (a >= c && c > 0) ? ['Cubierto','p-ok'] : (a > 0 ? ['Parcial','p-mid'] : ['Pendiente','p-no']);
+    var st = document.getElementById('ps-'+i);
+    if (st) st.innerHTML = '<span class="pill ' + lab[1] + '">' + lab[0] + '</span>' + (pe > 0 ? '<button class="btn small" data-act="liquidar" data-i="'+i+'" aria-label="Marcar pagado completo">Liquidar</button>' : '');
+  });
+  txt('t-comp', money(T.c)); txt('t-apor', money(T.a)); txt('t-pend', money(T.p));
+  txt('k-comp', money(T.c)); txt('k-compn', S.people.length + ' personas');
+  txt('k-apor', money(T.a));
+  var pct = T.c ? Math.round(T.a / T.c * 100) : 0;
+  var bar = document.getElementById('k-bar'); if (bar) bar.style.width = Math.min(pct, 100) + '%';
+  txt('k-pct', pct + '% de lo comprometido');
+  txt('k-pend', money(T.p)); txt('k-pendn', T.deben + (T.deben === 1 ? ' persona con saldo' : ' personas con saldo'));
+  S.gastos.forEach(function(x, i){ txt('gs-'+i, money(x.beb ? T.bebP : (+x.q||0) * (+x.p||0))); });
+  txt('gbp', S.elegida == null ? 'Por votar' : money(T.bebP));
+  txt('g-tot', money(T.g));
+  txt('b-saldo', money(T.menu - (+S.anticipo||0)));
+  var dif = T.c - T.g;
+  txt('b-dif', (dif < 0 ? '−' : '+') + money(Math.abs(dif)), 'big ' + (dif < 0 ? 'neg' : 'posi'));
+  txt('b-difn', dif < 0 ? 'Falta cubrir' : 'Sobra');
+  var n = S.people.length || 1, extra = dif < 0 ? Math.ceil(-dif / n / 50) * 50 : 0;
+  txt('b-extra', money(extra));
+  txt('b-extran', dif < 0 ? 'Si todos ponen un extra (redondeado a $50)' : 'No hace falta extra');
+  var note = document.getElementById('b-note');
+  if (note) {
+    if (dif < 0) { note.style.display = ''; note.innerHTML = '<strong>Ojo:</strong> lo comprometido (' + money(T.c) + ') no alcanza para los gastos estimados (' + money(T.g) + '). Faltan <strong>' + money(-dif) + '</strong>' + (S.elegida == null ? ', sin contar bebidas.' : '.') + ' Opciones: sumar más cooperantes o una aportación extra de ' + money(extra) + ' por persona.'; }
+    else { note.style.display = 'none'; }
+  }
+}
+
+function showStatus(){
+  var el = document.getElementById('status'); if (!el) return;
+  if (saving) { el.textContent = 'Guardando…'; el.className = 'status'; return; }
+  if (dirty) { el.textContent = 'Tienes cambios sin guardar'; el.className = 'status dirty'; return; }
+  el.textContent = art ? 'Todo guardado · edita cualquier dato directamente' : 'Edita cualquier dato directamente';
+  el.className = 'status';
+}
+function markDirty(){ dirty = true; showStatus(); }
+
+app.addEventListener('input', function(e){
+  var t = e.target, k = t.getAttribute && t.getAttribute('data-k'); if (!k) return;
+  var v = t.type === 'checkbox' ? t.checked : (t.getAttribute('data-num') ? (parseFloat(String(t.value).replace(/[^0-9.\-]/g, '')) || 0) : t.value);
+  setPath(k, v); markDirty(); derive();
+  if (t.type === 'checkbox') render();
+});
+app.addEventListener('change', function(e){ var k = e.target.getAttribute && e.target.getAttribute('data-k'); if (k && /^resp\.\d+\.q$/.test(k)) render(); });
+
+app.addEventListener('click', function(e){
+  var b = e.target.closest('[data-act]'); if (!b) return;
+  var act = b.getAttribute('data-act'), i = +b.getAttribute('data-i');
+  if (act === 'save') return save();
+  if (act === 'copy') return copySummary();
+  if (act === 'download') return download();
+  if (act === 'addPerson') S.people.push({n:'', c:1000, a:0});
+  else if (act === 'delPerson') S.people.splice(i, 1);
+  else if (act === 'liquidar') S.people[i].a = S.people[i].c;
+  else if (act === 'addGasto') S.gastos.splice(S.gastos.length - 1, 0, {n:'Nuevo gasto', d:'', q:1, p:0});
+  else if (act === 'delGasto') S.gastos.splice(i, 1);
+  else if (act === 'addResp') S.resp.push({t:'', q:'', e:'Pendiente', nt:''});
+  else if (act === 'delResp') S.resp.splice(i, 1);
+  else if (act === 'addTodo') S.todos.push({t:'', h:false});
+  else if (act === 'delTodo') S.todos.splice(i, 1);
+  else if (act === 'pickBeb') S.elegida = (S.elegida === i ? null : i);
+  else return;
+  markDirty(); render();
+});
+
+function summary(){
+  var T = totals(), L = [];
+  L.push('*' + S.titulo + ' · Hospital Noor*');
+  var m = []; if (S.fecha) m.push('Fecha: ' + S.fecha); if (S.hora) m.push('Hora: ' + S.hora); if (S.lugar) m.push('Lugar: ' + S.lugar);
+  if (m.length) L.push(m.join(' | '));
+  L.push(''); L.push('*Cooperaciones:* ' + money(T.a) + ' de ' + money(T.c) + ' recaudado');
+  S.people.forEach(function(p){ var pe = Math.max((+p.c||0) - (+p.a||0), 0); L.push((pe > 0 ? '• ' : '✓ ') + p.n + ': ' + (pe > 0 ? 'faltan ' + money(pe) : 'cubierto')); });
+  L.push(''); L.push('*Gastos estimados:* ' + money(T.g));
+  S.gastos.forEach(function(g){ var s = g.beb ? T.bebP : (+g.q||0) * (+g.p||0); L.push('• ' + g.n + ': ' + (g.beb && S.elegida == null ? 'por votar' : (s ? money(s) : 'pendiente'))); });
+  var dif = T.c - T.g; if (dif < 0) L.push('Faltan ' + money(-dif) + ' por cubrir.');
+  L.push(''); L.push('*Responsables:*');
+  S.resp.forEach(function(r){ L.push('• ' + r.t + ': ' + (r.q || 'por asignar') + ' (' + r.e + ')'); });
+  L.push(''); L.push('*Bebidas (compra: ' + S.compra + '):*');
+  S.bebidas.forEach(function(b, i){ L.push((S.elegida === i ? '✓ ' : '• ') + b.o + ' ' + money(b.p) + ': ' + b.d + (b.v ? ' · ' + b.v + ' votos' : '')); });
+  return L.join('\n');
+}
+function copySummary(){
+  var t = summary();
+  function fallback(){
+    var box = document.createElement('div'); box.className = 'copybox';
+    box.innerHTML = '<div class="in"><strong>Copia este texto y pégalo en WhatsApp</strong><textarea readonly></textarea><button class="btn primary">Cerrar</button></div>';
+    box.querySelector('textarea').value = t;
+    box.querySelector('button').onclick = function(){ box.remove(); };
+    document.body.appendChild(box); var ta = box.querySelector('textarea'); ta.focus(); ta.select();
+  }
+  try { navigator.clipboard.writeText(t).then(function(){ var el = document.getElementById('status'); if (el) { el.textContent = 'Resumen copiado. Pégalo en WhatsApp.'; el.className = 'status'; setTimeout(showStatus, 3000); } }, fallback); }
+  catch (e) { fallback(); }
+}
+
+function buildDoc(){
+  var json = JSON.stringify(S).replace(/</g, '\\u003c');
+  var css = document.getElementById('css').textContent;
+  var js = document.getElementById('appjs').textContent;
+  return '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>' + esc(S.titulo) + ' · Hospital Noor</title>\n' +
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">\n' +
+    '<style id="css">' + css + '</style>\n</head>\n<body>\n<div id="app"></div>\n' +
+    '<script id="state" type="application/json">' + json + '<\/script>\n' +
+    '<script id="appjs">' + js + '<\/script>\n</body>\n</html>\n';
+}
+function download(){
+  try { S.actualizado = new Date().toLocaleString('es-MX', {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'}); } catch (e) {}
+  try {
+    var blob = new Blob([buildDoc()], {type:'text/html'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'index.html';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  } catch (e) {}
+}
+function save(){
+  if (!IN_CLAUDE) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify({base:BASE, state:S})); dirty = false; showStatus();
+      var e1 = document.getElementById('status'); if (e1) e1.textContent = 'Guardado en este navegador. Para que todos lo vean, descarga el index.html y súbelo a GitHub.';
+    } catch (e) { var e2 = document.getElementById('status'); if (e2) { e2.textContent = 'Este navegador no permite guardar; usa “Descargar index.html actualizado”.'; e2.className = 'status dirty'; } }
+    return;
+  }
+  if (!art) { var el = document.getElementById('status'); if (el) { el.textContent = 'No se puede guardar desde esta vista. Ábrela desde claude.ai.'; el.className = 'status dirty'; } return; }
+  try { S.actualizado = new Date().toLocaleString('es-MX', {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'}); } catch (e) {}
+  saving = true; showStatus();
+  Promise.resolve().then(function(){ return art.publish(buildDoc()); }).then(function(){ saving = false; dirty = false; showStatus(); }, function(err){
+    saving = false;
+    var c = String((err && (err.code || err.message)) || err || '');
+    var el = document.getElementById('status');
+    if (el) { el.className = 'status dirty';
+      el.textContent = /not_granted|not_writer/.test(c) ? 'Solo lectura: no tienes permiso para guardar.' : (/conflict/.test(c) ? 'Alguien guardó antes; la página se actualizará.' : 'No se pudo guardar. Intenta de nuevo.'); }
+  });
+}
+
+render();
+try {
+  if (window.claude && window.claude.use) window.claude.use('artifact').then(function(a){ art = a; showStatus(); }, function(){});
+} catch (e) {}
+})();
+</script>
+</body>
+</html>
